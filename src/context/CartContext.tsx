@@ -7,11 +7,12 @@ export interface CartItem {
   image_url?: string;
   quantity: number;
   category?: string;
+  observation?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: { id: string; name: string; price: number; image_url?: string; category?: string }) => void;
+  addItem: (item: { id: string; name: string; price: number; image_url?: string; category?: string; observation?: string }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
   clearCart: () => void;
@@ -51,19 +52,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('faithhub_pwa_cart', JSON.stringify(newItems));
   };
 
-  const addItem = (product: { id: string; name: string; price: number; image_url?: string; category?: string }) => {
-    const existingIndex = items.findIndex(i => i.id === product.id);
+  const addItem = (product: { id: string; name: string; price: number; image_url?: string; category?: string; observation?: string }) => {
+    const existingIndex = items.findIndex(i => i.id === product.id && i.observation === product.observation);
     if (existingIndex > -1) {
       const updated = [...items];
       updated[existingIndex].quantity += 1;
       saveCart(updated);
     } else {
       const newItem: CartItem = {
-        id: product.id,
+        id: `${product.id}_${Date.now()}`,
         name: product.name,
         price: product.price,
         image_url: product.image_url,
         category: product.category,
+        observation: product.observation,
         quantity: 1
       };
       saveCart([...items, newItem]);

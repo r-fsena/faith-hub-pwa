@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useBranding } from '../context/BrandingContext';
+import { createPdvOrder } from '../services/api';
 
 export const CartFloatingButton: React.FC = () => {
   const { totalItemsCount, totalPrice, setIsCartOpen } = useCart();
@@ -25,19 +26,87 @@ export const CartFloatingButton: React.FC = () => {
 export const CartDrawer: React.FC = () => {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
   const { branding } = useBranding();
-  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'pix' | 'success'>('cart');
+  
+  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'delivery' | 'pix' | 'success'>('cart');
+  const [deliveryMethod, setDeliveryMethod] = useState<'church' | 'home'>('church');
+  const [pickupOption, setPickupOption] = useState<string>('Retirar no Balcão / Ponto de Coleta');
+  
+  // Entrega em Casa
+  const [cep, setCep] = useState('');
+  const [address, setAddress] = useState('');
+  const [numberComp, setNumberComp] = useState('');
+  const [careOf, setCareOf] = useState('');
+  const [preferredTime, setPreferredTime] = useState('');
+
+  // Identificação
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [createdOrderId, setCreatedOrderId] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isCartOpen) return null;
 
-  const handleProceedToPix = () => {
+  const handleProceedToDelivery = () => {
+    if (items.length === 0) return;
+    setCheckoutStep('delivery');
+  };
+
+  const handleProceedToPix = async () => {
     if (!customerName.trim()) {
-      alert("Por favor, digite seu nome para identificação do pedido.");
+      alert("Por favor, informe seu nome para identificação do pedido.");
       return;
     }
-    setCheckoutStep('pix');
+
+    if (deliveryMethod === 'home' && (!address.trim() || !numberComp.trim())) {
+      alert("Por favor, preencha o endereço completo para entrega.");
+      return;
+    }
+
+    setIsSaving(true);
+    const deliveryDetailsString = deliveryMethod === 'home'
+      ? `Entrega: ${address}, ${numberComp} (CEP: ${cep}) - A/C: ${careOf} | Horário: ${preferredTime || 'Livre'}`
+      : `Retirada: ${pickupOption}`;
+
+    const itemsPayload = items.map(item => ({
+      name: item.name,
+      qty: item.quantity,
+      price: item.price,
+      obs: item.observation
+    }));
+
+    try {
+      const orderRes = await createPdvOrder({
+        user_name: `${customerName.trim()} (${customerPhone.trim() || 'Sem tel'})`,
+        delivery_method: deliveryMethod,
+        delivery_details: deliveryDetailsString,
+        items_json: itemsPayload,
+        total_price: totalPrice
+      });
+
+      const orderId = orderRes?.id || `ORD-${Date.now().toString().slice(-6)}`;
+      setCreatedOrderId(orderId);
+
+      // Salva no histórico local de pedidos
+      const savedOrders = localStorage.getItem('faithhub_my_pdv_orders');
+      const orderList = savedOrders ? JSON.parse(savedOrders) : [];
+      const newOrderRecord = {
+        id: orderId,
+        date: new Date().toLocaleDateString('pt-BR'),
+        status: 'RECEBIDO E PREPARANDO',
+        total: totalPrice,
+        items: itemsPayload,
+        delivery: deliveryDetailsString
+      };
+      localStorage.setItem('faithhub_my_pdv_orders', JSON.stringify([newOrderRecord, ...orderList]));
+
+      setCheckoutStep('pix');
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao enviar pedido.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCopyPix = () => {
@@ -84,7 +153,7 @@ export const CartDrawer: React.FC = () => {
                 <p style={{ fontSize: '0.85rem' }}>Seu carrinho está vazio.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '40vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '42vh', overflowY: 'auto' }}>
                 {items.map((item) => (
                   <div 
                     key={item.id}
@@ -106,6 +175,11 @@ export const CartDrawer: React.FC = () => {
                       )}
                       <div>
                         <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>{item.name}</div>
+                        {item.observation && (
+                          <div style={{ fontSize: '0.70rem', color: '#d97706', fontWeight: 700 }}>
+                            Obs: {item.observation}
+                          </div>
+                        )}
                         <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 700 }}>
                           R$ {item.price.toFixed(2).replace('.', ',')}
                         </div>
@@ -138,23 +212,6 @@ export const CartDrawer: React.FC = () => {
 
             {items.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--panel-border)', paddingTop: '14px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input 
-                    type="text" 
-                    className="input-pwa"
-                    placeholder="Seu Nome Completo *"
-                    value={customerName} 
-                    onChange={e => setCustomerName(e.target.value)} 
-                  />
-                  <input 
-                    type="tel" 
-                    className="input-pwa"
-                    placeholder="WhatsApp para aviso de retirada"
-                    value={customerPhone} 
-                    onChange={e => setCustomerPhone(e.target.value)} 
-                  />
-                </div>
-
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1rem', fontWeight: 800 }}>
                   <span>Total:</span>
                   <span style={{ fontSize: '1.25rem', color: '#059669' }}>
@@ -165,28 +222,145 @@ export const CartDrawer: React.FC = () => {
                 <button 
                   type="button" 
                   className="btn-pwa-primary"
-                  onClick={handleProceedToPix}
+                  onClick={handleProceedToDelivery}
                 >
-                  ⚡ Pagar com Pix Instantâneo
+                  Continuar para Entrega / Retirada →
                 </button>
               </div>
             )}
           </>
         )}
 
-        {/* STEP 2: PIX QR CODE & COPIA E COLA */}
+        {/* STEP 2: FORMA DE ENTREGA & DADOS */}
+        {checkoutStep === 'delivery' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                type="button" 
+                onClick={() => setCheckoutStep('cart')}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                ← Voltar
+              </button>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                Como deseja receber?
+              </h3>
+            </div>
+
+            {/* Opções Retirar na Igreja vs Receber em Casa */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('church')}
+                style={{
+                  padding: '12px',
+                  borderRadius: '14px',
+                  border: deliveryMethod === 'church' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                  background: deliveryMethod === 'church' ? 'var(--accent-primary-light)' : '#ffffff',
+                  color: deliveryMethod === 'church' ? 'var(--accent-primary)' : 'var(--text-main)',
+                  fontWeight: 800,
+                  fontSize: '0.80rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '1.3rem' }}>🏛️</span>
+                Retirar na Igreja
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('home')}
+                style={{
+                  padding: '12px',
+                  borderRadius: '14px',
+                  border: deliveryMethod === 'home' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                  background: deliveryMethod === 'home' ? 'var(--accent-primary-light)' : '#ffffff',
+                  color: deliveryMethod === 'home' ? 'var(--accent-primary)' : 'var(--text-main)',
+                  fontWeight: 800,
+                  fontSize: '0.80rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '1.3rem' }}>🛵</span>
+                Receber em Casa
+              </button>
+            </div>
+
+            {/* Sub-opções de Retirada na Igreja */}
+            {deliveryMethod === 'church' && (
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>Ponto de Retirada</span>
+                {[
+                  'Retirar no Balcão / Ponto de Coleta',
+                  'Retirar ao Final do Culto'
+                ].map(opt => (
+                  <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="pickup" 
+                      checked={pickupOption === opt} 
+                      onChange={() => setPickupOption(opt)} 
+                    />
+                    <span>{opt}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {/* Sub-opções de Entrega em Casa */}
+            {deliveryMethod === 'home' && (
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>Endereço de Entrega</span>
+                <input type="text" className="input-pwa" placeholder="CEP (00000-000)" value={cep} onChange={e => setCep(e.target.value)} />
+                <input type="text" className="input-pwa" placeholder="Rua / Avenida *" value={address} onChange={e => setAddress(e.target.value)} required />
+                <input type="text" className="input-pwa" placeholder="Número e Complemento (Apto, Bloco) *" value={numberComp} onChange={e => setNumberComp(e.target.value)} required />
+                <input type="text" className="input-pwa" placeholder="A/C (Aos cuidados de)" value={careOf} onChange={e => setCareOf(e.target.value)} />
+                <input type="text" className="input-pwa" placeholder="Horário de preferência (ex: Manhã, Noite)" value={preferredTime} onChange={e => setPreferredTime(e.target.value)} />
+              </div>
+            )}
+
+            {/* Identificação do Cliente */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>Seus Dados para Contato</span>
+              <input type="text" className="input-pwa" placeholder="Seu Nome Completo *" value={customerName} onChange={e => setCustomerName(e.target.value)} required />
+              <input type="tel" className="input-pwa" placeholder="WhatsApp para aviso de pedido pronto *" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} required />
+            </div>
+
+            <button 
+              type="button" 
+              className="btn-pwa-primary"
+              onClick={handleProceedToPix}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Gerando Pedido...' : '⚡ Pagar com Pix Instantâneo'}
+            </button>
+          </div>
+        )}
+
+        {/* STEP 3: PIX QR CODE & COPIA E COLA */}
         {checkoutStep === 'pix' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
               Pagamento via Pix
             </h3>
+            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)', background: 'var(--accent-primary-light)', padding: '4px 10px', borderRadius: '8px' }}>
+              Pedido #{createdOrderId}
+            </span>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
               Pague <strong>R$ {totalPrice.toFixed(2).replace('.', ',')}</strong> apontando o app do seu banco:
             </p>
 
             <div style={{ background: '#ffffff', padding: '12px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`Pix:${branding.church_name}:${totalPrice}`)}`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`Pix:${branding.church_name}:${totalPrice}:${createdOrderId}`)}`} 
                 alt="QR Code Pix"
                 style={{ width: '160px', height: '160px', display: 'block' }}
               />
@@ -208,34 +382,26 @@ export const CartDrawer: React.FC = () => {
             >
               Já realizei o pagamento
             </button>
-
-            <button 
-              type="button" 
-              onClick={() => setCheckoutStep('cart')}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}
-            >
-              ← Voltar ao carrinho
-            </button>
           </div>
         )}
 
-        {/* STEP 3: SUCESSO / PEDIDO CONFIRMADO */}
+        {/* STEP 4: SUCESSO / PEDIDO CONFIRMADO */}
         {checkoutStep === 'success' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px', padding: '10px 0' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
               ✓
             </div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-              Pedido Confirmado!
+              Pedido #{createdOrderId} Confirmado!
             </h3>
             <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
-              Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado e está sendo preparado pela equipe da cantina.
+              Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado no sistema da igreja e está sendo preparado.
             </p>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', width: '100%', fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
-              Apresente seu nome no balcão para retirar.
+              {deliveryMethod === 'church' ? 'Apresente seu nome ou código no balcão da cantina.' : 'Seu pedido será entregue no endereço informado.'}
             </div>
             <button type="button" className="btn-pwa-primary" onClick={handleClose}>
-              Concluir
+              Concluir & Ver Pedidos
             </button>
           </div>
         )}

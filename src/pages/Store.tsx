@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { fetchPdvProducts } from '../services/api';
 
 interface Product {
   id: string;
@@ -71,19 +72,43 @@ const SAMPLE_PRODUCTS: Product[] = [
 
 export const Store: React.FC = () => {
   const { addItem } = useCart();
-  const [products] = useState<Product[]>(SAMPLE_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'catalog' | 'my_orders'>('catalog');
+  const [myOrders, setMyOrders] = useState<any[]>([]);
+
+  // Modal de Detalhes / Observação
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
+  const [itemObs, setItemObs] = useState<string>('');
 
   useEffect(() => {
-    // Carrega a lista e ordem dos grupos configurada no Web Studio
+    loadProductsFromBackend();
+    loadGroupsOrder();
+    loadMyOrders();
+  }, []);
+
+  const loadProductsFromBackend = async () => {
+    const backendProducts = await fetchPdvProducts();
+    if (backendProducts && Array.isArray(backendProducts) && backendProducts.length > 0) {
+      const mapped = backendProducts.map((p: any) => ({
+        id: p.id,
+        name: p.name || p.title,
+        category: p.category || 'Geral',
+        description: p.description || '',
+        price: Number(p.price) || 0,
+        image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
+      }));
+      setProducts(mapped);
+    }
+  };
+
+  const loadGroupsOrder = () => {
     const savedGroups = localStorage.getItem('faithhub_pdv_groups');
     if (savedGroups) {
       try {
         const parsed = JSON.parse(savedGroups);
         if (Array.isArray(parsed)) {
-          // Filtra apenas ativos
           const activeOnly = parsed
             .filter((g: any) => typeof g === 'string' ? true : g.active !== false)
             .map((g: any) => typeof g === 'string' ? g : g.name);
@@ -92,7 +117,6 @@ export const Store: React.FC = () => {
         }
       } catch (e) {}
     }
-    // Grupos padrão ordenados
     setGroups([
       'Salgados & Lanches',
       'Doces e Sobremesas',
@@ -100,118 +124,250 @@ export const Store: React.FC = () => {
       'Livraria & Bíblias',
       'Vestuário & Camisas'
     ]);
-  }, []);
+  };
+
+  const loadMyOrders = () => {
+    const saved = localStorage.getItem('faithhub_my_pdv_orders');
+    if (saved) {
+      try {
+        setMyOrders(JSON.parse(saved));
+        return;
+      } catch (e) {}
+    }
+    setMyOrders([
+      {
+        id: 'ORD-8921',
+        date: 'Hoje',
+        status: 'PRONTO PARA RETIRADA',
+        total: 24.50,
+        items: [
+          { name: 'Coxinha Artesanal com Catupiry', qty: 2, price: 9.50, obs: 'Bem quentinha' },
+          { name: 'Café Expresso', qty: 1, price: 5.50 }
+        ],
+        delivery: 'Retirada no Balcão'
+      }
+    ]);
+  };
 
   const filteredProducts = selectedGroup === 'ALL'
     ? products
     : products.filter(p => p.category === selectedGroup);
 
-  const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const handleOpenProductModal = (product: Product) => {
+    setSelectedProductModal(product);
+    setItemObs('');
+  };
+
+  const handleConfirmAddToCart = () => {
+    if (!selectedProductModal) return;
     addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image_url: product.image_urls[0],
-      category: product.category
+      id: selectedProductModal.id,
+      name: selectedProductModal.name,
+      price: selectedProductModal.price,
+      image_url: selectedProductModal.image_urls[0],
+      category: selectedProductModal.category,
+      observation: itemObs.trim() || undefined
     });
+    setSelectedProductModal(null);
+    setItemObs('');
   };
 
   return (
     <div className="pwa-content animate-fade-in">
       
-      <div className="section-header-row">
+      {/* Header com Switch entre Catálogo e Meus Pedidos */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 className="section-title" style={{ fontSize: '1.25rem' }}>Cantina & Livraria</h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Peça e retire no balcão da igreja sem filas</p>
+          <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
+            {viewMode === 'catalog' ? 'Cantina & Loja' : 'Meus Pedidos'}
+          </h2>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+            {viewMode === 'catalog' ? 'Peça e retire no balcão da igreja sem filas' : 'Acompanhe o status do preparo dos seus lanches'}
+          </p>
         </div>
-      </div>
 
-      {/* Segmented Filter Bar com Grupos Ordenados */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
         <button
           type="button"
-          onClick={() => setSelectedGroup('ALL')}
+          onClick={() => {
+            if (viewMode === 'catalog') {
+              loadMyOrders();
+              setViewMode('my_orders');
+            } else {
+              setViewMode('catalog');
+            }
+          }}
           style={{
-            padding: '7px 14px',
-            borderRadius: '999px',
-            border: '1px solid var(--panel-border)',
-            background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : '#ffffff',
-            color: selectedGroup === 'ALL' ? '#ffffff' : 'var(--text-main)',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap'
+            background: 'var(--accent-primary-light)',
+            color: 'var(--accent-primary)',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '10px',
+            fontWeight: 800,
+            fontSize: '0.74rem',
+            cursor: 'pointer'
           }}
         >
-          Todos ({products.length})
+          {viewMode === 'catalog' ? '📋 Meus Pedidos' : '🛒 Ver Cardápio'}
         </button>
+      </div>
 
-        {groups.map((group) => {
-          const count = products.filter(p => p.category === group).length;
-          return (
+      {/* ========================================================
+          MODO 1: CATÁLOGO DO PDV MOBILE
+          ======================================================== */}
+      {viewMode === 'catalog' ? (
+        <>
+          {/* Segmented Filter Bar com Grupos Ordenados */}
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
             <button
-              key={group}
               type="button"
-              onClick={() => setSelectedGroup(group)}
+              onClick={() => setSelectedGroup('ALL')}
               style={{
                 padding: '7px 14px',
                 borderRadius: '999px',
                 border: '1px solid var(--panel-border)',
-                background: selectedGroup === group ? 'var(--accent-primary)' : '#ffffff',
-                color: selectedGroup === group ? '#ffffff' : 'var(--text-main)',
+                background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : '#ffffff',
+                color: selectedGroup === 'ALL' ? '#ffffff' : 'var(--text-main)',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}
             >
-              {group} ({count})
+              Todos ({products.length})
             </button>
-          );
-        })}
-      </div>
 
-      {/* Grid de Produtos */}
-      <div className="product-grid">
-        {filteredProducts.map((prod) => (
-          <div 
-            key={prod.id} 
-            className="product-card" 
-            onClick={() => setSelectedProductModal(prod)}
-            style={{ cursor: 'pointer' }}
-          >
-            {prod.image_urls && prod.image_urls[0] ? (
-              <img src={prod.image_urls[0]} alt={prod.name} className="product-image" />
-            ) : (
-              <div className="product-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                Sem Foto
-              </div>
-            )}
-
-            <div className="product-info">
-              <span style={{ fontSize: '0.64rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                {prod.category}
-              </span>
-              <h4 className="product-title">{prod.name}</h4>
-              
-              <div className="product-price">
-                <span>R$ {prod.price.toFixed(2).replace('.', ',')}</span>
-                <button 
-                  type="button" 
-                  className="add-cart-mini-btn" 
-                  onClick={(e) => handleAddToCart(prod, e)}
-                  title="Adicionar ao Pedido"
+            {groups.map((group) => {
+              const count = products.filter(p => p.category === group).length;
+              return (
+                <button
+                  key={group}
+                  type="button"
+                  onClick={() => setSelectedGroup(group)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid var(--panel-border)',
+                    background: selectedGroup === group ? 'var(--accent-primary)' : '#ffffff',
+                    color: selectedGroup === group ? '#ffffff' : 'var(--text-main)',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  +
+                  {group} ({count})
                 </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
 
-      {/* Modal de Detalhes do Produto */}
+          {/* Grid de Produtos */}
+          <div className="product-grid">
+            {filteredProducts.map((prod) => (
+              <div 
+                key={prod.id} 
+                className="product-card" 
+                onClick={() => handleOpenProductModal(prod)}
+                style={{ cursor: 'pointer' }}
+              >
+                {prod.image_urls && prod.image_urls[0] ? (
+                  <img src={prod.image_urls[0]} alt={prod.name} className="product-image" />
+                ) : (
+                  <div className="product-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    Sem Foto
+                  </div>
+                )}
+
+                <div className="product-info">
+                  <span style={{ fontSize: '0.64rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', marginBottom: '2px' }}>
+                    {prod.category}
+                  </span>
+                  <h4 className="product-title">{prod.name}</h4>
+                  
+                  <div className="product-price">
+                    <span>R$ {prod.price.toFixed(2).replace('.', ',')}</span>
+                    <button 
+                      type="button" 
+                      className="add-cart-mini-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenProductModal(prod);
+                      }}
+                      title="Adicionar ao Pedido"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        /* ========================================================
+            MODO 2: MEUS PEDIDOS (MONITOR DE STATUS EM TEMPO REAL)
+            ======================================================== */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {myOrders.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🛍️</div>
+              <p style={{ fontSize: '0.85rem' }}>Você ainda não realizou nenhum pedido hoje.</p>
+            </div>
+          ) : (
+            myOrders.map(order => (
+              <div 
+                key={order.id}
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  border: '1px solid var(--panel-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>{order.date}</span>
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-main)' }}>Pedido #{order.id}</div>
+                  </div>
+
+                  <span style={{
+                    fontSize: '0.70rem',
+                    fontWeight: 800,
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    background: order.status === 'PRONTO PARA RETIRADA' ? '#ecfdf5' : '#fffbeb',
+                    color: order.status === 'PRONTO PARA RETIRADA' ? '#059669' : '#d97706'
+                  }}>
+                    {order.status === 'PRONTO PARA RETIRADA' ? '✓ PRONTO NO BALCÃO' : '⏳ EM PREPARO'}
+                  </span>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {order.items && order.items.map((it: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span>{it.qty}x {it.name} {it.obs ? `(${it.obs})` : ''}</span>
+                      <span style={{ fontWeight: 700 }}>R$ {(it.price * it.qty).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border)', paddingTop: '10px', fontSize: '0.84rem' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>{order.delivery}</span>
+                  <span style={{ fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>
+                    Total: R$ {Number(order.total).toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Modal de Detalhes do Produto com Observação */}
       {selectedProductModal && (
         <div className="drawer-overlay" onClick={() => setSelectedProductModal(null)}>
           <div className="drawer-container" onClick={e => e.stopPropagation()}>
@@ -221,7 +377,7 @@ export const Store: React.FC = () => {
               <img 
                 src={selectedProductModal.image_urls[0]} 
                 alt={selectedProductModal.name} 
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px' }}
+                style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '16px' }}
               />
             )}
 
@@ -229,18 +385,32 @@ export const Store: React.FC = () => {
               <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
                 {selectedProductModal.category}
               </span>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', marginTop: '2px' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', marginTop: '2px' }}>
                 {selectedProductModal.name}
               </h2>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: '6px', lineHeight: 1.4 }}>
-                {selectedProductModal.description}
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
+                {selectedProductModal.description || 'Item fresco preparado com carinho.'}
               </p>
+            </div>
+
+            {/* Campo de Observação por Item */}
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                Observação para a Cozinha / Balcão (Opcional)
+              </label>
+              <input 
+                type="text" 
+                className="input-pwa" 
+                placeholder="Ex: Sem cebola, embalar para presente, bem passado..."
+                value={itemObs}
+                onChange={e => setItemObs(e.target.value)}
+              />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--panel-border)', paddingTop: '14px' }}>
               <div>
                 <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', display: 'block' }}>Preço Unitário</span>
-                <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#059669' }}>
+                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#059669' }}>
                   R$ {selectedProductModal.price.toFixed(2).replace('.', ',')}
                 </span>
               </div>
@@ -249,10 +419,7 @@ export const Store: React.FC = () => {
                 type="button" 
                 className="btn-pwa-primary" 
                 style={{ width: 'auto', padding: '12px 24px' }}
-                onClick={() => {
-                  handleAddToCart(selectedProductModal);
-                  setSelectedProductModal(null);
-                }}
+                onClick={handleConfirmAddToCart}
               >
                 + Adicionar ao Pedido
               </button>
