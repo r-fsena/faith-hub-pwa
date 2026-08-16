@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
-import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn } from 'aws-amplify/auth';
 
 const AVATARS = [
   'https://i.pravatar.cc/150?img=11',
@@ -17,13 +17,15 @@ export const Profile: React.FC = () => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
 
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'confirm' | 'forgot' | 'forgot_confirm'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'confirm' | 'forgot' | 'forgot_confirm' | 'new_password_required'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [acceptLGPD, setAcceptLGPD] = useState(true);
   const [confirmationCode, setConfirmationCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -56,8 +58,12 @@ export const Profile: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      await signIn({ username: email.trim(), password });
-      await checkAuth();
+      const result = await signIn({ username: email.trim(), password });
+      if (result.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+        setAuthMode('new_password_required');
+      } else {
+        await checkAuth();
+      }
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Erro ao entrar. Verifique seu e-mail e senha.');
@@ -66,8 +72,35 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const handleConfirmNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 8) {
+      setErrorMsg('A nova senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      await confirmSignIn({ challengeResponse: newPassword });
+      await checkAuth();
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.message || 'Erro ao definir nova senha.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim() || !email.trim() || !password) {
+      setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    if (!acceptLGPD) {
+      setErrorMsg('É necessário aceitar os termos de privacidade para criar sua conta.');
+      return;
+    }
     setLoading(true);
     setErrorMsg('');
     try {
@@ -77,7 +110,8 @@ export const Profile: React.FC = () => {
         options: {
           userAttributes: {
             name: name.trim(),
-            phone_number: phone ? (phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`) : undefined
+            phone_number: phone ? (phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`) : undefined,
+            birthdate: birthDate || undefined
           }
         }
       });
@@ -271,27 +305,51 @@ export const Profile: React.FC = () => {
   return (
     <div className="pwa-content animate-fade-in">
       
-      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+      <div style={{ background: '#ffffff', borderRadius: '24px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
         
-        {/* Header do Form */}
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--accent-primary-gradient)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', margin: '0 auto 10px auto' }}>
-            👤
-          </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
-            {authMode === 'login' && 'Entrar na sua Conta'}
-            {authMode === 'signup' && 'Criar Conta de Membro'}
-            {authMode === 'confirm' && 'Confirmar E-mail'}
-            {authMode === 'forgot' && 'Recuperar Senha'}
-            {authMode === 'forgot_confirm' && 'Definir Nova Senha'}
-          </h2>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Acesso exclusivo à {branding.church_name}
-          </p>
+        {/* Switcher entre Entrar e Criar Conta */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '14px', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              border: 'none',
+              background: authMode === 'login' ? '#ffffff' : 'transparent',
+              color: authMode === 'login' ? 'var(--accent-primary)' : 'var(--text-muted)',
+              fontWeight: 800,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              boxShadow: authMode === 'login' ? 'var(--shadow-sm)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Entrar na Conta
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setAuthMode('signup'); setErrorMsg(''); }}
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              border: 'none',
+              background: authMode === 'signup' ? '#ffffff' : 'transparent',
+              color: authMode === 'signup' ? 'var(--accent-primary)' : 'var(--text-muted)',
+              fontWeight: 800,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              boxShadow: authMode === 'signup' ? 'var(--shadow-sm)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Criar Nova Conta
+          </button>
         </div>
 
         {errorMsg && (
-          <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px 14px', borderRadius: '10px', fontSize: '0.78rem', marginBottom: '14px' }}>
+          <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px 14px', borderRadius: '12px', fontSize: '0.78rem', marginBottom: '14px', fontWeight: 600 }}>
             {errorMsg}
           </div>
         )}
@@ -329,30 +387,19 @@ export const Profile: React.FC = () => {
 
             <button 
               type="button" 
-              onClick={() => setAuthMode('forgot')}
-              style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.74rem', fontWeight: 700, textAlign: 'right', cursor: 'pointer' }}
+              onClick={() => { setAuthMode('forgot'); setErrorMsg(''); }}
+              style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', fontWeight: 700, textAlign: 'right', cursor: 'pointer' }}
             >
-              Esqueci minha senha
+              Esqueceu sua senha?
             </button>
 
-            <button type="submit" className="btn-pwa-primary" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar no App'}
+            <button type="submit" className="btn-pwa-primary" disabled={loading} style={{ marginTop: '6px' }}>
+              {loading ? 'Entrando...' : 'Entrar no Aplicativo'}
             </button>
-
-            <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              Não tem conta?{' '}
-              <button 
-                type="button" 
-                onClick={() => setAuthMode('signup')}
-                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 800, cursor: 'pointer' }}
-              >
-                Cadastre-se grátis
-              </button>
-            </div>
           </form>
         )}
 
-        {/* SIGNUP FORM */}
+        {/* SIGNUP FORM COM CAMPOS COMPLETOS */}
         {authMode === 'signup' && (
           <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
@@ -362,7 +409,7 @@ export const Profile: React.FC = () => {
               <input 
                 type="text" 
                 className="input-pwa" 
-                placeholder="Ex: João da Silva" 
+                placeholder="Seu nome completo" 
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -383,9 +430,36 @@ export const Profile: React.FC = () => {
               />
             </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                  WhatsApp / Celular
+                </label>
+                <input 
+                  type="tel" 
+                  className="input-pwa" 
+                  placeholder="(11) 98765-4321" 
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                  Data de Nascimento
+                </label>
+                <input 
+                  type="date" 
+                  className="input-pwa" 
+                  value={birthDate}
+                  onChange={e => setBirthDate(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                Senha (mínimo 8 caracteres) *
+                Senha de Acesso (mínimo 8 caracteres) *
               </label>
               <input 
                 type="password" 
@@ -397,20 +471,22 @@ export const Profile: React.FC = () => {
               />
             </div>
 
-            <button type="submit" className="btn-pwa-primary" disabled={loading}>
-              {loading ? 'Cadastrando...' : 'Criar Minha Conta'}
-            </button>
+            {/* Aceite LGPD & Termos */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', margin: '4px 0' }}>
+              <input 
+                type="checkbox" 
+                checked={acceptLGPD} 
+                onChange={e => setAcceptLGPD(e.target.checked)} 
+                style={{ marginTop: '2px' }}
+              />
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>
+                Concordo com os <strong>Termos de Uso e Política de Privacidade (LGPD)</strong> para receber avisos e comunicações da igreja.
+              </span>
+            </label>
 
-            <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              Já possui conta?{' '}
-              <button 
-                type="button" 
-                onClick={() => setAuthMode('login')}
-                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 800, cursor: 'pointer' }}
-              >
-                Fazer Login
-              </button>
-            </div>
+            <button type="submit" className="btn-pwa-primary" disabled={loading}>
+              {loading ? 'Criando Conta...' : 'Cadastrar e Conectar'}
+            </button>
           </form>
         )}
 
@@ -418,7 +494,7 @@ export const Profile: React.FC = () => {
         {authMode === 'confirm' && (
           <form onSubmit={handleConfirmCode} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-              Enviamos um código de 6 dígitos para o e-mail <strong>{email}</strong>.
+              Enviamos um código de verificação para <strong>{email}</strong>.
             </p>
 
             <input 
@@ -431,7 +507,7 @@ export const Profile: React.FC = () => {
             />
 
             <button type="submit" className="btn-pwa-primary" disabled={loading}>
-              {loading ? 'Confirmando...' : 'Confirmar E-mail'}
+              {loading ? 'Confirmando...' : 'Confirmar e Ativar Conta'}
             </button>
 
             <button 
@@ -444,22 +520,48 @@ export const Profile: React.FC = () => {
           </form>
         )}
 
-        {/* FORGOT PASSWORD */}
-        {authMode === 'forgot' && (
-          <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* TROCA DE SENHA OBRIGATÓRIA NO 1º ACESSO (CONVITE) */}
+        {authMode === 'new_password_required' && (
+          <form onSubmit={handleConfirmNewPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              Este é o seu primeiro acesso. Por favor, cadastre uma nova senha pessoal para continuar.
+            </p>
+
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                Digite seu E-mail cadastrado
+                Nova Senha Pessoal *
               </label>
               <input 
-                type="email" 
+                type="password" 
                 className="input-pwa" 
-                placeholder="seu@email.com" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                placeholder="Mínimo 8 caracteres" 
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
                 required
               />
             </div>
+
+            <button type="submit" className="btn-pwa-primary" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Nova Senha & Entrar'}
+            </button>
+          </form>
+        )}
+
+        {/* FORGOT PASSWORD */}
+        {authMode === 'forgot' && (
+          <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              Informe seu e-mail cadastrado para enviarmos as instruções de recuperação.
+            </p>
+
+            <input 
+              type="email" 
+              className="input-pwa" 
+              placeholder="seu@email.com" 
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
 
             <button type="submit" className="btn-pwa-primary" disabled={loading}>
               {loading ? 'Enviando...' : 'Enviar Código de Recuperação'}
@@ -475,47 +577,33 @@ export const Profile: React.FC = () => {
           </form>
         )}
 
-        {/* FORGOT CONFIRM */}
+        {/* FORGOT CONFIRM PASSWORD */}
         {authMode === 'forgot_confirm' && (
           <form onSubmit={handleConfirmResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                Código recebido por e-mail
-              </label>
-              <input 
-                type="text" 
-                className="input-pwa" 
-                placeholder="Código de 6 dígitos" 
-                value={confirmationCode}
-                onChange={e => setConfirmationCode(e.target.value)}
-                required
-              />
-            </div>
+            <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              Digite o código que você recebeu por e-mail e sua nova senha.
+            </p>
 
-            <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                Nova Senha
-              </label>
-              <input 
-                type="password" 
-                className="input-pwa" 
-                placeholder="Nova senha" 
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                required
-              />
-            </div>
+            <input 
+              type="text" 
+              className="input-pwa" 
+              placeholder="Código de recuperação" 
+              value={confirmationCode}
+              onChange={e => setConfirmationCode(e.target.value)}
+              required
+            />
+
+            <input 
+              type="password" 
+              className="input-pwa" 
+              placeholder="Nova senha (mínimo 8 dígitos)" 
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              required
+            />
 
             <button type="submit" className="btn-pwa-primary" disabled={loading}>
               {loading ? 'Redefinindo...' : 'Salvar Nova Senha'}
-            </button>
-
-            <button 
-              type="button" 
-              onClick={() => setAuthMode('login')}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}
-            >
-              ← Voltar ao login
             </button>
           </form>
         )}

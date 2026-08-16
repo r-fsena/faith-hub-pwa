@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
+import { useAuth } from '../context/AuthContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { fetchActiveBroadcast, fetchEvents } from '../services/api';
@@ -33,6 +34,7 @@ export const Home: React.FC<HomeProps> = ({
   onOpenGiving
 }) => {
   const { branding } = useBranding();
+  const { user } = useAuth();
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
@@ -116,6 +118,29 @@ export const Home: React.FC<HomeProps> = ({
       
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
+
+      {/* Saudação Personalizada & Data Atual no Padrão do Web Studio */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 4px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '1.25rem' }}>👋</span>
+            <h2 style={{ fontSize: '1.30rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0 }}>
+              Olá, {user?.name ? user.name.split(' ')[0] : 'Rfsena'}!
+            </h2>
+          </div>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px', textTransform: 'capitalize' }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Badge de Membro ou Visitante */}
+        <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '6px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+            {user ? 'Membro Ativo' : 'Conectado'}
+          </span>
+        </div>
+      </div>
 
       {/* Hero Banner Inteligente da Igreja */}
       <div className="pwa-hero-card">
