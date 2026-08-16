@@ -4,6 +4,16 @@ import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { fetchActiveBroadcast, fetchEvents } from '../services/api';
 import { checkPushNotificationSupport, requestPushPermission } from '../services/pushNotifications';
+import { 
+  LiveIcon, 
+  BookOpenIcon, 
+  UsersGroupIcon, 
+  ShoppingBagIcon, 
+  GivingHeartIcon, 
+  CalendarEventIcon, 
+  BibleScriptureIcon, 
+  PrayerChatIcon 
+} from '../components/ServiceIcons';
 import type { ActiveTab } from '../components/BottomNav';
 
 interface HomeProps {
@@ -58,15 +68,64 @@ export const Home: React.FC<HomeProps> = ({
     setShowPushBanner(false);
   };
 
+  // 8 Serviços & Atalhos com Ícones SVG do Design System
   const quickActions = [
-    { label: 'Cultos ao Vivo', icon: '🔴', action: onOpenLive, bg: '#fee2e2' },
-    { label: 'Palavra & Ensino', icon: '📖', action: () => onNavigate('devotionals'), bg: '#e0f2fe' },
-    { label: 'Células & Redes', icon: '📍', action: () => onNavigate('cells'), bg: '#fef3c7' },
-    { label: 'Cantina & Loja', icon: '🛒', action: () => onNavigate('store'), bg: '#dcfce7' },
-    { label: 'Dízimos & Ofertas', icon: '🕊️', action: onOpenGiving, bg: '#fae8ff' },
-    { label: 'Eventos & Cursos', icon: '🎟️', action: onOpenEvents, bg: '#ffedd5' },
-    { label: 'Bíblia Digital', icon: '📜', action: onOpenBible, bg: '#e2e8f0' },
-    { label: 'Mural de Oração', icon: '🙏', action: onOpenPrayers, bg: '#f1f5f9' },
+    { 
+      label: 'Cultos ao Vivo', 
+      icon: <LiveIcon size={22} color="#dc2626" />, 
+      bg: 'rgba(239, 68, 68, 0.12)', 
+      border: 'rgba(239, 68, 68, 0.25)', 
+      action: onOpenLive 
+    },
+    { 
+      label: 'Palavra & Ensino', 
+      icon: <BookOpenIcon size={22} color="#0284c7" />, 
+      bg: 'rgba(2, 132, 199, 0.12)', 
+      border: 'rgba(2, 132, 199, 0.25)', 
+      action: () => onNavigate('devotionals') 
+    },
+    { 
+      label: 'Células & Redes', 
+      icon: <UsersGroupIcon size={22} color="var(--accent-primary)" />, 
+      bg: 'var(--accent-primary-light)', 
+      border: 'rgba(15, 118, 110, 0.25)', 
+      action: () => onNavigate('cells') 
+    },
+    { 
+      label: 'Cantina & Loja', 
+      icon: <ShoppingBagIcon size={22} color="#059669" />, 
+      bg: 'rgba(5, 150, 105, 0.12)', 
+      border: 'rgba(5, 150, 105, 0.25)', 
+      action: () => onNavigate('store') 
+    },
+    { 
+      label: 'Dízimos & Ofertas', 
+      icon: <GivingHeartIcon size={22} color="#9333ea" />, 
+      bg: 'rgba(147, 51, 234, 0.12)', 
+      border: 'rgba(147, 51, 234, 0.25)', 
+      action: onOpenGiving 
+    },
+    { 
+      label: 'Eventos & Cursos', 
+      icon: <CalendarEventIcon size={22} color="#ea580c" />, 
+      bg: 'rgba(234, 88, 12, 0.12)', 
+      border: 'rgba(234, 88, 12, 0.25)', 
+      action: onOpenEvents 
+    },
+    { 
+      label: 'Bíblia Sagrada', 
+      icon: <BibleScriptureIcon size={22} color="#475569" />, 
+      bg: 'rgba(71, 85, 105, 0.12)', 
+      border: 'rgba(71, 85, 105, 0.25)', 
+      action: onOpenBible 
+    },
+    { 
+      label: 'Mural de Oração', 
+      icon: <PrayerChatIcon size={22} color="#4f46e5" />, 
+      bg: 'rgba(79, 70, 229, 0.12)', 
+      border: 'rgba(79, 70, 229, 0.25)', 
+      action: onOpenPrayers 
+    },
   ];
 
   return (
@@ -129,7 +188,7 @@ export const Home: React.FC<HomeProps> = ({
             {branding.tagline || 'Conectados pelo mesmo propósito e coração.'}
           </p>
 
-          {/* Botão de Live Integrado ao Hero quando ativo */}
+          {/* Botões do Hero */}
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
             <button
               type="button"
@@ -139,7 +198,7 @@ export const Home: React.FC<HomeProps> = ({
                 color: '#0f172a',
                 border: 'none',
                 padding: '8px 14px',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '0.76rem',
                 cursor: 'pointer',
@@ -162,7 +221,7 @@ export const Home: React.FC<HomeProps> = ({
                 border: '1px solid rgba(255,255,255,0.4)',
                 backdropFilter: 'blur(8px)',
                 padding: '8px 14px',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 fontWeight: 700,
                 fontSize: '0.76rem',
                 cursor: 'pointer'
@@ -174,26 +233,31 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Grade de Atalhos Rápidos (8 Botões com Micro-animação Tátil) */}
+      {/* Grade de Atalhos Rápidos (8 Botões com Ícones SVG do Design System) */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h3 className="section-title" style={{ margin: 0, fontSize: '0.95rem' }}>Serviços & Atalhos</h3>
-          <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Acesso imediato</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 className="section-title" style={{ margin: 0, fontSize: '0.98rem' }}>Serviços & Atalhos</h3>
+          <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Acesso rápido</span>
         </div>
 
-        <div className="quick-grid">
+        <div className="quick-action-grid">
           {quickActions.map((action, i) => (
             <button
               key={i}
               type="button"
-              className="quick-card"
+              className="quick-action-btn"
               onClick={action.action}
-              style={{ transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
             >
-              <div className="quick-icon-box" style={{ background: action.bg }}>
+              <div 
+                className="quick-action-icon" 
+                style={{ 
+                  background: action.bg,
+                  border: `1px solid ${action.border}`
+                }}
+              >
                 {action.icon}
               </div>
-              <span className="quick-label">{action.label}</span>
+              <span className="quick-action-label">{action.label}</span>
             </button>
           ))}
         </div>
@@ -219,8 +283,8 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
-              ☀️
+            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <BookOpenIcon size={22} color="#0284c7" />
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
@@ -255,8 +319,8 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
-              🎟️
+            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(234, 88, 12, 0.12)', border: '1px solid rgba(234, 88, 12, 0.25)', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CalendarEventIcon size={22} color="#ea580c" />
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
