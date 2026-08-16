@@ -10,8 +10,8 @@ export const CartFloatingButton: React.FC = () => {
   if (totalItemsCount === 0) return null;
 
   return (
-    <button 
-      type="button" 
+    <button
+      type="button"
       className="floating-cart-btn"
       onClick={() => setIsCartOpen(true)}
     >
@@ -25,13 +25,13 @@ export const CartFloatingButton: React.FC = () => {
 };
 
 export const CartDrawer: React.FC = () => {
-  const { items, isCartOpen, setIsCartOpen, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
+  const { items, isCartOpen, setIsCartOpen, updateQuantity, clearCart, totalPrice } = useCart();
   const { branding } = useBranding();
-  
+
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'delivery' | 'payment_method' | 'pix' | 'card' | 'success'>('cart');
   const [deliveryMethod, setDeliveryMethod] = useState<'church' | 'home'>('church');
   const [pickupOption, setPickupOption] = useState<string>('Retirar no Balcão / Ponto de Coleta');
-  
+
   // Entrega em Casa
   const [cep, setCep] = useState('');
   const [address, setAddress] = useState('');
@@ -163,8 +163,8 @@ export const CartDrawer: React.FC = () => {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 Seu Pedido (Cantina / Loja)
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={clearCart}
                 style={{ fontSize: '0.74rem', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
               >
@@ -180,16 +180,16 @@ export const CartDrawer: React.FC = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '42vh', overflowY: 'auto' }}>
                 {items.map((item) => (
-                  <div 
+                  <div
                     key={item.id}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '10px 12px', 
-                      background: '#f8fafc', 
+                      padding: '10px 12px',
+                      background: '#f8fafc',
                       borderRadius: '14px',
-                      border: '1px solid var(--panel-border)' 
+                      border: '1px solid var(--panel-border)'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -212,8 +212,8 @@ export const CartDrawer: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => updateQuantity(item.id, -1)}
                         style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: '#ffffff', cursor: 'pointer', fontWeight: 800 }}
                       >
@@ -222,8 +222,8 @@ export const CartDrawer: React.FC = () => {
                       <span style={{ fontSize: '0.84rem', fontWeight: 800, minWidth: '16px', textAlign: 'center' }}>
                         {item.quantity}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => updateQuantity(item.id, 1)}
                         style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: '#ffffff', cursor: 'pointer', fontWeight: 800 }}
                       >
@@ -244,8 +244,8 @@ export const CartDrawer: React.FC = () => {
                   </span>
                 </div>
 
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-pwa-primary"
                   onClick={handleProceedToDelivery}
                 >
@@ -260,8 +260,8 @@ export const CartDrawer: React.FC = () => {
         {checkoutStep === 'delivery' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setCheckoutStep('cart')}
                 style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
               >
@@ -328,11 +328,11 @@ export const CartDrawer: React.FC = () => {
                   'Retirar ao Final do Culto'
                 ].map(opt => (
                   <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer' }}>
-                    <input 
-                      type="radio" 
-                      name="pickup" 
-                      checked={pickupOption === opt} 
-                      onChange={() => setPickupOption(opt)} 
+                    <input
+                      type="radio"
+                      name="pickup"
+                      checked={pickupOption === opt}
+                      onChange={() => setPickupOption(opt)}
                     />
                     <span>{opt}</span>
                   </label>
@@ -359,8 +359,8 @@ export const CartDrawer: React.FC = () => {
               <input type="tel" className="input-pwa" placeholder="WhatsApp para aviso de pedido pronto *" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} required />
             </div>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn-pwa-primary"
               onClick={handleProceedToPaymentMethod}
             >
@@ -373,8 +373,8 @@ export const CartDrawer: React.FC = () => {
         {checkoutStep === 'payment_method' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setCheckoutStep('delivery')}
                 style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
               >
@@ -394,7 +394,7 @@ export const CartDrawer: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {/* Opção Pix */}
-              <div 
+              <div
                 onClick={handleStartPix}
                 style={{
                   padding: '16px',
@@ -421,7 +421,7 @@ export const CartDrawer: React.FC = () => {
               </div>
 
               {/* Opção Cartão de Crédito Pagar.me */}
-              <div 
+              <div
                 onClick={() => setCheckoutStep('card')}
                 style={{
                   padding: '16px',
@@ -454,8 +454,8 @@ export const CartDrawer: React.FC = () => {
         {checkoutStep === 'card' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '55vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setCheckoutStep('payment_method')}
                 style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
               >
@@ -466,8 +466,8 @@ export const CartDrawer: React.FC = () => {
               </h3>
             </div>
 
-            <CreditCardForm 
-              totalAmount={totalPrice} 
+            <CreditCardForm
+              totalAmount={totalPrice}
               onSubmit={handleCreditCardSubmit}
               isLoading={isSaving}
             />
@@ -488,15 +488,15 @@ export const CartDrawer: React.FC = () => {
             </p>
 
             <div style={{ background: '#ffffff', padding: '12px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`Pix:${branding.church_name}:${totalPrice}:${createdOrderId}`)}`} 
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`Pix:${branding.church_name}:${totalPrice}:${createdOrderId}`)}`}
                 alt="QR Code Pix"
                 style={{ width: '160px', height: '160px', display: 'block' }}
               />
             </div>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn-pwa-secondary"
               onClick={handleCopyPix}
               style={{ fontWeight: 800 }}
@@ -504,8 +504,8 @@ export const CartDrawer: React.FC = () => {
               {isCopied ? '✅ Código Pix Copiado!' : '📋 Copiar Código Pix (Copia e Cola)'}
             </button>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn-pwa-primary"
               onClick={handleFinishOrder}
             >

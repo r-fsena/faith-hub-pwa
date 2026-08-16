@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useBranding } from '../context/BrandingContext';
 
 interface CellGroup {
   id: string;
@@ -130,11 +129,9 @@ const SAMPLE_SNACKS: SnackAssignment[] = [
 type PortalTab = 'dashboard' | 'mural' | 'estudos' | 'membros' | 'lanches' | 'fotos';
 
 export const CellGroups: React.FC = () => {
-  const { branding } = useBranding();
-  
   // Modo de visualização: 'portal' (Meu Grupo Conectado) ou 'discover' (Explorar Células)
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('portal');
-  const [myGroupId, setMyGroupId] = useState<string>('grp_1');
+  const [myGroupId] = useState<string>('grp_1');
   const [portalTab, setPortalTab] = useState<PortalTab>('dashboard');
   
   // Discover State

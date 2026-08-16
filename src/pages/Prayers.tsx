@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useBranding } from '../context/BrandingContext';
 
 interface PrayerRequest {
   id: string;
@@ -46,10 +45,7 @@ const SAMPLE_PRAYERS: PrayerRequest[] = [
 ];
 
 export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const { branding } = useBranding();
-
   const [prayers, setPrayers] = useState<PrayerRequest[]>(SAMPLE_PRAYERS);
-  const [viewTab, setViewTab] = useState<'mural' | 'my_prayers'>('mural');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
   // Modal Novo Pedido
@@ -65,7 +61,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (saved) {
       try {
         setPrayers(JSON.parse(saved));
-      } catch (e) {}
+      } catch (e) { }
     }
   }, []);
 
@@ -131,7 +127,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   return (
     <div className="pwa-content animate-fade-in">
-      
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -181,7 +177,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       {/* Lista de Pedidos de Oração */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {filteredPrayers.map(item => (
-          <div 
+          <div
             key={item.id}
             style={{
               background: '#ffffff',
@@ -254,7 +250,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </h3>
 
             <form onSubmit={handleSubmitPrayer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              
+
               {/* NÍVEL DE PRIVACIDADE: PÚBLICO VS CONFIDENCIAL */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>
@@ -334,21 +330,21 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     Seu Nome (ou marque Anônimo)
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={isAnonymous} 
-                      onChange={e => setIsAnonymous(e.target.checked)} 
+                    <input
+                      type="checkbox"
+                      checked={isAnonymous}
+                      onChange={e => setIsAnonymous(e.target.checked)}
                     />
                     Enviar como Anônimo
                   </label>
                 </div>
                 {!isAnonymous && (
-                  <input 
-                    type="text" 
-                    className="input-pwa" 
-                    placeholder="Seu nome completo" 
-                    value={authorName} 
-                    onChange={e => setAuthorName(e.target.value)} 
+                  <input
+                    type="text"
+                    className="input-pwa"
+                    placeholder="Seu nome completo"
+                    value={authorName}
+                    onChange={e => setAuthorName(e.target.value)}
                   />
                 )}
               </div>
@@ -358,9 +354,9 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
                   Descreva o seu Motivo de Oração *
                 </label>
-                <textarea 
+                <textarea
                   rows={3}
-                  className="input-pwa" 
+                  className="input-pwa"
                   placeholder="Escreva aqui pelo que devemos clamar ao Senhor..."
                   value={content}
                   onChange={e => setContent(e.target.value)}

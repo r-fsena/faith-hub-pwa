@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useBranding } from '../context/BrandingContext';
-
+ 
 export const InstallPwaBanner: React.FC = () => {
-  const { branding } = useBranding();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isIOS, setIsIOS] = useState(false);

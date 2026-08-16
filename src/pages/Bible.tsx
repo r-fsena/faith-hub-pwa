@@ -64,8 +64,6 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [version, setVersion] = useState<'NVI' | 'ARC'>('NVI');
   const [fontSize, setFontSize] = useState<number>(16);
-  const [searchBook, setSearchBook] = useState<string>('');
-  const [testamentFilter, setTestamentFilter] = useState<'ALL' | 'OLD' | 'NEW'>('ALL');
   
   // Marcação de Versículos
   const [selectedVerseIndex, setSelectedVerseIndex] = useState<number | null>(null);
@@ -116,12 +114,6 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     alert('📋 Versículo copiado para a área de transferência!');
     setSelectedVerseIndex(null);
   };
-
-  const filteredBooks = BOOKS.filter(b => {
-    const matchesSearch = b.name.toLowerCase().includes(searchBook.toLowerCase());
-    const matchesTestament = testamentFilter === 'ALL' || b.testament === testamentFilter;
-    return matchesSearch && matchesTestament;
-  });
 
   return (
     <div className="pwa-content animate-fade-in">
