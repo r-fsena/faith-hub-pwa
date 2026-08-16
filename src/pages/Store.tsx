@@ -11,68 +11,9 @@ interface Product {
   image_urls: string[];
 }
 
-const SAMPLE_PRODUCTS: Product[] = [
-  {
-    id: 'prod_1',
-    name: 'Coxinha Artesanal com Catupiry',
-    category: 'Salgados & Lanches',
-    description: 'Massa leve e crocante, recheada com peito de frango desfiado e autêntico Catupiry.',
-    price: 9.50,
-    image_urls: ['https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_2',
-    name: 'Pastel de Forno Integral',
-    category: 'Salgados & Lanches',
-    description: 'Opção assada com recheio de palmito cremoso e ricota.',
-    price: 8.50,
-    image_urls: ['https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_3',
-    name: 'Bolo Caseiro de Cenoura com Chocolate',
-    category: 'Doces e Sobremesas',
-    description: 'Fatia generosa com cobertura aveludada de chocolate 50% cacau.',
-    price: 7.00,
-    image_urls: ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_4',
-    name: 'Café Expresso Especial Grão Moído',
-    category: 'Bebidas & Cafeteria',
-    description: 'Café arábica premium extraído na hora na cafeteira italiana.',
-    price: 5.00,
-    image_urls: ['https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_5',
-    name: 'Suco Natural de Laranja 400ml',
-    category: 'Bebidas & Cafeteria',
-    description: '100% natural, sem adição de açúcares, feito na hora.',
-    price: 8.00,
-    image_urls: ['https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_6',
-    name: 'Bíblia de Estudo NVI Luxo',
-    category: 'Livraria & Bíblias',
-    description: 'Capa em couro sintético com bordas douradas, comentários exegéticos e mapas históricos.',
-    price: 89.90,
-    image_urls: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80']
-  },
-  {
-    id: 'prod_7',
-    name: 'Camisa Oficial Faith Movement',
-    category: 'Vestuário & Camisas',
-    description: 'Algodão egípcio 100% penteado com estampa minimalista.',
-    price: 59.90,
-    image_urls: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=80']
-  }
-];
-
 export const Store: React.FC = () => {
   const { addItem } = useCart();
-  const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'catalog' | 'my_orders'>('catalog');
@@ -262,8 +203,19 @@ export const Store: React.FC = () => {
           </div>
 
           {/* Grid de Produtos */}
-          <div className="product-grid">
-            {filteredProducts.map((prod) => (
+          {filteredProducts.length === 0 ? (
+            <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🛒</div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+                Nenhum produto cadastrado na cantina
+              </h3>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
+                Os itens do cardápio, lanches e livraria cadastrados no Portal Web aparecerão aqui automaticamente.
+              </p>
+            </div>
+          ) : (
+            <div className="product-grid">
+              {filteredProducts.map((prod) => (
               <div 
                 key={prod.id} 
                 className="product-card" 
@@ -308,6 +260,7 @@ export const Store: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
         </>
       ) : (
         /* ========================================================

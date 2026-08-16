@@ -12,41 +12,8 @@ interface PrayerRequest {
   is_praying?: boolean;
 }
 
-const SAMPLE_PRAYERS: PrayerRequest[] = [
-  {
-    id: 'pr_1',
-    author: 'Irmã Maria Luiza',
-    category: 'Saúde',
-    privacy: 'PUBLIC',
-    content: 'Peço oração pela recuperação da minha mãe que está passando por uma cirurgia amanhã. Cremos na cura completa em nome de Jesus!',
-    praying_count: 24,
-    time_ago: 'Há 2 horas',
-    is_praying: true
-  },
-  {
-    id: 'pr_2',
-    author: 'Membro Anônimo',
-    category: 'Família',
-    privacy: 'PUBLIC',
-    content: 'Pela restauração do diálogo e da paz no casamento. Que Deus renove o amor e a paciência no nosso lar.',
-    praying_count: 18,
-    time_ago: 'Hoje cedo',
-    is_praying: false
-  },
-  {
-    id: 'pr_3',
-    author: 'Lucas Gabriel',
-    category: 'Finanças',
-    privacy: 'PUBLIC',
-    content: 'Entrevista de emprego marcada para esta quinta-feira. Peço a bênção e graça do Senhor diante dos entrevistadores.',
-    praying_count: 15,
-    time_ago: 'Ontem',
-    is_praying: false
-  }
-];
-
 export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [prayers, setPrayers] = useState<PrayerRequest[]>(SAMPLE_PRAYERS);
+  const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
 
   // Modal Novo Pedido
@@ -217,8 +184,27 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       {/* Lista de Pedidos de Oração */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {filteredPrayers.map(item => (
+      {filteredPrayers.length === 0 ? (
+        <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🙏</div>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+            Nenhum pedido de oração no mural
+          </h3>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+            Compartilhe suas necessidades ou motivos de gratidão para que a comunidade possa orar junto com você.
+          </p>
+          <button 
+            type="button" 
+            className="btn-pwa-primary"
+            onClick={() => setShowModal(true)}
+            style={{ width: 'auto', margin: '0 auto', padding: '10px 20px', fontSize: '0.82rem' }}
+          >
+            + Publicar Meu Pedido
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {filteredPrayers.map(item => (
           <div
             key={item.id}
             style={{
@@ -280,6 +266,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           </div>
         ))}
       </div>
+      )}
 
       {/* MODAL NOVO PEDIDO DE ORAÇÃO (COM PRIVACIDADE) */}
       {showModal && (

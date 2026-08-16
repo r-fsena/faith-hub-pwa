@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { checkPushNotificationSupport, requestPushPermission } from '../services/pushNotifications';
+import { fetchActiveBroadcast } from '../services/api';
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -9,13 +10,22 @@ interface NotificationsModalProps {
 export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose }) => {
   const [pushStatus, setPushStatus] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
+  const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
 
   useEffect(() => {
-    if (checkPushNotificationSupport()) {
-      setIsSupported(true);
-      setPushStatus(Notification.permission);
+    if (isOpen) {
+      if (checkPushNotificationSupport()) {
+        setIsSupported(true);
+        setPushStatus(Notification.permission);
+      }
+      loadBroadcast();
     }
   }, [isOpen]);
+
+  const loadBroadcast = async () => {
+    const b = await fetchActiveBroadcast();
+    if (b) setActiveBroadcast(b);
+  };
 
   const handleActivatePush = async () => {
     const permission = await requestPushPermission();
@@ -72,8 +82,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                     {pushStatus === 'granted' 
-                      ? 'Você receberá avisos de cultos ao vivo e devocionais'
-                      : 'Receba avisos quando a igreja entrar ao vivo'}
+                      ? 'Você receberá avisos de transmissões e eventos'
+                      : 'Receba alertas quando a igreja iniciar transmissões'}
                   </div>
                 </div>
               </div>
@@ -98,56 +108,32 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
           </div>
         )}
 
-        {/* Lista de Avisos e Comunicados */}
+        {/* Lista de Avisos e Comunicados Reais */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Últimos Comunicados
           </span>
 
-          <div style={{ background: '#ffffff', padding: '14px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-primary)', background: 'var(--accent-primary-light)', padding: '2px 8px', borderRadius: '6px' }}>
-                HOJE • 20h00
-              </span>
-              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Há 30 min</span>
+          {activeBroadcast ? (
+            <div style={{ background: '#ffffff', padding: '14px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ef4444', background: '#fee2e2', padding: '2px 8px', borderRadius: '6px' }}>
+                  ● AO VIVO AGORA
+                </span>
+                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Transmissão</span>
+              </div>
+              <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', marginTop: '2px' }}>
+                {activeBroadcast.title || 'Culto ao Vivo'}
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                {activeBroadcast.description || 'Assista à ministração e louvor ao vivo diretamente pelo aplicativo.'}
+              </p>
             </div>
-            <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', marginTop: '2px' }}>
-              Culto de Quarta & Estudo da Palavra
+          ) : (
+            <div style={{ background: '#ffffff', padding: '24px 16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+              Nenhum comunicado recente no momento. Quando a liderança publicar avisos ou transmissões, eles aparecerão aqui.
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-              Participe presencialmente no templo ou assista a transmissão ao vivo direto pelo app.
-            </p>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '14px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px' }}>
-                CANTINA & LOJA
-              </span>
-              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Hoje cedo</span>
-            </div>
-            <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', marginTop: '2px' }}>
-              Cardápio da Cantina Atualizado
-            </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-              Peça seus salgados, sucos e cafés sem filas pela aba Cantina e retire no balcão.
-            </p>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '14px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c', background: '#fff7ed', padding: '2px 8px', borderRadius: '6px' }}>
-                INSCRIÇÕES
-              </span>
-              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Ontem</span>
-            </div>
-            <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', marginTop: '2px' }}>
-              Conferência de Avivamento 2026
-            </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-              Lotes com vagas limitadas abertos na aba Eventos & Cursos com passaporte digital.
-            </p>
-          </div>
+          )}
         </div>
 
         <button type="button" className="btn-pwa-secondary" onClick={onClose} style={{ fontWeight: 800 }}>

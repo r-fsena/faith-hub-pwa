@@ -32,55 +32,8 @@ interface MyTicket {
   qr_code_data: string;
 }
 
-const SAMPLE_EVENTS: ChurchEvent[] = [
-  {
-    id: '1',
-    title: 'Conferência de Avivamento 2026',
-    category: 'Conferência Anual',
-    date_formatted: '24 e 25 de Agosto',
-    time: '19:30 às 22:00',
-    location: 'Templo Principal',
-    price: 0,
-    description: 'Dois dias intensos de louvor, ministração da Palavra e manifestação do poder de Deus com preletores convidados.',
-    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
-    batches: [
-      { id: 'b1', name: 'Inscrição Gratuita (Lote Geral)', price: 0, available: true },
-      { id: 'b2', name: 'Kit Especial (Camisa + Livro)', price: 49.90, available: true }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Encontro de Casais: Aliança & Amor',
-    category: 'Família',
-    date_formatted: '07 de Setembro',
-    time: '09:00 às 18:00',
-    location: 'Auditório B & Jantar',
-    price: 120.00,
-    description: 'Um sábado especial de oficinas práticas, dinâmicas de comunicação no casamento e jantar romântico.',
-    cover_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
-    batches: [
-      { id: 'b1', name: '1º Lote Promocional (Casal)', price: 120.00, available: true },
-      { id: 'b2', name: '2º Lote com Hospedagem', price: 280.00, available: true }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Seminário de Liderança e Discipulado',
-    category: 'Ensino & Escola',
-    date_formatted: '15 de Setembro',
-    time: '19:30',
-    location: 'Sala Multiuso 01',
-    price: 0,
-    description: 'Capacitação bíblica e prática para líderes e anfitriões de células.',
-    cover_url: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80',
-    batches: [
-      { id: 'b1', name: 'Líderes de Célula e Discipuladores', price: 0, available: true }
-    ]
-  }
-];
-
 export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [events, setEvents] = useState<ChurchEvent[]>(SAMPLE_EVENTS);
+  const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [viewTab, setViewTab] = useState<'events' | 'my_tickets'>('events');
   const [myTickets, setMyTickets] = useState<MyTicket[]>([]);
 
@@ -223,8 +176,19 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           MODO 1: LISTA DE EVENTOS
           ======================================================== */}
       {viewTab === 'events' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {events.map(ev => (
+        events.length === 0 ? (
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🗓️</div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+              Nenhum evento agendado no momento
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
+              As conferências, cultos especiais e cursos cadastrados no Portal Web aparecerão aqui automaticamente.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {events.map(ev => (
             <div 
               key={ev.id}
               style={{
@@ -281,6 +245,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
           ))}
         </div>
+        )
       ) : (
         /* ========================================================
             MODO 2: MEUS PASSAPORTES / INGRESSOS

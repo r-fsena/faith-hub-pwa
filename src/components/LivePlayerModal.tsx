@@ -9,10 +9,7 @@ interface LivePlayerModalProps {
 export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClose }) => {
   const { branding } = useBranding();
   const [note, setNote] = useState('');
-  const [notesList, setNotesList] = useState<string[]>([
-    'Versículo pregado: Lucas 1:37 - Pois para Deus nada é impossível.',
-    'Palavra profética: O Senhor está abrindo portas de cura nesta semana.'
-  ]);
+  const [notesList, setNotesList] = useState<string[]>([]);
 
   if (!isOpen) return null;
 

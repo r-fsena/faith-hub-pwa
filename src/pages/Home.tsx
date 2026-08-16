@@ -3,7 +3,7 @@ import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
-import { fetchActiveBroadcast, fetchEvents } from '../services/api';
+import { fetchActiveBroadcast, fetchEvents, fetchTodayDevotional } from '../services/api';
 import { 
   LiveIcon, 
   BookOpenIcon, 
@@ -37,6 +37,7 @@ export const Home: React.FC<HomeProps> = ({
   const { user } = useAuth();
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
+  const [todayDevotional, setTodayDevotional] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,9 @@ export const Home: React.FC<HomeProps> = ({
   const loadHomeData = async () => {
     const broadcast = await fetchActiveBroadcast();
     if (broadcast) setActiveBroadcast(broadcast);
+
+    const dev = await fetchTodayDevotional();
+    if (dev) setTodayDevotional(dev);
 
     const events = await fetchEvents();
     if (events && Array.isArray(events) && events.length > 0) {
@@ -125,7 +129,7 @@ export const Home: React.FC<HomeProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontSize: '1.20rem' }}>👋</span>
             <h2 style={{ fontSize: 'clamp(1.10rem, 4vw, 1.30rem)', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              Olá, {user?.name ? user.name.split(' ')[0] : 'Rfsena'}!
+              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Seja bem-vindo(a)'}!
             </h2>
           </div>
           <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px', textTransform: 'capitalize' }}>
@@ -162,7 +166,7 @@ export const Home: React.FC<HomeProps> = ({
             )}
           </div>
           <h2 style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.35rem)', fontWeight: 900, marginTop: '2px', lineHeight: 1.2 }}>
-            {branding.church_name}
+            {branding.church_name || 'Faith-Hub'}
           </h2>
           <p style={{ fontSize: '0.76rem', opacity: 0.9, marginTop: '4px' }}>
             {branding.tagline || 'Conectados pelo mesmo propósito e coração.'}
@@ -265,18 +269,18 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <BookOpenIcon size={22} color="#0284c7" />
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                DEVOCIONAL DE HOJE
+                PALAVRA & ENSINO
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
-                Renovando as Forças no Senhor
+                {todayDevotional?.title || 'Devocional Diário'}
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Isaías 40:29 • Toque para ler a mensagem
+                {todayDevotional?.verse_reference || 'Toque para ler mensagens e estudos bíblicos'}
               </p>
             </div>
           </div>
@@ -301,18 +305,18 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(234, 88, 12, 0.12)', border: '1px solid rgba(234, 88, 12, 0.25)', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(234, 88, 12, 0.12)', border: '1px solid rgba(234, 88, 12, 0.25)', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <CalendarEventIcon size={22} color="#ea580c" />
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
-                PRÓXIMO GRANDE EVENTO
+                CALENDÁRIO & EVENTOS
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
-                {featuredEvent?.title || 'Conferência de Avivamento 2026'}
+                {featuredEvent?.title || 'Eventos & Cursos'}
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                {featuredEvent?.location || 'Templo Principal • Inscrições abertas'}
+                {featuredEvent?.location ? `${featuredEvent.location} • Inscrições abertas` : 'Toque para ver a programação da comunidade'}
               </p>
             </div>
           </div>

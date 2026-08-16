@@ -12,30 +12,10 @@ interface SpecialProject {
   pix_key: string;
 }
 
-const SAMPLE_PROJECTS: SpecialProject[] = [
-  {
-    id: 'p1',
-    title: 'Reforma do Espaço Infantil & Berçário',
-    image: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=600&q=80',
-    goal: 15000,
-    raised: 9200,
-    desc: 'O espaço das crianças precisa de isolamento térmico, novos tatames e brinquedoteca segura.',
-    pix_key: 'cnpj: 22.333.444/0001-55'
-  },
-  {
-    id: 'p2',
-    title: 'Missões Globais & Assistência Social 2026',
-    image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80',
-    goal: 50000,
-    raised: 28400,
-    desc: 'Envio de cestas básicas para comunidades carentes e apoio aos missionários no campo.',
-    pix_key: 'email: missoes@faithhub.com'
-  }
-];
-
 export const Giving: React.FC = () => {
   const { branding } = useBranding();
   const [viewTab, setViewTab] = useState<'tithes' | 'projects'>('tithes');
+  const [projects] = useState<SpecialProject[]>([]);
   
   // Dízimo State
   const [amount, setAmount] = useState<number>(50);
@@ -259,8 +239,19 @@ export const Giving: React.FC = () => {
         /* ========================================================
             MODO 2: PROJETOS E CAMPANHAS ESPECIAIS (COM METAS %)
             ======================================================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {SAMPLE_PROJECTS.map(proj => {
+        projects.length === 0 ? (
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🎯</div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+              Nenhuma campanha ativa no momento
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
+              As campanhas para obras, missões e projetos sociais da igreja serão exibidas aqui.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {projects.map(proj => {
             const pct = Math.min(Math.round((proj.raised / proj.goal) * 100), 100);
 
             return (
@@ -310,6 +301,7 @@ export const Giving: React.FC = () => {
             );
           })}
         </div>
+        )
       )}
 
       {/* Modal QR Code */}

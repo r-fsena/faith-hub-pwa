@@ -187,11 +187,17 @@ export const Profile: React.FC = () => {
         <div style={{ background: '#ffffff', borderRadius: '20px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', textAlign: 'center', position: 'relative' }}>
           
           <div style={{ position: 'relative', width: '74px', height: '74px', margin: '0 auto 12px auto' }}>
-            <img 
-              src={avatarUrl} 
-              alt="Avatar" 
-              style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-primary)' }} 
-            />
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="Avatar" 
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-primary)' }} 
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--accent-primary-gradient)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.4rem', border: '3px solid #ffffff', boxShadow: 'var(--shadow-sm)' }}>
+                {user.name ? user.name.substring(0, 2).toUpperCase() : 'ME'}
+              </div>
+            )}
             <button 
               type="button" 
               onClick={() => setShowAvatarPicker(true)}
@@ -211,10 +217,7 @@ export const Profile: React.FC = () => {
 
           <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '999px', fontSize: '0.74rem', fontWeight: 800 }}>
-              ✓ Membro Ativo
-            </span>
-            <span style={{ background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '999px', fontSize: '0.74rem', fontWeight: 800 }}>
-              Célula Graça & Vida
+              ✓ Membro Conectado
             </span>
           </div>
         </div>
