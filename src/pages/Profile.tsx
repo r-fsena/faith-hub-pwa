@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
 import { getActiveCampusId } from '../services/api';
+import { BottomSheet } from '../components/BottomSheet';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -88,7 +89,6 @@ export const Profile: React.FC = () => {
   const loadUserProfile = async () => {
     if (!user) return;
     try {
-      // Carrega dados salvos localmente primeiro
       const localPhone = localStorage.getItem('faithhub_user_phone') || '';
       const localAddress = localStorage.getItem('faithhub_user_address') || '';
 
@@ -99,7 +99,6 @@ export const Profile: React.FC = () => {
         address: localAddress
       }));
 
-      // Tenta buscar da API de membros se disponível
       const activeCampus = getActiveCampusId();
       const res = await fetch(`${API_URL}/members?organization_id=org_default`);
       if (res.ok) {
@@ -138,7 +137,6 @@ export const Profile: React.FC = () => {
       localStorage.setItem('faithhub_user_phone', memberProfile.phone);
       localStorage.setItem('faithhub_user_address', memberProfile.address);
 
-      // Tenta atualizar atributos no Cognito
       try {
         await updateUserAttributes({
           userAttributes: {
@@ -149,7 +147,6 @@ export const Profile: React.FC = () => {
         console.log("Cognito attr update notice:", errCognito);
       }
 
-      // Tenta persistir no RDS MySQL via API
       if (user?.userId) {
         await fetch(`${API_URL}/members/${user.userId}`, {
           method: 'PUT',
@@ -185,7 +182,6 @@ export const Profile: React.FC = () => {
         localStorage.setItem('faithhub_user_avatar', dataUrl);
         setShowAvatarPicker(false);
 
-        // Salva na API se logado
         if (user?.userId) {
           fetch(`${API_URL}/members/${user.userId}`, {
             method: 'PUT',
@@ -603,226 +599,224 @@ export const Profile: React.FC = () => {
         </button>
 
         {/* ========================================================
-            DRAWER / MODAL: EDITAR DADOS PESSOAIS DO USUÁRIO
+            BOTTOM SHEET: EDITAR DADOS PESSOAIS DO USUÁRIO
             ======================================================== */}
-        {isEditProfileOpen && (
-          <div className="drawer-overlay animate-fade-in" onClick={() => setIsEditProfileOpen(false)}>
-            <div className="drawer-container" onClick={e => e.stopPropagation()}>
-              <div className="drawer-handle" />
-              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                <span style={{ fontSize: '1.4rem' }}>✏️</span>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-                  Editar Meus Dados
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Atualize suas informações pessoais de contato.
-                </p>
-              </div>
-
-              <form onSubmit={handleSaveProfileData} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
-                    Nome Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={memberProfile.name}
-                    onChange={e => setMemberProfile({ ...memberProfile, name: e.target.value })}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: '#f8fafc',
-                      border: '1.5px solid var(--panel-border)',
-                      fontSize: '0.88rem',
-                      color: 'var(--text-main)',
-                      outline: 'none'
-                    }}
-                    placeholder="Seu nome"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
-                    Telefone / WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={memberProfile.phone}
-                    onChange={e => setMemberProfile({ ...memberProfile, phone: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: '#f8fafc',
-                      border: '1.5px solid var(--panel-border)',
-                      fontSize: '0.88rem',
-                      color: 'var(--text-main)',
-                      outline: 'none'
-                    }}
-                    placeholder="(11) 99999-9999"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
-                    Endereço / Bairro
-                  </label>
-                  <input
-                    type="text"
-                    value={memberProfile.address}
-                    onChange={e => setMemberProfile({ ...memberProfile, address: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: '#f8fafc',
-                      border: '1.5px solid var(--panel-border)',
-                      fontSize: '0.88rem',
-                      color: 'var(--text-main)',
-                      outline: 'none'
-                    }}
-                    placeholder="Rua, Número, Bairro"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
-                    E-mail de Acesso (Não editável)
-                  </label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: '#e2e8f0',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.84rem',
-                      color: '#64748b',
-                      cursor: 'not-allowed'
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <button
-                    type="button"
-                    className="btn-pwa-secondary"
-                    onClick={() => setIsEditProfileOpen(false)}
-                    style={{ flex: 1 }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-pwa-primary"
-                    disabled={isSavingProfile}
-                    style={{ flex: 2 }}
-                  >
-                    {isSavingProfile ? 'Salvando...' : 'Salvar Alterações'}
-                  </button>
-                </div>
-              </form>
-            </div>
+        <BottomSheet 
+          isOpen={isEditProfileOpen} 
+          onClose={() => setIsEditProfileOpen(false)}
+          maxHeight="75vh"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '1.4rem' }}>✏️</span>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+              Editar Meus Dados
+            </h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+              Atualize suas informações pessoais de contato.
+            </p>
           </div>
-        )}
 
-        {/* ========================================================
-            DRAWER: ESCOLHER FOTO / CÂMERA / GALERIA / AVATARES
-            ======================================================== */}
-        {showAvatarPicker && (
-          <div className="drawer-overlay animate-fade-in" onClick={() => setShowAvatarPicker(false)}>
-            <div className="drawer-container" onClick={e => e.stopPropagation()}>
-              <div className="drawer-handle" />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, textAlign: 'center', color: 'var(--text-main)', margin: '4px 0 16px 0' }}>
-                Trocar Foto de Perfil
-              </h3>
+          <form onSubmit={handleSaveProfileData} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Nome Completo *
+              </label>
+              <input
+                type="text"
+                value={memberProfile.name}
+                onChange={e => setMemberProfile({ ...memberProfile, name: e.target.value })}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--panel-border)',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-main)',
+                  outline: 'none'
+                }}
+                placeholder="Seu nome"
+              />
+            </div>
 
-              {/* Botões de Ação Rápida: Câmera e Galeria */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  style={{
-                    background: '#ffffff',
-                    border: '1.5px solid var(--panel-border)',
-                    borderRadius: '16px',
-                    padding: '14px 10px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
-                >
-                  <span style={{ fontSize: '1.6rem' }}>📸</span>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Tirar Foto (Câmera)</span>
-                </button>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Telefone / WhatsApp
+              </label>
+              <input
+                type="text"
+                value={memberProfile.phone}
+                onChange={e => setMemberProfile({ ...memberProfile, phone: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--panel-border)',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-main)',
+                  outline: 'none'
+                }}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  style={{
-                    background: '#ffffff',
-                    border: '1.5px solid var(--panel-border)',
-                    borderRadius: '16px',
-                    padding: '14px 10px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
-                >
-                  <span style={{ fontSize: '1.6rem' }}>🖼️</span>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Escolher da Galeria</span>
-                </button>
-              </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Endereço / Bairro
+              </label>
+              <input
+                type="text"
+                value={memberProfile.address}
+                onChange={e => setMemberProfile({ ...memberProfile, address: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--panel-border)',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-main)',
+                  outline: 'none'
+                }}
+                placeholder="Rua, Número, Bairro"
+              />
+            </div>
 
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px' }}>
-                Ou escolha um Avatar Ilustrado:
-              </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                E-mail de Acesso (Não editável)
+              </label>
+              <input
+                type="email"
+                value={user.email}
+                disabled
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#e2e8f0',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.84rem',
+                  color: '#64748b',
+                  cursor: 'not-allowed'
+                }}
+              />
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', maxHeight: '200px', overflowY: 'auto', padding: '4px' }}>
-                {CURATED_AVATARS.map((url, i) => (
-                  <img 
-                    key={i}
-                    src={url} 
-                    alt={`Avatar ${i}`} 
-                    onClick={() => handleSelectCuratedAvatar(url)}
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      border: avatarUrl === url ? '3px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                      objectFit: 'cover',
-                      margin: '0 auto',
-                      transition: 'transform 0.15s ease'
-                    }}
-                  />
-                ))}
-              </div>
-
-              <button 
-                type="button" 
-                className="btn-pwa-secondary" 
-                onClick={() => setShowAvatarPicker(false)}
-                style={{ marginTop: '16px' }}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <button
+                type="button"
+                className="btn-pwa-secondary"
+                onClick={() => setIsEditProfileOpen(false)}
+                style={{ flex: 1 }}
               >
                 Cancelar
               </button>
+              <button
+                type="submit"
+                className="btn-pwa-primary"
+                disabled={isSavingProfile}
+                style={{ flex: 2 }}
+              >
+                {isSavingProfile ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
             </div>
+          </form>
+        </BottomSheet>
+
+        {/* ========================================================
+            BOTTOM SHEET: ESCOLHER FOTO / CÂMERA / GALERIA / AVATARES
+            ======================================================== */}
+        <BottomSheet 
+          isOpen={showAvatarPicker} 
+          onClose={() => setShowAvatarPicker(false)}
+          maxHeight="70vh"
+        >
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, textAlign: 'center', color: 'var(--text-main)', margin: '4px 0 16px 0' }}>
+            Trocar Foto de Perfil
+          </h3>
+
+          {/* Botões de Ação Rápida: Câmera e Galeria */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid var(--panel-border)',
+                borderRadius: '16px',
+                padding: '14px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <span style={{ fontSize: '1.6rem' }}>📸</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Tirar Foto (Câmera)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current?.click()}
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid var(--panel-border)',
+                borderRadius: '16px',
+                padding: '14px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <span style={{ fontSize: '1.6rem' }}>🖼️</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Escolher da Galeria</span>
+            </button>
           </div>
-        )}
+
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px' }}>
+            Ou escolha um Avatar Ilustrado:
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', maxHeight: '200px', overflowY: 'auto', padding: '4px' }}>
+            {CURATED_AVATARS.map((url, i) => (
+              <img 
+                key={i}
+                src={url} 
+                alt={`Avatar ${i}`} 
+                onClick={() => handleSelectCuratedAvatar(url)}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  border: avatarUrl === url ? '3px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                  objectFit: 'cover',
+                  margin: '0 auto',
+                  transition: 'transform 0.15s ease'
+                }}
+              />
+            ))}
+          </div>
+
+          <button 
+            type="button" 
+            className="btn-pwa-secondary" 
+            onClick={() => setShowAvatarPicker(false)}
+            style={{ marginTop: '16px' }}
+          >
+            Cancelar
+          </button>
+        </BottomSheet>
 
       </div>
     );

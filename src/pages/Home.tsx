@@ -3,6 +3,7 @@ import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
+import { BottomSheet } from '../components/BottomSheet';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -423,74 +424,73 @@ export const Home: React.FC<HomeProps> = ({
       />
 
       {/* Drawer de Seleção de Unidade / Campus */}
-      {isCampusDrawerOpen && (
-        <div className="drawer-overlay animate-fade-in" onClick={() => setIsCampusDrawerOpen(false)}>
-          <div className="drawer-container" onClick={e => e.stopPropagation()}>
-            <div className="drawer-handle" />
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <span style={{ fontSize: '1.4rem' }}>🏛️</span>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-                Escolha sua Congregação
-              </h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                Selecione o campus onde você congrega ou está visitando hoje.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto' }}>
-              {campuses.map(c => {
-                const isSelected = c.id === activeCampusId;
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => handleSelectCampus(c.id)}
-                    style={{
-                      background: isSelected ? 'var(--accent-primary-light)' : '#ffffff',
-                      border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                      borderRadius: '14px',
-                      padding: '14px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                          {c.name}
-                        </span>
-                        {Boolean(c.is_headquarters) && (
-                          <span style={{ fontSize: '0.62rem', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                            SEDE
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                        {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
-                      </p>
-                      {c.pastor_name && (
-                        <p style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, margin: '2px 0 0 0' }}>
-                          Pastor Local: {c.pastor_name}
-                        </p>
-                      )}
-                    </div>
-
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
-                      background: '#ffffff'
-                    }} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+      <BottomSheet 
+        isOpen={isCampusDrawerOpen} 
+        onClose={() => setIsCampusDrawerOpen(false)}
+        maxHeight="65vh"
+      >
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <span style={{ fontSize: '1.4rem' }}>🏛️</span>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+            Escolha sua Congregação
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+            Selecione o campus onde você congrega ou está visitando hoje.
+          </p>
         </div>
-      )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '48vh', overflowY: 'auto' }}>
+          {campuses.map(c => {
+            const isSelected = c.id === activeCampusId;
+            return (
+              <div
+                key={c.id}
+                onClick={() => handleSelectCampus(c.id)}
+                style={{
+                  background: isSelected ? 'var(--accent-primary-light)' : '#ffffff',
+                  border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                  borderRadius: '14px',
+                  padding: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      {c.name}
+                    </span>
+                    {Boolean(c.is_headquarters) && (
+                      <span style={{ fontSize: '0.62rem', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                        SEDE
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                    {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
+                  </p>
+                  {c.pastor_name && (
+                    <p style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, margin: '2px 0 0 0' }}>
+                      Pastor Local: {c.pastor_name}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
+                  background: '#ffffff'
+                }} />
+              </div>
+            );
+          })}
+        </div>
+      </BottomSheet>
 
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { fetchCampuses, getActiveCampusId } from '../services/api';
+import { BottomSheet } from './BottomSheet';
 
 interface VisitorModalProps {
   isOpen: boolean;
@@ -74,23 +75,20 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="drawer-overlay" onClick={onClose}>
-      <div className="drawer-container" onClick={e => e.stopPropagation()}>
-        <div className="drawer-handle" />
-
-        {!isSuccess ? (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: '14px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', margin: '0 auto 8px auto' }}>
-                👋
-              </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
-                Seja Muito Bem-Vindo!
-              </h3>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                É uma alegria ter você conosco na {branding.church_name}. Queremos orar por você e te acolher com carinho.
-              </p>
+    <BottomSheet isOpen={isOpen} onClose={onClose}>
+      {!isSuccess ? (
+        <>
+          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', margin: '0 auto 8px auto' }}>
+              👋
             </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+              Seja Muito Bem-Vindo!
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              É uma alegria ter você conosco na {branding.church_name}. Queremos orar por você e te acolher com carinho.
+            </p>
+          </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '55vh', overflowY: 'auto', paddingRight: '4px' }}>
               
@@ -248,8 +246,6 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
             </button>
           </div>
         )}
-
-      </div>
-    </div>
+    </BottomSheet>
   );
 };

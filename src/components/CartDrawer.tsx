@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useBranding } from '../context/BrandingContext';
 import { createPdvOrder } from '../services/api';
 import { CreditCardForm } from './CreditCardForm';
+import { BottomSheet } from './BottomSheet';
 
 export const CartFloatingButton: React.FC = () => {
   const { totalItemsCount, totalPrice, setIsCartOpen } = useCart();
@@ -152,12 +153,9 @@ export const CartDrawer: React.FC = () => {
   };
 
   return (
-    <div className="drawer-overlay" onClick={handleClose}>
-      <div className="drawer-container" onClick={e => e.stopPropagation()}>
-        <div className="drawer-handle" />
-
-        {/* STEP 1: ITENS DO CARRINHO */}
-        {checkoutStep === 'cart' && (
+    <BottomSheet isOpen={isCartOpen} onClose={handleClose}>
+      {/* STEP 1: ITENS DO CARRINHO */}
+      {checkoutStep === 'cart' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
@@ -534,8 +532,6 @@ export const CartDrawer: React.FC = () => {
             </button>
           </div>
         )}
-
-      </div>
-    </div>
+    </BottomSheet>
   );
 };
