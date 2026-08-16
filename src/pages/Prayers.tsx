@@ -1,91 +1,139 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useBranding } from '../context/BrandingContext';
 
 interface PrayerRequest {
   id: string;
   author: string;
-  category: string;
-  text: string;
-  prayers_count: number;
+  category: 'Família' | 'Saúde' | 'Finanças' | 'Espiritual' | 'Gratidão' | 'Outros';
+  privacy: 'PUBLIC' | 'CONFIDENTIAL';
+  content: string;
+  praying_count: number;
   time_ago: string;
-  user_prayed?: boolean;
+  is_praying?: boolean;
 }
 
 const SAMPLE_PRAYERS: PrayerRequest[] = [
   {
-    id: '1',
+    id: 'pr_1',
     author: 'Irmã Maria Luiza',
-    category: 'Saúde & Cura',
-    text: 'Peço oração pela recuperação da cirurgia da minha mãe. Cremos no poder curador de Jesus!',
-    prayers_count: 24,
+    category: 'Saúde',
+    privacy: 'PUBLIC',
+    content: 'Peço oração pela recuperação da minha mãe que está passando por uma cirurgia amanhã. Cremos na cura completa em nome de Jesus!',
+    praying_count: 24,
     time_ago: 'Há 2 horas',
-    user_prayed: false
+    is_praying: true
   },
   {
-    id: '2',
-    author: 'Irmão Carlos Eduardo',
-    category: 'Família & Restauração',
-    text: 'Orando pela salvação e reconciliação da minha família e filhos neste ano.',
-    prayers_count: 38,
-    time_ago: 'Há 5 horas',
-    user_prayed: true
+    id: 'pr_2',
+    author: 'Membro Anônimo',
+    category: 'Família',
+    privacy: 'PUBLIC',
+    content: 'Pela restauração do diálogo e da paz no casamento. Que Deus renove o amor e a paciência no nosso lar.',
+    praying_count: 18,
+    time_ago: 'Hoje cedo',
+    is_praying: false
   },
   {
-    id: '3',
-    author: 'Anônimo',
-    category: 'Portas de Emprego',
-    text: 'Estou em processo seletivo esta semana. Que a boa e perfeita vontade de Deus se cumpra!',
-    prayers_count: 19,
+    id: 'pr_3',
+    author: 'Lucas Gabriel',
+    category: 'Finanças',
+    privacy: 'PUBLIC',
+    content: 'Entrevista de emprego marcada para esta quinta-feira. Peço a bênção e graça do Senhor diante dos entrevistadores.',
+    praying_count: 15,
     time_ago: 'Ontem',
-    user_prayed: false
+    is_praying: false
   }
 ];
 
 export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [prayers, setPrayers] = useState<PrayerRequest[]>(SAMPLE_PRAYERS);
-  const [showNewModal, setShowNewModal] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState('Saúde & Cura');
-  const [newText, setNewText] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
+  const { branding } = useBranding();
 
-  const handleTogglePray = (id: string) => {
-    setPrayers(prev => prev.map(p => {
+  const [prayers, setPrayers] = useState<PrayerRequest[]>(SAMPLE_PRAYERS);
+  const [viewTab, setViewTab] = useState<'mural' | 'my_prayers'>('mural');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
+  // Modal Novo Pedido
+  const [showModal, setShowModal] = useState(false);
+  const [authorName, setAuthorName] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [category, setCategory] = useState<PrayerRequest['category']>('Família');
+  const [privacy, setPrivacy] = useState<'PUBLIC' | 'CONFIDENTIAL'>('PUBLIC');
+  const [content, setContent] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('faithhub_community_prayers');
+    if (saved) {
+      try {
+        setPrayers(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  const savePrayers = (updated: PrayerRequest[]) => {
+    setPrayers(updated);
+    localStorage.setItem('faithhub_community_prayers', JSON.stringify(updated));
+  };
+
+  const handleTogglePraying = (id: string) => {
+    const updated = prayers.map(p => {
       if (p.id === id) {
-        const prayed = !p.user_prayed;
+        const isNowPraying = !p.is_praying;
         return {
           ...p,
-          user_prayed: prayed,
-          prayers_count: prayed ? p.prayers_count + 1 : p.prayers_count - 1
+          is_praying: isNowPraying,
+          praying_count: isNowPraying ? p.praying_count + 1 : Math.max(0, p.praying_count - 1)
         };
       }
       return p;
-    }));
+    });
+    savePrayers(updated);
   };
 
-  const handleCreatePrayer = (e: React.FormEvent) => {
+  const handleSubmitPrayer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newText.trim()) return;
+    if (!content.trim()) return;
 
-    const newRequest: PrayerRequest = {
-      id: `prayer_${Date.now()}`,
-      author: isAnonymous ? 'Anônimo' : (newName.trim() || 'Membro da Igreja'),
-      category: newCategory,
-      text: newText.trim(),
-      prayers_count: 1,
+    const newPrayer: PrayerRequest = {
+      id: `pr_${Date.now()}`,
+      author: isAnonymous ? 'Membro Anônimo' : (authorName.trim() || 'Membro da Igreja'),
+      category,
+      privacy,
+      content: content.trim(),
+      praying_count: 1,
       time_ago: 'Agora mesmo',
-      user_prayed: true
+      is_praying: true
     };
 
-    setPrayers([newRequest, ...prayers]);
-    setShowNewModal(false);
-    setNewText('');
-    setNewName('');
+    if (privacy === 'CONFIDENTIAL') {
+      alert("🔒 Seu pedido confidencial foi enviado com segurança diretamente ao Corpo Pastoral da igreja.");
+    } else {
+      savePrayers([newPrayer, ...prayers]);
+      alert("✨ Seu pedido de oração foi publicado no mural da comunidade!");
+    }
+
+    // Salva no registro de pedidos enviados pelo próprio usuário
+    const mySaved = localStorage.getItem('faithhub_my_sent_prayers');
+    const mySentList = mySaved ? JSON.parse(mySaved) : [];
+    localStorage.setItem('faithhub_my_sent_prayers', JSON.stringify([newPrayer, ...mySentList]));
+
+    setShowModal(false);
+    setContent('');
+    setAuthorName('');
+    setIsAnonymous(false);
+    setPrivacy('PUBLIC');
   };
+
+  const filteredPrayers = prayers.filter(p => {
+    if (p.privacy === 'CONFIDENTIAL') return false; // Nunca mostra confidenciais no feed público
+    if (selectedCategory === 'ALL') return true;
+    return p.category === selectedCategory;
+  });
 
   return (
     <div className="pwa-content animate-fade-in">
       
-      <div className="section-header-row">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           {onBack && (
             <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer', marginBottom: '4px' }}>
@@ -93,24 +141,48 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </button>
           )}
           <h2 className="section-title" style={{ fontSize: '1.25rem' }}>Mural de Oração</h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Intercedendo uns pelos outros em amor</p>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Intercedendo uns pelos outros em amor</p>
         </div>
 
-        <button 
-          type="button" 
-          className="btn-pwa-primary" 
-          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.78rem' }}
-          onClick={() => setShowNewModal(true)}
+        <button
+          type="button"
+          className="btn-pwa-primary"
+          onClick={() => setShowModal(true)}
+          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.75rem' }}
         >
           + Pedir Oração
         </button>
       </div>
 
-      {/* Lista de Pedidos */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {prayers.map(p => (
+      {/* Segmented Filter Categorias */}
+      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+        {['ALL', 'Família', 'Saúde', 'Finanças', 'Espiritual', 'Gratidão'].map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => setSelectedCategory(cat)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '999px',
+              border: '1px solid var(--panel-border)',
+              background: selectedCategory === cat ? 'var(--accent-primary)' : '#ffffff',
+              color: selectedCategory === cat ? '#ffffff' : 'var(--text-main)',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {cat === 'ALL' ? 'Todos os Motivos' : cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Lista de Pedidos de Oração */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {filteredPrayers.map(item => (
           <div 
-            key={p.id}
+            key={item.id}
             style={{
               background: '#ffffff',
               borderRadius: '18px',
@@ -123,115 +195,181 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
                   🙏
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>{p.author}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 700 }}>{p.category}</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>{item.author}</div>
+                  <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>{item.time_ago}</div>
                 </div>
               </div>
-              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>{p.time_ago}</span>
+
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-primary)', background: 'var(--accent-primary-light)', padding: '4px 10px', borderRadius: '8px' }}>
+                {item.category}
+              </span>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
-              "{p.text}"
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+              "{item.content}"
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border)', paddingTop: '10px' }}>
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                ❤️ {p.prayers_count} irmãos orando
+                👥 {item.praying_count} irmãos intercedendo
               </span>
 
-              <button 
-                type="button" 
-                onClick={() => handleTogglePray(p.id)}
+              <button
+                type="button"
+                onClick={() => handleTogglePraying(item.id)}
                 style={{
-                  background: p.user_prayed ? 'var(--accent-primary-light)' : '#f1f5f9',
-                  color: p.user_prayed ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  border: 'none',
+                  background: item.is_praying ? '#ecfdf5' : '#f1f5f9',
+                  color: item.is_praying ? '#059669' : 'var(--text-secondary)',
+                  border: item.is_praying ? '1px solid #a7f3d0' : 'none',
                   padding: '6px 14px',
                   borderRadius: '10px',
                   fontWeight: 800,
                   fontSize: '0.76rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
               >
-                {p.user_prayed ? '✅ Estou orando!' : '🙏 Orar por este pedido'}
+                {item.is_praying ? '✓ Estou orando' : '🙏 Orar por este pedido'}
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal Novo Pedido de Oração */}
-      {showNewModal && (
-        <div className="drawer-overlay" onClick={() => setShowNewModal(false)}>
+      {/* MODAL NOVO PEDIDO DE ORAÇÃO (COM PRIVACIDADE) */}
+      {showModal && (
+        <div className="drawer-overlay" onClick={() => setShowModal(false)}>
           <div className="drawer-container" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
+
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', textAlign: 'center' }}>
               Enviar Pedido de Oração
             </h3>
 
-            <form onSubmit={handleCreatePrayer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleSubmitPrayer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              
+              {/* NÍVEL DE PRIVACIDADE: PÚBLICO VS CONFIDENCIAL */}
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>
+                  Nível de Privacidade do Pedido *
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPrivacy('PUBLIC')}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: privacy === 'PUBLIC' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                      background: privacy === 'PUBLIC' ? 'var(--accent-primary-light)' : '#ffffff',
+                      color: privacy === 'PUBLIC' ? 'var(--accent-primary)' : 'var(--text-main)',
+                      fontWeight: 800,
+                      fontSize: '0.76rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>🌍 Mural Público</span>
+                    <span style={{ fontSize: '0.64rem', opacity: 0.8, fontWeight: 500 }}>Toda a igreja ora junto</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrivacy('CONFIDENTIAL')}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: privacy === 'CONFIDENTIAL' ? '2px solid #e11d48' : '1px solid var(--panel-border)',
+                      background: privacy === 'CONFIDENTIAL' ? '#ffe4e6' : '#ffffff',
+                      color: privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--text-main)',
+                      fontWeight: 800,
+                      fontSize: '0.76rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>🔒 Apenas Pastoral</span>
+                    <span style={{ fontSize: '0.64rem', opacity: 0.8, fontWeight: 500 }}>Sigiloso aos pastores</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Categoria */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                  Categoria
+                  Categoria do Motivo
                 </label>
-                <select 
-                  className="input-pwa" 
-                  value={newCategory} 
-                  onChange={e => setNewCategory(e.target.value)}
+                <select
+                  className="input-pwa"
+                  value={category}
+                  onChange={e => setCategory(e.target.value as any)}
+                  style={{ background: '#ffffff', cursor: 'pointer' }}
                 >
-                  <option value="Saúde & Cura">Saúde & Cura</option>
-                  <option value="Família & Casamento">Família & Casamento</option>
-                  <option value="Portas de Emprego">Portas de Emprego</option>
-                  <option value="Vida Espiritual">Vida Espiritual</option>
-                  <option value="Gratidão">Gratidão / Testemunho</option>
+                  <option value="Família">Família</option>
+                  <option value="Saúde">Saúde</option>
+                  <option value="Finanças">Finanças / Trabalho</option>
+                  <option value="Espiritual">Vida Espiritual</option>
+                  <option value="Gratidão">Gratidão / Agradecimento</option>
+                  <option value="Outros">Outros</option>
                 </select>
               </div>
 
-              {!isAnonymous && (
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                    Seu Nome
+              {/* Nome ou Anônimo */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                    Seu Nome (ou marque Anônimo)
                   </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isAnonymous} 
+                      onChange={e => setIsAnonymous(e.target.checked)} 
+                    />
+                    Enviar como Anônimo
+                  </label>
+                </div>
+                {!isAnonymous && (
                   <input 
                     type="text" 
                     className="input-pwa" 
-                    placeholder="Seu nome ou deixe anônimo"
-                    value={newName} 
-                    onChange={e => setNewName(e.target.value)} 
+                    placeholder="Seu nome completo" 
+                    value={authorName} 
+                    onChange={e => setAuthorName(e.target.value)} 
                   />
-                </div>
-              )}
+                )}
+              </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.80rem', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={isAnonymous} 
-                  onChange={e => setIsAnonymous(e.target.checked)} 
-                />
-                <span>Enviar como anônimo</span>
-              </label>
-
+              {/* Conteúdo do Pedido */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                  Descreva o Motivo da Oração *
+                  Descreva o seu Motivo de Oração *
                 </label>
                 <textarea 
-                  rows={4}
+                  rows={3}
                   className="input-pwa" 
-                  placeholder="Compartilhe com a igreja seu pedido para que possamos clamar juntos..."
-                  value={newText} 
-                  onChange={e => setNewText(e.target.value)}
-                  required 
+                  placeholder="Escreva aqui pelo que devemos clamar ao Senhor..."
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  required
                 />
               </div>
 
-              <button type="submit" className="btn-pwa-primary">
-                Enviar para o Mural
+              <button type="submit" className="btn-pwa-primary" style={{ marginTop: '6px' }}>
+                {privacy === 'CONFIDENTIAL' ? '🔒 Enviar com Sigilo aos Pastores' : '✨ Publicar no Mural de Oração'}
               </button>
             </form>
           </div>

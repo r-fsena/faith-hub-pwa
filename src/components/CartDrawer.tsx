@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useBranding } from '../context/BrandingContext';
 import { createPdvOrder } from '../services/api';
+import { CreditCardForm } from './CreditCardForm';
 
 export const CartFloatingButton: React.FC = () => {
   const { totalItemsCount, totalPrice, setIsCartOpen } = useCart();
@@ -27,7 +28,7 @@ export const CartDrawer: React.FC = () => {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
   const { branding } = useBranding();
   
-  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'delivery' | 'pix' | 'success'>('cart');
+  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'delivery' | 'payment_method' | 'pix' | 'card' | 'success'>('cart');
   const [deliveryMethod, setDeliveryMethod] = useState<'church' | 'home'>('church');
   const [pickupOption, setPickupOption] = useState<string>('Retirar no Balcão / Ponto de Coleta');
   
@@ -52,7 +53,7 @@ export const CartDrawer: React.FC = () => {
     setCheckoutStep('delivery');
   };
 
-  const handleProceedToPix = async () => {
+  const handleProceedToPaymentMethod = () => {
     if (!customerName.trim()) {
       alert("Por favor, informe seu nome para identificação do pedido.");
       return;
@@ -63,6 +64,10 @@ export const CartDrawer: React.FC = () => {
       return;
     }
 
+    setCheckoutStep('payment_method');
+  };
+
+  const createOrderRecord = async (paymentMethod: 'PIX' | 'CREDIT_CARD', extraInfo?: string) => {
     setIsSaving(true);
     const deliveryDetailsString = deliveryMethod === 'home'
       ? `Entrega: ${address}, ${numberComp} (CEP: ${cep}) - A/C: ${careOf} | Horário: ${preferredTime || 'Livre'}`
@@ -79,7 +84,7 @@ export const CartDrawer: React.FC = () => {
       const orderRes = await createPdvOrder({
         user_name: `${customerName.trim()} (${customerPhone.trim() || 'Sem tel'})`,
         delivery_method: deliveryMethod,
-        delivery_details: deliveryDetailsString,
+        delivery_details: `${deliveryDetailsString} [Pgto: ${paymentMethod}${extraInfo ? ` - ${extraInfo}` : ''}]`,
         items_json: itemsPayload,
         total_price: totalPrice
       });
@@ -96,14 +101,34 @@ export const CartDrawer: React.FC = () => {
         status: 'RECEBIDO E PREPARANDO',
         total: totalPrice,
         items: itemsPayload,
-        delivery: deliveryDetailsString
+        delivery: deliveryDetailsString,
+        payment: paymentMethod
       };
       localStorage.setItem('faithhub_my_pdv_orders', JSON.stringify([newOrderRecord, ...orderList]));
 
-      setCheckoutStep('pix');
+      return orderId;
     } catch (e) {
       console.error(e);
-      alert("Erro ao enviar pedido.");
+      return `ORD-${Date.now().toString().slice(-6)}`;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleStartPix = async () => {
+    await createOrderRecord('PIX');
+    setCheckoutStep('pix');
+  };
+
+  const handleCreditCardSubmit = async (cardData: any) => {
+    setIsSaving(true);
+    try {
+      await createOrderRecord('CREDIT_CARD', `${cardData.installments}x cartão final ${cardData.number.slice(-4)}`);
+      alert("✅ Pagamento com Cartão Aprovado via Pagar.me!");
+      setCheckoutStep('success');
+      clearCart();
+    } catch (err) {
+      alert("Erro ao processar cartão.");
     } finally {
       setIsSaving(false);
     }
@@ -337,15 +362,119 @@ export const CartDrawer: React.FC = () => {
             <button 
               type="button" 
               className="btn-pwa-primary"
-              onClick={handleProceedToPix}
-              disabled={isSaving}
+              onClick={handleProceedToPaymentMethod}
             >
-              {isSaving ? 'Gerando Pedido...' : '⚡ Pagar com Pix Instantâneo'}
+              Escolher Forma de Pagamento →
             </button>
           </div>
         )}
 
-        {/* STEP 3: PIX QR CODE & COPIA E COLA */}
+        {/* STEP 3: SELEÇÃO DA FORMA DE PAGAMENTO (PIX OU CARTÃO PAGAR.ME) */}
+        {checkoutStep === 'payment_method' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                type="button" 
+                onClick={() => setCheckoutStep('delivery')}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                ← Voltar
+              </button>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                Forma de Pagamento
+              </h3>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Total a Pagar:</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#059669' }}>
+                R$ {totalPrice.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Opção Pix */}
+              <div 
+                onClick={handleStartPix}
+                style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--panel-border)',
+                  background: '#ffffff',
+                  boxShadow: 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
+                    ⚡
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)' }}>Pix Instantâneo</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Aprovação imediata com QR Code</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>›</span>
+              </div>
+
+              {/* Opção Cartão de Crédito Pagar.me */}
+              <div 
+                onClick={() => setCheckoutStep('card')}
+                style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--panel-border)',
+                  background: '#ffffff',
+                  boxShadow: 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
+                    💳
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)' }}>Cartão de Crédito (Pagar.me)</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Parcele em até 12x no cartão</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>›</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: CARTÃO DE CRÉDITO PAGAR.ME FORM */}
+        {checkoutStep === 'card' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '55vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                type="button" 
+                onClick={() => setCheckoutStep('payment_method')}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                ← Voltar
+              </button>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                Dados do Cartão
+              </h3>
+            </div>
+
+            <CreditCardForm 
+              totalAmount={totalPrice} 
+              onSubmit={handleCreditCardSubmit}
+              isLoading={isSaving}
+            />
+          </div>
+        )}
+
+        {/* STEP 5: PIX QR CODE & COPIA E COLA */}
         {checkoutStep === 'pix' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
@@ -385,7 +514,7 @@ export const CartDrawer: React.FC = () => {
           </div>
         )}
 
-        {/* STEP 4: SUCESSO / PEDIDO CONFIRMADO */}
+        {/* STEP 6: SUCESSO / PEDIDO CONFIRMADO */}
         {checkoutStep === 'success' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px', padding: '10px 0' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>

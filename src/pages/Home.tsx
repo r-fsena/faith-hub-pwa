@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
+import { VisitorModal } from '../components/VisitorModal';
 import { fetchActiveBroadcast, fetchEvents } from '../services/api';
+import { checkPushNotificationSupport, requestPushPermission } from '../services/pushNotifications';
 import type { ActiveTab } from '../components/BottomNav';
 
 interface HomeProps {
@@ -24,9 +26,12 @@ export const Home: React.FC<HomeProps> = ({
   const { branding } = useBranding();
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
+  const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
+  const [showPushBanner, setShowPushBanner] = useState(false);
 
   useEffect(() => {
     loadHomeData();
+    checkPushStatus();
   }, []);
 
   const loadHomeData = async () => {
@@ -37,6 +42,20 @@ export const Home: React.FC<HomeProps> = ({
     if (events && Array.isArray(events) && events.length > 0) {
       setFeaturedEvent(events[0]);
     }
+  };
+
+  const checkPushStatus = () => {
+    if (checkPushNotificationSupport() && Notification.permission === 'default') {
+      const alreadyDismissed = sessionStorage.getItem('faithhub_push_dismissed');
+      if (!alreadyDismissed) {
+        setShowPushBanner(true);
+      }
+    }
+  };
+
+  const handleEnablePush = async () => {
+    await requestPushPermission();
+    setShowPushBanner(false);
   };
 
   const quickActions = [
@@ -55,6 +74,35 @@ export const Home: React.FC<HomeProps> = ({
       
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
+
+      {/* Banner de Notificações Web Push */}
+      {showPushBanner && (
+        <div style={{ background: '#f0fdfa', border: '1.5px solid var(--accent-primary)', borderRadius: '16px', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.3rem' }}>🔔</span>
+            <div>
+              <div style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-main)' }}>Ativar Avisos de Cultos?</div>
+              <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Receba avisos quando o culto começar</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button 
+              type="button" 
+              onClick={handleEnablePush}
+              style={{ background: 'var(--accent-primary)', color: '#ffffff', border: 'none', padding: '6px 10px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
+            >
+              Ativar
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setShowPushBanner(false); sessionStorage.setItem('faithhub_push_dismissed', 'true'); }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.72rem', cursor: 'pointer' }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero Banner da Igreja */}
       <div className="pwa-hero-card">
@@ -75,6 +123,37 @@ export const Home: React.FC<HomeProps> = ({
             {branding.tagline || 'Conectados pelo mesmo propósito e coração.'}
           </p>
         </div>
+      </div>
+
+      {/* Card Especial de Boas-Vindas aos Visitantes */}
+      <div 
+        onClick={() => setIsVisitorModalOpen(true)}
+        style={{
+          background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+          border: '1.5px dashed #c084fc',
+          borderRadius: '16px',
+          padding: '14px 16px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow-sm)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#c084fc', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
+            👋
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#581c87' }}>
+              Primeira vez na igreja?
+            </div>
+            <div style={{ fontSize: '0.74rem', color: '#7e22ce' }}>
+              Toque aqui para ser acolhido e receber uma bênção
+            </div>
+          </div>
+        </div>
+        <span style={{ fontSize: '1.2rem', color: '#9333ea', fontWeight: 800 }}>›</span>
       </div>
 
       {/* Grade de Atalhos Rápidos (8 Botões) */}
@@ -217,6 +296,12 @@ export const Home: React.FC<HomeProps> = ({
           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>Inscrição ›</span>
         </div>
       </div>
+
+      {/* Modal de Visitante */}
+      <VisitorModal 
+        isOpen={isVisitorModalOpen} 
+        onClose={() => setIsVisitorModalOpen(false)} 
+      />
 
     </div>
   );

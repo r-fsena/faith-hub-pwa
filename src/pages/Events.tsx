@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchEvents, checkoutTicket } from '../services/api';
+import { CreditCardForm } from '../components/CreditCardForm';
 
 interface EventBatch {
   id: string;
@@ -90,6 +91,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [attendeeCpf, setAttendeeCpf] = useState('');
   const [attendeePhone, setAttendeePhone] = useState('');
   const [dietaryNotes, setDietaryNotes] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'details' | 'card'>('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modal do Passaporte Selecionado
@@ -134,8 +136,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setSelectedBatch(ev.batches ? ev.batches[0] : { id: 'b1', name: 'Geral', price: ev.price, available: true });
   };
 
-  const handleConfirmRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirmRegistration = async (e?: React.FormEvent, paymentMethod: 'PIX' | 'CREDIT_CARD' = 'PIX', extraInfo?: string) => {
+    if (e) e.preventDefault();
     if (!selectedEvent || !attendeeName.trim() || !attendeePhone.trim()) return;
 
     setIsSubmitting(true);
@@ -147,14 +149,14 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         attendee_cpf: attendeeCpf.trim() || undefined,
         attendee_whatsapp: attendeePhone.trim(),
         dietary_notes: dietaryNotes.trim() || undefined,
-        payment_method: 'PIX'
+        payment_method: paymentMethod
       });
 
       const newTicket: MyTicket = {
         ticket_id: checkoutRes?.ticket_id || `TCK-${Date.now().toString().slice(-6)}`,
         event_title: selectedEvent.title,
         attendee_name: attendeeName.trim(),
-        batch_name: selectedBatch?.name || 'Geral',
+        batch_name: `${selectedBatch?.name || 'Geral'}${extraInfo ? ` (${extraInfo})` : ''}`,
         date_formatted: selectedEvent.date_formatted,
         location: selectedEvent.location,
         qr_code_data: checkoutRes?.qr_code_data || `TICKET_${selectedEvent.id}_${attendeePhone}`
@@ -167,6 +169,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       alert('✅ Inscrição confirmada com sucesso! Seu passaporte digital foi gerado.');
       setSelectedEvent(null);
       setViewTicketModal(newTicket);
+      setPaymentMode('details');
       setAttendeeName('');
       setAttendeeCpf('');
       setAttendeePhone('');
@@ -333,82 +336,124 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               Inscrição: {selectedEvent.title}
             </h3>
 
-            <form onSubmit={handleConfirmRegistration} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              
-              {/* Seleção de Lote */}
-              {selectedEvent.batches && selectedEvent.batches.length > 0 && (
+            {paymentMode === 'card' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '55vh', overflowY: 'auto' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setPaymentMode('details')} 
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer', textAlign: 'left' }}
+                >
+                  ← Voltar aos Dados
+                </button>
+                <CreditCardForm 
+                  totalAmount={selectedBatch?.price || selectedEvent.price}
+                  onSubmit={async (cardData) => {
+                    await handleConfirmRegistration(undefined, 'CREDIT_CARD', `${cardData.installments}x no cartão`);
+                  }}
+                  isLoading={isSubmitting}
+                />
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmRegistration} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                
+                {/* Seleção de Lote */}
+                {selectedEvent.batches && selectedEvent.batches.length > 0 && (
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                      Selecione o Lote / Categoria
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {selectedEvent.batches.map(b => (
+                        <label 
+                          key={b.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            border: selectedBatch?.id === b.id ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                            background: selectedBatch?.id === b.id ? 'var(--accent-primary-light)' : '#ffffff',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input type="radio" name="batch" checked={selectedBatch?.id === b.id} onChange={() => setSelectedBatch(b)} />
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>{b.name}</span>
+                          </div>
+                          <span style={{ fontSize: '0.86rem', fontWeight: 800, color: b.price === 0 ? '#059669' : 'var(--text-main)' }}>
+                            {b.price === 0 ? 'Gratuito' : `R$ ${b.price.toFixed(2).replace('.', ',')}`}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                    Selecione o Lote / Categoria
+                    Nome Completo do Participante *
                   </label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {selectedEvent.batches.map(b => (
-                      <label 
-                        key={b.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '10px 12px',
-                          borderRadius: '12px',
-                          border: selectedBatch?.id === b.id ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                          background: selectedBatch?.id === b.id ? 'var(--accent-primary-light)' : '#ffffff',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <input type="radio" name="batch" checked={selectedBatch?.id === b.id} onChange={() => setSelectedBatch(b)} />
-                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>{b.name}</span>
-                        </div>
-                        <span style={{ fontSize: '0.86rem', fontWeight: 800, color: b.price === 0 ? '#059669' : 'var(--text-main)' }}>
-                          {b.price === 0 ? 'Gratuito' : `R$ ${b.price.toFixed(2).replace('.', ',')}`}
-                        </span>
-                      </label>
-                    ))}
+                  <input type="text" className="input-pwa" placeholder="Seu nome" value={attendeeName} onChange={e => setAttendeeName(e.target.value)} required />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                      CPF (Para Credenciamento)
+                    </label>
+                    <input type="text" className="input-pwa" placeholder="000.000.000-00" value={attendeeCpf} onChange={e => setAttendeeCpf(e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                      WhatsApp *
+                    </label>
+                    <input type="tel" className="input-pwa" placeholder="(11) 98765-4321" value={attendeePhone} onChange={e => setAttendeePhone(e.target.value)} required />
                   </div>
                 </div>
-              )}
 
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                  Nome Completo do Participante *
-                </label>
-                <input type="text" className="input-pwa" placeholder="Seu nome" value={attendeeName} onChange={e => setAttendeeName(e.target.value)} required />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                    CPF (Para Credenciamento)
+                    Restrições Alimentares / Observações
                   </label>
-                  <input type="text" className="input-pwa" placeholder="000.000.000-00" value={attendeeCpf} onChange={e => setAttendeeCpf(e.target.value)} />
+                  <input type="text" className="input-pwa" placeholder="Ex: Vegetariano, alérgico a glúten..." value={dietaryNotes} onChange={e => setDietaryNotes(e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                    WhatsApp *
-                  </label>
-                  <input type="tel" className="input-pwa" placeholder="(11) 98765-4321" value={attendeePhone} onChange={e => setAttendeePhone(e.target.value)} required />
+
+                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', fontSize: '0.86rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+                  <span>Total a Pagar:</span>
+                  <span style={{ color: (selectedBatch?.price || selectedEvent.price) === 0 ? '#059669' : 'var(--text-main)' }}>
+                    {(selectedBatch?.price || selectedEvent.price) === 0 ? 'Gratuito' : `R$ ${(selectedBatch?.price || selectedEvent.price).toFixed(2).replace('.', ',')}`}
+                  </span>
                 </div>
-              </div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
-                  Restrições Alimentares / Observações
-                </label>
-                <input type="text" className="input-pwa" placeholder="Ex: Vegetariano, alérgico a glúten..." value={dietaryNotes} onChange={e => setDietaryNotes(e.target.value)} />
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', fontSize: '0.86rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
-                <span>Total a Pagar:</span>
-                <span style={{ color: (selectedBatch?.price || selectedEvent.price) === 0 ? '#059669' : 'var(--text-main)' }}>
-                  {(selectedBatch?.price || selectedEvent.price) === 0 ? 'Gratuito' : `R$ ${(selectedBatch?.price || selectedEvent.price).toFixed(2).replace('.', ',')}`}
-                </span>
-              </div>
-
-              <button type="submit" className="btn-pwa-primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Confirmando...' : 'Confirmar & Gerar Passaporte'}
-              </button>
-            </form>
+                {(selectedBatch?.price || selectedEvent.price) > 0 ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                    <button type="submit" className="btn-pwa-primary" disabled={isSubmitting}>
+                      {isSubmitting ? 'Gerando...' : '⚡ Pagar com Pix'}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn-pwa-secondary" 
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        if (!attendeeName.trim() || !attendeePhone.trim()) {
+                          alert("Preencha nome e WhatsApp antes de continuar para o cartão.");
+                          return;
+                        }
+                        setPaymentMode('card');
+                      }}
+                      style={{ fontWeight: 800 }}
+                    >
+                      💳 Pagar no Cartão
+                    </button>
+                  </div>
+                ) : (
+                  <button type="submit" className="btn-pwa-primary" disabled={isSubmitting}>
+                    {isSubmitting ? 'Confirmando...' : 'Confirmar & Gerar Passaporte'}
+                  </button>
+                )}
+              </form>
+            )}
           </div>
         </div>
       )}
