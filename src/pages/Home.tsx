@@ -291,52 +291,24 @@ export const Home: React.FC<HomeProps> = ({
           </span>
         </div>
 
-        <div className="pwa-services-grid">
+        <div className="quick-action-grid">
           {quickActions.map((action, idx) => (
             <button
               key={idx}
               type="button"
               onClick={action.action}
-              className="pwa-service-btn"
-              style={{
-                background: '#ffffff',
-                border: '1px solid var(--panel-border)',
-                borderRadius: '18px',
-                padding: '12px 6px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-                transition: 'all var(--transition-fast)'
-              }}
+              className="quick-action-btn"
             >
               <div
+                className="quick-action-icon"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '14px',
                   background: action.bg,
-                  border: `1px solid ${action.border}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  border: `1px solid ${action.border}`
                 }}
               >
                 {action.icon}
               </div>
-              <span
-                style={{
-                  fontSize: '0.70rem',
-                  fontWeight: 800,
-                  color: 'var(--text-main)',
-                  textAlign: 'center',
-                  lineHeight: 1.15,
-                  maxWidth: '72px'
-                }}
-              >
+              <span className="quick-action-label">
                 {action.label}
               </span>
             </button>

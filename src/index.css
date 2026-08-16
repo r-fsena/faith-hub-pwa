@@ -322,14 +322,14 @@ input, select, textarea {
 }
 
 /* QUICK ACTION GRID (DESIGN SYSTEM RESPONSIVO) */
-.quick-action-grid {
+.quick-action-grid, .pwa-services-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   width: 100%;
 }
 
-.quick-action-btn {
+.quick-action-btn, .pwa-service-btn {
   background: var(--bg-card);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
