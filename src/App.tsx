@@ -29,6 +29,21 @@ const AppContent: React.FC = () => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // Redirecionamento da Raiz para o Site Institucional se não houver /nomedaigreja
+  React.useEffect(() => {
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const isRoot = !path;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (isRoot) {
+      if (isLocalhost) {
+        window.location.replace('/demonstracao');
+      } else {
+        window.location.replace('https://faithhubs.com');
+      }
+    }
+  }, []);
+
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
     setSubView('none');
