@@ -5,9 +5,16 @@ import { useAuth } from '../context/AuthContext';
 interface TopHeaderProps {
   onOpenNotifications?: () => void;
   onOpenProfile?: () => void;
+  title?: string;
+  onBack?: () => void;
 }
 
-export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenNotifications, onOpenProfile }) => {
+export const TopHeader: React.FC<TopHeaderProps> = ({ 
+  onOpenNotifications, 
+  onOpenProfile,
+  title,
+  onBack
+}) => {
   const { branding } = useBranding();
   const { user } = useAuth();
 
@@ -17,6 +24,39 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenNotifications, onOpe
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.substring(0, 2).toUpperCase();
   };
+
+  // Se estiver em uma sub-tela (com botão Voltar)
+  if (onBack) {
+    return (
+      <header className="pwa-topbar" style={{ justifyContent: 'space-between' }}>
+        <button 
+          type="button" 
+          onClick={onBack}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-main)',
+            fontSize: '0.86rem',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            padding: '4px 0'
+          }}
+        >
+          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span>
+          <span>Voltar</span>
+        </button>
+
+        <span style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-main)' }}>
+          {title || branding.church_name}
+        </span>
+
+        <div style={{ width: '48px' }} /> {/* Espaçador para balancear o título ao centro */}
+      </header>
+    );
+  }
 
   return (
     <header className="pwa-topbar">

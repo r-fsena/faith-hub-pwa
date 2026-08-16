@@ -291,9 +291,15 @@ export const Store: React.FC = () => {
                       className="add-cart-mini-btn" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenProductModal(prod);
+                        addItem({
+                          id: prod.id,
+                          name: prod.name,
+                          price: prod.price,
+                          image_url: prod.image_urls[0],
+                          category: prod.category
+                        });
                       }}
-                      title="Adicionar ao Pedido"
+                      title="Adicionar Imediatamente"
                     >
                       +
                     </button>

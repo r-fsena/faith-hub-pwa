@@ -127,7 +127,7 @@ const SAMPLE_SNACKS: SnackAssignment[] = [
   { id: '4', date: 'Quarta Seguinte (26/08)', person: 'A definir (Você?)', item: 'Copos e Guardanapos', confirmed: false }
 ];
 
-type PortalTab = 'mural' | 'estudos' | 'membros' | 'lanches' | 'fotos';
+type PortalTab = 'dashboard' | 'mural' | 'estudos' | 'membros' | 'lanches' | 'fotos';
 
 export const CellGroups: React.FC = () => {
   const { branding } = useBranding();
@@ -135,7 +135,7 @@ export const CellGroups: React.FC = () => {
   // Modo de visualização: 'portal' (Meu Grupo Conectado) ou 'discover' (Explorar Células)
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('portal');
   const [myGroupId, setMyGroupId] = useState<string>('grp_1');
-  const [portalTab, setPortalTab] = useState<PortalTab>('mural');
+  const [portalTab, setPortalTab] = useState<PortalTab>('dashboard');
   
   // Discover State
   const [searchTerm, setSearchTerm] = useState('');
@@ -193,7 +193,7 @@ export const CellGroups: React.FC = () => {
       {/* Header com Switch entre "Minha Célula" e "Explorar Células" */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 className="section-title" style={{ fontSize: '1.25rem' }}>Células & Pequenos Grupos</h2>
+          <h2 className="section-title" style={{ fontSize: '1.25rem' }}>Células & Redes</h2>
           <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
             {viewMode === 'portal' ? 'Hub conectado da sua célula' : 'Encontre uma célula perto de você'}
           </p>
@@ -251,11 +251,12 @@ export const CellGroups: React.FC = () => {
           {/* Abas de Navegação Interna da Célula */}
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
             {[
-              { id: 'mural', label: '💬 Mural', desc: 'Avisos' },
-              { id: 'estudos', label: '📖 Estudos', desc: 'Lição' },
-              { id: 'membros', label: '👥 Membros', desc: 'Pessoas' },
-              { id: 'lanches', label: '☕ Partilha', desc: 'Lanche' },
-              { id: 'fotos', label: '📸 Álbum', desc: 'Fotos' }
+              { id: 'dashboard', label: '📊 Início' },
+              { id: 'mural', label: '💬 Mural' },
+              { id: 'estudos', label: '📖 Estudos' },
+              { id: 'membros', label: '👥 Membros' },
+              { id: 'lanches', label: '☕ Partilha' },
+              { id: 'fotos', label: '📸 Álbum' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -268,7 +269,7 @@ export const CellGroups: React.FC = () => {
                   background: portalTab === tab.id ? 'var(--accent-primary-light)' : '#ffffff',
                   color: portalTab === tab.id ? 'var(--accent-primary)' : 'var(--text-main)',
                   fontWeight: 800,
-                  fontSize: '0.78rem',
+                  fontSize: '0.76rem',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap'
                 }}
@@ -277,6 +278,129 @@ export const CellGroups: React.FC = () => {
               </button>
             ))}
           </div>
+
+          {/* WIDGET DASHBOARD DA CÉLULA (Fase 3 UI/UX) */}
+          {portalTab === 'dashboard' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Widget 1: Lição da Semana Preview */}
+              <div 
+                onClick={() => setPortalTab('estudos')}
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  border: '1px solid var(--panel-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                    📖 LIÇÃO DA SEMANA
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Ver estudo ›</span>
+                </div>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '4px 0' }}>
+                  {SAMPLE_STUDY.title}
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
+                  "{SAMPLE_STUDY.verse.slice(0, 110)}..."
+                </p>
+              </div>
+
+              {/* Grid de 2 Widgets: Mural + Escala de Lanches */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                
+                {/* Mini Mural */}
+                <div 
+                  onClick={() => setPortalTab('mural')}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '14px',
+                    border: '1px solid var(--panel-border)',
+                    boxShadow: 'var(--shadow-sm)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '120px'
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0284c7' }}>💬 MURAL DO GRUPO</span>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-main)', fontWeight: 700, margin: '6px 0 0 0', lineHeight: 1.3 }}>
+                      {posts[0]?.content.slice(0, 55)}...
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                    {posts.length} recados ›
+                  </span>
+                </div>
+
+                {/* Mini Escala de Lanche */}
+                <div 
+                  onClick={() => setPortalTab('lanches')}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '14px',
+                    border: '1px solid var(--panel-border)',
+                    boxShadow: 'var(--shadow-sm)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '120px'
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c' }}>☕ PARTILHA & LANCHE</span>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-main)', fontWeight: 700, margin: '6px 0 0 0', lineHeight: 1.3 }}>
+                      {snacks[0]?.item}
+                    </p>
+                    <span style={{ fontSize: '0.70rem', color: '#059669', fontWeight: 800 }}>
+                      ✓ {snacks[0]?.person}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                    Ver escala ›
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Widget Membros & Galeria Teaser */}
+              <div 
+                onClick={() => setPortalTab('membros')}
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '18px',
+                  padding: '14px 16px',
+                  border: '1px solid var(--panel-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="https://i.pravatar.cc/150?img=11" alt="Membro" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid #ffffff' }} />
+                    <img src="https://i.pravatar.cc/150?img=5" alt="Membro" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid #ffffff', marginLeft: '-8px' }} />
+                    <img src="https://i.pravatar.cc/150?img=33" alt="Membro" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid #ffffff', marginLeft: '-8px' }} />
+                  </div>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    8 participantes conectados
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--accent-primary)' }}>Ver todos ›</span>
+              </div>
+
+            </div>
+          )}
 
           {/* FERRAMENTA 1: MURAL DO GRUPO */}
           {portalTab === 'mural' && (
@@ -462,7 +586,7 @@ export const CellGroups: React.FC = () => {
           {/* Busca Rápida */}
           <input 
             type="text" 
-            className="input-pwa"
+            className="input-pwa" 
             placeholder="🔍 Buscar por bairro, líder ou nome da célula..." 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 

@@ -32,15 +32,27 @@ const AppContent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const getSubViewTitle = (view: SubView) => {
+    switch (view) {
+      case 'prayers': return 'Mural de Oração';
+      case 'events': return 'Eventos & Cursos';
+      case 'bible': return 'Bíblia Sagrada';
+      case 'giving': return 'Contribuições & Dízimos';
+      default: return undefined;
+    }
+  };
+
   return (
     <div className="pwa-app-shell">
-      {/* Top Header */}
+      {/* Top Header com suporte a navegação e botão Voltar */}
       <TopHeader 
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenProfile={() => handleTabChange('profile')}
+        title={getSubViewTitle(subView)}
+        onBack={subView !== 'none' ? () => setSubView('none') : undefined}
       />
 
-      {/* Main Pages */}
+      {/* Main Content */}
       <main style={{ flex: 1 }}>
         {subView === 'prayers' ? (
           <Prayers onBack={() => setSubView('none')} />
