@@ -263,3 +263,74 @@ export async function getUploadPresignedUrl(contentType: string, prefix = 'recei
   }
   return null;
 }
+
+// ----------------------------------------------------
+// 7. WHITELABEL / CHURCH SETTINGS
+// ----------------------------------------------------
+export async function fetchChurchSettings() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/church-settings`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Church settings fallback to local storage", e);
+  }
+  return null;
+}
+
+// ----------------------------------------------------
+// 8. ORAÇÕES & INTERCESSÃO
+// ----------------------------------------------------
+export async function fetchPrayers(category?: string, userId?: string) {
+  try {
+    let url = `${API_BASE_URL}/prayers`;
+    const params = new URLSearchParams();
+    if (category && category !== 'ALL') params.append('category', category);
+    if (userId) params.append('user_id', userId);
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+
+    const res = await fetch(url);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Prayers API fallback", e);
+  }
+  return null;
+}
+
+export async function createPrayerRequest(payload: {
+  author_name: string;
+  is_anonymous: boolean;
+  category: string;
+  privacy: string;
+  content: string;
+  user_id?: string;
+}) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/prayers`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Create prayer fallback", e);
+  }
+  return null;
+}
+
+export async function prayForRequest(prayerId: string, userId?: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/prayers/${prayerId}/pray`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ user_id: userId })
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Pray for request fallback", e);
+  }
+  return null;
+}
+

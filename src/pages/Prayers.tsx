@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchPrayers, createPrayerRequest, prayForRequest } from '../services/api';
 
 interface PrayerRequest {
   id: string;
@@ -57,20 +58,37 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [content, setContent] = useState('');
 
   useEffect(() => {
+    loadPrayers();
+  }, [selectedCategory]);
+
+  const loadPrayers = async () => {
+    // 1. Carrega do localStorage imediato
     const saved = localStorage.getItem('faithhub_community_prayers');
     if (saved) {
       try {
         setPrayers(JSON.parse(saved));
       } catch (e) { }
     }
-  }, []);
+
+    // 2. Busca do backend a versão em nuvem
+    try {
+      const data = await fetchPrayers(selectedCategory);
+      if (Array.isArray(data) && data.length > 0) {
+        setPrayers(data);
+        localStorage.setItem('faithhub_community_prayers', JSON.stringify(data));
+      }
+    } catch (e) {
+      console.log("Offline fallback para orações", e);
+    }
+  };
 
   const savePrayers = (updated: PrayerRequest[]) => {
     setPrayers(updated);
     localStorage.setItem('faithhub_community_prayers', JSON.stringify(updated));
   };
 
-  const handleTogglePraying = (id: string) => {
+  const handleTogglePraying = async (id: string) => {
+    // Atualização otimista
     const updated = prayers.map(p => {
       if (p.id === id) {
         const isNowPraying = !p.is_praying;
@@ -83,34 +101,56 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       return p;
     });
     savePrayers(updated);
+
+    // Envia ao backend
+    try {
+      await prayForRequest(id);
+    } catch (e) {
+      console.log("Erro ao registrar oração em nuvem", e);
+    }
   };
 
-  const handleSubmitPrayer = (e: React.FormEvent) => {
+  const handleSubmitPrayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
 
-    const newPrayer: PrayerRequest = {
-      id: `pr_${Date.now()}`,
-      author: isAnonymous ? 'Membro Anônimo' : (authorName.trim() || 'Membro da Igreja'),
-      category,
-      privacy,
-      content: content.trim(),
-      praying_count: 1,
-      time_ago: 'Agora mesmo',
-      is_praying: true
-    };
+    const authorDisplayName = isAnonymous ? 'Membro Anônimo' : (authorName.trim() || 'Membro da Igreja');
 
-    if (privacy === 'CONFIDENTIAL') {
-      alert("🔒 Seu pedido confidencial foi enviado com segurança diretamente ao Corpo Pastoral da igreja.");
-    } else {
-      savePrayers([newPrayer, ...prayers]);
-      alert("✨ Seu pedido de oração foi publicado no mural da comunidade!");
+    // Envia ao backend
+    try {
+      const res = await createPrayerRequest({
+        author_name: authorDisplayName,
+        is_anonymous: isAnonymous,
+        category,
+        privacy,
+        content: content.trim()
+      });
+
+      const prayerObj: PrayerRequest = res?.prayer || {
+        id: `pr_${Date.now()}`,
+        author: authorDisplayName,
+        category,
+        privacy,
+        content: content.trim(),
+        praying_count: 1,
+        time_ago: 'Agora mesmo',
+        is_praying: true
+      };
+
+      if (privacy === 'CONFIDENTIAL') {
+        alert("🔒 Seu pedido confidencial foi enviado com segurança diretamente ao Corpo Pastoral da igreja.");
+      } else {
+        savePrayers([prayerObj, ...prayers]);
+        alert("✨ Seu pedido de oração foi publicado no mural da comunidade!");
+      }
+
+      // Salva no registro de pedidos enviados pelo próprio usuário
+      const mySaved = localStorage.getItem('faithhub_my_sent_prayers');
+      const mySentList = mySaved ? JSON.parse(mySaved) : [];
+      localStorage.setItem('faithhub_my_sent_prayers', JSON.stringify([prayerObj, ...mySentList]));
+    } catch (err) {
+      console.error("Erro salvando oração", err);
     }
-
-    // Salva no registro de pedidos enviados pelo próprio usuário
-    const mySaved = localStorage.getItem('faithhub_my_sent_prayers');
-    const mySentList = mySaved ? JSON.parse(mySaved) : [];
-    localStorage.setItem('faithhub_my_sent_prayers', JSON.stringify([newPrayer, ...mySentList]));
 
     setShowModal(false);
     setContent('');

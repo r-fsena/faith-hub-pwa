@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchChurchSettings } from '../services/api';
 
 export interface ChurchBranding {
   church_name: string;
@@ -79,7 +80,8 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => window.removeEventListener('church-branding-updated', handleUpdate);
   }, []);
 
-  const loadBranding = () => {
+  const loadBranding = async () => {
+    // 1. Carrega do localStorage imediato para não piscar
     const saved = localStorage.getItem('faithhub_church_branding');
     if (saved) {
       try {
@@ -87,12 +89,46 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const merged = { ...DEFAULT_BRANDING, ...parsed };
         setBranding(merged);
         applyTheme(merged);
-        return;
       } catch (e) {
-        console.error("Erro ao carregar branding PWA", e);
+        console.error("Erro ao carregar branding PWA do cache", e);
       }
+    } else {
+      applyTheme(DEFAULT_BRANDING);
     }
-    applyTheme(DEFAULT_BRANDING);
+
+    // 2. Busca do backend a versão mais recente em nuvem
+    try {
+      const backendSettings = await fetchChurchSettings();
+      if (backendSettings && backendSettings.church_name) {
+        const mapped: Partial<ChurchBranding> = {
+          church_name: backendSettings.church_name,
+          tagline: backendSettings.slogan || DEFAULT_BRANDING.tagline,
+          cnpj: backendSettings.cnpj || '',
+          address: `${backendSettings.address_street || ''} ${backendSettings.address_number || ''}`.trim() || DEFAULT_BRANDING.address,
+          city: backendSettings.address_city || DEFAULT_BRANDING.city,
+          state: backendSettings.address_state || DEFAULT_BRANDING.state,
+          whatsapp: backendSettings.whatsapp || '',
+          email: backendSettings.email || '',
+          instagram: backendSettings.instagram_url || '',
+          youtube: backendSettings.youtube_url || '',
+          website: backendSettings.website_url || '',
+          logo_icon_url: backendSettings.logo_icon_url || '',
+          logo_header_url: backendSettings.logo_header_url || '',
+          banner_url: backendSettings.banner_url || '',
+          primary_color: backendSettings.primary_color || DEFAULT_BRANDING.primary_color,
+          secondary_color: backendSettings.secondary_color || DEFAULT_BRANDING.secondary_color,
+          pwa_short_name: backendSettings.pwa_short_name || DEFAULT_BRANDING.pwa_short_name,
+          pwa_slug: backendSettings.pwa_slug || DEFAULT_BRANDING.pwa_slug,
+          pwa_theme_color: backendSettings.pwa_theme_color || backendSettings.primary_color || DEFAULT_BRANDING.pwa_theme_color
+        };
+        const updated = { ...DEFAULT_BRANDING, ...mapped };
+        setBranding(updated);
+        localStorage.setItem('faithhub_church_branding', JSON.stringify(updated));
+        applyTheme(updated);
+      }
+    } catch (err) {
+      console.log("Usando branding em cache local offline", err);
+    }
   };
 
   const applyTheme = (data: Partial<ChurchBranding>) => {
