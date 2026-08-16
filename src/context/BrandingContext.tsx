@@ -63,6 +63,23 @@ const BrandingContext = createContext<BrandingContextType>({
   updateBranding: () => {}
 });
 
+export function getChurchSlugFromUrl(): string | null {
+  try {
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    if (!path) return null;
+    const segments = path.split('/');
+    const firstSegment = segments[0]?.toLowerCase();
+    
+    // Ignora rotas do app que não são slugs de igrejas
+    const internalRoutes = ['login', 'signup', 'auth', 'profile', 'bible', 'devotionals', 'events', 'store', 'prayers', 'cells', 'live', 'admin'];
+    if (internalRoutes.includes(firstSegment)) return null;
+    
+    return firstSegment;
+  } catch {
+    return null;
+  }
+}
+
 export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [branding, setBranding] = useState<ChurchBranding>(DEFAULT_BRANDING);
 
@@ -81,6 +98,13 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const loadBranding = async () => {
+    const urlSlug = getChurchSlugFromUrl();
+    const activeSlug = urlSlug || localStorage.getItem('faithhub_active_church_slug') || undefined;
+
+    if (urlSlug) {
+      localStorage.setItem('faithhub_active_church_slug', urlSlug);
+    }
+
     // 1. Carrega do localStorage imediato para não piscar
     const saved = localStorage.getItem('faithhub_church_branding');
     if (saved) {
@@ -96,9 +120,9 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       applyTheme(DEFAULT_BRANDING);
     }
 
-    // 2. Busca do backend a versão mais recente em nuvem
+    // 2. Busca do backend a versão mais recente em nuvem (usando o slug da igreja se presente)
     try {
-      const backendSettings = await fetchChurchSettings();
+      const backendSettings = await fetchChurchSettings(activeSlug);
       if (backendSettings && backendSettings.church_name) {
         const mapped: Partial<ChurchBranding> = {
           church_name: backendSettings.church_name,

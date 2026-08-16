@@ -283,9 +283,10 @@ export async function getUploadPresignedUrl(contentType: string, prefix = 'recei
 // ----------------------------------------------------
 // 7. WHITELABEL / CHURCH SETTINGS
 // ----------------------------------------------------
-export async function fetchChurchSettings() {
+export async function fetchChurchSettings(slug?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/church-settings`);
+    const queryParam = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+    const res = await fetch(`${API_BASE_URL}/church-settings${queryParam}`);
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Church settings fallback to local storage", e);
