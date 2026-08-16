@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrandingProvider } from './context/BrandingContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
 import { TopHeader } from './components/TopHeader';
@@ -8,6 +8,7 @@ import { BottomNav, type ActiveTab } from './components/BottomNav';
 import { CartFloatingButton, CartDrawer } from './components/CartDrawer';
 import { LivePlayerModal } from './components/LivePlayerModal';
 import { NotificationsModal } from './components/NotificationsModal';
+import { AuthGate } from './components/AuthGate';
 
 import { Home } from './pages/Home';
 import { Devotionals } from './pages/Devotionals';
@@ -22,6 +23,7 @@ import { Giving } from './pages/Giving';
 type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 
 const AppContent: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [subView, setSubView] = useState<SubView>('none');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
@@ -47,23 +49,62 @@ const AppContent: React.FC = () => {
     <div className="pwa-app-shell">
       {/* Top Header com suporte a navegação e botão Voltar */}
       <TopHeader 
-        onOpenNotifications={() => setShowNotifications(true)}
+        onOpenNotifications={() => {
+          if (!isAuthenticated) {
+            handleTabChange('profile');
+          } else {
+            setShowNotifications(true);
+          }
+        }}
         onOpenProfile={() => handleTabChange('profile')}
         title={getSubViewTitle(subView)}
         onBack={subView !== 'none' ? () => setSubView('none') : undefined}
       />
 
       {/* Main Content */}
-      <main style={{ flex: 1 }}>
-        {subView === 'prayers' ? (
-          <Prayers onBack={() => setSubView('none')} />
-        ) : subView === 'events' ? (
-          <Events onBack={() => setSubView('none')} />
-        ) : subView === 'bible' ? (
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* SUBVIEWS */}
+        {subView === 'bible' ? (
+          /* Bíblia Sagrada: 100% Livre para qualquer visitante sem login */
           <Bible onBack={() => setSubView('none')} />
+        ) : subView === 'prayers' ? (
+          !isAuthenticated ? (
+            <AuthGate 
+              featureName="Mural de Oração"
+              featureDescription="Para publicar pedidos de oração, interceder pela comunidade e receber apoio pastoral, entre com sua conta."
+              onGoToLogin={() => handleTabChange('profile')}
+              onGoToBible={() => setSubView('bible')}
+              onBack={() => setSubView('none')}
+            />
+          ) : (
+            <Prayers onBack={() => setSubView('none')} />
+          )
+        ) : subView === 'events' ? (
+          !isAuthenticated ? (
+            <AuthGate 
+              featureName="Eventos & Cursos"
+              featureDescription="Para se inscrever em conferências, cursos e emitir seu passaporte com QR Code, entre ou crie seu cadastro grátis."
+              onGoToLogin={() => handleTabChange('profile')}
+              onGoToBible={() => setSubView('bible')}
+              onBack={() => setSubView('none')}
+            />
+          ) : (
+            <Events onBack={() => setSubView('none')} />
+          )
         ) : subView === 'giving' ? (
-          <Giving />
+          !isAuthenticated ? (
+            <AuthGate 
+              featureName="Contribuições & Dízimos"
+              featureDescription="Para semear na obra com segurança e anexar seus comprovantes à tesouraria, faça login na sua conta."
+              onGoToLogin={() => handleTabChange('profile')}
+              onGoToBible={() => setSubView('bible')}
+              onBack={() => setSubView('none')}
+            />
+          ) : (
+            <Giving />
+          )
         ) : (
+          /* ABAS PRINCIPAIS DO BOTTOM NAV */
           <>
             {activeTab === 'home' && (
               <Home 
@@ -75,19 +116,60 @@ const AppContent: React.FC = () => {
                 onOpenGiving={() => setSubView('giving')}
               />
             )}
-            {activeTab === 'devotionals' && <Devotionals />}
-            {activeTab === 'cells' && <CellGroups />}
-            {activeTab === 'store' && <Store />}
+
+            {activeTab === 'devotionals' && (
+              !isAuthenticated ? (
+                <AuthGate 
+                  featureName="Palavra & Devocionais"
+                  featureDescription="Acesse mensagens edificantes diárias e estudos bíblicos preparados pelos pastores da comunidade."
+                  onGoToLogin={() => handleTabChange('profile')}
+                  onGoToBible={() => setSubView('bible')}
+                  onBack={() => handleTabChange('home')}
+                />
+              ) : (
+                <Devotionals />
+              )
+            )}
+
+            {activeTab === 'cells' && (
+              !isAuthenticated ? (
+                <AuthGate 
+                  featureName="Células & Redes"
+                  featureDescription="Conecte-se à sua célula, participe dos murais de avisos, estudos semanais e escalas de partilha."
+                  onGoToLogin={() => handleTabChange('profile')}
+                  onGoToBible={() => setSubView('bible')}
+                  onBack={() => handleTabChange('home')}
+                />
+              ) : (
+                <CellGroups />
+              )
+            )}
+
+            {activeTab === 'store' && (
+              !isAuthenticated ? (
+                <AuthGate 
+                  featureName="Cantina & Loja"
+                  featureDescription="Faça pedidos com retirada expressa no balcão e acompanhe o status de preparo dos seus lanches."
+                  onGoToLogin={() => handleTabChange('profile')}
+                  onGoToBible={() => setSubView('bible')}
+                  onBack={() => handleTabChange('home')}
+                />
+              ) : (
+                <Store />
+              )
+            )}
+
+            {/* Perfil: sempre acessível para permitir login/cadastro/recuperação de senha */}
             {activeTab === 'profile' && <Profile />}
           </>
         )}
       </main>
 
-      {/* Floating Cart Button for Store */}
-      <CartFloatingButton />
+      {/* Floating Cart Button for Store (Somente para usuários autenticados) */}
+      {isAuthenticated && <CartFloatingButton />}
 
       {/* Cart Drawer */}
-      <CartDrawer />
+      {isAuthenticated && <CartDrawer />}
 
       {/* Live Stream Player Modal */}
       <LivePlayerModal isOpen={isLiveOpen} onClose={() => setIsLiveOpen(false)} />
