@@ -209,8 +209,14 @@ export const Giving: React.FC = () => {
             {/* Resumo e Botão Pix */}
             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Você está contribuindo com</span>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#059669', margin: '4px 0 12px 0' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#059669', margin: '4px 0 8px 0' }}>
                 R$ {currentAmount.toFixed(2).replace('.', ',')}
+              </div>
+
+              <div style={{ background: '#ffffff', border: '1px solid var(--panel-border)', borderRadius: '12px', padding: '8px 12px', marginBottom: '12px', fontSize: '0.74rem', color: 'var(--text-secondary)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div>🏛️ <strong>Favorecido:</strong> {branding.church_name}</div>
+                {branding.cnpj && <div>🔑 <strong>Chave Pix (CNPJ):</strong> {branding.cnpj}</div>}
+                <div>📍 <strong>Localização:</strong> {branding.city} - {branding.state}</div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -225,7 +231,7 @@ export const Giving: React.FC = () => {
                 <button 
                   type="button" 
                   className="btn-pwa-secondary"
-                  onClick={() => handleCopyPix()}
+                  onClick={() => handleCopyPix(branding.cnpj ? `cnpj: ${branding.cnpj}` : undefined)}
                 >
                   {isCopied ? '✅ Chave Pix Copiada!' : '📋 Copiar Código Pix Copia e Cola'}
                 </button>

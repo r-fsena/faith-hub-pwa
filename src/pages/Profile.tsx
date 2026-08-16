@@ -254,14 +254,34 @@ export const Profile: React.FC = () => {
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             🏛️ <strong>{branding.church_name}</strong>
           </div>
+          {branding.address && (
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              📍 <strong>Endereço:</strong> {branding.address}, {branding.city} - {branding.state}
+            </div>
+          )}
           {branding.whatsapp && (
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              💬 Secretaria: <strong>{branding.whatsapp}</strong>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              💬 <strong>Secretaria (WhatsApp):</strong> {branding.whatsapp}
+            </div>
+          )}
+          {branding.email && (
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              ✉️ <strong>E-mail:</strong> {branding.email}
             </div>
           )}
           {branding.instagram && (
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              📸 Instagram: <strong>{branding.instagram}</strong>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              📸 <strong>Instagram:</strong> {branding.instagram}
+            </div>
+          )}
+          {branding.youtube && (
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              🎥 <strong>Canal YouTube:</strong> {branding.youtube}
+            </div>
+          )}
+          {branding.website && (
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              🌐 <strong>Site Oficial:</strong> {branding.website}
             </div>
           )}
         </div>
