@@ -334,3 +334,20 @@ export async function prayForRequest(prayerId: string, userId?: string) {
   return null;
 }
 
+// ----------------------------------------------------
+// 9. UNIDADES / CAMPI DA IGREJA
+// ----------------------------------------------------
+export async function fetchCampuses() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/campuses`);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data || [];
+    }
+  } catch (e) {
+    console.log("Fetch campuses fallback", e);
+  }
+  return [];
+}
+
+
