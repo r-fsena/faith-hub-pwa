@@ -65,12 +65,13 @@ const BrandingContext = createContext<BrandingContextType>({
 
 export function getChurchSlugFromUrl(): string | null {
   try {
-    const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    if (!path) return null;
-    const segments = path.split('/');
-    const firstSegment = segments[0]?.toLowerCase();
+    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    if (!rawPath) return null;
+    const decoded = decodeURIComponent(rawPath);
+    const segments = decoded.split('/');
+    const firstSegment = segments[0]?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     
-    // Ignora rotas do app que não são slugs de igrejas
+    // Ignora rotas internas do app que não são slugs de igrejas
     const internalRoutes = ['login', 'signup', 'auth', 'profile', 'bible', 'devotionals', 'events', 'store', 'prayers', 'cells', 'live', 'admin'];
     if (internalRoutes.includes(firstSegment)) return null;
     
