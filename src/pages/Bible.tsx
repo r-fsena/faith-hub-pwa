@@ -246,20 +246,20 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div 
           style={{
             position: 'fixed',
-            bottom: '76px',
+            bottom: 'calc(var(--bottom-nav-height) + var(--safe-bottom) + 12px)',
             left: '50%',
             transform: 'translateX(-50%)',
-            width: 'calc(100% - 32px)',
+            width: 'calc(100% - 28px)',
             maxWidth: '440px',
             background: '#1e293b',
             color: '#ffffff',
             borderRadius: '16px',
-            padding: '12px 16px',
+            padding: '12px 14px',
             boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            zIndex: 100
+            zIndex: 48
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

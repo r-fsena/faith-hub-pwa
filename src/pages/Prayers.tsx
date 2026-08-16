@@ -191,22 +191,24 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       {/* Segmented Filter Categorias */}
-      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
         {['ALL', 'Família', 'Saúde', 'Finanças', 'Espiritual', 'Gratidão'].map(cat => (
           <button
             key={cat}
             type="button"
             onClick={() => setSelectedCategory(cat)}
             style={{
-              padding: '6px 14px',
+              padding: '7px 14px',
               borderRadius: '999px',
-              border: '1px solid var(--panel-border)',
+              border: selectedCategory === cat ? '1px solid var(--accent-primary)' : '1px solid var(--panel-border)',
               background: selectedCategory === cat ? 'var(--accent-primary)' : '#ffffff',
               color: selectedCategory === cat ? '#ffffff' : 'var(--text-main)',
               fontSize: '0.74rem',
               fontWeight: 700,
               cursor: 'pointer',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              minHeight: '34px'
             }}
           >
             {cat === 'ALL' ? 'Todos os Motivos' : cat}

@@ -120,23 +120,23 @@ export const Home: React.FC<HomeProps> = ({
       <InstallPwaBanner />
 
       {/* Saudação Personalizada & Data Atual no Padrão do Web Studio */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 4px' }}>
-        <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 2px', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.25rem' }}>👋</span>
-            <h2 style={{ fontSize: '1.30rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0 }}>
+            <span style={{ fontSize: '1.20rem' }}>👋</span>
+            <h2 style={{ fontSize: 'clamp(1.10rem, 4vw, 1.30rem)', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Olá, {user?.name ? user.name.split(' ')[0] : 'Rfsena'}!
             </h2>
           </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px', textTransform: 'capitalize' }}>
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px', textTransform: 'capitalize' }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
         </div>
 
         {/* Badge de Membro ou Visitante */}
-        <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '6px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+        <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '5px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+          <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
             {user ? 'Membro Ativo' : 'Conectado'}
           </span>
         </div>
@@ -152,7 +152,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="pwa-hero-overlay" />
         <div className="pwa-hero-content">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#93c5fd' }}>
+            <span style={{ fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#93c5fd' }}>
               Comunidade Oficial
             </span>
             {activeBroadcast && (
@@ -161,15 +161,15 @@ export const Home: React.FC<HomeProps> = ({
               </span>
             )}
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 900, marginTop: '2px', lineHeight: 1.2 }}>
+          <h2 style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.35rem)', fontWeight: 900, marginTop: '2px', lineHeight: 1.2 }}>
             {branding.church_name}
           </h2>
-          <p style={{ fontSize: '0.78rem', opacity: 0.9, marginTop: '4px' }}>
+          <p style={{ fontSize: '0.76rem', opacity: 0.9, marginTop: '4px' }}>
             {branding.tagline || 'Conectados pelo mesmo propósito e coração.'}
           </p>
 
-          {/* Botões do Hero */}
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+          {/* Botões do Hero com flex-wrap */}
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={onOpenLive}
@@ -177,19 +177,20 @@ export const Home: React.FC<HomeProps> = ({
                 background: '#ffffff',
                 color: '#0f172a',
                 border: 'none',
-                padding: '8px 14px',
+                padding: '8px 12px',
                 borderRadius: '12px',
                 fontWeight: 800,
-                fontSize: '0.76rem',
+                fontSize: '0.74rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                minHeight: '36px'
               }}
             >
               <span>▶</span>
-              <span>Assistir Culto ao Vivo</span>
+              <span>Assistir Culto</span>
             </button>
 
             <button
@@ -200,11 +201,12 @@ export const Home: React.FC<HomeProps> = ({
                 color: '#ffffff',
                 border: '1px solid rgba(255,255,255,0.4)',
                 backdropFilter: 'blur(8px)',
-                padding: '8px 14px',
+                padding: '8px 12px',
                 borderRadius: '12px',
                 fontWeight: 700,
-                fontSize: '0.76rem',
-                cursor: 'pointer'
+                fontSize: '0.74rem',
+                cursor: 'pointer',
+                minHeight: '36px'
               }}
             >
               👋 Sou Visitante

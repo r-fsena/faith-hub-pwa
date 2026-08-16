@@ -246,7 +246,7 @@ export const CellGroups: React.FC = () => {
           </div>
 
           {/* Abas de Navegação Interna da Célula */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+          <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
             {[
               { id: 'dashboard', label: '📊 Início' },
               { id: 'mural', label: '💬 Mural' },

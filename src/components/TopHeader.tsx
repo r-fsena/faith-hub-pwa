@@ -42,18 +42,30 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             alignItems: 'center',
             gap: '6px',
             cursor: 'pointer',
-            padding: '4px 0'
+            padding: '6px 4px',
+            flexShrink: 0,
+            minHeight: '40px'
           }}
         >
-          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span>
+          <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>‹</span>
           <span>Voltar</span>
         </button>
 
-        <span style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-main)' }}>
+        <span style={{ 
+          fontSize: '0.92rem', 
+          fontWeight: 900, 
+          color: 'var(--text-main)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'center',
+          flex: 1,
+          padding: '0 6px'
+        }}>
           {title || branding.church_name}
         </span>
 
-        <div style={{ width: '48px' }} /> {/* Espaçador para balancear o título ao centro */}
+        <div style={{ width: '56px', flexShrink: 0 }} /> {/* Espaçador para balancear o título ao centro */}
       </header>
     );
   }

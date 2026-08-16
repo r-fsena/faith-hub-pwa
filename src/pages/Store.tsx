@@ -217,7 +217,7 @@ export const Store: React.FC = () => {
       {viewMode === 'catalog' ? (
         <>
           {/* Segmented Filter Bar com Grupos Ordenados */}
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+          <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
             <button
               type="button"
               onClick={() => setSelectedGroup('ALL')}

@@ -182,14 +182,15 @@ export const Giving: React.FC = () => {
                     type="button"
                     onClick={() => { setAmount(val); setCustomAmount(''); }}
                     style={{
-                      padding: '10px 4px',
+                      padding: '8px 2px',
                       borderRadius: '10px',
                       border: amount === val && !customAmount ? '2px solid #059669' : '1px solid var(--panel-border)',
                       background: amount === val && !customAmount ? '#ecfdf5' : '#ffffff',
                       color: amount === val && !customAmount ? '#059669' : 'var(--text-main)',
                       fontWeight: 800,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer'
+                      fontSize: 'clamp(0.70rem, 2.2vw, 0.82rem)',
+                      cursor: 'pointer',
+                      minHeight: '38px'
                     }}
                   >
                     R${val}

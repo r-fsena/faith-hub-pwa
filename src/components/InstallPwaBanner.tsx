@@ -52,10 +52,9 @@ export const InstallPwaBanner: React.FC = () => {
   return (
     <>
       <div className="install-banner-pulsing">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
           {/* Ícone com Halo Pulsante */}
-          <div className="install-icon-pulsing">
+          <div className="install-icon-pulsing" style={{ flexShrink: 0 }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
               <path d="M12 18h.01"/>
@@ -63,24 +62,25 @@ export const InstallPwaBanner: React.FC = () => {
             <span className="install-halo" />
           </div>
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 900, fontSize: '0.88rem', color: '#ffffff', letterSpacing: '-0.2px' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 900, fontSize: 'clamp(0.76rem, 2.6vw, 0.86rem)', color: '#ffffff', letterSpacing: '-0.2px' }}>
                 Instalar Aplicativo Oficial
               </span>
-              <span className="install-badge-live">1-TOQUE</span>
+              <span className="install-badge-live" style={{ fontSize: '0.60rem', padding: '1px 5px' }}>1-TOQUE</span>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.85)', marginTop: '2px' }}>
+            <div style={{ fontSize: 'clamp(0.66rem, 2.2vw, 0.72rem)', color: 'rgba(255,255,255,0.85)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Acesso direto na tela inicial sem ocupar memória
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           <button 
             type="button" 
             onClick={handleInstallClick}
             className="install-cta-btn"
+            style={{ padding: '8px 12px', minHeight: '36px', fontSize: '0.76rem' }}
           >
             Instalar
           </button>
@@ -88,7 +88,7 @@ export const InstallPwaBanner: React.FC = () => {
           <button 
             type="button" 
             onClick={() => setIsDismissed(true)} 
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '1.3rem', padding: '4px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Fechar"
           >
             &times;

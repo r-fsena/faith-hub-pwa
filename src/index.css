@@ -28,9 +28,13 @@
   --shadow-lg: 0 14px 30px rgba(15, 23, 42, 0.12);
   --shadow-nav: 0 -4px 20px rgba(15, 23, 42, 0.06);
 
-  /* Dimensions */
+  /* Dimensions & Safe Areas */
   --header-height: 60px;
   --bottom-nav-height: 68px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -39,29 +43,56 @@
   padding: 0;
   -webkit-tap-highlight-color: transparent;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: #0b0f19;
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: #0b0f19;
-  color: var(--text-main);
-  min-height: 100vh;
   display: flex;
   justify-content: center;
-  overflow-x: hidden;
 }
 
-/* Mobile App Wrapper */
+/* Previne zoom automático indesejado no iOS Safari ao focar em inputs */
+input, select, textarea {
+  font-size: 16px !important;
+  font-family: inherit;
+}
+
+/* Utilitário para esconder scrollbars mantendo a rolagem por toque */
+.no-scrollbar, .hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar, .hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile App Wrapper - Adaptação Fluida de 320px até Tablets */
 .pwa-app-shell {
   width: 100%;
-  max-width: 480px; /* Limits width on desktop/tablet for true smartphone preview */
-  min-height: 100vh;
+  max-width: 480px;
+  min-height: 100dvh;
   background-color: var(--bg-app);
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
   overflow-x: hidden;
-  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 
 /* TOPBAR */
@@ -71,24 +102,29 @@ body {
   z-index: 40;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--panel-border);
-  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px 16px;
+  padding: calc(var(--safe-top) + 10px) 14px 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: calc(var(--header-height) + env(safe-area-inset-top));
+  min-height: calc(var(--header-height) + var(--safe-top));
+  gap: 8px;
 }
 
 .pwa-topbar-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0; /* Permite truncar o texto corretamente */
 }
 
 .pwa-church-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 12px;
   background: var(--accent-primary-gradient);
   color: #ffffff;
   display: flex;
@@ -109,34 +145,41 @@ body {
 .pwa-church-title {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .pwa-church-name {
-  font-size: 0.92rem;
+  font-size: 0.90rem;
   font-weight: 800;
   color: var(--text-main);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 220px;
+  max-width: calc(100vw - 140px);
 }
 
 .pwa-greeting {
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   color: var(--text-muted);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pwa-topbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .icon-btn-pill {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   border-radius: 50%;
   background: #f1f5f9;
   border: 1px solid var(--panel-border);
@@ -146,17 +189,18 @@ body {
   color: var(--text-secondary);
   cursor: pointer;
   position: relative;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.2s ease;
 }
 
 .icon-btn-pill:active {
   transform: scale(0.92);
+  background: #e2e8f0;
 }
 
 .badge-dot {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 9px;
+  right: 9px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -172,16 +216,20 @@ body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  min-height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+  padding-bottom: max(var(--safe-bottom), 8px);
+  padding-top: 6px;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--panel-border);
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 50;
   box-shadow: var(--shadow-nav);
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .nav-tab-item {
@@ -194,10 +242,13 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-radius: 12px;
   transition: all 0.2s ease;
   position: relative;
+  min-width: 54px;
+  min-height: 44px;
+  flex: 1;
 }
 
 .nav-tab-item.active {
@@ -209,14 +260,15 @@ body {
 }
 
 .nav-tab-label {
-  font-size: 0.68rem;
+  font-size: clamp(0.60rem, 2.4vw, 0.72rem);
   font-weight: 700;
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .nav-active-pill {
   position: absolute;
-  bottom: 2px;
+  bottom: 1px;
   width: 16px;
   height: 3px;
   border-radius: 999px;
@@ -226,10 +278,11 @@ body {
 /* MAIN CONTENT CONTAINER */
 .pwa-content {
   flex: 1;
-  padding: 16px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  width: 100%;
 }
 
 /* HERO BANNER */
@@ -244,7 +297,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 20px;
+  padding: 18px 16px;
 }
 
 .pwa-hero-bg {
@@ -259,7 +312,7 @@ body {
 .pwa-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(15, 23, 42, 0.85) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(15, 23, 42, 0.88) 100%);
   z-index: 2;
 }
 
@@ -268,27 +321,30 @@ body {
   z-index: 3;
 }
 
-/* QUICK ACTION GRID (DESIGN SYSTEM) */
+/* QUICK ACTION GRID (DESIGN SYSTEM RESPONSIVO) */
 .quick-action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
 }
 
 .quick-action-btn {
   background: var(--bg-card);
   border: 1px solid var(--panel-border);
-  border-radius: 18px;
-  padding: 12px 6px;
+  border-radius: 16px;
+  padding: 10px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease, border-color 0.15s ease;
   outline: none;
+  min-height: 78px;
+  width: 100%;
 }
 
 .quick-action-btn:active {
@@ -298,9 +354,9 @@ body {
 }
 
 .quick-action-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,11 +368,13 @@ body {
 }
 
 .quick-action-label {
-  font-size: 0.70rem;
+  font-size: clamp(0.60rem, 2.2vw, 0.70rem);
   font-weight: 800;
   color: var(--text-main);
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
+  padding: 0 2px;
+  word-break: break-word;
 }
 
 /* SECTION HEADER */
@@ -324,7 +382,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .section-title {
@@ -341,35 +399,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-}
-
-/* DEVOCIONAL CARD */
-.devotional-card {
-  background: var(--bg-card);
-  border: 1px solid var(--panel-border);
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.devotional-tag {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--accent-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.devotional-verse {
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  border-left: 3px solid var(--accent-primary);
-  padding-left: 10px;
+  padding: 4px 6px;
 }
 
 /* STORE / PDV CARD */
@@ -377,6 +407,7 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  width: 100%;
 }
 
 .product-card {
@@ -408,6 +439,7 @@ body {
   font-weight: 800;
   color: var(--text-main);
   margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .product-price {
@@ -422,9 +454,10 @@ body {
 }
 
 .add-cart-mini-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 10px;
   background: var(--accent-primary-gradient);
   color: #ffffff;
   border: none;
@@ -442,7 +475,7 @@ body {
 /* FLOATING CART BUTTON */
 .floating-cart-btn {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 14px);
   right: 16px;
   background: var(--accent-primary-gradient);
   color: #ffffff;
@@ -477,12 +510,14 @@ body {
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 60;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  overscroll-behavior: contain;
 }
 
 .drawer-container {
@@ -490,14 +525,15 @@ body {
   max-width: 480px;
   background: var(--bg-card);
   border-radius: 28px 28px 0 0;
-  padding: 20px 20px calc(env(safe-area-inset-bottom) + 20px) 20px;
-  max-height: 88vh;
+  padding: 18px 18px calc(var(--safe-bottom) + 18px) 18px;
+  max-height: 90dvh;
   overflow-y: auto;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   gap: 16px;
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-overflow-scrolling: touch;
 }
 
 .drawer-handle {
@@ -506,17 +542,19 @@ body {
   border-radius: 999px;
   background: #cbd5e1;
   margin: 0 auto 6px auto;
+  flex-shrink: 0;
 }
 
 /* BUTTONS */
 .btn-pwa-primary {
   width: 100%;
+  min-height: 48px;
   background: var(--accent-primary-gradient);
   color: #ffffff;
   border: none;
   border-radius: 16px;
-  padding: 14px;
-  font-size: 0.95rem;
+  padding: 12px 16px;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
@@ -533,12 +571,13 @@ body {
 
 .btn-pwa-secondary {
   width: 100%;
+  min-height: 44px;
   background: #f1f5f9;
   color: var(--text-main);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: 12px;
-  font-size: 0.90rem;
+  padding: 12px 14px;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -552,10 +591,6 @@ body {
   transform: scale(0.97);
 }
 
-.quick-card:active {
-  transform: scale(0.95);
-}
-
 /* INPUTS */
 .input-pwa {
   width: 100%;
@@ -564,24 +599,25 @@ body {
   border: 1px solid var(--panel-border);
   background: #ffffff;
   color: var(--text-main);
-  font-size: 0.90rem;
+  font-size: 16px !important;
   font-weight: 600;
   outline: none;
   transition: border-color 0.2s;
+  min-height: 44px;
 }
 
 .input-pwa:focus {
   border-color: var(--accent-primary);
 }
 
-/* INSTALL PWA PROMPT BANNER (PULSING & VIBRANT) */
+/* INSTALL PWA PROMPT BANNER */
 .install-banner-pulsing {
   background: linear-gradient(135deg, #0f172a 0%, #0f766e 60%, #14b8a6 100%);
   background-size: 200% 200%;
   animation: gradientShift 6s ease infinite, bannerPulse 3.5s infinite ease-in-out;
   color: #ffffff;
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -589,100 +625,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
-}
-
-.install-icon-pulsing {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.install-halo {
-  position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  border: 2px solid rgba(20, 184, 166, 0.6);
-  animation: haloRipple 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
-  pointer-events: none;
-}
-
-.install-badge-live {
-  background: #facc15;
-  color: #854d0e;
-  font-size: 0.60rem;
-  font-weight: 900;
-  padding: 2px 6px;
-  border-radius: 6px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.install-cta-btn {
-  background: #ffffff;
-  color: var(--accent-primary);
-  font-weight: 900;
-  font-size: 0.78rem;
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  animation: ctaBreath 2.5s infinite ease-in-out;
-  white-space: nowrap;
-}
-
-.install-cta-btn:active {
-  transform: scale(0.94);
+  gap: 8px;
 }
 
 /* ANIMATIONS */
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes bannerPulse {
-  0%, 100% {
-    box-shadow: 0 6px 20px rgba(15, 118, 110, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-  50% {
-    box-shadow: 0 8px 28px rgba(20, 184, 166, 0.45);
-    border-color: rgba(255, 255, 255, 0.45);
-  }
-}
-
-@keyframes haloRipple {
-  0% {
-    transform: scale(0.9);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.35);
-    opacity: 0;
-  }
-}
-
-@keyframes ctaBreath {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  }
-}
-
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -693,11 +639,102 @@ body {
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes bannerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   ESPECIALIZAÇÃO RESPONSIVA PARA MICRO-TELAS (iPhone SE, Galaxy A0x, Fold <= 360px)
+   ========================================================================== */
+@media (max-width: 360px) {
+  .pwa-content {
+    padding: 12px 10px;
+    gap: 14px;
+  }
+  
+  .pwa-topbar {
+    padding: calc(var(--safe-top) + 8px) 10px 8px 10px;
+  }
+  
+  .pwa-church-avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    font-size: 0.80rem;
+  }
+  
+  .pwa-church-name {
+    font-size: 0.82rem;
+    max-width: 140px;
+  }
+  
+  .quick-action-grid {
+    gap: 6px;
+  }
+  
+  .quick-action-btn {
+    padding: 8px 2px;
+    min-height: 72px;
+  }
+  
+  .quick-action-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .quick-action-label {
+    font-size: 0.60rem;
+  }
+  
+  .nav-tab-item {
+    min-width: 48px;
+    padding: 4px 2px;
+  }
+  
+  .nav-tab-label {
+    font-size: 0.58rem;
+  }
+  
+  .product-grid {
+    gap: 8px;
+  }
+}
+
+/* ==========================================================================
+   ESPECIALIZAÇÃO RESPONSIVA PARA TABLETS E TELAS GRANDES (>= 768px)
+   ========================================================================== */
+@media (min-width: 768px) {
+  body {
+    background: radial-gradient(circle at center, #1e293b 0%, #0b0f19 100%);
+    align-items: center;
+    padding: 20px 0;
+  }
+  
+  .pwa-app-shell {
+    border-radius: 36px;
+    overflow: hidden;
+    min-height: 94dvh;
+    max-height: 96dvh;
+    border: 8px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .pwa-bottom-nav {
+    border-radius: 0 0 28px 28px;
+  }
 }
