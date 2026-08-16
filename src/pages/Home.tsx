@@ -141,7 +141,8 @@ export const Home: React.FC<HomeProps> = ({
       icon: <BibleScriptureIcon size={22} color="#475569" />, 
       bg: 'rgba(71, 85, 105, 0.12)', 
       border: 'rgba(71, 85, 105, 0.25)', 
-      action: onOpenBible 
+      action: onOpenBible,
+      isBible: true
     },
     { 
       label: 'Mural de Oração', 
@@ -158,53 +159,46 @@ export const Home: React.FC<HomeProps> = ({
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
 
-      {/* Saudação Personalizada & Data Atual no Padrão do Web Studio */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 2px', gap: '8px', flexWrap: 'wrap' }}>
+      {/* Saudação Personalizada & Seletor de Unidade */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px', gap: '8px' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.20rem' }}>👋</span>
-            <h2 style={{ fontSize: 'clamp(1.10rem, 4vw, 1.30rem)', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Seja bem-vindo(a)'}!
+            <span style={{ fontSize: '1.25rem' }}>{user ? '👋' : '✨'}</span>
+            <h2 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.30rem)', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a)'}!
             </h2>
           </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px', textTransform: 'capitalize' }}>
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
+            {user ? (currentCampus?.name ? `📍 ${currentCampus.name}` : 'Membro Ativo') : 'Explore nossa comunidade'} • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
           </p>
         </div>
 
-        {/* Seletor de Campus e Badge de Membro */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          {/* Seletor de Campus / Unidade */}
-          <button
-            type="button"
-            onClick={() => setIsCampusDrawerOpen(true)}
-            style={{
-              background: '#ffffff',
-              border: '1px solid var(--panel-border)',
-              padding: '6px 10px',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <span style={{ fontSize: '0.80rem' }}>📍</span>
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-main)', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {currentCampus?.name || 'Sede Principal'}
-            </span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▾</span>
-          </button>
-
-          {/* Badge de Membro ou Visitante */}
-          <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '6px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-            <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-              {user ? 'Membro' : 'Visitante'}
-            </span>
+        {/* Seletor de Congregação / Unidade */}
+        <button
+          type="button"
+          onClick={() => setIsCampusDrawerOpen(true)}
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--panel-border)',
+            padding: '6px 12px',
+            borderRadius: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-sm)',
+            flexShrink: 0
+          }}
+        >
+          <span style={{ fontSize: '0.85rem' }}>🏛️</span>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '0.60rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', lineHeight: 1 }}>Unidade</div>
+            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)', maxWidth: '95px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+              {currentCampus?.name || 'Sede'}
+            </div>
           </div>
-        </div>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▾</span>
+        </button>
       </div>
 
       {/* Hero Banner Inteligente da Igreja */}
@@ -242,7 +236,7 @@ export const Home: React.FC<HomeProps> = ({
                 background: '#ffffff',
                 color: '#0f172a',
                 border: 'none',
-                padding: '8px 12px',
+                padding: '8px 14px',
                 borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '0.74rem',
@@ -258,24 +252,46 @@ export const Home: React.FC<HomeProps> = ({
               <span>Assistir Culto</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsVisitorModalOpen(true)}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.4)',
-                backdropFilter: 'blur(8px)',
-                padding: '8px 12px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.74rem',
-                cursor: 'pointer',
-                minHeight: '36px'
-              }}
-            >
-              👋 Sou Visitante
-            </button>
+            {/* Botão Sou Visitante SOMENTE QUANDO NÃO LOGADO */}
+            {!user ? (
+              <button
+                type="button"
+                onClick={() => setIsVisitorModalOpen(true)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.74rem',
+                  cursor: 'pointer',
+                  minHeight: '36px'
+                }}
+              >
+                👋 Sou Visitante
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenBible}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.74rem',
+                  cursor: 'pointer',
+                  minHeight: '36px'
+                }}
+              >
+                📖 Bíblia Sagrada
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -287,32 +303,39 @@ export const Home: React.FC<HomeProps> = ({
             Serviços & Comunidade
           </h3>
           <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            {branding.church_name}
+            {!user ? 'Acesso Comunitário' : branding.church_name}
           </span>
         </div>
 
         <div className="quick-action-grid">
-          {quickActions.map((action, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={action.action}
-              className="quick-action-btn"
-            >
-              <div
-                className="quick-action-icon"
-                style={{
-                  background: action.bg,
-                  border: `1px solid ${action.border}`
-                }}
+          {quickActions.map((action, idx) => {
+            const isBiblePulse = !user && action.isBible;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={action.action}
+                className={`quick-action-btn ${isBiblePulse ? 'pulse-bible-free' : ''}`}
+                style={{ position: 'relative' }}
               >
-                {action.icon}
-              </div>
-              <span className="quick-action-label">
-                {action.label}
-              </span>
-            </button>
-          ))}
+                {isBiblePulse && (
+                  <span className="free-access-badge">LIVRE</span>
+                )}
+                <div
+                  className="quick-action-icon"
+                  style={{
+                    background: isBiblePulse ? 'rgba(15, 118, 110, 0.15)' : action.bg,
+                    border: `1px solid ${action.border}`
+                  }}
+                >
+                  {action.icon}
+                </div>
+                <span className="quick-action-label" style={{ color: isBiblePulse ? 'var(--accent-primary)' : 'var(--text-main)', fontWeight: isBiblePulse ? 900 : 800 }}>
+                  {action.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
