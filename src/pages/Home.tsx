@@ -3,7 +3,6 @@ import { useBranding } from '../context/BrandingContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { fetchActiveBroadcast, fetchEvents } from '../services/api';
-import { checkPushNotificationSupport, requestPushPermission } from '../services/pushNotifications';
 import { 
   LiveIcon, 
   BookOpenIcon, 
@@ -37,11 +36,9 @@ export const Home: React.FC<HomeProps> = ({
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
-  const [showPushBanner, setShowPushBanner] = useState(false);
 
   useEffect(() => {
     loadHomeData();
-    checkPushStatus();
   }, []);
 
   const loadHomeData = async () => {
@@ -52,20 +49,6 @@ export const Home: React.FC<HomeProps> = ({
     if (events && Array.isArray(events) && events.length > 0) {
       setFeaturedEvent(events[0]);
     }
-  };
-
-  const checkPushStatus = () => {
-    if (checkPushNotificationSupport() && Notification.permission === 'default') {
-      const alreadyDismissed = sessionStorage.getItem('faithhub_push_dismissed');
-      if (!alreadyDismissed) {
-        setShowPushBanner(true);
-      }
-    }
-  };
-
-  const handleEnablePush = async () => {
-    await requestPushPermission();
-    setShowPushBanner(false);
   };
 
   // 8 Serviços & Atalhos com Ícones SVG do Design System
@@ -133,34 +116,6 @@ export const Home: React.FC<HomeProps> = ({
       
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
-
-      {/* Banner Notificações Push Compacto */}
-      {showPushBanner && (
-        <div style={{ background: '#f0fdfa', border: '1.5px solid var(--accent-primary)', borderRadius: '16px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🔔</span>
-            <div style={{ fontSize: '0.76rem', color: 'var(--text-main)', fontWeight: 700 }}>
-              Ativar avisos de transmissões e devocionais?
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <button 
-              type="button" 
-              onClick={handleEnablePush}
-              style={{ background: 'var(--accent-primary)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
-            >
-              Ativar
-            </button>
-            <button 
-              type="button" 
-              onClick={() => { setShowPushBanner(false); sessionStorage.setItem('faithhub_push_dismissed', 'true'); }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.80rem', cursor: 'pointer' }}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Hero Banner Inteligente da Igreja */}
       <div className="pwa-hero-card">

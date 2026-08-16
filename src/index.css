@@ -574,20 +574,115 @@ body {
   border-color: var(--accent-primary);
 }
 
-/* INSTALL PWA PROMPT BANNER */
-.install-banner {
-  background: linear-gradient(135deg, #1e293b 0%, #0f766e 100%);
+/* INSTALL PWA PROMPT BANNER (PULSING & VIBRANT) */
+.install-banner-pulsing {
+  background: linear-gradient(135deg, #0f172a 0%, #0f766e 60%, #14b8a6 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite, bannerPulse 3.5s infinite ease-in-out;
   color: #ffffff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 4px;
+  box-shadow: 0 8px 25px rgba(15, 118, 110, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.install-icon-pulsing {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.install-halo {
+  position: absolute;
+  inset: -4px;
+  border-radius: 16px;
+  border: 2px solid rgba(20, 184, 166, 0.6);
+  animation: haloRipple 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+  pointer-events: none;
+}
+
+.install-badge-live {
+  background: #facc15;
+  color: #854d0e;
+  font-size: 0.60rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.install-cta-btn {
+  background: #ffffff;
+  color: var(--accent-primary);
+  font-weight: 900;
+  font-size: 0.78rem;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: ctaBreath 2.5s infinite ease-in-out;
+  white-space: nowrap;
+}
+
+.install-cta-btn:active {
+  transform: scale(0.94);
 }
 
 /* ANIMATIONS */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes bannerPulse {
+  0%, 100% {
+    box-shadow: 0 6px 20px rgba(15, 118, 110, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 8px 28px rgba(20, 184, 166, 0.45);
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+@keyframes haloRipple {
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+@keyframes ctaBreath {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  }
+}
+
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

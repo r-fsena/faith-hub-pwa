@@ -7,6 +7,7 @@ import { TopHeader } from './components/TopHeader';
 import { BottomNav, type ActiveTab } from './components/BottomNav';
 import { CartFloatingButton, CartDrawer } from './components/CartDrawer';
 import { LivePlayerModal } from './components/LivePlayerModal';
+import { NotificationsModal } from './components/NotificationsModal';
 
 import { Home } from './pages/Home';
 import { Devotionals } from './pages/Devotionals';
@@ -91,35 +92,11 @@ const AppContent: React.FC = () => {
       {/* Live Stream Player Modal */}
       <LivePlayerModal isOpen={isLiveOpen} onClose={() => setIsLiveOpen(false)} />
 
-      {/* Modal de Notificações */}
-      {showNotifications && (
-        <div className="drawer-overlay" onClick={() => setShowNotifications(false)}>
-          <div className="drawer-container" onClick={e => e.stopPropagation()}>
-            <div className="drawer-handle" />
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Avisos & Notificações
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-primary)' }}>HOJE</span>
-                <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>Culto de Quarta às 20h00</div>
-                <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>Participe presencialmente ou assista pelo app.</p>
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669' }}>NOVIDADE</span>
-                <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>Cardápio da Cantina Atualizado</div>
-                <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>Peça seus lanches direto na aba Cantina.</p>
-              </div>
-            </div>
-
-            <button type="button" className="btn-pwa-primary" onClick={() => setShowNotifications(false)}>
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Modal de Notificações & Avisos com Push Integrado */}
+      <NotificationsModal 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onChangeTab={handleTabChange} />

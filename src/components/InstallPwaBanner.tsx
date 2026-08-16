@@ -53,17 +53,27 @@ export const InstallPwaBanner: React.FC = () => {
 
   return (
     <>
-      <div className="install-banner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-            📱
+      <div className="install-banner-pulsing">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          
+          {/* Ícone com Halo Pulsante */}
+          <div className="install-icon-pulsing">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+              <path d="M12 18h.01"/>
+            </svg>
+            <span className="install-halo" />
           </div>
+
           <div>
-            <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>
-              Instale o App {branding.pwa_short_name || 'da Igreja'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: 900, fontSize: '0.88rem', color: '#ffffff', letterSpacing: '-0.2px' }}>
+                Instalar Aplicativo Oficial
+              </span>
+              <span className="install-badge-live">1-TOQUE</span>
             </div>
-            <div style={{ fontSize: '0.70rem', opacity: 0.85 }}>
-              Acesso rápido com 1 toque na tela do celular
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.85)', marginTop: '2px' }}>
+              Acesso direto na tela inicial sem ocupar memória
             </div>
           </div>
         </div>
@@ -72,23 +82,16 @@ export const InstallPwaBanner: React.FC = () => {
           <button 
             type="button" 
             onClick={handleInstallClick}
-            style={{ 
-              background: '#ffffff', 
-              color: 'var(--accent-primary)', 
-              fontWeight: 800, 
-              fontSize: '0.76rem', 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              border: 'none', 
-              cursor: 'pointer' 
-            }}
+            className="install-cta-btn"
           >
             Instalar
           </button>
+          
           <button 
             type="button" 
             onClick={() => setIsDismissed(true)} 
-            style={{ background: 'none', border: 'none', color: '#ffffff', opacity: 0.7, cursor: 'pointer', fontSize: '1rem', padding: '4px' }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Fechar"
           >
             &times;
           </button>
@@ -100,24 +103,24 @@ export const InstallPwaBanner: React.FC = () => {
         <div className="drawer-overlay" onClick={() => setShowIOSModal(false)}>
           <div className="drawer-container" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, textAlign: 'center', color: 'var(--text-main)' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 900, textAlign: 'center', color: 'var(--text-main)' }}>
               Como instalar no seu iPhone
             </h3>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center', margin: 0 }}>
-              Siga os 2 passos rápidos no Safari:
+              Siga os 2 passos rápidos no navegador Safari:
             </p>
 
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '18px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>1</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>1</div>
+                <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
                   Toque no botão de <strong>Compartilhar</strong> (ícone de quadrado com seta para cima no rodapé do Safari).
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>2</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>2</div>
+                <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
                   Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong>.
                 </div>
               </div>
