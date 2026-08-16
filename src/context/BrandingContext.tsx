@@ -127,7 +127,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (backendSettings && backendSettings.church_name) {
         const mapped: Partial<ChurchBranding> = {
           church_name: backendSettings.church_name,
-          tagline: backendSettings.slogan || DEFAULT_BRANDING.tagline,
+          tagline: backendSettings.slogan !== undefined ? (backendSettings.slogan || '') : (backendSettings.tagline || ''),
           cnpj: backendSettings.cnpj || '',
           address: `${backendSettings.address_street || ''} ${backendSettings.address_number || ''}`.trim() || DEFAULT_BRANDING.address,
           city: backendSettings.address_city || DEFAULT_BRANDING.city,

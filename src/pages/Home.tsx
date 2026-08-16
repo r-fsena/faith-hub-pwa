@@ -213,7 +213,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="pwa-hero-content">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#93c5fd' }}>
-              Comunidade Oficial
+              Aplicativo Oficial
             </span>
             {activeBroadcast && (
               <span style={{ background: '#ef4444', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.64rem', fontWeight: 800, animation: 'pulse 2s infinite' }}>
@@ -224,9 +224,11 @@ export const Home: React.FC<HomeProps> = ({
           <h2 style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.35rem)', fontWeight: 900, marginTop: '2px', lineHeight: 1.2 }}>
             {branding.church_name || 'Faith-Hub'}
           </h2>
-          <p style={{ fontSize: '0.76rem', opacity: 0.9, marginTop: '4px' }}>
-            {branding.tagline || 'Conectados pelo mesmo propósito e coração.'}
-          </p>
+          {branding.tagline ? (
+            <p style={{ fontSize: '0.76rem', opacity: 0.9, marginTop: '4px' }}>
+              {branding.tagline}
+            </p>
+          ) : null}
 
           {/* Botões do Hero com flex-wrap */}
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
