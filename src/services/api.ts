@@ -55,11 +55,25 @@ export async function fetchDevotionals() {
 }
 
 // ----------------------------------------------------
+// HELPER: CAMPUS ATIVO NO PWA
+// ----------------------------------------------------
+export function getActiveCampusId(): string {
+  return localStorage.getItem('faithhub_pwa_active_campus_id') || 'campus_sede';
+}
+
+export function setActiveCampusId(campusId: string): void {
+  localStorage.setItem('faithhub_pwa_active_campus_id', campusId);
+  window.dispatchEvent(new CustomEvent('pwa-campus-changed', { detail: { campusId } }));
+}
+
+// ----------------------------------------------------
 // 3. EVENTOS & TICKETS / PASSAPORTES
 // ----------------------------------------------------
-export async function fetchEvents() {
+export async function fetchEvents(campusId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/events`);
+    const activeCampus = campusId || getActiveCampusId();
+    const queryParam = activeCampus && activeCampus !== 'all' ? `?campus_id=${activeCampus}` : '';
+    const res = await fetch(`${API_BASE_URL}/events${queryParam}`);
     if (res.ok) {
       const data = await res.json();
       return data.data || data;
@@ -112,18 +126,20 @@ export async function fetchMyTickets() {
 // ----------------------------------------------------
 // 4. PDV / PRODUTOS E PEDIDOS
 // ----------------------------------------------------
-export async function fetchPdvProducts() {
+export async function fetchPdvProducts(campusId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/pdv/products`, { headers });
+    const activeCampus = campusId || getActiveCampusId();
+    const queryParam = activeCampus && activeCampus !== 'all' ? `?campus_id=${activeCampus}` : '';
+    const res = await fetch(`${API_BASE_URL}/pdv/products${queryParam}`, { headers });
     if (res.ok) {
       const data = await res.json();
-      return data.data || data;
+      return Array.isArray(data) ? data : (data.data || []);
     }
   } catch (e) {
     console.log("Offline/fallback PDV products", e);
   }
-  return null;
+  return [];
 }
 
 export async function createPdvOrder(payload: {

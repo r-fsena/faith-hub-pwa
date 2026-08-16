@@ -3,7 +3,14 @@ import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
-import { fetchActiveBroadcast, fetchEvents, fetchTodayDevotional } from '../services/api';
+import { 
+  fetchActiveBroadcast, 
+  fetchEvents, 
+  fetchTodayDevotional, 
+  fetchCampuses, 
+  getActiveCampusId, 
+  setActiveCampusId 
+} from '../services/api';
 import { 
   LiveIcon, 
   BookOpenIcon, 
@@ -39,23 +46,51 @@ export const Home: React.FC<HomeProps> = ({
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [todayDevotional, setTodayDevotional] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
+  const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
+  const [campuses, setCampuses] = useState<any[]>([]);
+  const [activeCampusId, setActiveCampusIdState] = useState<string>(getActiveCampusId());
 
   useEffect(() => {
     loadHomeData();
+    loadCampuses();
+
+    const handleCampusChanged = (e: any) => {
+      const newCampusId = e.detail?.campusId || getActiveCampusId();
+      setActiveCampusIdState(newCampusId);
+      loadHomeData(newCampusId);
+    };
+
+    window.addEventListener('pwa-campus-changed', handleCampusChanged);
+    return () => window.removeEventListener('pwa-campus-changed', handleCampusChanged);
   }, []);
 
-  const loadHomeData = async () => {
+  const loadCampuses = async () => {
+    const list = await fetchCampuses();
+    setCampuses(list);
+  };
+
+  const loadHomeData = async (campusId?: string) => {
     const broadcast = await fetchActiveBroadcast();
     if (broadcast) setActiveBroadcast(broadcast);
 
     const dev = await fetchTodayDevotional();
     if (dev) setTodayDevotional(dev);
 
-    const events = await fetchEvents();
+    const events = await fetchEvents(campusId);
     if (events && Array.isArray(events) && events.length > 0) {
       setFeaturedEvent(events[0]);
+    } else {
+      setFeaturedEvent(null);
     }
   };
+
+  const handleSelectCampus = (cId: string) => {
+    setActiveCampusId(cId);
+    setActiveCampusIdState(cId);
+    setIsCampusDrawerOpen(false);
+  };
+
+  const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
 
   // 8 Serviços & Atalhos com Ícones SVG do Design System
   const quickActions = [
@@ -137,12 +172,38 @@ export const Home: React.FC<HomeProps> = ({
           </p>
         </div>
 
-        {/* Badge de Membro ou Visitante */}
-        <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '5px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-          <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-            {user ? 'Membro Ativo' : 'Conectado'}
-          </span>
+        {/* Seletor de Campus e Badge de Membro */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {/* Seletor de Campus / Unidade */}
+          <button
+            type="button"
+            onClick={() => setIsCampusDrawerOpen(true)}
+            style={{
+              background: '#ffffff',
+              border: '1px solid var(--panel-border)',
+              padding: '6px 10px',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <span style={{ fontSize: '0.80rem' }}>📍</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-main)', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {currentCampus?.name || 'Sede Principal'}
+            </span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▾</span>
+          </button>
+
+          {/* Badge de Membro ou Visitante */}
+          <div style={{ background: 'var(--accent-primary-light)', border: '1px solid rgba(15, 118, 110, 0.2)', padding: '6px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+            <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+              {user ? 'Membro' : 'Visitante'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -219,40 +280,74 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Grade de Atalhos Rápidos (8 Botões com Ícones SVG do Design System) */}
+      {/* Grid de 8 Serviços Ministeriais em 4 Colunas */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h3 className="section-title" style={{ margin: 0, fontSize: '0.98rem' }}>Serviços & Atalhos</h3>
-          <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Acesso rápido</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '0 2px' }}>
+          <h3 style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Serviços & Comunidade
+          </h3>
+          <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            {branding.church_name}
+          </span>
         </div>
 
-        <div className="quick-action-grid">
-          {quickActions.map((action, i) => (
+        <div className="pwa-services-grid">
+          {quickActions.map((action, idx) => (
             <button
-              key={i}
+              key={idx}
               type="button"
-              className="quick-action-btn"
               onClick={action.action}
+              className="pwa-service-btn"
+              style={{
+                background: '#ffffff',
+                border: '1px solid var(--panel-border)',
+                borderRadius: '18px',
+                padding: '12px 6px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all var(--transition-fast)'
+              }}
             >
-              <div 
-                className="quick-action-icon" 
-                style={{ 
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '14px',
                   background: action.bg,
-                  border: `1px solid ${action.border}`
+                  border: `1px solid ${action.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 {action.icon}
               </div>
-              <span className="quick-action-label">{action.label}</span>
+              <span
+                style={{
+                  fontSize: '0.70rem',
+                  fontWeight: 800,
+                  color: 'var(--text-main)',
+                  textAlign: 'center',
+                  lineHeight: 1.15,
+                  maxWidth: '72px'
+                }}
+              >
+                {action.label}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Carrossel / Cards de Destaque da Semana */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Destaques Ministeriais / Banner de Devocional & Eventos */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         
-        {/* Card Devocional do Dia */}
+        {/* Card Palavra Diária */}
         <div 
           onClick={() => onNavigate('devotionals')}
           style={{
@@ -310,7 +405,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
-                CALENDÁRIO & EVENTOS
+                CALENDÁRIO & EVENTOS ({currentCampus?.name || 'Local'})
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
                 {featuredEvent?.title || 'Eventos & Cursos'}
@@ -331,6 +426,76 @@ export const Home: React.FC<HomeProps> = ({
         isOpen={isVisitorModalOpen} 
         onClose={() => setIsVisitorModalOpen(false)} 
       />
+
+      {/* Drawer de Seleção de Unidade / Campus */}
+      {isCampusDrawerOpen && (
+        <div className="drawer-overlay animate-fade-in" onClick={() => setIsCampusDrawerOpen(false)}>
+          <div className="drawer-container" onClick={e => e.stopPropagation()}>
+            <div className="drawer-handle" />
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <span style={{ fontSize: '1.4rem' }}>🏛️</span>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+                Escolha sua Congregação
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                Selecione o campus onde você congrega ou está visitando hoje.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto' }}>
+              {campuses.map(c => {
+                const isSelected = c.id === activeCampusId;
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => handleSelectCampus(c.id)}
+                    style={{
+                      background: isSelected ? 'var(--accent-primary-light)' : '#ffffff',
+                      border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                      borderRadius: '14px',
+                      padding: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                          {c.name}
+                        </span>
+                        {Boolean(c.is_headquarters) && (
+                          <span style={{ fontSize: '0.62rem', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                            SEDE
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                        {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
+                      </p>
+                      {c.pastor_name && (
+                        <p style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, margin: '2px 0 0 0' }}>
+                          Pastor Local: {c.pastor_name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
+                      background: '#ffffff'
+                    }} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

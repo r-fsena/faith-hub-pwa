@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
+import { fetchCampuses, getActiveCampusId } from '../services/api';
 
 interface VisitorModalProps {
   isOpen: boolean;
@@ -16,8 +17,16 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
   const [invitedBy, setInvitedBy] = useState('');
   const [decisionTrack, setDecisionTrack] = useState<string>('FIRST_TIME');
   const [prayerRequest, setPrayerRequest] = useState('');
+  const [campusId, setCampusId] = useState<string>(getActiveCampusId());
+  const [campuses, setCampuses] = useState<any[]>([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCampuses().then(list => setCampuses(list));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -35,6 +44,7 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
         invited_by: invitedBy.trim() || undefined,
         decision_track: decisionTrack,
         prayer_request: prayerRequest.trim() || undefined,
+        campus_id: campusId,
         date: new Date().toLocaleDateString('pt-BR')
       };
 
@@ -158,6 +168,26 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
                   />
                 </div>
               </div>
+
+              {campuses.length > 0 && (
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                    Qual congregação você visita ou deseja frequentar? *
+                  </label>
+                  <select
+                    className="input-pwa"
+                    value={campusId}
+                    onChange={e => setCampusId(e.target.value)}
+                    style={{ background: '#ffffff', cursor: 'pointer' }}
+                  >
+                    {campuses.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.city ? `(${c.city}/${c.state})` : ''} {Boolean(c.is_headquarters) ? '⭐ Sede' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
