@@ -61,7 +61,11 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
       const roomsRes = await fetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
       if (roomsRes.ok) {
         const json = await roomsRes.json();
-        setRooms(json.data || []);
+        const list = json.data || [];
+        setRooms(list);
+        if (list.length > 0) {
+          setQuickForm(prev => prev.room_id ? prev : { ...prev, room_id: list[0].id });
+        }
       }
 
       // 2. Check-ins Ativos
@@ -102,13 +106,14 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const handlePerformCheckin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const targetRoomId = quickForm.room_id || (rooms.length > 0 ? rooms[0].id : '');
       const payload = {
         child_id: selectedChild?.id || null,
         child_name: quickForm.child_name,
         birthdate: quickForm.birthdate || null,
         allergies: quickForm.allergies || null,
         medical_notes: quickForm.medical_notes || null,
-        room_id: quickForm.room_id,
+        room_id: targetRoomId,
         parent_name: quickForm.parent_name,
         parent_phone: quickForm.parent_phone,
         parent_email: quickForm.parent_email || null,
@@ -125,8 +130,9 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
         body: JSON.stringify(payload)
       });
 
+      const json = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        const json = await res.json();
         setCreatedCheckinSuccess(json.checkin);
         loadData();
         // Reset form
@@ -137,7 +143,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
           birthdate: '',
           allergies: '',
           medical_notes: '',
-          room_id: '',
+          room_id: rooms.length > 0 ? rooms[0].id : '',
           parent_name: '',
           parent_phone: '',
           parent_email: '',
@@ -145,11 +151,11 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
           register_as_member: true
         });
       } else {
-        const err = await res.json();
-        alert(err.message || 'Erro ao realizar check-in');
+        alert(json.message || 'Erro ao realizar check-in');
       }
-    } catch (e) {
-      alert('Erro de conexão ao realizar check-in');
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message || 'Erro de conexão ao realizar check-in');
     }
   };
 
