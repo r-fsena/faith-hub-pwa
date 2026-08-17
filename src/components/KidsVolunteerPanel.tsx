@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { BottomSheet } from './BottomSheet';
+import { KidsBadgeModal } from './KidsBadgeModal';
+import { KidsQrScannerModal } from './KidsQrScannerModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -42,9 +44,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     is_visitor: false,
     register_as_member: true
   });
-  const [createdCheckinSuccess, setCreatedCheckinSuccess] = useState<any | null>(null);
-
-  // Ações de Chamada e Checkout
+  const [createdCheckinSuccess, setCreatedCheckinSuccess] = useState<any | null>(null);  // Ações de Chamada e Checkout
   const [callingCheckin, setCallingCheckin] = useState<any | null>(null);
   const [callReason, setCallReason] = useState('CHORO');
   const [callCustomMsg, setCallCustomMsg] = useState('');
@@ -53,6 +53,10 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const [checkoutTarget, setCheckoutTarget] = useState<any | null>(null);
   const [checkoutPin, setCheckoutPin] = useState('');
   const [checkoutError, setCheckoutError] = useState('');
+
+  // Scanner de Câmera QR Code
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerTarget, setScannerTarget] = useState<any | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -133,7 +137,10 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
       const json = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        setCreatedCheckinSuccess(json.checkin);
+        setCreatedCheckinSuccess({
+          ...json.checkin,
+          church_name: branding.church_name
+        });
         loadData();
         // Reset form
         setSelectedChild(null);
@@ -174,6 +181,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
           message: callCustomMsg || null
         })
       });
+
       if (res.ok) {
         setCallingCheckin(null);
         loadData();
@@ -199,7 +207,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     }
   };
 
-  // Handler: Validar Checkout Seguro
+  // Handler: Validar Checkout Seguro via PIN
   const handlePerformCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!checkoutTarget) return;
@@ -220,11 +228,54 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
         setCheckoutPin('');
         loadData();
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         setCheckoutError(err.message || 'PIN incorreto!');
       }
     } catch (e) {
       setCheckoutError('Erro de conexão ao validar checkout.');
+    }
+  };
+
+  // Handler: Checkout Seguro via Leitura de Câmera QR Code
+  const handleScanSuccessCheckout = async (scannedCode: string) => {
+    setIsScannerOpen(false);
+    const target = scannerTarget;
+    setScannerTarget(null);
+
+    let targetCheckin = target;
+
+    if (!targetCheckin) {
+      targetCheckin = activeCheckins.find(c => 
+        c.security_code.trim().toUpperCase() === scannedCode.trim().toUpperCase() ||
+        scannedCode.includes(c.security_code)
+      );
+    }
+
+    if (!targetCheckin) {
+      alert(`O QR Code "${scannedCode}" não foi encontrado na lista de crianças ativas.`);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/kids/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkin_id: targetCheckin.id,
+          security_code: scannedCode,
+          checked_out_by: user?.name || 'Educador (PWA Mobile)'
+        })
+      });
+
+      if (res.ok) {
+        alert(`✅ Devolução de ${targetCheckin.child_name} liberada com sucesso!`);
+        loadData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Código QR inválido para esta criança.');
+      }
+    } catch (e) {
+      alert('Erro de conexão ao validar devolução.');
     }
   };
 
@@ -305,6 +356,35 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
             ======================================================== */}
         {subTab === 'presence' && (
           <div>
+            {/* Botão Rápido de Scanner Geral de Devolução */}
+            <button
+              type="button"
+              onClick={() => {
+                setScannerTarget(null);
+                setIsScannerOpen(true);
+              }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 14,
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                fontWeight: 900,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                marginBottom: 12,
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)'
+              }}
+            >
+              <span style={{ fontSize: '1.1rem' }}>📸</span>
+              <span>Abrir Câmera para Ler QR Code de Devolução</span>
+            </button>
+
             {/* Filtro de Sala por Carrossel de Pílulas */}
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, marginBottom: 10 }}>
               <button
@@ -314,10 +394,10 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                   background: selectedRoomId === 'all' ? 'var(--accent-primary)' : '#ffffff',
                   color: selectedRoomId === 'all' ? '#ffffff' : 'var(--text-main)',
                   border: '1px solid var(--panel-border)',
-                  borderRadius: 20,
-                  padding: '4px 12px',
-                  fontSize: '0.72rem',
+                  padding: '6px 12px',
+                  borderRadius: 10,
                   fontWeight: 800,
+                  fontSize: '0.72rem',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer'
                 }}
@@ -326,48 +406,57 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
               </button>
               {rooms.map(r => {
                 const count = activeCheckins.filter(c => c.room_id === r.id).length;
-                const isSel = selectedRoomId === r.id;
                 return (
                   <button
                     key={r.id}
                     type="button"
                     onClick={() => setSelectedRoomId(r.id)}
                     style={{
-                      background: isSel ? (r.color || 'var(--accent-primary)') : '#ffffff',
-                      color: isSel ? '#ffffff' : 'var(--text-main)',
+                      background: selectedRoomId === r.id ? (r.color || 'var(--accent-primary)') : '#ffffff',
+                      color: selectedRoomId === r.id ? '#ffffff' : 'var(--text-main)',
                       border: '1px solid var(--panel-border)',
-                      borderRadius: 20,
-                      padding: '4px 12px',
-                      fontSize: '0.72rem',
+                      padding: '6px 12px',
+                      borderRadius: 10,
                       fontWeight: 800,
+                      fontSize: '0.72rem',
                       whiteSpace: 'nowrap',
                       cursor: 'pointer'
                     }}
                   >
-                    {r.icon} {r.name.split(' ')[0]} ({count})
+                    {r.icon} {r.name} ({count})
                   </button>
                 );
               })}
             </div>
 
-            {/* Campo de Busca Rápida */}
+            {/* Search Input */}
             <input
               type="text"
               className="pwa-input"
-              placeholder="🔍 Buscar por criança ou PIN..."
+              placeholder="Buscar por criança, responsável ou PIN..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ marginBottom: 10, fontSize: '0.80rem', padding: '8px 12px' }}
+              style={{ marginBottom: 12, fontSize: '0.78rem' }}
             />
 
-            {filteredCheckins.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
-                Nenhuma criança encontrada nesta sala.
+            {/* Lista de Crianças Presentes */}
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)', fontSize: '0.80rem' }}>
+                Carregando crianças presentes...
+              </div>
+            ) : filteredCheckins.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 30, background: '#ffffff', borderRadius: 14, border: '1px dashed var(--panel-border)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>👶</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)' }}>Nenhuma criança nesta sala</div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Use a aba "Check-in" para registrar a entrada dos pequenos.
+                </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {filteredCheckins.map(c => {
                   const isCalling = c.status === 'CALLING_PARENTS';
+
                   return (
                     <div
                       key={c.id}
@@ -375,7 +464,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                         background: isCalling ? '#fef2f2' : '#ffffff',
                         border: isCalling ? '2px solid #ef4444' : '1px solid var(--panel-border)',
                         borderRadius: 14,
-                        padding: '12px',
+                        padding: '10px 12px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 8
@@ -421,7 +510,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                       )}
 
                       {/* Botões de Ação na Porta da Sala */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, paddingTop: 4 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr', gap: 6, paddingTop: 4 }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -434,9 +523,33 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                             color: isCalling ? '#b91c1c' : '#c2410c',
                             border: '1px solid #fed7aa',
                             borderRadius: 8,
-                            padding: '6px',
+                            padding: '6px 4px',
                             fontWeight: 800,
-                            fontSize: '0.74rem',
+                            fontSize: '0.72rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 3
+                          }}
+                        >
+                          <span>🚨</span> Chamar
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScannerTarget(c);
+                            setIsScannerOpen(true);
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: 8,
+                            padding: '6px 4px',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -444,7 +557,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                             gap: 4
                           }}
                         >
-                          <span>🚨</span> Chamar Pais
+                          <span>📸</span> Ler QR Code
                         </button>
 
                         <button
@@ -459,17 +572,17 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                             color: '#15803d',
                             border: '1px solid #bbf7d0',
                             borderRadius: 8,
-                            padding: '6px',
+                            padding: '6px 4px',
                             fontWeight: 800,
-                            fontSize: '0.74rem',
+                            fontSize: '0.72rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 4
+                            gap: 3
                           }}
                         >
-                          <span>🔐</span> Checkout (PIN)
+                          <span>🔐</span> PIN Manual
                         </button>
                       </div>
                     </div>
@@ -940,6 +1053,24 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
           </form>
         </div>
       )}
+
+      {/* Modal de Crachá Digital com QR Code após Check-in */}
+      <KidsBadgeModal
+        isOpen={!!createdCheckinSuccess}
+        onClose={() => setCreatedCheckinSuccess(null)}
+        badge={createdCheckinSuccess}
+      />
+
+      {/* Modal de Leitura de Câmera QR Code */}
+      <KidsQrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => {
+          setIsScannerOpen(false);
+          setScannerTarget(null);
+        }}
+        onScanSuccess={handleScanSuccessCheckout}
+        childName={scannerTarget?.child_name}
+      />
     </BottomSheet>
   );
 };

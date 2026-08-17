@@ -61,6 +61,8 @@ export const KidsPassCard: React.FC = () => {
     return () => clearInterval(interval);
   }, [user, phoneSearch, branding]);
 
+  const [selectedQrItem, setSelectedQrItem] = useState<any | null>(null);
+
   if (activeCheckins.length === 0) {
     return null; // Não exibe se não houver filhos com check-in ativo hoje
   }
@@ -121,19 +123,29 @@ export const KidsPassCard: React.FC = () => {
                 </div>
               </div>
 
-              {/* PIN do Crachá Digital */}
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid var(--accent-primary)',
-                borderRadius: 10,
-                padding: '4px 10px',
-                textAlign: 'right'
-              }}>
-                <div style={{ fontSize: '0.58rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>PIN de Retirada</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.05em' }}>
-                  {item.security_code}
+              {/* Botão para abrir QR Code & PIN */}
+              <button
+                type="button"
+                onClick={() => setSelectedQrItem(item)}
+                style={{
+                  background: '#f0fdfa',
+                  border: '1.5px solid var(--accent-primary)',
+                  borderRadius: 10,
+                  padding: '5px 10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '1rem' }}>📱</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.56rem', fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>QR Code & PIN</div>
+                  <div style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
+                    {item.security_code}
+                  </div>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Alerta Visual de Chamado */}
@@ -153,13 +165,111 @@ export const KidsPassCard: React.FC = () => {
               </div>
             )}
 
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Entrada: {new Date(item.checkin_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span>Apresente o PIN <strong>{item.security_code}</strong> ao retirar seu filho.</span>
+              <span style={{ color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => setSelectedQrItem(item)}>
+                Toque para ver QR Code ➔
+              </span>
             </div>
           </div>
         );
       })}
+
+      {/* Modal de Exibição do QR Code para os Pais Apresentarem */}
+      {selectedQrItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 999999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 16
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: 24,
+            padding: 24,
+            width: '100%',
+            maxWidth: 340,
+            textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              background: '#f0fdfa',
+              color: 'var(--accent-primary)',
+              border: '1px solid #99f6e4',
+              padding: '4px 14px',
+              borderRadius: 16,
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              marginBottom: 8,
+              textTransform: 'uppercase'
+            }}>
+              🚸 {selectedQrItem.room_name}
+            </div>
+
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+              {selectedQrItem.child_name}
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 16px 0' }}>
+              Apresente esta tela ao educador para retirar seu filho com segurança
+            </p>
+
+            <div style={{
+              background: '#ffffff',
+              border: '2px dashed #cbd5e1',
+              borderRadius: 16,
+              padding: 14,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+              marginBottom: 16
+            }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(selectedQrItem.security_code)}&margin=10`}
+                alt="QR Code de Retirada"
+                style={{ width: 190, height: 190, borderRadius: 8, display: 'block' }}
+              />
+            </div>
+
+            <div style={{
+              background: '#f8fafc',
+              border: '2px solid var(--accent-primary)',
+              borderRadius: 14,
+              padding: '10px 20px',
+              width: '100%',
+              marginBottom: 16
+            }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>PIN de Segurança</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.08em' }}>
+                {selectedQrItem.security_code}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedQrItem(null)}
+              style={{
+                width: '100%',
+                background: 'var(--accent-primary)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px',
+                fontWeight: 900,
+                fontSize: '0.86rem',
+                cursor: 'pointer'
+              }}
+            >
+              Fechar Crachá
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal / Alerta Urgente de Chamada de Pais */}
       {isCallingModalOpen && currentCallingItem && (
