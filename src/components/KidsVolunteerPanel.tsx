@@ -58,8 +58,10 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerTarget, setScannerTarget] = useState<any | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isInitial = false) => {
+    if (isInitial && rooms.length === 0 && activeCheckins.length === 0) {
+      setLoading(true);
+    }
     try {
       // 1. Salas
       const roomsRes = await fetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
@@ -81,7 +83,9 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     } catch (e) {
       console.error("Erro ao carregar dados do kids no PWA:", e);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   };
 
@@ -99,9 +103,11 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
-      loadData();
+      loadData(true);
       loadFamilies();
-      const interval = setInterval(loadData, 8000);
+      const interval = setInterval(() => {
+        loadData(false);
+      }, 8000);
       return () => clearInterval(interval);
     }
   }, [isOpen, orgId]);
@@ -289,7 +295,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="🚸 Painel do Educador Kids (Mobile)">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: '65dvh' }}>
         
         {/* Navigation Tabs Bar */}
         <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
@@ -440,7 +446,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
             />
 
             {/* Lista de Crianças Presentes */}
-            {loading ? (
+            {loading && activeCheckins.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)', fontSize: '0.80rem' }}>
                 Carregando crianças presentes...
               </div>

@@ -55,11 +55,14 @@ export const KidsPassCard: React.FC = () => {
     }
   };
 
+  const userPhone = user?.phone || user?.attributes?.phone_number || '';
+  const orgId = branding.organization_id || branding.id || 'org_default';
+
   useEffect(() => {
     fetchParentStatus();
     const interval = setInterval(fetchParentStatus, 8000); // Polling a cada 8s durante o culto
     return () => clearInterval(interval);
-  }, [user, phoneSearch, branding]);
+  }, [userPhone, phoneSearch, orgId]);
 
   const [selectedQrItem, setSelectedQrItem] = useState<any | null>(null);
 
