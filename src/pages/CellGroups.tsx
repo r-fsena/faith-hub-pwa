@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   fetchCellGroups, 
   fetchCellPosts, 
@@ -14,6 +15,8 @@ import {
   removeCellMember,
   updateCellGroupDetails
 } from '../services/api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
 interface CellGroup {
   id: string;
@@ -83,10 +86,12 @@ type PortalTab = 'dashboard' | 'mural' | 'estudos' | 'lanches' | 'lideranca';
 type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
 
 export const CellGroups: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const [cells, setCells] = useState<CellGroup[]>([]);
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('discover');
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
   const [portalTab, setPortalTab] = useState<PortalTab>('dashboard');
+  const [isCellLeader, setIsCellLeader] = useState(false);
   
   // Discover State
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,19 +126,60 @@ export const CellGroups: React.FC = () => {
 
   useEffect(() => {
     loadAllData();
-  }, []);
+  }, [user, isAuthenticated]);
 
   const loadAllData = async () => {
     const groupList = await fetchCellGroups();
-    if (Array.isArray(groupList) && groupList.length > 0) {
-      setCells(groupList);
-      const savedGroupId = localStorage.getItem('faithhub_my_cell_group_id') || groupList[0].id;
-      setMyGroupId(savedGroupId);
+    const cellsArray = Array.isArray(groupList) ? groupList : [];
+    setCells(cellsArray);
+
+    let assignedGroupId: string | null = null;
+    let userRole = 'Membro';
+
+    if (user?.email) {
+      try {
+        const res = await fetch(`${API_URL}/members?organization_id=org_default`);
+        if (res.ok) {
+          const json = await res.json();
+          const member = (json.data || []).find((m: any) => 
+            m.email?.toLowerCase() === user.email?.toLowerCase() || m.id === user.userId
+          );
+          if (member) {
+            userRole = member.role || 'Membro';
+            if (member.cell_group_id) {
+              assignedGroupId = member.cell_group_id;
+            }
+            if (member.pending_cell_group_id) {
+              setPendingGroupId(member.pending_cell_group_id);
+            }
+          }
+        }
+      } catch (e) {}
+
+      if (!assignedGroupId) {
+        assignedGroupId = localStorage.getItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`);
+      }
+    }
+
+    const matchedGroup = cellsArray.find(c => c.id === assignedGroupId);
+
+    if (matchedGroup) {
+      setMyGroupId(matchedGroup.id);
       setViewMode('portal');
-      loadGroupSpecifics(savedGroupId, groupList);
+
+      const roleUpper = userRole.toUpperCase();
+      const isLeader = Boolean(
+        (matchedGroup.leader_name && user?.name && matchedGroup.leader_name.toLowerCase() === user.name.toLowerCase()) ||
+        (matchedGroup.leader && user?.name && matchedGroup.leader.toLowerCase() === user.name.toLowerCase()) ||
+        ['ADMIN', 'PASTOR', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(roleUpper)
+      );
+      setIsCellLeader(isLeader);
+
+      loadGroupSpecifics(matchedGroup.id, cellsArray);
     } else {
-      setCells([]);
+      setMyGroupId(null);
       setViewMode('discover');
+      setIsCellLeader(false);
     }
   };
 
@@ -326,7 +372,7 @@ export const CellGroups: React.FC = () => {
           </p>
         </div>
 
-        {cells.length > 0 && (
+        {cells.length > 0 && myGroupId && (
           <button 
             type="button" 
             onClick={() => setViewMode(viewMode === 'portal' ? 'discover' : 'portal')}
@@ -372,17 +418,17 @@ export const CellGroups: React.FC = () => {
             </div>
           </div>
 
-          {/* Abas de Navegação Interna da Célula (Incluindo Gestão do Líder) */}
+          {/* Abas de Navegação Interna da Célula (Incluindo Gestão do Líder se for Líder) */}
           <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
             {[
               { id: 'dashboard', label: '📊 Início' },
               { id: 'mural', label: '💬 Mural' },
               { id: 'estudos', label: '📖 Estudos' },
               { id: 'lanches', label: '☕ Partilha' },
-              { 
+              ...(isCellLeader ? [{ 
                 id: 'lideranca', 
                 label: pendingUsers.length > 0 ? `🛡️ Gestão do Líder (${pendingUsers.length})` : '🛡️ Gestão do Líder' 
-              }
+              }] : [])
             ].map(tab => (
               <button
                 key={tab.id}

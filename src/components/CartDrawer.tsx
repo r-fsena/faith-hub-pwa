@@ -5,6 +5,8 @@ import { createPdvOrder } from '../services/api';
 import { CreditCardForm } from './CreditCardForm';
 import { BottomSheet } from './BottomSheet';
 
+import { useAuth } from '../context/AuthContext';
+
 export const CartFloatingButton: React.FC = () => {
   const { totalItemsCount, totalPrice, setIsCartOpen } = useCart();
 
@@ -28,6 +30,7 @@ export const CartFloatingButton: React.FC = () => {
 export const CartDrawer: React.FC = () => {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, clearCart, totalPrice } = useCart();
   const { branding } = useBranding();
+  const { user } = useAuth();
 
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'delivery' | 'payment_method' | 'pix' | 'card' | 'success'>('cart');
   const [deliveryMethod, setDeliveryMethod] = useState<'church' | 'home'>('church');
@@ -93,8 +96,9 @@ export const CartDrawer: React.FC = () => {
       const orderId = orderRes?.id || `ORD-${Date.now().toString().slice(-6)}`;
       setCreatedOrderId(orderId);
 
-      // Salva no histórico local de pedidos
-      const savedOrders = localStorage.getItem('faithhub_my_pdv_orders');
+      // Salva no histórico de pedidos do usuário atual
+      const userKey = user?.email ? `faithhub_my_pdv_orders_${user.email.toLowerCase()}` : 'faithhub_my_pdv_orders_guest';
+      const savedOrders = localStorage.getItem(userKey);
       const orderList = savedOrders ? JSON.parse(savedOrders) : [];
       const newOrderRecord = {
         id: orderId,
@@ -103,9 +107,11 @@ export const CartDrawer: React.FC = () => {
         total: totalPrice,
         items: itemsPayload,
         delivery: deliveryDetailsString,
-        payment: paymentMethod
+        payment: paymentMethod,
+        customer_name: user?.name || user?.email || 'Visitante',
+        customer_email: user?.email || ''
       };
-      localStorage.setItem('faithhub_my_pdv_orders', JSON.stringify([newOrderRecord, ...orderList]));
+      localStorage.setItem(userKey, JSON.stringify([newOrderRecord, ...orderList]));
 
       return orderId;
     } catch (e) {

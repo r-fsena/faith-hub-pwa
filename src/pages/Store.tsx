@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { fetchPdvProducts } from '../services/api';
 
 interface Product {
@@ -13,6 +14,7 @@ interface Product {
 
 export const Store: React.FC = () => {
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
@@ -68,26 +70,16 @@ export const Store: React.FC = () => {
   };
 
   const loadMyOrders = () => {
-    const saved = localStorage.getItem('faithhub_my_pdv_orders');
+    const userEmail = user?.email || localStorage.getItem('faithhub_user_email') || '';
+    const userKey = userEmail ? `faithhub_my_pdv_orders_${userEmail.toLowerCase()}` : 'faithhub_my_pdv_orders_guest';
+    const saved = localStorage.getItem(userKey);
     if (saved) {
       try {
         setMyOrders(JSON.parse(saved));
         return;
       } catch (e) {}
     }
-    setMyOrders([
-      {
-        id: 'ORD-8921',
-        date: 'Hoje',
-        status: 'PRONTO PARA RETIRADA',
-        total: 24.50,
-        items: [
-          { name: 'Coxinha Artesanal com Catupiry', qty: 2, price: 9.50, obs: 'Bem quentinha' },
-          { name: 'Café Expresso', qty: 1, price: 5.50 }
-        ],
-        delivery: 'Retirada no Balcão'
-      }
-    ]);
+    setMyOrders([]);
   };
 
   const filteredProducts = selectedGroup === 'ALL'
