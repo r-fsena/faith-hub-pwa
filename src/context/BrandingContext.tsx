@@ -106,8 +106,10 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       localStorage.setItem('faithhub_active_church_slug', urlSlug);
     }
 
+    const cacheKey = `faithhub_church_branding_${activeSlug || 'default'}`;
+
     // 1. Carrega do localStorage imediato para não piscar
-    const saved = localStorage.getItem('faithhub_church_branding');
+    const saved = localStorage.getItem(cacheKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -121,7 +123,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       applyTheme(DEFAULT_BRANDING);
     }
 
-    // 2. Busca do backend a versão mais recente em nuvem (usando o slug da igreja se presente)
+    // 2. Busca do backend a versão mais recente em nuvem para este slug específico
     try {
       const backendSettings = await fetchChurchSettings(activeSlug);
       if (backendSettings && backendSettings.church_name) {
@@ -148,7 +150,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
         const updated = { ...DEFAULT_BRANDING, ...mapped };
         setBranding(updated);
-        localStorage.setItem('faithhub_church_branding', JSON.stringify(updated));
+        localStorage.setItem(cacheKey, JSON.stringify(updated));
         applyTheme(updated);
       }
     } catch (err) {
