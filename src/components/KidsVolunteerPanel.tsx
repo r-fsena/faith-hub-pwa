@@ -27,11 +27,12 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const [selectedRoomId, setSelectedRoomId] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-
+  
   // Form Check-in Rápido
   const [checkinMode, setCheckinMode] = useState<'MEMBER' | 'VISITOR'>('MEMBER');
   const [selectedFamily, setSelectedFamily] = useState<any | null>(null);
   const [selectedChild, setSelectedChild] = useState<any | null>(null);
+  const [familySearchQuery, setFamilySearchQuery] = useState('');
   const [quickForm, setQuickForm] = useState({
     child_name: '',
     birthdate: '',
@@ -44,7 +45,27 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     is_visitor: false,
     register_as_member: true
   });
-  const [createdCheckinSuccess, setCreatedCheckinSuccess] = useState<any | null>(null);  // Ações de Chamada e Checkout
+  const [createdCheckinSuccess, setCreatedCheckinSuccess] = useState<any | null>(null);
+
+  const calculateAge = (birthdate?: string) => {
+    if (!birthdate) return null;
+    const birth = new Date(birthdate);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const getSuggestedRoomForAge = (age: number | null) => {
+    if (age === null || rooms.length === 0) return rooms[0]?.id || '';
+    const found = rooms.find(r => age >= r.min_age && age <= r.max_age);
+    return found ? found.id : rooms[0]?.id || '';
+  };
+
+  // Ações de Chamada e Checkout
   const [callingCheckin, setCallingCheckin] = useState<any | null>(null);
   const [callReason, setCallReason] = useState('CHORO');
   const [callCustomMsg, setCallCustomMsg] = useState('');
@@ -603,9 +624,9 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
             SUBTAB 2: FAZER CHECK-IN EXPRESSO PELO CELULAR
             ======================================================== */}
         {subTab === 'checkin' && (
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Toggle Membro vs Visitante */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
               <button
                 type="button"
                 onClick={() => {
@@ -614,14 +635,15 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                 }}
                 style={{
                   flex: 1,
-                  background: checkinMode === 'MEMBER' ? 'var(--accent-primary)' : '#f1f5f9',
+                  background: checkinMode === 'MEMBER' ? 'var(--accent-primary)' : 'transparent',
                   color: checkinMode === 'MEMBER' ? '#ffffff' : '#64748b',
                   border: 'none',
                   borderRadius: 8,
-                  padding: '6px 8px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
+                  padding: '10px 12px',
+                  fontSize: '0.82rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 👤 Membro Cadastrado
@@ -632,151 +654,311 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                   setCheckinMode('VISITOR');
                   setSelectedFamily(null);
                   setSelectedChild(null);
-                  setQuickForm(prev => ({ ...prev, is_visitor: true }));
+                  setFamilySearchQuery('');
+                  setQuickForm(prev => ({ ...prev, is_visitor: true, parent_member_id: '' }));
                 }}
                 style={{
                   flex: 1,
-                  background: checkinMode === 'VISITOR' ? 'var(--accent-primary)' : '#f1f5f9',
+                  background: checkinMode === 'VISITOR' ? 'var(--accent-primary)' : 'transparent',
                   color: checkinMode === 'VISITOR' ? '#ffffff' : '#64748b',
                   border: 'none',
                   borderRadius: 8,
-                  padding: '6px 8px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  cursor: 'pointer'
+                  padding: '10px 12px',
+                  fontSize: '0.82rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 👋 Visitante Rápido
               </button>
             </div>
 
+            {/* MODO MEMBRO: Busca Inteligente (Só exibe quando pesquisar) */}
             {checkinMode === 'MEMBER' && (
-              <div style={{ marginBottom: 12 }}>
-                <input
-                  type="text"
-                  className="pwa-input"
-                  placeholder="🔍 Buscar membro / pai..."
-                  onChange={e => loadFamilies(e.target.value)}
-                  style={{ marginBottom: 8, fontSize: '0.78rem' }}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {!selectedFamily ? (
+                  <div>
+                    <label style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, display: 'block' }}>
+                      🔍 1. Buscar Responsável na Base de Membros:
+                    </label>
+                    <input
+                      type="text"
+                      className="pwa-input"
+                      placeholder="Digite o nome, WhatsApp ou e-mail do pai/mãe..."
+                      value={familySearchQuery}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFamilySearchQuery(val);
+                        if (val.trim().length >= 2) {
+                          loadFamilies(val);
+                        }
+                      }}
+                      style={{
+                        padding: '12px 14px',
+                        fontSize: '0.94rem',
+                        minHeight: 48,
+                        borderRadius: 12,
+                        border: '1.5px solid #cbd5e1'
+                      }}
+                    />
 
-                {families.length > 0 && !selectedFamily && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 130, overflowY: 'auto' }}>
-                    {families.slice(0, 4).map(fam => (
-                      <div
-                        key={fam.id}
-                        onClick={() => {
-                          setSelectedFamily(fam);
-                          setSelectedChild(null);
-                          setQuickForm({
-                            ...quickForm,
-                            parent_name: fam.name,
-                            parent_phone: fam.phone || '',
-                            parent_email: fam.email || '',
-                            is_visitor: false
-                          });
-                        }}
-                        style={{
-                          background: '#ffffff',
-                          border: '1px solid var(--panel-border)',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>{fam.name}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 800 }}>
-                          {fam.children.length} filho(s)
+                    {/* Resultados da Busca (Apenas com 2+ caracteres) */}
+                    {familySearchQuery.trim().length >= 2 && (
+                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                        {families.length === 0 ? (
+                          <div style={{ padding: 12, textAlign: 'center', background: '#f8fafc', borderRadius: 10, fontSize: '0.78rem', color: '#64748b' }}>
+                            Nenhum membro encontrado com "{familySearchQuery}".
+                          </div>
+                        ) : (
+                          families.map(fam => (
+                            <div
+                              key={fam.id}
+                              onClick={() => {
+                                setSelectedFamily(fam);
+                                setFamilySearchQuery('');
+                                // Se tiver filhos cadastrados, já auto-seleciona o primeiro filho se houver apenas 1
+                                if (fam.children && fam.children.length === 1) {
+                                  const firstChild = fam.children[0];
+                                  const childAge = calculateAge(firstChild.birthdate);
+                                  setSelectedChild(firstChild);
+                                  setQuickForm({
+                                    child_name: firstChild.name,
+                                    birthdate: firstChild.birthdate || '',
+                                    allergies: firstChild.allergies || '',
+                                    medical_notes: firstChild.medical_notes || '',
+                                    room_id: getSuggestedRoomForAge(childAge),
+                                    parent_name: fam.name,
+                                    parent_phone: fam.phone || '',
+                                    parent_email: fam.email || '',
+                                    is_visitor: false,
+                                    register_as_member: true
+                                  });
+                                } else {
+                                  setSelectedChild(null);
+                                  setQuickForm(prev => ({
+                                    ...prev,
+                                    parent_name: fam.name,
+                                    parent_phone: fam.phone || '',
+                                    parent_email: fam.email || '',
+                                    is_visitor: false
+                                  }));
+                                }
+                              }}
+                              style={{
+                                background: '#ffffff',
+                                border: '1.5px solid #e2e8f0',
+                                borderRadius: 12,
+                                padding: '10px 14px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-primary-gradient)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.90rem' }}>
+                                  {fam.name.charAt(0)}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '0.86rem', fontWeight: 900, color: 'var(--text-main)' }}>{fam.name}</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{fam.phone || fam.email}</div>
+                                </div>
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 800, background: 'var(--accent-primary-light)', padding: '4px 8px', borderRadius: 6 }}>
+                                {fam.children.length} filho(s)
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Card do Responsável Selecionado */
+                  <div style={{ background: '#f0fdfa', border: '1.5px solid #99f6e4', borderRadius: 14, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: '1.2rem' }}>👤</span>
+                        <div>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0f766e' }}>
+                            {selectedFamily.name}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#115e59' }}>
+                            {selectedFamily.phone || selectedFamily.email} • Membro
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {selectedFamily && (
-                  <div style={{ background: '#f8fafc', padding: 8, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        Responsável: {selectedFamily.name}
-                      </span>
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedFamily(null);
                           setSelectedChild(null);
+                          setQuickForm({
+                            child_name: '',
+                            birthdate: '',
+                            allergies: '',
+                            medical_notes: '',
+                            room_id: rooms[0]?.id || '',
+                            parent_name: '',
+                            parent_phone: '',
+                            parent_email: '',
+                            is_visitor: false,
+                            register_as_member: true
+                          });
                         }}
-                        style={{ border: 'none', background: 'transparent', color: '#ef4444', fontSize: '0.68rem', fontWeight: 800, cursor: 'pointer' }}
+                        style={{
+                          background: '#ffffff',
+                          color: '#e11d48',
+                          border: '1px solid #fecdd3',
+                          borderRadius: 8,
+                          padding: '4px 10px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
                       >
-                        Trocar
+                        Trocar Pai/Mãe
                       </button>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {selectedFamily.children.map((ch: any) => (
+                    {/* Seleção dos Filhos Associados com um toque */}
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #99f6e4' }}>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#0f766e', marginBottom: 6 }}>
+                        👶 Selecione o filho para fazer Check-in:
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {selectedFamily.children.map((ch: any) => {
+                          const isChildActive = selectedChild?.id === ch.id;
+                          const childAge = calculateAge(ch.birthdate);
+                          return (
+                            <button
+                              key={ch.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedChild(ch);
+                                setQuickForm({
+                                  ...quickForm,
+                                  child_name: ch.name,
+                                  birthdate: ch.birthdate || '',
+                                  allergies: ch.allergies || '',
+                                  medical_notes: ch.medical_notes || '',
+                                  room_id: getSuggestedRoomForAge(childAge),
+                                  parent_name: selectedFamily.name,
+                                  parent_phone: selectedFamily.phone || '',
+                                  parent_email: selectedFamily.email || '',
+                                  is_visitor: false
+                                });
+                              }}
+                              style={{
+                                background: isChildActive ? 'var(--accent-primary)' : '#ffffff',
+                                color: isChildActive ? '#ffffff' : 'var(--text-main)',
+                                border: isChildActive ? '1.5px solid var(--accent-primary)' : '1px solid #cbd5e1',
+                                borderRadius: 10,
+                                padding: '8px 12px',
+                                fontSize: '0.80rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                              }}
+                            >
+                              <span>👶 {ch.name}</span>
+                              <span style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                                {childAge !== null ? `(${childAge} anos)` : ''}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {/* Opção para cadastrar novo filho */}
                         <button
-                          key={ch.id}
                           type="button"
                           onClick={() => {
-                            setSelectedChild(ch);
+                            setSelectedChild(null);
                             setQuickForm({
-                              ...quickForm,
-                              child_name: ch.name,
-                              birthdate: ch.birthdate || '',
-                              allergies: ch.allergies || '',
-                              medical_notes: ch.medical_notes || '',
+                              child_name: '',
+                              birthdate: '',
+                              allergies: '',
+                              medical_notes: '',
                               room_id: rooms[0]?.id || '',
                               parent_name: selectedFamily.name,
                               parent_phone: selectedFamily.phone || '',
                               parent_email: selectedFamily.email || '',
-                              is_visitor: false
+                              is_visitor: false,
+                              register_as_member: true
                             });
                           }}
                           style={{
-                            background: selectedChild?.id === ch.id ? 'var(--accent-primary)' : '#ffffff',
-                            color: selectedChild?.id === ch.id ? '#ffffff' : 'var(--text-main)',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: 8,
-                            padding: '4px 10px',
-                            fontSize: '0.72rem',
+                            background: '#ffffff',
+                            color: '#0f766e',
+                            border: '1.5px dashed #0f766e',
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            fontSize: '0.78rem',
                             fontWeight: 800,
                             cursor: 'pointer'
                           }}
                         >
-                          👶 {ch.name}
+                          ➕ Outro Filho
                         </button>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             )}
 
-            <form onSubmit={handlePerformCheckin} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* FORMULÁRIO DE DADOS DA CRIANÇA E SALA (Espaçoso e Confortável) */}
+            <form onSubmit={handlePerformCheckin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Nome da Criança */}
               <div>
-                <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)' }}>Nome da Criança *</label>
+                <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                  👶 Nome da Criança *
+                </label>
                 <input
                   type="text"
                   className="pwa-input"
-                  placeholder="Nome completo"
+                  placeholder="Nome completo da criança"
                   value={quickForm.child_name}
                   onChange={e => setQuickForm({ ...quickForm, child_name: e.target.value })}
                   required
+                  style={{
+                    padding: '12px 14px',
+                    fontSize: '0.96rem',
+                    fontWeight: 700,
+                    minHeight: 48,
+                    borderRadius: 12,
+                    border: '1.5px solid #cbd5e1'
+                  }}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {/* Sala e Data de Nascimento */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)' }}>Sala Destino *</label>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                    🏷️ Sala Destino *
+                  </label>
                   <select
                     className="pwa-input"
                     value={quickForm.room_id}
                     onChange={e => setQuickForm({ ...quickForm, room_id: e.target.value })}
                     required
+                    style={{
+                      padding: '12px 14px',
+                      fontSize: '0.90rem',
+                      fontWeight: 800,
+                      minHeight: 48,
+                      borderRadius: 12,
+                      border: '1.5px solid #cbd5e1',
+                      background: '#ffffff'
+                    }}
                   >
-                    <option value="">Selecione</option>
+                    <option value="">Selecione a sala</option>
                     {rooms.map(r => (
                       <option key={r.id} value={r.id}>
                         {r.icon} {r.name}
@@ -786,62 +968,116 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)' }}>Alergias</label>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                    🎂 Data Nasc.
+                  </label>
                   <input
-                    type="text"
+                    type="date"
                     className="pwa-input"
-                    placeholder="Lactose, amendoim..."
-                    value={quickForm.allergies}
-                    onChange={e => setQuickForm({ ...quickForm, allergies: e.target.value })}
+                    value={quickForm.birthdate}
+                    onChange={e => {
+                      const bdate = e.target.value;
+                      const age = calculateAge(bdate);
+                      setQuickForm({
+                        ...quickForm,
+                        birthdate: bdate,
+                        room_id: age !== null ? getSuggestedRoomForAge(age) : quickForm.room_id
+                      });
+                    }}
+                    style={{
+                      padding: '12px 14px',
+                      fontSize: '0.90rem',
+                      minHeight: 48,
+                      borderRadius: 12,
+                      border: '1.5px solid #cbd5e1'
+                    }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {/* Alergias / Cuidados Médicos */}
+              <div>
+                <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                  ⚠️ Alergias ou Observações Médicas
+                </label>
+                <input
+                  type="text"
+                  className="pwa-input"
+                  placeholder="Ex: Alergia a lactose, amendoim, asma..."
+                  value={quickForm.allergies}
+                  onChange={e => setQuickForm({ ...quickForm, allergies: e.target.value })}
+                  style={{
+                    padding: '12px 14px',
+                    fontSize: '0.92rem',
+                    minHeight: 48,
+                    borderRadius: 12,
+                    border: '1.5px solid #cbd5e1'
+                  }}
+                />
+              </div>
+
+              {/* Responsável e WhatsApp */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)' }}>Nome Pai/Mãe *</label>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                    👤 Nome do Responsável *
+                  </label>
                   <input
                     type="text"
                     className="pwa-input"
-                    placeholder="Responsável"
+                    placeholder="Nome do Pai / Mãe"
                     value={quickForm.parent_name}
                     onChange={e => setQuickForm({ ...quickForm, parent_name: e.target.value })}
                     required
+                    style={{
+                      padding: '12px 14px',
+                      fontSize: '0.92rem',
+                      minHeight: 48,
+                      borderRadius: 12,
+                      border: '1.5px solid #cbd5e1'
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)' }}>WhatsApp *</label>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                    📱 WhatsApp dos Pais *
+                  </label>
                   <input
-                    type="text"
+                    type="tel"
                     className="pwa-input"
                     placeholder="(00) 00000-0000"
                     value={quickForm.parent_phone}
                     onChange={e => setQuickForm({ ...quickForm, parent_phone: e.target.value })}
                     required
+                    style={{
+                      padding: '12px 14px',
+                      fontSize: '0.92rem',
+                      minHeight: 48,
+                      borderRadius: 12,
+                      border: '1.5px solid #cbd5e1'
+                    }}
                   />
                 </div>
               </div>
 
+              {/* Botão de Conclusão */}
               <button
                 type="submit"
                 className="pwa-btn-primary"
-                style={{ marginTop: 6, padding: '10px', fontSize: '0.84rem', fontWeight: 900 }}
+                style={{
+                  marginTop: 6,
+                  padding: '14px',
+                  fontSize: '1rem',
+                  fontWeight: 900,
+                  minHeight: 52,
+                  borderRadius: 14,
+                  boxShadow: '0 4px 14px rgba(15, 118, 110, 0.3)'
+                }}
               >
-                ✓ Concluir Check-in & Gerar PIN
+                ✓ Concluir Check-in & Gerar Crachá (PIN)
               </button>
             </form>
-
-            {createdCheckinSuccess && (
-              <div style={{ marginTop: 12, padding: 12, background: '#ecfdf5', border: '1.5px dashed #059669', borderRadius: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800 }}>CHECK-IN REALIZADO!</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', marginTop: 2 }}>{createdCheckinSuccess.child_name}</div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', letterSpacing: '0.08em', margin: '4px 0' }}>
-                  {createdCheckinSuccess.security_code}
-                </div>
-                <div style={{ fontSize: '0.70rem', color: '#065f46' }}>Informe este PIN ao responsável.</div>
-              </div>
-            )}
           </div>
         )}
 
