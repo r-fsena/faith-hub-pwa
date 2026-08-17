@@ -29,6 +29,8 @@ const AuthContext = createContext<AuthContextType>({
   checkAuth: async () => {}
 });
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<MemberUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,17 +60,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentUser = await getCurrentUser();
       if (currentUser) {
         let name = '';
+        let attrs: any = {};
         try {
-          const attrs = await fetchUserAttributes();
+          attrs = await fetchUserAttributes();
           name = attrs.name || attrs.given_name || '';
         } catch (e) {}
 
+        const email = currentUser.signInDetails?.loginId || attrs.email || '';
+
         setUser({
           userId: currentUser.userId,
-          email: currentUser.signInDetails?.loginId || '',
+          email,
           name: name || currentUser.username
         });
         setIsAuthenticated(true);
+
+        // Auto-sincronização automática com a tabela de membros do MySQL
+        if (email) {
+          fetch(`${API_URL}/members/self-register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: currentUser.userId,
+              email,
+              name: name || currentUser.username,
+              phone: attrs.phone_number || undefined,
+              birthdate: attrs.birthdate || undefined
+            })
+          }).catch(() => {});
+        }
       } else {
         setUser(null);
         setIsAuthenticated(false);

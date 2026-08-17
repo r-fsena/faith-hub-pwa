@@ -314,6 +314,19 @@ export const Profile: React.FC = () => {
         username: email.trim(),
         confirmationCode: confirmationCode.trim()
       });
+
+      // Sincroniza imediatamente com o banco MySQL
+      fetch(`${API_URL}/members/self-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          name: name.trim() || email.split('@')[0],
+          phone: phone ? (phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`) : undefined,
+          birthdate: birthDate || undefined
+        })
+      }).catch(() => {});
+
       alert('Conta confirmada com sucesso! Faça seu login.');
       setAuthMode('login');
     } catch (err: any) {
