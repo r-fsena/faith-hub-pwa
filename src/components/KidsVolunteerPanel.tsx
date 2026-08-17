@@ -268,14 +268,14 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
       });
 
       if (res.ok) {
-        alert(`✅ Devolução de ${targetCheckin.child_name} liberada com sucesso!`);
+        alert(`✅ Checkout de ${targetCheckin.child_name} realizado com sucesso!`);
         loadData();
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.message || 'Código QR inválido para esta criança.');
       }
     } catch (e) {
-      alert('Erro de conexão ao validar devolução.');
+      alert('Erro de conexão ao realizar checkout.');
     }
   };
 
@@ -382,7 +382,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
               }}
             >
               <span style={{ fontSize: '1.1rem' }}>📸</span>
-              <span>Abrir Câmera para Ler QR Code de Devolução</span>
+              <span>Realizar Checkout (Ler QR Code)</span>
             </button>
 
             {/* Filtro de Sala por Carrossel de Pílulas */}

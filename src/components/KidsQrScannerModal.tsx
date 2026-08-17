@@ -150,7 +150,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
             <div>
               <div style={{ fontSize: '0.96rem', fontWeight: 900 }}>Escanear QR Code</div>
               <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
-                {childName ? `Devolução de ${childName}` : 'Validação de Checkout'}
+                {childName ? `Checkout de ${childName}` : 'Realizar Checkout Seguro'}
               </div>
             </div>
           </div>
