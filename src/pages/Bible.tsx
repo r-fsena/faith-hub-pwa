@@ -23,11 +23,13 @@ const HIGHLIGHT_COLORS = [
   { name: 'Rosa', hex: '#fbcfe8' }
 ];
 
+const bibleMemoryCache: Record<string, BibleBook[]> = {};
+
 export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   // Estado dos Dados
-  const [bibleData, setBibleData] = useState<BibleBook[]>([]);
   const [version, setVersion] = useState<BibleVersion>('nvi');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [bibleData, setBibleData] = useState<BibleBook[]>(() => bibleMemoryCache['nvi'] || []);
+  const [loading, setLoading] = useState<boolean>(() => !bibleMemoryCache['nvi'] || bibleMemoryCache['nvi'].length === 0);
 
   // Navegação
   const [selectedBookIndex, setSelectedBookIndex] = useState<number>(42); // 42 = João
@@ -61,17 +63,24 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }, []);
 
   const loadBible = async (ver: BibleVersion) => {
+    if (bibleMemoryCache[ver] && bibleMemoryCache[ver].length > 0) {
+      setBibleData(bibleMemoryCache[ver]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // Tenta buscar do JSON estático local
       const res = await fetch(`/bible/${ver}.json`);
       if (res.ok) {
         const data = await res.json();
+        bibleMemoryCache[ver] = data;
         setBibleData(data);
       } else {
         // Fallback para CDN do GitHub
         const fallbackRes = await fetch(`https://raw.githubusercontent.com/thiagobodruk/bible/master/json/pt_${ver}.json`);
         const fallbackData = await fallbackRes.json();
+        bibleMemoryCache[ver] = fallbackData;
         setBibleData(fallbackData);
       }
     } catch (err) {

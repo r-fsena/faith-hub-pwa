@@ -34,6 +34,7 @@ interface MyTicket {
 
 export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [events, setEvents] = useState<ChurchEvent[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [viewTab, setViewTab] = useState<'events' | 'my_tickets'>('events');
   const [myTickets, setMyTickets] = useState<MyTicket[]>([]);
 
@@ -56,9 +57,39 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }, []);
 
   const loadEventsFromBackend = async () => {
-    const data = await fetchEvents();
-    if (data && Array.isArray(data) && data.length > 0) {
-      setEvents(data);
+    setLoading(true);
+    try {
+      const data = await fetchEvents();
+      if (Array.isArray(data)) {
+        const mapped: ChurchEvent[] = data.map((ev: any) => {
+          const startDate = ev.start_date ? new Date(ev.start_date) : null;
+          const dateFormatted = ev.date_formatted || (startDate ? startDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase() : 'Em breve');
+          const timeFormatted = ev.time || (startDate ? startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '19:30');
+          const numPrice = Number(ev.price) || 0;
+          const coverUrl = ev.cover_url || ev.image_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800';
+          const category = ev.category || (ev.type === 1 ? 'Curso & Capacitação' : 'Conferência / Culto');
+
+          return {
+            id: ev.id,
+            title: ev.title || 'Evento Especial',
+            description: ev.description || '',
+            category,
+            date_formatted: dateFormatted,
+            time: timeFormatted,
+            location: ev.location || 'Templo Principal',
+            price: numPrice,
+            cover_url: coverUrl,
+            batches: Array.isArray(ev.batches) && ev.batches.length > 0 ? ev.batches : [
+              { id: 'b1', name: 'Lote Geral', price: numPrice, available: true }
+            ]
+          };
+        });
+        setEvents(mapped);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar eventos:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -176,7 +207,18 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           MODO 1: LISTA DE EVENTOS
           ======================================================== */}
       {viewTab === 'events' ? (
-        events.length === 0 ? (
+        loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '60vh' }}>
+            {[1, 2].map(n => (
+              <div key={n} style={{ background: '#ffffff', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--panel-border)', padding: '16px' }}>
+                <div style={{ height: '120px', background: '#f1f5f9', borderRadius: '14px', marginBottom: '12px' }} />
+                <div style={{ height: '16px', background: '#f1f5f9', borderRadius: '6px', width: '40%', marginBottom: '8px' }} />
+                <div style={{ height: '22px', background: '#f1f5f9', borderRadius: '6px', width: '80%', marginBottom: '10px' }} />
+                <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '60%' }} />
+              </div>
+            ))}
+          </div>
+        ) : events.length === 0 ? (
           <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🗓️</div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>

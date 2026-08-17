@@ -15,17 +15,38 @@ interface DevotionalItem {
 }
 
 export const Devotionals: React.FC = () => {
-  const [devotionals, setDevotionals] = useState<DevotionalItem[]>([]);
-  const [selectedDevotional, setSelectedDevotional] = useState<DevotionalItem | null>(null);
+  const [devotionals, setDevotionals] = useState<DevotionalItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('faithhub_cached_devotionals');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedDevotional, setSelectedDevotional] = useState<DevotionalItem | null>(() => {
+    try {
+      const saved = localStorage.getItem('faithhub_cached_devotionals');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return parsed[0] || null;
+    } catch {
+      return null;
+    }
+  });
   const [liked, setLiked] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('faithhub_cached_devotionals');
+      return !saved || JSON.parse(saved).length === 0;
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    setLoading(true);
     try {
       const today = await fetchTodayDevotional();
       const list = await fetchDevotionals();
@@ -59,9 +80,10 @@ export const Devotionals: React.FC = () => {
         });
       }
 
-      setDevotionals(allDevs);
       if (allDevs.length > 0) {
-        setSelectedDevotional(allDevs[0]);
+        setDevotionals(allDevs);
+        localStorage.setItem('faithhub_cached_devotionals', JSON.stringify(allDevs));
+        setSelectedDevotional(prev => prev ? (allDevs.find(d => d.id === prev.id) || allDevs[0]) : allDevs[0]);
       }
     } catch (e) {
       console.log('Erro carregando devocionais', e);
@@ -71,7 +93,7 @@ export const Devotionals: React.FC = () => {
   };
 
   return (
-    <div className="pwa-content animate-fade-in">
+    <div className="pwa-content animate-fade-in" style={{ minHeight: '80vh' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -81,9 +103,16 @@ export const Devotionals: React.FC = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ background: '#ffffff', borderRadius: '20px', padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.86rem' }}>
-          Carregando mensagens...
+      {loading && devotionals.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '65vh' }}>
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '30%', marginBottom: '14px' }} />
+            <div style={{ height: '24px', background: '#f1f5f9', borderRadius: '8px', width: '85%', marginBottom: '16px' }} />
+            <div style={{ height: '70px', background: '#f8fafc', borderRadius: '12px', marginBottom: '16px' }} />
+            <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '100%', marginBottom: '8px' }} />
+            <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '90%', marginBottom: '8px' }} />
+            <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '75%' }} />
+          </div>
         </div>
       ) : devotionals.length === 0 ? (
         /* Empty State */
