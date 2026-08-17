@@ -32,6 +32,22 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const EyeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const EyeOffIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+    <line x1="2" y1="2" x2="22" y2="22" />
+  </svg>
+);
+
 export const Profile: React.FC = () => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
@@ -41,6 +57,8 @@ export const Profile: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -1021,22 +1039,43 @@ export const Profile: React.FC = () => {
                   Esqueci minha senha
                 </button>
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  background: '#f8fafc',
-                  border: '1.5px solid var(--panel-border)',
-                  fontSize: '0.88rem',
-                  outline: 'none'
-                }}
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '12px 42px 12px 14px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.88rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px'
+                  }}
+                  title={showPassword ? "Ocultar senha" : "Ver senha"}
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -1142,14 +1181,35 @@ export const Profile: React.FC = () => {
               <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
                 Senha de Acesso (min. 8 caracteres) *
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px'
+                  }}
+                  title={showPassword ? "Ocultar senha" : "Ver senha"}
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
             </div>
 
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.74rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -1230,14 +1290,35 @@ export const Profile: React.FC = () => {
               placeholder="Código de 6 dígitos recebido"
               style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
             />
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              required
-              placeholder="Nova senha (mínimo 8 caracteres)"
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                placeholder="Nova senha (mínimo 8 caracteres)"
+                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px'
+                }}
+                title={showNewPassword ? "Ocultar senha" : "Ver senha"}
+              >
+                {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
             <button type="submit" className="btn-pwa-primary" disabled={loading} style={{ width: '100%', padding: '12px' }}>
               {loading ? 'Alterando...' : 'Salvar Nova Senha'}
             </button>
@@ -1256,14 +1337,35 @@ export const Profile: React.FC = () => {
                 Este é seu primeiro acesso através de convite. Crie sua senha definitiva.
               </p>
             </div>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              required
-              placeholder="Nova senha definitiva"
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                placeholder="Nova senha definitiva"
+                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px'
+                }}
+                title={showNewPassword ? "Ocultar senha" : "Ver senha"}
+              >
+                {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
             <button type="submit" className="btn-pwa-primary" disabled={loading} style={{ width: '100%', padding: '12px' }}>
               {loading ? 'Definindo...' : 'Definir Senha e Entrar'}
             </button>
