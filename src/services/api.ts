@@ -266,6 +266,90 @@ export async function togglePartilhaItem(id: string) {
   return true;
 }
 
+export async function fetchCellGroupDetails(groupId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}`, { headers });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Fetch cell details fallback", e);
+  }
+  return null;
+}
+
+export async function evaluateCellJoinRequest(groupId: string, memberId: string, approved: boolean) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}/evaluate-request`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ memberId, approved })
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Evaluate request error", e);
+    return false;
+  }
+}
+
+export async function createPartilhaItem(payload: { cell_group_id: string; item_name: string; event_date: string; quantity?: string; user_name?: string }) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/partilhas`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Create partilha error", e);
+  }
+  return null;
+}
+
+export async function deletePartilhaItem(id: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/partilhas/${id}`, {
+      method: 'DELETE',
+      headers
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Delete partilha error", e);
+    return false;
+  }
+}
+
+export async function removeCellMember(groupId: string, memberId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Remove member error", e);
+    return false;
+  }
+}
+
+export async function updateCellGroupDetails(payload: any) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Update cell error", e);
+    return false;
+  }
+}
+
 // ----------------------------------------------------
 // 6. UPLOADS S3
 // ----------------------------------------------------
