@@ -1299,7 +1299,27 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
       {/* Modal de Crachá Digital com QR Code após Check-in */}
       <KidsBadgeModal
         isOpen={!!createdCheckinSuccess}
-        onClose={() => setCreatedCheckinSuccess(null)}
+        onClose={() => {
+          setCreatedCheckinSuccess(null);
+          setSubTab('rooms'); // Retorna para a tela inicial das salas
+        }}
+        onNewCheckin={() => {
+          setCreatedCheckinSuccess(null);
+          setSelectedChild(null);
+          setFamilySearchQuery('');
+          setQuickForm({
+            child_name: '',
+            birthdate: '',
+            allergies: '',
+            medical_notes: '',
+            room_id: rooms.length > 0 ? rooms[0].id : '',
+            parent_name: selectedFamily ? selectedFamily.name : '',
+            parent_phone: selectedFamily ? (selectedFamily.phone || '') : '',
+            parent_email: selectedFamily ? (selectedFamily.email || '') : '',
+            is_visitor: checkinMode === 'VISITOR',
+            register_as_member: true
+          });
+        }}
         badge={createdCheckinSuccess}
       />
 
