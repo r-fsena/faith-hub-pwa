@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { BottomSheet } from '../components/BottomSheet';
+import { KidsPassCard } from '../components/KidsPassCard';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -298,6 +299,9 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Meus Filhos no Kids / Chamador de Pais em Tempo Real */}
+      <KidsPassCard />
 
       {/* Grid de 8 Serviços Ministeriais em 4 Colunas */}
       <div>
