@@ -4,6 +4,7 @@ import { useBranding } from '../context/BrandingContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
+import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -66,6 +67,7 @@ export const Profile: React.FC = () => {
 
   // Modais de Edição
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(true);
@@ -558,6 +560,55 @@ export const Profile: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Card Área do Educador / Voluntário Kids */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
+          borderRadius: '20px',
+          padding: '18px',
+          color: '#ffffff',
+          boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.05em' }}>
+              Operações Ministeriais
+            </div>
+            <div style={{ fontSize: '1.02rem', fontWeight: 900, marginTop: '2px' }}>
+              🚸 Sala Kids & Educadores
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#ccfbf1', marginTop: '2px' }}>
+              Check-in, chamador de pais e PIN no celular
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsKidsVolunteerOpen(true)}
+            style={{
+              background: '#ffffff',
+              color: '#0f766e',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '8px 14px',
+              fontWeight: 900,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Abrir Painel
+          </button>
+        </div>
+
+        {/* Modal / Painel do Educador Kids */}
+        <KidsVolunteerPanel 
+          isOpen={isKidsVolunteerOpen} 
+          onClose={() => setIsKidsVolunteerOpen(false)} 
+        />
 
         {/* Configuração de Privacidade & LGPD */}
         <div style={{

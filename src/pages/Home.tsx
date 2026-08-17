@@ -5,6 +5,7 @@ import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsPassCard } from '../components/KidsPassCard';
+import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -49,6 +50,7 @@ export const Home: React.FC<HomeProps> = ({
   const [todayDevotional, setTodayDevotional] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
   const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
+  const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
   const [activeCampusId, setActiveCampusIdState] = useState<string>(getActiveCampusId());
 
@@ -497,6 +499,12 @@ export const Home: React.FC<HomeProps> = ({
           })}
         </div>
       </BottomSheet>
+
+      {/* Painel do Educador / Voluntário Kids Mobile */}
+      <KidsVolunteerPanel 
+        isOpen={isKidsVolunteerOpen} 
+        onClose={() => setIsKidsVolunteerOpen(false)} 
+      />
 
     </div>
   );
