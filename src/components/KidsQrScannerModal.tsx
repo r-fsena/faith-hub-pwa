@@ -28,7 +28,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
       setCameraError(null);
       setIsScanning(true);
 
-      // Pequeno timeout para garantir que o elemento DOM esteja renderizado
+      // Timeout para garantir que o container no DOM esteja pronto
       const timer = setTimeout(async () => {
         try {
           const html5QrCode = new Html5Qrcode(scannerContainerId);
@@ -45,7 +45,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
             config,
             (decodedText) => {
               if (mounted) {
-                // Toca som de beep
+                // Audio Beep
                 try {
                   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
                   const osc = ctx.createOscillator();
@@ -59,19 +59,19 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
                   osc.stop(ctx.currentTime + 0.15);
                 } catch (e) {}
 
-                // Vibração
+                // Haptic Feedback
                 if (navigator.vibrate) {
                   navigator.vibrate([100, 50, 100]);
                 }
 
-                // Para a câmera
+                // Stop camera and complete
                 html5QrCode.stop().catch(() => {}).finally(() => {
                   onScanSuccess(decodedText.trim());
                 });
               }
             },
             () => {
-              // Frame sem QR code lido (ignora)
+              // Frame ignorado
             }
           );
         } catch (err: any) {
@@ -107,51 +107,33 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(15, 23, 42, 0.85)',
-      backdropFilter: 'blur(8px)',
-      zIndex: 9999999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16
-    }}>
-      <div 
-        className="animate-scale-up"
-        style={{
-          background: '#ffffff',
-          borderRadius: 24,
-          maxWidth: 380,
-          width: '100%',
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          color: '#ffffff',
-          padding: '16px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '92dvh' }}>
+        <div className="drawer-handle" />
+
+        {/* Top Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.15)', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: 'var(--accent-primary-light)',
+              color: 'var(--accent-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.2rem'
+            }}>
               📸
             </div>
             <div>
-              <div style={{ fontSize: '0.96rem', fontWeight: 900 }}>Escanear QR Code</div>
-              <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
-                {childName ? `Checkout de ${childName}` : 'Realizar Checkout Seguro'}
-              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Realizar Checkout
+              </h3>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                {childName ? `Liberando devolução de ${childName}` : 'Escanear QR Code ou digitar PIN'}
+              </p>
             </div>
           </div>
 
@@ -159,18 +141,18 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
             type="button"
             onClick={onClose}
             style={{
-              background: 'rgba(255, 255, 255, 0.15)',
+              background: '#f1f5f9',
               border: 'none',
-              color: '#ffffff',
-              width: 28,
-              height: 28,
+              width: 32,
+              height: 32,
               borderRadius: '50%',
+              color: 'var(--text-muted)',
+              fontSize: '1rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: '0.8rem'
+              fontWeight: 700
             }}
           >
             ✕
@@ -178,20 +160,21 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
         </div>
 
         {/* Camera Viewfinder Area */}
-        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           
           <div style={{
             position: 'relative',
             width: '100%',
             maxWidth: 280,
-            height: 280,
+            height: 250,
             background: '#0f172a',
             borderRadius: 20,
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)'
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
+            border: '1.5px solid var(--panel-border)'
           }}>
             {/* Elemento onde a biblioteca injeta o vídeo */}
             <div id={scannerContainerId} style={{ width: '100%', height: '100%' }} />
@@ -203,9 +186,9 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: 190,
-                height: 190,
-                border: '2px solid rgba(255, 255, 255, 0.6)',
+                width: 170,
+                height: 170,
+                border: '2px solid rgba(255, 255, 255, 0.7)',
                 borderRadius: 16,
                 boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.35)',
                 pointerEvents: 'none',
@@ -216,37 +199,37 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
                 <div style={{
                   width: '90%',
                   height: '2px',
-                  background: 'linear-gradient(90deg, transparent, #22d3ee, transparent)',
-                  boxShadow: '0 0 8px #22d3ee',
+                  background: 'linear-gradient(90deg, transparent, var(--accent-primary, #0f766e), transparent)',
+                  boxShadow: '0 0 8px var(--accent-primary, #0f766e)',
                   animation: 'scanLine 2s infinite ease-in-out'
                 }} />
               </div>
             )}
 
             {cameraError && (
-              <div style={{ padding: 20, textAlign: 'center', color: '#cbd5e1', fontSize: '0.78rem', zIndex: 10 }}>
-                <div style={{ fontSize: '2rem', marginBottom: 8 }}>📷❌</div>
+              <div style={{ padding: 16, textAlign: 'center', color: '#cbd5e1', fontSize: '0.78rem', zIndex: 10 }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: 6 }}>📷❌</div>
                 <div>{cameraError}</div>
               </div>
             )}
           </div>
 
-          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 10, textAlign: 'center' }}>
-            Aponte a câmera para o QR Code no celular dos pais
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
+            Aponte a câmera para o QR Code no celular do responsável
           </div>
 
-          {/* Divisor "OU" */}
+          {/* Divisor "OU DIGITE O PIN" */}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', margin: '14px 0 10px 0', gap: 10 }}>
-            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Ou digite o PIN</span>
-            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ou digite o PIN</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
           </div>
 
           {/* Digitação Manual do PIN */}
           <form onSubmit={handleManualSubmit} style={{ width: '100%', display: 'flex', gap: 8 }}>
             <input
               type="text"
-              className="pwa-input"
+              className="input-pwa"
               placeholder="Ex: K-5966 ou 5966"
               value={manualPin}
               onChange={e => setManualPin(e.target.value)}
@@ -254,23 +237,19 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
                 flex: 1,
                 textAlign: 'center',
                 fontWeight: 900,
-                fontSize: '1.05rem',
-                letterSpacing: '0.05em',
-                padding: '10px'
+                fontSize: '1.1rem',
+                letterSpacing: '0.08em',
+                borderRadius: 14
               }}
             />
             <button
               type="submit"
               disabled={!manualPin.trim()}
+              className="btn-pwa-primary"
               style={{
-                background: 'var(--accent-primary, #0f766e)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 12,
-                padding: '10px 16px',
-                fontWeight: 900,
-                fontSize: '0.82rem',
-                cursor: manualPin.trim() ? 'pointer' : 'not-allowed',
+                width: 'auto',
+                minWidth: 100,
+                borderRadius: 14,
                 opacity: manualPin.trim() ? 1 : 0.6
               }}
             >

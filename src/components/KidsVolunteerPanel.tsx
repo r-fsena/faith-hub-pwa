@@ -1167,132 +1167,183 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
 
       {/* Modal / Dialogo de Chamar Pais */}
       {callingCheckin && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
-          zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
-        }}>
-          <form
-            onSubmit={handleTriggerCall}
-            style={{
-              background: '#ffffff', borderRadius: 16, padding: 18, width: '100%', maxWidth: 340,
-              display: 'flex', flexDirection: 'column', gap: 12
-            }}
-          >
-            <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)' }}>
-              🚨 Chamar Responsável de {callingCheckin.child_name}
-            </div>
+        <div className="drawer-overlay" onClick={() => setCallingCheckin(null)} style={{ zIndex: 999999 }}>
+          <div className="drawer-container" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <div className="drawer-handle" />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {[
-                { id: 'CHORO', label: '😭 Choro' },
-                { id: 'FRALDA', label: '🍼 Fralda' },
-                { id: 'FEBRE', label: '💊 Febre' },
-                { id: 'COMPARECER_SALA', label: '🚸 Na Sala' }
-              ].map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setCallReason(m.id)}
-                  style={{
-                    background: callReason === m.id ? '#fee2e2' : '#f8fafc',
-                    color: callReason === m.id ? '#b91c1c' : '#475569',
-                    border: callReason === m.id ? '2px solid #ef4444' : '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    padding: '8px 4px',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <input
-              type="text"
-              className="pwa-input"
-              placeholder="Mensagem adicional (opcional)"
-              value={callCustomMsg}
-              onChange={e => setCallCustomMsg(e.target.value)}
-              style={{ fontSize: '0.76rem' }}
-            />
-
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: '#fee2e2', color: '#b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                  🚨
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                    Chamar Pais
+                  </h3>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Notificar responsáveis de {callingCheckin.child_name}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setCallingCheckin(null)}
-                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 8, padding: '8px', fontSize: '0.76rem', fontWeight: 800, cursor: 'pointer' }}
+                style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={callingSaving}
-                style={{ flex: 1, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, padding: '8px', fontSize: '0.76rem', fontWeight: 900, cursor: 'pointer' }}
-              >
-                {callingSaving ? 'Enviando...' : '🚨 Disparar Alerta'}
+                ✕
               </button>
             </div>
-          </form>
+
+            <form onSubmit={handleTriggerCall} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <label style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-main)', display: 'block', marginTop: 4 }}>
+                Selecione o motivo da chamada:
+              </label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {[
+                  { id: 'CHORO', label: '😭 Choro Intenso' },
+                  { id: 'FRALDA', label: '🍼 Troca / Fralda' },
+                  { id: 'FEBRE', label: '💊 Febre / Saúde' },
+                  { id: 'COMPARECER_SALA', label: '🚸 Ir até a Sala' }
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setCallReason(m.id)}
+                    style={{
+                      background: callReason === m.id ? '#fee2e2' : '#f8fafc',
+                      color: callReason === m.id ? '#b91c1c' : 'var(--text-secondary)',
+                      border: callReason === m.id ? '2px solid #ef4444' : '1px solid var(--panel-border)',
+                      borderRadius: 14,
+                      padding: '12px 8px',
+                      fontSize: '0.80rem',
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
+                  Mensagem aos pais (Opcional):
+                </label>
+                <input
+                  type="text"
+                  className="input-pwa"
+                  placeholder="Ex: Por favor venha até a sala 2..."
+                  value={callCustomMsg}
+                  onChange={e => setCallCustomMsg(e.target.value)}
+                  style={{ borderRadius: 12 }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setCallingCheckin(null)}
+                  className="btn-pwa-secondary"
+                  style={{ flex: 1, borderRadius: 14 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={callingSaving}
+                  style={{
+                    flex: 1,
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 14,
+                    padding: '12px 14px',
+                    fontSize: '0.88rem',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                  }}
+                >
+                  {callingSaving ? 'Enviando...' : '🚨 Disparar Alerta'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
       {/* Modal / Dialogo de Checkout com Validação de PIN */}
       {checkoutTarget && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
-          zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
-        }}>
-          <form
-            onSubmit={handlePerformCheckout}
-            style={{
-              background: '#ffffff', borderRadius: 16, padding: 18, width: '100%', maxWidth: 340,
-              display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'center'
-            }}
-          >
-            <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)' }}>
-              🔐 Devolver {checkoutTarget.child_name}
-            </div>
-            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-              Solicite o PIN do crachá digital do responsável:
-            </div>
+        <div className="drawer-overlay" onClick={() => setCheckoutTarget(null)} style={{ zIndex: 999999 }}>
+          <div className="drawer-container" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <div className="drawer-handle" />
 
-            <input
-              type="text"
-              className="pwa-input"
-              placeholder="Ex: K-4829 ou 4829"
-              value={checkoutPin}
-              onChange={e => setCheckoutPin(e.target.value)}
-              style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 900, letterSpacing: '0.1em' }}
-              required
-              autoFocus
-            />
-
-            {checkoutError && (
-              <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '6px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700 }}>
-                {checkoutError}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                  🔐
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                    Realizar Checkout
+                  </h3>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                    Validar PIN de {checkoutTarget.child_name}
+                  </p>
+                </div>
               </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <button
                 type="button"
                 onClick={() => setCheckoutTarget(null)}
-                style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: 8, padding: '8px', fontSize: '0.76rem', fontWeight: 800, cursor: 'pointer' }}
+                style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                style={{ flex: 1, background: '#059669', color: '#fff', border: 'none', borderRadius: 8, padding: '8px', fontSize: '0.76rem', fontWeight: 900, cursor: 'pointer' }}
-              >
-                ✓ Validar PIN & Liberar
+                ✕
               </button>
             </div>
-          </form>
+
+            <form onSubmit={handlePerformCheckout} style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
+                Digite o PIN fornecido no crachá digital do responsável:
+              </div>
+
+              <input
+                type="text"
+                className="input-pwa"
+                placeholder="Ex: K-4829 ou 4829"
+                value={checkoutPin}
+                onChange={e => setCheckoutPin(e.target.value)}
+                style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 900, letterSpacing: '0.08em', borderRadius: 14, minHeight: 52 }}
+                required
+                autoFocus
+              />
+
+              {checkoutError && (
+                <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '8px 12px', borderRadius: 10, fontSize: '0.76rem', fontWeight: 800 }}>
+                  {checkoutError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutTarget(null)}
+                  className="btn-pwa-secondary"
+                  style={{ flex: 1, borderRadius: 14 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-pwa-primary"
+                  style={{ flex: 1, borderRadius: 14 }}
+                >
+                  ✓ Liberar Criança
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
