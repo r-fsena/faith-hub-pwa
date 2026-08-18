@@ -30,19 +30,43 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+
+  // Ignora chamadas de desenvolvimento, HMR, APIs e extensões
+  if (
+    url.includes('/@') ||
+    url.includes('/src/') ||
+    url.includes('chrome-extension') ||
+    url.includes('execute-api') ||
+    event.request.method !== 'GET'
+  ) {
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match('/index.html');
+        return caches.match('/index.html') || caches.match('/');
       })
     );
     return;
   }
 
+  // Network First para sempre carregar o bundle mais recente
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
 

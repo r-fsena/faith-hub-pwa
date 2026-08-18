@@ -26,9 +26,17 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('ServiceWorker registration failed: ', err);
-          });
+          const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isDev) {
+            // Em desenvolvimento local, desregistra qualquer service worker antigo para evitar tela branca
+            navigator.serviceWorker.getRegistrations().then(regs => {
+              for (const reg of regs) { reg.unregister(); }
+            });
+          } else {
+            navigator.serviceWorker.register('/sw.js').catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+          }
         });
       }
     </script>
