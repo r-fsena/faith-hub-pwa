@@ -31,7 +31,7 @@ const AppContent: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Redirecionamento da Raiz para o Site Institucional se não houver /nomedaigreja
-  React.useEffect(() => {
+  useEffect(() => {
     const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
     const isRoot = !path;
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
