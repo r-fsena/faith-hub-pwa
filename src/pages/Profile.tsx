@@ -5,6 +5,7 @@ import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, con
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
+import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -62,6 +63,7 @@ export const Profile: React.FC = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [signupAddress, setSignupAddress] = useState('');
   const [acceptLGPD, setAcceptLGPD] = useState(true);
   const [confirmationCode, setConfirmationCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -109,12 +111,13 @@ export const Profile: React.FC = () => {
   const loadUserProfile = async () => {
     if (!user) return;
     try {
-      const localPhone = localStorage.getItem('faithhub_user_phone') || '';
+      const localName = localStorage.getItem('faithhub_user_name') || user.name || user.email.split('@')[0];
+      const localPhone = localStorage.getItem('faithhub_user_phone') || user.phone || user.attributes?.phone_number || '';
       const localAddress = localStorage.getItem('faithhub_user_address') || '';
 
       setMemberProfile(prev => ({
         ...prev,
-        name: user.name || user.email.split('@')[0],
+        name: localName,
         phone: localPhone,
         address: localAddress
       }));
@@ -125,13 +128,22 @@ export const Profile: React.FC = () => {
         const json = await res.json();
         const found = (json.data || []).find((m: any) => m.email?.toLowerCase() === user.email?.toLowerCase() || m.id === user.userId);
         if (found) {
+          const finalName = found.name || localName;
+          const finalPhone = found.phone || localPhone;
+          const finalAddress = found.address || localAddress;
+
           setMemberProfile({
-            name: found.name || user.name || '',
-            phone: found.phone || localPhone,
-            address: found.address || localAddress,
+            name: finalName,
+            phone: finalPhone,
+            address: finalAddress,
             role: found.role || 'Membro',
             campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local')
           });
+
+          if (finalName) localStorage.setItem('faithhub_user_name', finalName);
+          if (finalPhone) localStorage.setItem('faithhub_user_phone', finalPhone);
+          if (finalAddress) localStorage.setItem('faithhub_user_address', finalAddress);
+
           if (found.avatar_url && !savedAvatarExists()) {
             setAvatarUrl(found.avatar_url);
             localStorage.setItem('faithhub_user_avatar', found.avatar_url);
@@ -154,8 +166,9 @@ export const Profile: React.FC = () => {
     }
     setIsSavingProfile(true);
     try {
-      localStorage.setItem('faithhub_user_phone', memberProfile.phone);
-      localStorage.setItem('faithhub_user_address', memberProfile.address);
+      localStorage.setItem('faithhub_user_name', memberProfile.name.trim());
+      localStorage.setItem('faithhub_user_phone', memberProfile.phone.trim());
+      localStorage.setItem('faithhub_user_address', memberProfile.address.trim());
 
       try {
         await updateUserAttributes({
@@ -167,14 +180,28 @@ export const Profile: React.FC = () => {
         console.log("Cognito attr update notice:", errCognito);
       }
 
+      // Sincroniza via self-register (MySQL)
+      await fetch(`${API_URL}/members/self-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user?.userId,
+          email: user?.email,
+          name: memberProfile.name.trim(),
+          phone: memberProfile.phone.trim(),
+          address: memberProfile.address.trim(),
+          avatar_url: avatarUrl
+        })
+      }).catch(() => {});
+
       if (user?.userId) {
         await fetch(`${API_URL}/members/${user.userId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: memberProfile.name.trim(),
-            phone: memberProfile.phone,
-            address: memberProfile.address,
+            phone: memberProfile.phone.trim(),
+            address: memberProfile.address.trim(),
             avatar_url: avatarUrl
           })
         }).catch(() => {});
@@ -274,7 +301,7 @@ export const Profile: React.FC = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !password) {
+    if (!email.trim() || !password || !name.trim()) {
       setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
@@ -285,6 +312,12 @@ export const Profile: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     try {
+      // Salva localmente os dados cadastrados
+      localStorage.setItem('faithhub_user_name', name.trim());
+      localStorage.setItem('faithhub_user_email', email.trim());
+      if (phone.trim()) localStorage.setItem('faithhub_user_phone', phone.trim());
+      if (signupAddress.trim()) localStorage.setItem('faithhub_user_address', signupAddress.trim());
+
       await signUp({
         username: email.trim(),
         password,
@@ -315,17 +348,22 @@ export const Profile: React.FC = () => {
         confirmationCode: confirmationCode.trim()
       });
 
+      const userAddr = signupAddress.trim() || localStorage.getItem('faithhub_user_address') || '';
+      const userPhone = phone.trim() || localStorage.getItem('faithhub_user_phone') || '';
+      const userName = name.trim() || localStorage.getItem('faithhub_user_name') || email.split('@')[0];
+
       // Sincroniza imediatamente com o banco MySQL
-      fetch(`${API_URL}/members/self-register`, {
+      await fetch(`${API_URL}/members/self-register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
-          name: name.trim() || email.split('@')[0],
-          phone: phone ? (phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`) : undefined,
+          name: userName,
+          phone: userPhone ? (userPhone.startsWith('+') ? userPhone : `+55${userPhone.replace(/\D/g, '')}`) : undefined,
+          address: userAddr || undefined,
           birthdate: birthDate || undefined
         })
-      }).catch(() => {});
+      }).catch((e) => console.log('self-register error:', e));
 
       alert('Conta confirmada com sucesso! Faça seu login.');
       setAuthMode('login');
@@ -543,16 +581,6 @@ export const Profile: React.FC = () => {
                 </button>
               </div>
             )}
-
-            {/* Botão de Desconectar */}
-            <button 
-              type="button" 
-              className="btn-pwa-secondary"
-              onClick={signOut}
-              style={{ color: '#ef4444', fontWeight: 800, marginTop: 'auto' }}
-            >
-              Sair da Conta (Logout)
-            </button>
           </div>
 
           {/* Coluna 2: Dados Pessoais, Contatos e Privacidade */}
@@ -684,6 +712,41 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
+        {/* Botão de Sair da Conta (Logout) no Final da Página */}
+        <div style={{
+          marginTop: '8px',
+          paddingTop: '16px',
+          borderTop: '1px solid var(--panel-border)',
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          <button 
+            type="button" 
+            onClick={signOut}
+            style={{
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: '1.5px solid #fecaca',
+              borderRadius: '14px',
+              padding: '12px 24px',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+              maxWidth: '380px',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.08)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>🚪</span> Sair da Conta (Logout)
+          </button>
+        </div>
+
         {/* Modal / Painel do Educador Kids */}
         <KidsVolunteerPanel 
           isOpen={isKidsVolunteerOpen} 
@@ -755,24 +818,11 @@ export const Profile: React.FC = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
-                Endereço / Bairro
-              </label>
-              <input
-                type="text"
+              <AddressAutocomplete
+                label="Endereço Residencial (Rua, Bairro ou CEP)"
                 value={memberProfile.address}
-                onChange={e => setMemberProfile({ ...memberProfile, address: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  background: '#f8fafc',
-                  border: '1.5px solid var(--panel-border)',
-                  fontSize: '0.88rem',
-                  color: 'var(--text-main)',
-                  outline: 'none'
-                }}
-                placeholder="Ex: Rua das Flores, 123"
+                onChange={val => setMemberProfile({ ...memberProfile, address: val })}
+                placeholder="Ex: Av. Paulista, 1000 ou seu CEP..."
               />
             </div>
 
@@ -1192,6 +1242,16 @@ export const Profile: React.FC = () => {
                   style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
               </div>
+            </div>
+
+            {/* Campo de Endereço Residencial com Busca Inteligente e CEP */}
+            <div>
+              <AddressAutocomplete
+                label="Endereço Residencial (Rua, Bairro ou CEP)"
+                value={signupAddress}
+                onChange={setSignupAddress}
+                placeholder="Ex: Av. Paulista, 1000 ou seu CEP..."
+              />
             </div>
 
             <div>
