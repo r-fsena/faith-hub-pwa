@@ -349,7 +349,7 @@ export const Home: React.FC<HomeProps> = ({
       </div>
 
       {/* Destaques Ministeriais / Banner de Devocional & Eventos */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '12px' }}>
         
         {/* Card Palavra Diária */}
         <div 

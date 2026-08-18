@@ -258,7 +258,7 @@ export const Store: React.FC = () => {
         /* ========================================================
             MODO 2: MEUS PEDIDOS (MONITOR DE STATUS EM TEMPO REAL)
             ======================================================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '14px' }}>
           {myOrders.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🛍️</div>

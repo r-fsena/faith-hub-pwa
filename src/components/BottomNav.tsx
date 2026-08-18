@@ -35,24 +35,26 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) 
 
   return (
     <nav className="pwa-bottom-nav">
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        const Icon = tab.icon;
+      <div className="pwa-bottom-nav-inner">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const Icon = tab.icon;
 
-        return (
-          <button
-            key={tab.id}
-            className={`nav-tab-item ${isActive ? 'active' : ''}`}
-            onClick={() => onChangeTab(tab.id)}
-          >
-            <div className="nav-icon-container">
-              <Icon />
-            </div>
-            <span className="nav-tab-label">{tab.label}</span>
-            {isActive && <div className="nav-active-pill" />}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={tab.id}
+              className={`nav-tab-item ${isActive ? 'active' : ''}`}
+              onClick={() => onChangeTab(tab.id)}
+            >
+              <div className="nav-icon-container">
+                <Icon />
+              </div>
+              <span className="nav-tab-label">{tab.label}</span>
+              {isActive && <div className="nav-active-pill" />}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 };

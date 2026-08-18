@@ -533,7 +533,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
         {/* 1. SELETOR DE LIVROS */}
         {tempBookIndex === null ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', maxHeight: '42vh', overflowY: 'auto', paddingRight: '2px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 140px), 1fr))', gap: '8px', maxHeight: '48vh', overflowY: 'auto', paddingRight: '2px' }}>
             {filteredBooks.map((b) => (
               <button
                 key={b.abbrev}

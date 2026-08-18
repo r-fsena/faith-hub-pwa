@@ -967,38 +967,40 @@ export const CellGroups: React.FC = () => {
               </p>
             </div>
           ) : (
-            filteredCells.map(cell => (
-              <div key={cell.id} style={{ background: '#ffffff', borderRadius: '18px', padding: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                      {cell.network || 'Geral'}
-                    </span>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
-                      {cell.name}
-                    </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '16px' }}>
+              {filteredCells.map(cell => (
+                <div key={cell.id} style={{ background: '#ffffff', borderRadius: '18px', padding: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                        {cell.network || 'Geral'}
+                      </span>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
+                        {cell.name}
+                      </h4>
+                    </div>
+                    {cell.neighborhood && (
+                      <span style={{ fontSize: '0.72rem', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', color: 'var(--text-secondary)' }}>
+                        📍 {cell.neighborhood}
+                      </span>
+                    )}
                   </div>
-                  {cell.neighborhood && (
-                    <span style={{ fontSize: '0.72rem', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', color: 'var(--text-secondary)' }}>
-                      📍 {cell.neighborhood}
-                    </span>
-                  )}
-                </div>
 
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  👤 <strong>Líder:</strong> {cell.leader || cell.leader_name || 'Pastoral'}
-                </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    👤 <strong>Líder:</strong> {cell.leader || cell.leader_name || 'Pastoral'}
+                  </div>
 
-                <button 
-                  type="button" 
-                  className="btn-pwa-primary" 
-                  onClick={() => handleRequestJoin(cell.id)}
-                  style={{ marginTop: '6px', padding: '10px', fontSize: '0.80rem' }}
-                >
-                  {pendingGroupId === cell.id ? '✓ Solicitação Enviada' : 'Quero Participar desta Célula'}
-                </button>
-              </div>
-            ))
+                  <button 
+                    type="button" 
+                    className="btn-pwa-primary" 
+                    onClick={() => handleRequestJoin(cell.id)}
+                    style={{ marginTop: 'auto', padding: '10px', fontSize: '0.80rem' }}
+                  >
+                    {pendingGroupId === cell.id ? '✓ Solicitação Enviada' : 'Quero Participar desta Célula'}
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

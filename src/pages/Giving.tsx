@@ -150,19 +150,19 @@ export const Giving: React.FC = () => {
               </div>
             </div>
 
-            {/* Valores Pré-definidos */}
+              {/* Valores Pré-definidos */}
             <div>
               <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
                 Valor (R$)
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 54px), 1fr))', gap: '6px', marginBottom: '8px' }}>
                 {presetAmounts.map(val => (
                   <button
                     key={val}
                     type="button"
                     onClick={() => { setAmount(val); setCustomAmount(''); }}
                     style={{
-                      padding: '8px 2px',
+                      padding: '8px 4px',
                       borderRadius: '10px',
                       border: amount === val && !customAmount ? '2px solid #059669' : '1px solid var(--panel-border)',
                       background: amount === val && !customAmount ? '#ecfdf5' : '#ffffff',

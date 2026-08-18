@@ -48,12 +48,11 @@
 
 html, body {
   width: 100%;
-  height: 100%;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  background-color: #0b0f19;
+  background-color: var(--bg-app);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -61,7 +60,16 @@ html, body {
 
 body {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Previne zoom automático indesejado no iOS Safari ao focar em inputs */
@@ -79,16 +87,14 @@ input, select, textarea {
   display: none;
 }
 
-/* Mobile App Wrapper - Adaptação Fluida de 320px até Tablets */
+/* Mobile App Wrapper - Adaptação Fluida de 320px até Tablets e Desktop */
 .pwa-app-shell {
   width: 100%;
-  max-width: 480px;
   min-height: 100dvh;
   background-color: var(--bg-app);
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
   overflow-x: hidden;
   padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
   padding-left: var(--safe-left);
@@ -100,16 +106,23 @@ input, select, textarea {
   position: sticky;
   top: 0;
   z-index: 40;
+  width: 100%;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--panel-border);
-  padding: calc(var(--safe-top) + 10px) 14px 10px 14px;
+  padding: calc(var(--safe-top) + 10px) 16px 10px 16px;
+  min-height: calc(var(--header-height) + var(--safe-top));
+}
+
+.pwa-topbar-inner {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: calc(var(--header-height) + var(--safe-top));
-  gap: 8px;
+  gap: 12px;
 }
 
 .pwa-topbar-left {
@@ -117,7 +130,7 @@ input, select, textarea {
   align-items: center;
   gap: 10px;
   flex: 1;
-  min-width: 0; /* Permite truncar o texto corretamente */
+  min-width: 0;
 }
 
 .pwa-church-avatar {
@@ -212,10 +225,9 @@ input, select, textarea {
 .pwa-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 480px;
   min-height: calc(var(--bottom-nav-height) + var(--safe-bottom));
   padding-bottom: max(var(--safe-bottom), 8px);
   padding-top: 6px;
@@ -223,13 +235,20 @@ input, select, textarea {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--panel-border);
+  z-index: 50;
+  box-shadow: var(--shadow-nav);
+  padding-left: max(var(--safe-left), 8px);
+  padding-right: max(var(--safe-right), 8px);
+  display: flex;
+  justify-content: center;
+}
+
+.pwa-bottom-nav-inner {
+  max-width: 1120px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  z-index: 50;
-  box-shadow: var(--shadow-nav);
-  padding-left: 4px;
-  padding-right: 4px;
 }
 
 .nav-tab-item {
@@ -242,13 +261,14 @@ input, select, textarea {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 6px 12px;
   border-radius: 12px;
   transition: all 0.2s ease;
   position: relative;
   min-width: 54px;
   min-height: 44px;
   flex: 1;
+  max-width: 160px;
 }
 
 .nav-tab-item.active {
@@ -260,7 +280,7 @@ input, select, textarea {
 }
 
 .nav-tab-label {
-  font-size: clamp(0.60rem, 2.4vw, 0.72rem);
+  font-size: clamp(0.62rem, 2.2vw, 0.74rem);
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -269,7 +289,7 @@ input, select, textarea {
 .nav-active-pill {
   position: absolute;
   bottom: 1px;
-  width: 16px;
+  width: 18px;
   height: 3px;
   border-radius: 999px;
   background: var(--accent-primary);
@@ -278,11 +298,13 @@ input, select, textarea {
 /* MAIN CONTENT CONTAINER */
 .pwa-content {
   flex: 1;
-  padding: 16px 14px;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  width: 100%;
 }
 
 /* HERO BANNER */
@@ -293,11 +315,11 @@ input, select, textarea {
   position: relative;
   box-shadow: var(--shadow-md);
   color: #ffffff;
-  min-height: 160px;
+  min-height: clamp(160px, 22vh, 260px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 18px 16px;
+  padding: clamp(16px, 3vw, 24px);
 }
 
 .pwa-hero-bg {
@@ -321,19 +343,26 @@ input, select, textarea {
   z-index: 3;
 }
 
-/* QUICK ACTION GRID (DESIGN SYSTEM RESPONSIVO) */
-.quick-action-grid, .pwa-services-grid {
+/* QUICK ACTION GRID (RESPONSIVO: 4 COLS NO MOBILE, 8 COLS NO DESKTOP) */
+.quick-action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .quick-action-grid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 12px;
+  }
 }
 
 .quick-action-btn, .pwa-service-btn {
   background: var(--bg-card);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  padding: 10px 4px;
+  padding: 12px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -343,14 +372,18 @@ input, select, textarea {
   cursor: pointer;
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease, border-color 0.15s ease;
   outline: none;
-  min-height: 78px;
+  min-height: 82px;
   width: 100%;
 }
 
-.quick-action-btn:active {
-  transform: scale(0.93);
-  box-shadow: none;
+.quick-action-btn:hover {
+  box-shadow: var(--shadow-md);
   border-color: var(--accent-primary);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.94);
+  box-shadow: none;
 }
 
 /* Efeito de Pulso na Bíblia quando visitante / deslogado */
@@ -363,7 +396,7 @@ input, select, textarea {
   50% {
     box-shadow: 0 0 0 7px rgba(15, 118, 110, 0);
     border-color: #0d9488;
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(15, 118, 110, 0);
@@ -395,8 +428,8 @@ input, select, textarea {
 }
 
 .quick-action-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -409,7 +442,7 @@ input, select, textarea {
 }
 
 .quick-action-label {
-  font-size: clamp(0.60rem, 2.2vw, 0.70rem);
+  font-size: clamp(0.62rem, 2.2vw, 0.72rem);
   font-weight: 800;
   color: var(--text-main);
   text-align: center;
@@ -427,7 +460,7 @@ input, select, textarea {
 }
 
 .section-title {
-  font-size: 1.05rem;
+  font-size: 1.10rem;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.2px;
@@ -443,12 +476,19 @@ input, select, textarea {
   padding: 4px 6px;
 }
 
-/* STORE / PDV CARD */
+/* STORE / PDV PRODUCT GRID */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
   width: 100%;
+}
+
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 16px;
+  }
 }
 
 .product-card {
@@ -459,11 +499,17 @@ input, select, textarea {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .product-image {
   width: 100%;
-  height: 120px;
+  height: 140px;
   object-fit: cover;
   background: #f1f5f9;
 }
@@ -476,11 +522,11 @@ input, select, textarea {
 }
 
 .product-title {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: var(--text-main);
   margin-bottom: 4px;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .product-price {
@@ -495,9 +541,9 @@ input, select, textarea {
 }
 
 .add-cart-mini-btn {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
   border-radius: 10px;
   background: var(--accent-primary-gradient);
   color: #ffffff;
@@ -513,11 +559,42 @@ input, select, textarea {
   transform: scale(0.9);
 }
 
+/* RESPONSIVE MULTI-CARD GRID (Eventos, Orações, Células) */
+.responsive-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .responsive-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: 18px;
+  }
+}
+
+/* RESPONSIVE 2-COLUMN LAYOUT (Devocionais, Doações, Perfil) */
+.responsive-2col-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .responsive-2col-layout {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
 /* FLOATING CART BUTTON */
 .floating-cart-btn {
   position: fixed;
   bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 14px);
-  right: 16px;
+  right: clamp(16px, 4vw, 32px);
   background: var(--accent-primary-gradient);
   color: #ffffff;
   padding: 12px 18px;
@@ -547,7 +624,7 @@ input, select, textarea {
   font-weight: 900;
 }
 
-/* DRAWER / BOTTOM SHEET */
+/* DRAWER / BOTTOM SHEET (Bottom Drawer no mobile, Modal Centrado em telas maiores) */
 .drawer-overlay {
   position: fixed;
   inset: 0;
@@ -559,11 +636,12 @@ input, select, textarea {
   align-items: flex-end;
   justify-content: center;
   overscroll-behavior: contain;
+  padding: 0;
 }
 
 .drawer-container {
   width: 100%;
-  max-width: 480px;
+  max-width: 100%;
   background: var(--bg-card);
   border-radius: 28px 28px 0 0;
   padding: 18px 18px calc(var(--safe-bottom) + 18px) 18px;
@@ -575,6 +653,22 @@ input, select, textarea {
   gap: 16px;
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .drawer-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .drawer-container {
+    max-width: 580px;
+    border-radius: 24px;
+    max-height: 85dvh;
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    animation: bounceIn 0.25s ease;
+  }
 }
 
 .drawer-handle {
@@ -676,7 +770,7 @@ input, select, textarea {
 }
 
 @keyframes bounceIn {
-  from { transform: scale(0.8); opacity: 0; }
+  from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
@@ -754,28 +848,5 @@ input, select, textarea {
   
   .product-grid {
     gap: 8px;
-  }
-}
-
-/* ==========================================================================
-   ESPECIALIZAÇÃO RESPONSIVA PARA TABLETS E TELAS GRANDES (>= 768px)
-   ========================================================================== */
-@media (min-width: 768px) {
-  body {
-    background: radial-gradient(circle at center, #1e293b 0%, #0b0f19 100%);
-    align-items: center;
-    padding: 20px 0;
-  }
-  
-  .pwa-app-shell {
-    border-radius: 36px;
-    overflow: hidden;
-    min-height: 94dvh;
-    max-height: 96dvh;
-    border: 8px solid rgba(255, 255, 255, 0.08);
-  }
-  
-  .pwa-bottom-nav {
-    border-radius: 0 0 28px 28px;
   }
 }

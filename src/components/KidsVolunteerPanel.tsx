@@ -480,7 +480,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: 10 }}>
                 {filteredCheckins.map(c => {
                   const isCalling = c.status === 'CALLING_PARENTS';
 

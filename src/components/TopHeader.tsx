@@ -28,75 +28,79 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   // Se estiver em uma sub-tela (com botão Voltar)
   if (onBack) {
     return (
-      <header className="pwa-topbar" style={{ justifyContent: 'space-between' }}>
-        <button 
-          type="button" 
-          onClick={onBack}
-          style={{
-            background: 'none',
-            border: 'none',
+      <header className="pwa-topbar">
+        <div className="pwa-topbar-inner" style={{ justifyContent: 'space-between' }}>
+          <button 
+            type="button" 
+            onClick={onBack}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-main)',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              padding: '6px 4px',
+              flexShrink: 0,
+              minHeight: '40px'
+            }}
+          >
+            <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>‹</span>
+            <span>Voltar</span>
+          </button>
+
+          <span style={{ 
+            fontSize: '0.92rem', 
+            fontWeight: 900, 
             color: 'var(--text-main)',
-            fontSize: '0.86rem',
-            fontWeight: 800,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            padding: '6px 4px',
-            flexShrink: 0,
-            minHeight: '40px'
-          }}
-        >
-          <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>‹</span>
-          <span>Voltar</span>
-        </button>
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            textAlign: 'center',
+            flex: 1,
+            padding: '0 6px'
+          }}>
+            {title || branding.church_name}
+          </span>
 
-        <span style={{ 
-          fontSize: '0.92rem', 
-          fontWeight: 900, 
-          color: 'var(--text-main)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          textAlign: 'center',
-          flex: 1,
-          padding: '0 6px'
-        }}>
-          {title || branding.church_name}
-        </span>
-
-        <div style={{ width: '56px', flexShrink: 0 }} /> {/* Espaçador para balancear o título ao centro */}
+          <div style={{ width: '56px', flexShrink: 0 }} />
+        </div>
       </header>
     );
   }
 
   return (
     <header className="pwa-topbar">
-      <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
-        <div className="pwa-church-avatar">
-          {branding.logo_icon_url ? (
-            <img src={branding.logo_icon_url} alt={branding.church_name} />
-          ) : (
-            <span>{getInitials(branding.church_name)}</span>
-          )}
+      <div className="pwa-topbar-inner">
+        <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
+          <div className="pwa-church-avatar">
+            {branding.logo_icon_url ? (
+              <img src={branding.logo_icon_url} alt={branding.church_name} />
+            ) : (
+              <span>{getInitials(branding.church_name)}</span>
+            )}
+          </div>
+          <div className="pwa-church-title">
+            <span className="pwa-church-name">{branding.church_name}</span>
+            <span className="pwa-greeting">
+              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a) à comunidade'}
+            </span>
+          </div>
         </div>
-        <div className="pwa-church-title">
-          <span className="pwa-church-name">{branding.church_name}</span>
-          <span className="pwa-greeting">
-            {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a) à comunidade'}
-          </span>
-        </div>
-      </div>
 
-      <div className="pwa-topbar-right">
-        <button 
-          className="icon-btn-pill" 
-          onClick={onOpenNotifications} 
-          title="Notificações e Avisos"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span className="badge-dot" />
-        </button>
+        <div className="pwa-topbar-right">
+          <button 
+            className="icon-btn-pill" 
+            onClick={onOpenNotifications} 
+            title="Notificações e Avisos"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span className="badge-dot" />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -71,7 +71,7 @@ export const KidsPassCard: React.FC = () => {
   }
 
   return (
-    <div style={{ margin: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ margin: '0', display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: '1.2rem' }}>🚸</span>
@@ -84,7 +84,8 @@ export const KidsPassCard: React.FC = () => {
         </span>
       </div>
 
-      {activeCheckins.map(item => {
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '12px' }}>
+        {activeCheckins.map(item => {
         const isCalling = item.status === 'CALLING_PARENTS';
 
         return (
@@ -177,6 +178,7 @@ export const KidsPassCard: React.FC = () => {
           </div>
         );
       })}
+      </div>
 
       {/* Modal de Crachá Digital com QR Code para os Pais */}
       {selectedQrItem && (

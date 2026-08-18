@@ -404,16 +404,19 @@ export const Profile: React.FC = () => {
           onChange={e => e.target.files?.[0] && handleProcessImage(e.target.files[0])}
         />
 
-        {/* Card Principal de Perfil do Membro */}
-        <div style={{
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          borderRadius: '24px',
-          padding: '24px 20px',
-          border: '1px solid var(--panel-border)',
-          boxShadow: 'var(--shadow-sm)',
-          textAlign: 'center',
-          position: 'relative'
-        }}>
+        <div className="responsive-2col-layout">
+          {/* Coluna 1: Perfil do Membro, Operações Ministeriais e Logout */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Card Principal de Perfil do Membro */}
+            <div style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              borderRadius: '24px',
+              padding: '24px 20px',
+              border: '1px solid var(--panel-border)',
+              boxShadow: 'var(--shadow-sm)',
+              textAlign: 'center',
+              position: 'relative'
+            }}>
           {/* Avatar com Botão de Ação */}
           <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 12px auto' }}>
             <img 
@@ -592,59 +595,6 @@ export const Profile: React.FC = () => {
           )}
         </div>
 
-        {/* Card Área do Educador / Voluntário Kids (Exibido apenas para Liderança, Pastores, Educadores e Voluntários) */}
-        {['ADMIN', 'PASTOR', 'LEADER', 'VOLUNTEER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'ADMINISTRADOR', 'MINISTÉRIO INFANTIL', 'OBREIRO', 'STAFF'].includes((memberProfile.role || '').toUpperCase()) && (
-          <>
-            <div style={{
-              background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
-              borderRadius: '20px',
-              padding: '18px',
-              color: '#ffffff',
-              boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.05em' }}>
-                  Operações Ministeriais
-                </div>
-                <div style={{ fontSize: '1.02rem', fontWeight: 900, marginTop: '2px' }}>
-                  🚸 Sala Kids & Educadores
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#ccfbf1', marginTop: '2px' }}>
-                  Check-in, chamador de pais e PIN no celular
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsKidsVolunteerOpen(true)}
-                style={{
-                  background: '#ffffff',
-                  color: '#0f766e',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '8px 14px',
-                  fontWeight: 900,
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Abrir Painel
-              </button>
-            </div>
-
-            {/* Modal / Painel do Educador Kids */}
-            <KidsVolunteerPanel 
-              isOpen={isKidsVolunteerOpen} 
-              onClose={() => setIsKidsVolunteerOpen(false)} 
-            />
-          </>
-        )}
-
         {/* Configuração de Privacidade & LGPD */}
         <div style={{
           background: '#ffffff',
@@ -673,16 +623,8 @@ export const Profile: React.FC = () => {
             <span className="slider-round" />
           </label>
         </div>
-
-        {/* Botão de Desconectar */}
-        <button 
-          type="button" 
-          className="btn-pwa-secondary"
-          onClick={signOut}
-          style={{ color: '#ef4444', fontWeight: 800, marginTop: '8px' }}
-        >
-          Sair da Conta (Logout)
-        </button>
+      </div>
+    </div>
 
         {/* ========================================================
             BOTTOM SHEET: EDITAR DADOS PESSOAIS DO USUÁRIO
@@ -766,7 +708,7 @@ export const Profile: React.FC = () => {
                   color: 'var(--text-main)',
                   outline: 'none'
                 }}
-                placeholder="Rua, Número, Bairro"
+                placeholder="Ex: Rua das Flores, 123"
               />
             </div>
 
@@ -791,7 +733,7 @@ export const Profile: React.FC = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
               <button
                 type="button"
                 className="btn-pwa-secondary"
@@ -865,43 +807,35 @@ export const Profile: React.FC = () => {
               }}
             >
               <span style={{ fontSize: '1.6rem' }}>🖼️</span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Escolher da Galeria</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>Galeria de Fotos</span>
             </button>
           </div>
 
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Ou escolha um Avatar Ilustrado:
+          <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '16px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '12px', textAlign: 'center' }}>
+              Ou escolha um avatar ilustrado:
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+              {PRESET_AVATARS.map((av, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => handleSelectPresetAvatar(av)}
+                  style={{
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: avatarUrl === av ? '3px solid var(--accent-primary)' : '2px solid var(--panel-border)',
+                    cursor: 'pointer',
+                    aspectRatio: '1/1',
+                    boxShadow: avatarUrl === av ? '0 0 0 2px var(--accent-primary-light)' : 'none',
+                    transform: avatarUrl === av ? 'scale(1.05)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <img src={av} alt="Avatar Preset" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', maxHeight: '200px', overflowY: 'auto', padding: '4px' }}>
-            {CURATED_AVATARS.map((url, i) => (
-              <img 
-                key={i}
-                src={url} 
-                alt={`Avatar ${i}`} 
-                onClick={() => handleSelectCuratedAvatar(url)}
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  border: avatarUrl === url ? '3px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                  objectFit: 'cover',
-                  margin: '0 auto',
-                  transition: 'transform 0.15s ease'
-                }}
-              />
-            ))}
-          </div>
-
-          <button 
-            type="button" 
-            className="btn-pwa-secondary" 
-            onClick={() => setShowAvatarPicker(false)}
-            style={{ marginTop: '16px' }}
-          >
-            Cancelar
-          </button>
         </BottomSheet>
 
       </div>
@@ -912,17 +846,19 @@ export const Profile: React.FC = () => {
   // SE NÃO ESTÁ AUTENTICADO: RENDERIZA A TELA DE LOGIN (ESTILO WEB STUDIO)
   // =========================================================================
   return (
-    <div className="pwa-content animate-fade-in" style={{ justifyContent: 'center', minHeight: '80vh' }}>
+    <div className="pwa-content animate-fade-in" style={{ justifyContent: 'center', minHeight: '80vh', alignItems: 'center' }}>
       
       <div style={{
         background: '#ffffff',
         borderRadius: '24px',
-        padding: '28px 22px',
+        padding: 'clamp(20px, 4vw, 32px)',
         border: '1px solid var(--panel-border)',
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '20px',
+        maxWidth: '460px',
+        width: '100%'
       }}>
         
         {/* Logo & Header no mesmo padrão do Web Studio */}

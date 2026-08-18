@@ -229,7 +229,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '18px' }}>
             {events.map(ev => (
             <div 
               key={ev.id}
@@ -238,7 +238,9 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 borderRadius: '20px',
                 overflow: 'hidden',
                 border: '1px solid var(--panel-border)',
-                boxShadow: 'var(--shadow-sm)'
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
               <div style={{ height: '140px', background: `url(${ev.cover_url})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
@@ -249,7 +251,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
                 <div>
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
                     🗓️ {ev.date_formatted} • {ev.time}
@@ -262,7 +264,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   </p>
                 </div>
 
-                <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 'auto' }}>
                   📍 {ev.location}
                 </div>
 
@@ -292,7 +294,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         /* ========================================================
             MODO 2: MEUS PASSAPORTES / INGRESSOS
             ======================================================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '14px' }}>
           {myTickets.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎟️</div>

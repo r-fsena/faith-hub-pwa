@@ -126,9 +126,9 @@ export const Devotionals: React.FC = () => {
           </p>
         </div>
       ) : selectedDevotional ? (
-        /* Modo Leitura */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+        /* Modo Leitura & Histórico */
+        <div className="responsive-2col-layout">
+          <div style={{ background: '#ffffff', borderRadius: '20px', padding: 'clamp(16px, 3vw, 24px)', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 ☀️ {selectedDevotional.date || 'Hoje'}
