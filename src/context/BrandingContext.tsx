@@ -25,6 +25,7 @@ export interface ChurchBranding {
   pwa_description: string;
   pwa_theme_color: string;
   pwa_splash_bg: string;
+  status?: string;
 }
 
 const DEFAULT_BRANDING: ChurchBranding = {
@@ -146,7 +147,8 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           secondary_color: backendSettings.secondary_color || DEFAULT_BRANDING.secondary_color,
           pwa_short_name: backendSettings.pwa_short_name || DEFAULT_BRANDING.pwa_short_name,
           pwa_slug: backendSettings.pwa_slug || DEFAULT_BRANDING.pwa_slug,
-          pwa_theme_color: backendSettings.pwa_theme_color || backendSettings.primary_color || DEFAULT_BRANDING.pwa_theme_color
+          pwa_theme_color: backendSettings.pwa_theme_color || backendSettings.primary_color || DEFAULT_BRANDING.pwa_theme_color,
+          status: backendSettings.status || 'ACTIVE'
         };
         const updated = { ...DEFAULT_BRANDING, ...mapped };
         setBranding(updated);

@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.
 export const KidsPassCard: React.FC = () => {
   const { branding } = useBranding();
   const { user, isAuthenticated } = useAuth();
-  
+
   const [activeCheckins, setActiveCheckins] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [phoneSearch, setPhoneSearch] = useState('');
@@ -41,8 +41,8 @@ export const KidsPassCard: React.FC = () => {
           // Toca som de alerta
           try {
             const audio = new Audio(alertSound);
-            audio.play().catch(() => {});
-          } catch (e) {}
+            audio.play().catch(() => { });
+          } catch (e) { }
 
           // Vibra o celular se suportado
           if (navigator.vibrate) {
@@ -86,98 +86,98 @@ export const KidsPassCard: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '12px' }}>
         {activeCheckins.map(item => {
-        const isCalling = item.status === 'CALLING_PARENTS';
+          const isCalling = item.status === 'CALLING_PARENTS';
 
-        return (
-          <div
-            key={item.id}
-            style={{
-              background: isCalling ? '#fef2f2' : '#ffffff',
-              border: isCalling ? '2px solid #ef4444' : '1px solid var(--panel-border)',
-              borderRadius: 16,
-              padding: '14px 16px',
-              boxShadow: isCalling ? '0 4px 18px rgba(239, 68, 68, 0.25)' : '0 2px 10px rgba(0,0,0,0.03)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: item.room_color || 'var(--accent-primary)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '0.95rem'
-                }}>
-                  {item.child_name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                    {item.child_name}
+          return (
+            <div
+              key={item.id}
+              style={{
+                background: isCalling ? '#fef2f2' : '#ffffff',
+                border: isCalling ? '2px solid #ef4444' : '1px solid var(--panel-border)',
+                borderRadius: 16,
+                padding: '14px 16px',
+                boxShadow: isCalling ? '0 4px 18px rgba(239, 68, 68, 0.25)' : '0 2px 10px rgba(0,0,0,0.03)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: item.room_color || 'var(--accent-primary)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '0.95rem'
+                  }}>
+                    {item.child_name.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                    {item.room_icon} {item.room_name}
-                  </div>
-                </div>
-              </div>
-
-              {/* Botão para abrir QR Code & PIN */}
-              <button
-                type="button"
-                onClick={() => setSelectedQrItem(item)}
-                style={{
-                  background: '#f0fdfa',
-                  border: '1.5px solid var(--accent-primary)',
-                  borderRadius: 10,
-                  padding: '5px 10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer'
-                }}
-              >
-                <span style={{ fontSize: '1rem' }}>📱</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.56rem', fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>QR Code & PIN</div>
-                  <div style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
-                    {item.security_code}
+                  <div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      {item.child_name}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      {item.room_icon} {item.room_name}
+                    </div>
                   </div>
                 </div>
-              </button>
-            </div>
 
-            {/* Alerta Visual de Chamado */}
-            {isCalling && (
-              <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 12px', borderRadius: 10, fontSize: '0.78rem', fontWeight: 800, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fca5a5' }}>
-                <div>
-                  <div>🚨 OS EDUCADORES ESTÃO CHAMANDO VOCÊ!</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, marginTop: 2 }}>Motivo: {item.call_reason} {item.call_message ? `• "${item.call_message}"` : ''}</div>
-                </div>
+                {/* Botão para abrir QR Code & PIN */}
                 <button
                   type="button"
-                  onClick={() => setIsCallingModalOpen(true)}
-                  style={{ background: '#b91c1c', color: '#ffffff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: '0.70rem', fontWeight: 800, cursor: 'pointer' }}
+                  onClick={() => setSelectedQrItem(item)}
+                  style={{
+                    background: '#f0fdfa',
+                    border: '1.5px solid var(--accent-primary)',
+                    borderRadius: 10,
+                    padding: '5px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer'
+                  }}
                 >
-                  Ver Sala
+                  <span style={{ fontSize: '1rem' }}>📱</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.56rem', fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>QR Code & PIN</div>
+                    <div style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
+                      {item.security_code}
+                    </div>
+                  </div>
                 </button>
               </div>
-            )}
 
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Entrada: {new Date(item.checkin_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span style={{ color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => setSelectedQrItem(item)}>
-                Toque para ver QR Code ➔
-              </span>
+              {/* Alerta Visual de Chamado */}
+              {isCalling && (
+                <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 12px', borderRadius: 10, fontSize: '0.78rem', fontWeight: 800, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fca5a5' }}>
+                  <div>
+                    <div>🚨 OS EDUCADORES ESTÃO CHAMANDO VOCÊ!</div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 600, marginTop: 2 }}>Motivo: {item.call_reason} {item.call_message ? `• "${item.call_message}"` : ''}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCallingModalOpen(true)}
+                    style={{ background: '#b91c1c', color: '#ffffff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: '0.70rem', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    Ver Sala
+                  </button>
+                </div>
+              )}
+
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Entrada: {new Date(item.checkin_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => setSelectedQrItem(item)}>
+                  Toque para ver QR Code ➔
+                </span>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
 
       {/* Modal de Crachá Digital com QR Code para os Pais */}

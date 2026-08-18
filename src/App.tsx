@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { BrandingProvider } from './context/BrandingContext';
+import { BrandingProvider, useBranding } from './context/BrandingContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
@@ -23,6 +22,7 @@ import { Giving } from './pages/Giving';
 type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 
 const AppContent: React.FC = () => {
+  const { branding } = useBranding();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [subView, setSubView] = useState<SubView>('none');
@@ -59,6 +59,65 @@ const AppContent: React.FC = () => {
       default: return undefined;
     }
   };
+
+  // Se o ambiente da congregação foi inativado pela administração
+  if ((branding.status || '').toUpperCase() === 'INACTIVE') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f8fafc',
+        padding: '24px',
+        fontFamily: 'inherit'
+      }}>
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '24px',
+          padding: '36px 24px',
+          maxWidth: '420px',
+          width: '100%',
+          textAlign: 'center',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
+          border: '1px solid #e2e8f0'
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '18px',
+            background: '#fee2e2',
+            color: '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.8rem',
+            margin: '0 auto 16px auto'
+          }}>
+            ✝️
+          </div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 8px 0' }}>
+            {branding.church_name}
+          </h2>
+          <span style={{
+            display: 'inline-block',
+            background: '#fee2e2',
+            color: '#b91c1c',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            padding: '3px 10px',
+            borderRadius: 999,
+            marginBottom: '16px'
+          }}>
+            Aplicativo Temporariamente Indisponível
+          </span>
+          <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+            O aplicativo da nossa comunidade está temporariamente indisponível no momento. Para informações sobre cultos, eventos e pedidos de oração, consulte a secretaria da igreja.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pwa-app-shell">
