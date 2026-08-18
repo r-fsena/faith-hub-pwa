@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BottomSheet } from '../components/BottomSheet';
+import { useBranding } from '../context/BrandingContext';
 
 interface BibleBook {
   abbrev: string;
@@ -7,13 +8,15 @@ interface BibleBook {
   chapters: string[][];
 }
 
-type BibleVersion = 'nvi' | 'acf' | 'aa';
+export type BibleVersion = 'nvi' | 'acf' | 'aa' | 'nvt' | 'kja';
 type ColorTheme = 'light' | 'sepia' | 'dark';
 
-const VERSION_NAMES: Record<BibleVersion, { label: string; fullName: string }> = {
-  nvi: { label: 'NVI', fullName: 'Nova Versão Internacional' },
-  acf: { label: 'ACF', fullName: 'Almeida Corrigida Fiel' },
-  aa: { label: 'AA', fullName: 'Almeida Atualizada' }
+export const ALL_BIBLE_VERSIONS: Record<BibleVersion, { label: string; fullName: string; description: string }> = {
+  nvi: { label: 'NVI', fullName: 'Nova Versão Internacional', description: 'Tradução contemporânea fiel e de fácil compreensão' },
+  acf: { label: 'ACF', fullName: 'Almeida Corrigida Fiel', description: 'Tradução clássica tradicional baseada no Textus Receptus' },
+  aa: { label: 'AA', fullName: 'Almeida Atualizada', description: 'Edição revista de Almeida com estilo sóbrio e formal' },
+  nvt: { label: 'NVT', fullName: 'Nova Versão Transformadora', description: 'Linguagem dinâmica, fluida e clara' },
+  kja: { label: 'KJA', fullName: 'King James Atualizada', description: 'Texto canônico para estudo aprofundado das escrituras' }
 };
 
 const HIGHLIGHT_COLORS = [
@@ -26,10 +29,34 @@ const HIGHLIGHT_COLORS = [
 const bibleMemoryCache: Record<string, BibleBook[]> = {};
 
 export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+  const { branding } = useBranding();
+  const bibleCfg = branding.bible_config;
+
+  // Lista de versões permitidas pela congregação
+  const allowedVersions: BibleVersion[] = useMemo(() => {
+    const raw = bibleCfg?.enabled_versions;
+    if (Array.isArray(raw) && raw.length > 0) {
+      const valid = raw.filter(v => v in ALL_BIBLE_VERSIONS) as BibleVersion[];
+      if (valid.length > 0) return valid;
+    }
+    return ['nvi', 'acf', 'aa'];
+  }, [bibleCfg]);
+
+  const defaultVer: BibleVersion = (bibleCfg?.default_version && allowedVersions.includes(bibleCfg.default_version as BibleVersion))
+    ? (bibleCfg.default_version as BibleVersion)
+    : (allowedVersions[0] || 'nvi');
+
   // Estado dos Dados
-  const [version, setVersion] = useState<BibleVersion>('nvi');
-  const [bibleData, setBibleData] = useState<BibleBook[]>(() => bibleMemoryCache['nvi'] || []);
-  const [loading, setLoading] = useState<boolean>(() => !bibleMemoryCache['nvi'] || bibleMemoryCache['nvi'].length === 0);
+  const [version, setVersion] = useState<BibleVersion>(defaultVer);
+  const [bibleData, setBibleData] = useState<BibleBook[]>(() => bibleMemoryCache[defaultVer] || []);
+  const [loading, setLoading] = useState<boolean>(() => !bibleMemoryCache[defaultVer] || bibleMemoryCache[defaultVer].length === 0);
+
+  // Garante que se a versão atual for desabilitada, troca para a padrão
+  useEffect(() => {
+    if (!allowedVersions.includes(version)) {
+      setVersion(defaultVer);
+    }
+  }, [allowedVersions, defaultVer]);
 
   // Navegação
   const [selectedBookIndex, setSelectedBookIndex] = useState<number>(42); // 42 = João
@@ -150,14 +177,16 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleCopyVerse = (verseText: string) => {
-    const textToCopy = `"${verseText}" — ${currentBook.name} ${selectedChapter}:${(selectedVerseIndex || 0) + 1} (${VERSION_NAMES[version].label})`;
+    const verLabel = ALL_BIBLE_VERSIONS[version]?.label || version.toUpperCase();
+    const textToCopy = `"${verseText}" — ${currentBook.name} ${selectedChapter}:${(selectedVerseIndex || 0) + 1} (${verLabel})`;
     navigator.clipboard.writeText(textToCopy);
     alert('📋 Versículo copiado com sucesso!');
     setSelectedVerseIndex(null);
   };
 
   const handleShareVerse = (verseText: string) => {
-    const textToShare = `"${verseText}" — ${currentBook.name} ${selectedChapter}:${(selectedVerseIndex || 0) + 1} (${VERSION_NAMES[version].label})`;
+    const verLabel = ALL_BIBLE_VERSIONS[version]?.label || version.toUpperCase();
+    const textToShare = `"${verseText}" — ${currentBook.name} ${selectedChapter}:${(selectedVerseIndex || 0) + 1} (${verLabel})`;
     if (navigator.share) {
       navigator.share({
         title: `${currentBook.name} ${selectedChapter}:${(selectedVerseIndex || 0) + 1}`,
@@ -215,25 +244,41 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         {/* Controles de Versão e Tema */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Seletor de Versão */}
-          <select
-            value={version}
-            onChange={e => setVersion(e.target.value as BibleVersion)}
-            style={{
-              padding: '6px 8px',
+          {allowedVersions.length > 1 && bibleCfg?.allow_user_version_switch !== false ? (
+            <select
+              value={version}
+              onChange={e => setVersion(e.target.value as BibleVersion)}
+              style={{
+                padding: '6px 8px',
+                borderRadius: '10px',
+                border: '1px solid var(--panel-border)',
+                background: '#ffffff',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: 'var(--accent-primary)',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              {allowedVersions.map(v => (
+                <option key={v} value={v}>
+                  {ALL_BIBLE_VERSIONS[v]?.label || v.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div style={{
+              padding: '6px 10px',
               borderRadius: '10px',
               border: '1px solid var(--panel-border)',
-              background: '#ffffff',
+              background: '#f8fafc',
               fontSize: '0.74rem',
-              fontWeight: 800,
-              color: 'var(--accent-primary)',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
-          >
-            <option value="nvi">NVI</option>
-            <option value="acf">ACF</option>
-            <option value="aa">AA</option>
-          </select>
+              fontWeight: 900,
+              color: 'var(--accent-primary)'
+            }}>
+              {ALL_BIBLE_VERSIONS[version]?.label || version.toUpperCase()}
+            </div>
+          )}
 
           {/* Seletor de Tema (Claro / Sépia / Escuro) */}
           <button
@@ -276,6 +321,29 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
       </div>
 
+      {/* NOTA PASTORAL DA CONGREGAÇÃO */}
+      {bibleCfg?.pastoral_note && (
+        <div style={{
+          background: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
+          borderRadius: '16px',
+          padding: '12px 16px',
+          border: '1px solid #99f6e4',
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'flex-start'
+        }}>
+          <span style={{ fontSize: '1.2rem' }}>🕊️</span>
+          <div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>
+              Orientação da Liderança
+            </div>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#134e4a', lineHeight: 1.4 }}>
+              {bibleCfg.pastoral_note}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Barra de Seleção Rápida de Livro & Capítulo */}
       <div 
         onClick={() => { setTempBookIndex(selectedBookIndex); setIsPickerOpen(true); }}
@@ -298,7 +366,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               {currentBook?.name || 'Carregando...'} {selectedChapter}
             </div>
             <div style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700 }}>
-              {selectedBookIndex < 39 ? 'Antigo Testamento' : 'Novo Testamento'} • {VERSION_NAMES[version].label}
+              {selectedBookIndex < 39 ? 'Antigo Testamento' : 'Novo Testamento'} • {ALL_BIBLE_VERSIONS[version]?.label || version.toUpperCase()}
             </div>
           </div>
         </div>
@@ -348,7 +416,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 {currentBook?.name} {selectedChapter}
               </h1>
               <span style={{ fontSize: '0.72rem', opacity: 0.8, fontWeight: 700 }}>
-                {VERSION_NAMES[version].fullName}
+                {ALL_BIBLE_VERSIONS[version]?.fullName || version.toUpperCase()}
               </span>
             </div>
 

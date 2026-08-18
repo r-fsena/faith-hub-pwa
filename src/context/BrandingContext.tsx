@@ -26,6 +26,17 @@ export interface ChurchBranding {
   pwa_theme_color: string;
   pwa_splash_bg: string;
   status?: string;
+  bible_config?: {
+    enabled_versions: string[];
+    default_version: string;
+    allow_user_version_switch: boolean;
+    daily_verse_enabled: boolean;
+    reading_history_enabled: boolean;
+    highlights_enabled: boolean;
+    whatsapp_share_enabled: boolean;
+    featured_reading_book?: string;
+    pastoral_note?: string;
+  };
 }
 
 const DEFAULT_BRANDING: ChurchBranding = {
@@ -148,7 +159,8 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           pwa_short_name: backendSettings.pwa_short_name || DEFAULT_BRANDING.pwa_short_name,
           pwa_slug: backendSettings.pwa_slug || DEFAULT_BRANDING.pwa_slug,
           pwa_theme_color: backendSettings.pwa_theme_color || backendSettings.primary_color || DEFAULT_BRANDING.pwa_theme_color,
-          status: backendSettings.status || 'ACTIVE'
+          status: backendSettings.status || 'ACTIVE',
+          bible_config: backendSettings.bible_config || undefined
         };
         const updated = { ...DEFAULT_BRANDING, ...mapped };
         setBranding(updated);
