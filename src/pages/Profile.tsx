@@ -417,214 +417,278 @@ export const Profile: React.FC = () => {
               textAlign: 'center',
               position: 'relative'
             }}>
-          {/* Avatar com Botão de Ação */}
-          <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 12px auto' }}>
-            <img 
-              src={avatarUrl} 
-              alt="Avatar" 
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid var(--accent-primary)',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
-              }} 
-            />
+              {/* Avatar com Botão de Ação */}
+              <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 12px auto' }}>
+                <img 
+                  src={avatarUrl} 
+                  alt="Avatar" 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid var(--accent-primary)',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
+                  }} 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowAvatarPicker(true)}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    background: 'var(--accent-primary)',
+                    color: '#ffffff',
+                    border: '2px solid #ffffff',
+                    borderRadius: '50%',
+                    width: '30px',
+                    height: '30px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                  }}
+                  title="Trocar Foto"
+                >
+                  📷
+                </button>
+              </div>
+
+              <h2 style={{ fontSize: '1.30rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+                {memberProfile.name || user.name || 'Membro da Igreja'}
+              </h2>
+              
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                {user.email}
+              </p>
+
+              <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                  ✓ Membro Ativo
+                </span>
+                <span style={{ background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                  📍 {memberProfile.campus_name}
+                </span>
+              </div>
+
+              {/* Botão para Editar Meus Dados */}
+              <div style={{ marginTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid var(--panel-border)',
+                    borderRadius: '12px',
+                    padding: '8px 18px',
+                    fontSize: '0.80rem',
+                    fontWeight: 800,
+                    color: 'var(--text-main)',
+                    cursor: 'pointer',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>✏️</span> Editar Meus Dados
+                </button>
+              </div>
+            </div>
+
+            {/* Card Área do Educador / Voluntário Kids (Exibido apenas para Liderança, Pastores, Educadores e Voluntários) */}
+            {['ADMIN', 'PASTOR', 'LEADER', 'VOLUNTEER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'ADMINISTRADOR', 'MINISTÉRIO INFANTIL', 'OBREIRO', 'STAFF'].includes((memberProfile.role || '').toUpperCase()) && (
+              <div style={{
+                background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
+                borderRadius: '20px',
+                padding: '18px',
+                color: '#ffffff',
+                boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.05em' }}>
+                    Operações Ministeriais
+                  </div>
+                  <div style={{ fontSize: '1.02rem', fontWeight: 900, marginTop: '2px' }}>
+                    🚸 Sala Kids & Educadores
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#ccfbf1', marginTop: '2px' }}>
+                    Check-in, chamador de pais e PIN no celular
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsKidsVolunteerOpen(true)}
+                  style={{
+                    background: '#ffffff',
+                    color: '#0f766e',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '8px 14px',
+                    fontWeight: 900,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Abrir Painel
+                </button>
+              </div>
+            )}
+
+            {/* Botão de Desconectar */}
             <button 
               type="button" 
-              onClick={() => setShowAvatarPicker(true)}
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                background: 'var(--accent-primary)',
-                color: '#ffffff',
-                border: '2px solid #ffffff',
-                borderRadius: '50%',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-              }}
-              title="Trocar Foto"
+              className="btn-pwa-secondary"
+              onClick={signOut}
+              style={{ color: '#ef4444', fontWeight: 800, marginTop: 'auto' }}
             >
-              📷
+              Sair da Conta (Logout)
             </button>
           </div>
 
-          <h2 style={{ fontSize: '1.30rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-            {memberProfile.name || user.name || 'Membro da Igreja'}
-          </h2>
-          
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-            {user.email}
-          </p>
+          {/* Coluna 2: Dados Pessoais, Contatos e Privacidade */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Card Meus Dados Cadastrais */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '18px',
+              border: '1px solid var(--panel-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Meus Dados Pessoais
+                </span>
+                <span 
+                  onClick={() => setIsEditProfileOpen(true)}
+                  style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Editar
+                </span>
+              </div>
 
-          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-              ✓ Membro Ativo
-            </span>
-            <span style={{ background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-              📍 {memberProfile.campus_name}
-            </span>
-          </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>👤</span>
+                  <div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Nome Completo</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.name || 'Não informado'}</div>
+                  </div>
+                </div>
 
-          {/* Botão para Editar Meus Dados */}
-          <div style={{ marginTop: '16px' }}>
-            <button
-              type="button"
-              onClick={() => setIsEditProfileOpen(true)}
-              style={{
-                background: '#ffffff',
-                border: '1px solid var(--panel-border)',
-                borderRadius: '12px',
-                padding: '8px 18px',
-                fontSize: '0.80rem',
-                fontWeight: 800,
-                color: 'var(--text-main)',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <span>✏️</span> Editar Meus Dados
-            </button>
-          </div>
-        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>📱</span>
+                  <div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Telefone / WhatsApp</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.phone || 'Adicionar telefone'}</div>
+                  </div>
+                </div>
 
-        {/* Card Meus Dados Cadastrais */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '18px',
-          border: '1px solid var(--panel-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Meus Dados Pessoais
-            </span>
-            <span 
-              onClick={() => setIsEditProfileOpen(true)}
-              style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Editar
-            </span>
-          </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>📍</span>
+                  <div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Endereço / Bairro</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.address || 'Adicionar endereço'}</div>
+                  </div>
+                </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.1rem' }}>👤</span>
-              <div>
-                <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Nome Completo</div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.name || 'Não informado'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🔒</span>
+                  <div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>E-mail de Login (Único)</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-muted)' }}>{user.email}</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.1rem' }}>📱</span>
-              <div>
-                <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Telefone / WhatsApp</div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.phone || 'Adicionar telefone'}</div>
+            {/* Card Informações da Igreja & Contatos */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '18px',
+              border: '1px solid var(--panel-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Minha Comunidade & Contatos
+              </span>
+
+              <div style={{ fontSize: '0.86rem', color: 'var(--text-main)', fontWeight: 800 }}>
+                🏛️ {branding.church_name || 'Faith-Hub Comunidade'}
               </div>
+              {branding.address && (
+                <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
+                  📍 <strong>Endereço:</strong> {branding.address}, {branding.city} - {branding.state}
+                </div>
+              )}
+              {branding.whatsapp && (
+                <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
+                  💬 <strong>Secretaria (WhatsApp):</strong> {branding.whatsapp}
+                </div>
+              )}
+              {branding.email && (
+                <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
+                  ✉️ <strong>E-mail:</strong> {branding.email}
+                </div>
+              )}
+              {branding.instagram && (
+                <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
+                  📸 <strong>Instagram:</strong> {branding.instagram}
+                </div>
+              )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.1rem' }}>📍</span>
+            {/* Configuração de Privacidade & LGPD */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '16px',
+              border: '1px solid var(--panel-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
               <div>
-                <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Endereço / Bairro</div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.address || 'Adicionar endereço'}</div>
+                <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                  Termos de Uso & LGPD
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Permitir notificações e comunicados da liderança
+                </div>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.1rem' }}>🔒</span>
-              <div>
-                <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>E-mail de Login (Único)</div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-muted)' }}>{user.email}</div>
-              </div>
+              <label className="switch-control">
+                <input 
+                  type="checkbox" 
+                  checked={lgpdConsent} 
+                  onChange={e => handleToggleLgpd(e.target.checked)} 
+                />
+                <span className="slider-round" />
+              </label>
             </div>
           </div>
         </div>
 
-        {/* Card Informações da Igreja & Contatos */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '18px',
-          border: '1px solid var(--panel-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px'
-        }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Minha Comunidade & Contatos
-          </span>
-
-          <div style={{ fontSize: '0.86rem', color: 'var(--text-main)', fontWeight: 800 }}>
-            🏛️ {branding.church_name || 'Faith-Hub Comunidade'}
-          </div>
-          {branding.address && (
-            <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              📍 <strong>Endereço:</strong> {branding.address}, {branding.city} - {branding.state}
-            </div>
-          )}
-          {branding.whatsapp && (
-            <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              💬 <strong>Secretaria (WhatsApp):</strong> {branding.whatsapp}
-            </div>
-          )}
-          {branding.email && (
-            <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              ✉️ <strong>E-mail:</strong> {branding.email}
-            </div>
-          )}
-          {branding.instagram && (
-            <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)' }}>
-              📸 <strong>Instagram:</strong> {branding.instagram}
-            </div>
-          )}
-        </div>
-
-        {/* Configuração de Privacidade & LGPD */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '16px',
-          border: '1px solid var(--panel-border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
-              Termos de Uso & LGPD
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Permitir notificações e comunicados da liderança
-            </div>
-          </div>
-
-          <label className="switch-control">
-            <input 
-              type="checkbox" 
-              checked={lgpdConsent} 
-              onChange={e => handleToggleLgpd(e.target.checked)} 
-            />
-            <span className="slider-round" />
-          </label>
-        </div>
-      </div>
-    </div>
+        {/* Modal / Painel do Educador Kids */}
+        <KidsVolunteerPanel 
+          isOpen={isKidsVolunteerOpen} 
+          onClose={() => setIsKidsVolunteerOpen(false)} 
+        />
 
         {/* ========================================================
             BOTTOM SHEET: EDITAR DADOS PESSOAIS DO USUÁRIO
@@ -816,10 +880,10 @@ export const Profile: React.FC = () => {
               Ou escolha um avatar ilustrado:
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-              {PRESET_AVATARS.map((av, idx) => (
+              {CURATED_AVATARS.map((av, idx) => (
                 <div 
                   key={idx}
-                  onClick={() => handleSelectPresetAvatar(av)}
+                  onClick={() => handleSelectCuratedAvatar(av)}
                   style={{
                     borderRadius: '50%',
                     overflow: 'hidden',
