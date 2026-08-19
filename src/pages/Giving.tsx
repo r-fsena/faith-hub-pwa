@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
+import { useAuth } from '../context/AuthContext';
 import { getUploadPresignedUrl } from '../services/api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
 interface SpecialProject {
   id: string;
   title: string;
-  image: string;
-  goal: number;
-  raised: number;
-  desc: string;
-  pix_key: string;
+  image_url?: string;
+  target_amount: number;
+  collected_amount: number;
+  description?: string;
+  pix_key?: string;
+  status: string;
 }
 
 export const Giving: React.FC = () => {
   const { branding } = useBranding();
+  const { user } = useAuth();
   const [viewTab, setViewTab] = useState<'tithes' | 'projects'>('tithes');
-  const [projects] = useState<SpecialProject[]>([]);
+  const [projects, setProjects] = useState<SpecialProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   
   // Dízimo State
   const [amount, setAmount] = useState<number>(50);
@@ -32,11 +38,50 @@ export const Giving: React.FC = () => {
   const presetAmounts = [20, 50, 100, 200, 500];
   const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
 
-  const handleCopyPix = (customKey?: string) => {
+  const orgId = branding.organization_id || 'org_default';
+
+  useEffect(() => {
+    fetchProjects();
+  }, [orgId]);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const res = await fetch(`${API_URL}/financial/projects?organization_id=${orgId}`);
+      if (res.ok) {
+        const json = await res.json();
+        setProjects(json.data || []);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar projetos especiais:', e);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const handleCopyPix = (customKey?: string, projectId?: string) => {
     const pixPayload = customKey || `00020126580014br.gov.bcb.pix0136${branding.pwa_slug || 'faithhub'}520400005303986540${currentAmount.toFixed(2)}5802BR5913${branding.church_name.substring(0, 13)}6009SAO PAULO62070503***6304`;
     navigator.clipboard.writeText(pixPayload);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 3000);
+
+    // Registra intenção / transação na tesouraria
+    fetch(`${API_URL}/financial/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organization_id: orgId,
+        type: 'INCOME',
+        category: projectId ? 'Campanha / Projeto' : purpose,
+        description: projectId ? `Contribuição Projeto PIX: ${branding.church_name}` : `${purpose} via App PWA`,
+        amount: currentAmount,
+        payment_method: 'PIX',
+        status: 'PAID',
+        member_name: user?.name || user?.email || 'Membro do App',
+        origin_module: 'TITHES',
+        project_id: projectId || null
+      })
+    }).catch(() => {});
   };
 
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,13 +91,34 @@ export const Giving: React.FC = () => {
 
     try {
       const presigned = await getUploadPresignedUrl(file.type, 'receipts');
+      let receiptUrl = '';
       if (presigned?.uploadUrl) {
         await fetch(presigned.uploadUrl, {
           method: 'PUT',
           headers: { 'Content-Type': file.type },
           body: file
         });
+        receiptUrl = presigned.uploadUrl.split('?')[0];
       }
+
+      // Salva transação na tesouraria com comprovante
+      await fetch(`${API_URL}/financial/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_id: orgId,
+          type: 'INCOME',
+          category: purpose,
+          description: `${purpose} com comprovante anexado`,
+          amount: currentAmount,
+          payment_method: 'PIX',
+          status: 'PAID',
+          member_name: user?.name || user?.email || 'Membro do App',
+          origin_module: 'TITHES',
+          receipt_url: receiptUrl || null
+        })
+      });
+
       setReceiptAttached(true);
       alert('Comprovante anexado e enviado com sucesso à Tesouraria!');
       setShowAttachModal(false);
@@ -252,7 +318,9 @@ export const Giving: React.FC = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {projects.map(proj => {
-            const pct = Math.min(Math.round((proj.raised / proj.goal) * 100), 100);
+            const collected = Number(proj.collected_amount || 0);
+            const target = Number(proj.target_amount || 1);
+            const pct = Math.min(Math.round((collected / target) * 100), 100);
 
             return (
               <div 
@@ -265,21 +333,23 @@ export const Giving: React.FC = () => {
                   boxShadow: 'var(--shadow-sm)'
                 }}
               >
-                <img src={proj.image} alt={proj.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                {proj.image_url && (
+                  <img src={proj.image_url} alt={proj.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                )}
                 
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                     {proj.title}
                   </h3>
                   <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
-                    {proj.desc}
+                    {proj.description || 'Campanha oficial da igreja.'}
                   </p>
 
                   {/* Barra de Progresso da Meta */}
                   <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '6px' }}>
-                      <span style={{ fontWeight: 800, color: '#059669' }}>R$ {proj.raised.toLocaleString('pt-BR')} arrecadados</span>
-                      <span style={{ color: 'var(--text-muted)' }}>Meta: R$ {proj.goal.toLocaleString('pt-BR')} ({pct}%)</span>
+                      <span style={{ fontWeight: 800, color: '#059669' }}>R$ {collected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Meta: R$ {target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({pct}%)</span>
                     </div>
 
                     <div style={{ width: '100%', height: '8px', borderRadius: '999px', background: '#e2e8f0', overflow: 'hidden' }}>
@@ -291,7 +361,7 @@ export const Giving: React.FC = () => {
                     <button 
                       type="button" 
                       className="btn-pwa-primary"
-                      onClick={() => handleCopyPix(proj.pix_key)}
+                      onClick={() => handleCopyPix(proj.pix_key, proj.id)}
                     >
                       Semeie Neste Projeto (Pix)
                     </button>
