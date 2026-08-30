@@ -689,18 +689,24 @@ export const Devotionals: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Botão Ler Estudo */}
+                      {/* Ícone de Seta para a Direita Minimalista */}
                       <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: isDone ? '#ecfdf5' : '#f8fafc',
+                        border: isDone ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                        color: isDone ? '#059669' : 'var(--accent-primary)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        color: isDone ? '#059669' : 'var(--accent-primary)',
-                        fontSize: '0.76rem',
-                        fontWeight: 800,
-                        flexShrink: 0
+                        justifyContent: 'center',
+                        fontSize: '1.1rem',
+                        fontWeight: 900,
+                        flexShrink: 0,
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'all 0.2s ease'
                       }}>
-                        <span>{isDone ? 'Concluído' : 'Ler Estudo'}</span>
-                        <span style={{ fontSize: '1rem', lineHeight: 1 }}>›</span>
+                        <span style={{ lineHeight: 1, marginTop: '-1px' }}>›</span>
                       </div>
                     </div>
                   );
