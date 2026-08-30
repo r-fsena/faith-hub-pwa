@@ -875,12 +875,12 @@ export const CellGroups: React.FC = () => {
                 </div>
               )}
 
-              {/* Caixa de Entrada e Envio de Mensagens Estilo WhatsApp */}
+              {/* Caixa de Entrada e Envio de Mensagens */}
               <form 
                 onSubmit={handleAddPost} 
                 style={{
                   background: '#ffffff',
-                  borderRadius: '22px',
+                  borderRadius: '20px',
                   padding: '14px',
                   border: '1.5px solid var(--panel-border)',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
@@ -928,42 +928,78 @@ export const CellGroups: React.FC = () => {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-                  <textarea
-                    id="cell-mural-input"
-                    className="input-pwa"
-                    placeholder={replyingTo ? `Responda para @${replyingTo.author_name || replyingTo.author}...` : "Escreva uma mensagem para o mural da célula..."}
-                    rows={replyingTo ? 2 : 3}
-                    value={newPostText}
-                    onChange={e => setNewPostText(e.target.value)}
-                    style={{
-                      flex: 1,
-                      resize: 'none',
-                      padding: '10px 14px',
-                      fontSize: '0.84rem',
-                      borderRadius: '14px',
-                      border: '1px solid #cbd5e1'
-                    }}
-                  />
-                  <button 
-                    type="submit" 
-                    disabled={!newPostText.trim() || isSubmittingPost}
-                    className="btn-pwa-primary" 
-                    style={{ 
-                      padding: '12px 16px', 
-                      fontSize: '0.82rem',
-                      borderRadius: '14px',
-                      height: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      opacity: (!newPostText.trim() || isSubmittingPost) ? 0.6 : 1,
-                      flexShrink: 0
-                    }}
-                  >
-                    <span>{isSubmittingPost ? '...' : '➤'}</span>
-                    <span>{replyingTo ? 'Responder' : 'Enviar'}</span>
-                  </button>
+                {/* Textarea Espaçoso e Ergonômico (Largura Total) */}
+                <textarea
+                  id="cell-mural-input"
+                  className="input-pwa"
+                  placeholder={replyingTo ? `Escreva sua resposta para @${replyingTo.author_name || replyingTo.author}...` : "Compartilhe um recado, aviso, gratidão ou versículo com a célula..."}
+                  rows={3}
+                  value={newPostText}
+                  onChange={e => setNewPostText(e.target.value)}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    resize: 'none',
+                    padding: '12px 14px',
+                    fontSize: '0.88rem',
+                    borderRadius: '14px',
+                    border: '1px solid #cbd5e1',
+                    lineHeight: 1.4,
+                    minHeight: '76px'
+                  }}
+                />
+
+                {/* Barra de Ações Inferior */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    {replyingTo ? '💬 Respondendo mensagem' : '✨ Visível para todos da célula'}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {replyingTo && (
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        style={{
+                          background: '#f1f5f9',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          padding: '8px 14px',
+                          borderRadius: '12px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+
+                    <button 
+                      type="submit" 
+                      disabled={!newPostText.trim() || isSubmittingPost}
+                      style={{ 
+                        background: 'var(--gradient-primary, linear-gradient(135deg, #1e3a8a, #3b82f6))',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '9px 18px', 
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        borderRadius: '12px',
+                        height: '38px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                        opacity: (!newPostText.trim() || isSubmittingPost) ? 0.6 : 1,
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>{isSubmittingPost ? 'Enviando...' : '➤'}</span>
+                      <span>{replyingTo ? 'Responder' : 'Publicar'}</span>
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
