@@ -145,6 +145,7 @@ export const CellGroups: React.FC = () => {
   const [activeReactionPickerPostId, setActiveReactionPickerPostId] = useState<string | null>(null);
   const [study, setStudy] = useState<CellStudy | null>(null);
   const [studyBooks, setStudyBooks] = useState<StudyBook[]>([]);
+  const [loadedBooksMap, setLoadedBooksMap] = useState<Record<string, StudyBook>>({});
   const [studyScope, setStudyScope] = useState<'cell' | 'church'>('cell');
   const [selectedBook, setSelectedBook] = useState<StudyBook | null>(null);
   const [expandedChapterIds, setExpandedChapterIds] = useState<string[]>([]);
@@ -278,16 +279,19 @@ export const CellGroups: React.FC = () => {
     }
   };
 
-  const loadBookWithCompletions = async (bookId: string) => {
-    setLoadingBookDetails(true);
+  const loadBookWithCompletions = async (bookId: string, silent = true) => {
+    if (!silent && !loadedBooksMap[bookId]) {
+      setLoadingBookDetails(true);
+    }
     try {
       const userIdentifier = user?.email || 'guest';
       const fullBook = await fetchStudyBookDetails(bookId, userIdentifier);
       if (fullBook) {
+        setLoadedBooksMap(prev => ({ ...prev, [bookId]: fullBook }));
         setSelectedBook(fullBook);
         
         // Sincroniza conclusões do localStorage + backend
-        const localKey = `faithhub_completed_chapters_${user?.email || 'guest'}_${bookId}`;
+        const localKey = `faithhub_completed_chapters_${userIdentifier}_${bookId}`;
         let cachedCompletions: string[] = [];
         try {
           cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]');
@@ -297,9 +301,8 @@ export const CellGroups: React.FC = () => {
         
         setCompletedChapterIds(mergedCompletions);
         
-        // Se houver capítulos, expande o primeiro por padrão se nenhum estiver expandido
         if (fullBook.chapters && fullBook.chapters.length > 0) {
-          setExpandedChapterIds([fullBook.chapters[0].id || '0']);
+          setExpandedChapterIds(prev => prev.length === 0 ? [fullBook.chapters[0].id || '0'] : prev);
         }
       }
     } finally {
@@ -307,19 +310,41 @@ export const CellGroups: React.FC = () => {
     }
   };
 
-  const handleSwitchScope = async (scope: 'cell' | 'church') => {
+  const handleSwitchScope = (scope: 'cell' | 'church') => {
     setStudyScope(scope);
     setShowPreface(false);
     
     let targetBook: StudyBook | undefined;
     if (scope === 'cell') {
-      targetBook = studyBooks.find(b => b.target_group_id === myGroupId) || studyBooks.find(b => b.target_group_id);
+      targetBook = Object.values(loadedBooksMap).find(b => b.target_group_id === myGroupId || b.target_group_id) ||
+                   studyBooks.find(b => b.target_group_id === myGroupId || b.target_group_id);
     } else {
-      targetBook = studyBooks.find(b => !b.target_group_id);
+      targetBook = Object.values(loadedBooksMap).find(b => !b.target_group_id) ||
+                   studyBooks.find(b => !b.target_group_id);
     }
     
     if (targetBook) {
-      await loadBookWithCompletions(targetBook.id);
+      const fullBook = loadedBooksMap[targetBook.id] || targetBook;
+      setSelectedBook(fullBook);
+
+      const userIdentifier = user?.email || 'guest';
+      const localKey = `faithhub_completed_chapters_${userIdentifier}_${fullBook.id}`;
+      let cachedCompletions: string[] = [];
+      try {
+        cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]');
+      } catch {}
+      const backendCompletions: string[] = fullBook.completed_chapter_ids || [];
+      const mergedCompletions = Array.from(new Set([...cachedCompletions, ...backendCompletions]));
+      setCompletedChapterIds(mergedCompletions);
+
+      if (fullBook.chapters && fullBook.chapters.length > 0) {
+        setExpandedChapterIds([fullBook.chapters[0].id || '0']);
+      }
+
+      // Carrega silenciosamente em background se faltar dados
+      if (!fullBook.chapters || fullBook.chapters.length === 0) {
+        loadBookWithCompletions(fullBook.id, true);
+      }
     } else {
       setSelectedBook(null);
     }
@@ -348,8 +373,21 @@ export const CellGroups: React.FC = () => {
     
     setCompletedChapterIds(newCompletions);
     
-    const localKey = `faithhub_completed_chapters_${user?.email || 'guest'}_${selectedBook.id}`;
+    const localKey = `faithhub_completed_chapters_${userIdentifier}_${selectedBook.id}`;
     localStorage.setItem(localKey, JSON.stringify(newCompletions));
+
+    // Atualiza também no mapa em memória
+    setLoadedBooksMap(prev => {
+      const existing = prev[selectedBook.id];
+      if (!existing) return prev;
+      return {
+        ...prev,
+        [selectedBook.id]: {
+          ...existing,
+          completed_chapter_ids: newCompletions
+        }
+      };
+    });
 
     try {
       const res = await toggleChapterCompletion(chapterId, selectedBook.id, userIdentifier);
@@ -376,21 +414,55 @@ export const CellGroups: React.FC = () => {
       setPosts(normalized);
     }
 
-    // Carrega Livros de Estudo da Célula
+    // Carrega Livros de Estudo da Célula e da Igreja antecipadamente em paralelo
     const books = await fetchStudyBooks(groupId);
     if (Array.isArray(books) && books.length > 0) {
       setStudyBooks(books);
-      const cellBook = books.find(b => b.target_group_id === groupId || b.target_group_id);
-      const churchBook = books.find(b => !b.target_group_id);
-      
-      const targetBook = cellBook || churchBook || books[0];
-      if (targetBook) {
-        setStudyScope(targetBook.target_group_id ? 'cell' : 'church');
-        await loadBookWithCompletions(targetBook.id);
+      const userIdentifier = user?.email || 'guest';
+
+      // Pré-carrega os detalhes de TODOS os livros (Célula e Igreja) em paralelo
+      const detailsList = await Promise.all(
+        books.map(async (b) => {
+          try {
+            const detail = await fetchStudyBookDetails(b.id, userIdentifier);
+            return detail || b;
+          } catch {
+            return b;
+          }
+        })
+      );
+
+      const bookMap: Record<string, StudyBook> = {};
+      detailsList.forEach((b) => {
+        if (b && b.id) bookMap[b.id] = b;
+      });
+      setLoadedBooksMap(bookMap);
+
+      const cellBook = detailsList.find(b => b && (b.target_group_id === groupId || b.target_group_id));
+      const churchBook = detailsList.find(b => b && !b.target_group_id);
+      const defaultBook = cellBook || churchBook || detailsList[0];
+
+      if (defaultBook) {
+        setSelectedBook(defaultBook);
+        setStudyScope(defaultBook.target_group_id ? 'cell' : 'church');
+
+        const localKey = `faithhub_completed_chapters_${userIdentifier}_${defaultBook.id}`;
+        let cachedCompletions: string[] = [];
+        try {
+          cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]');
+        } catch {}
+        const backendCompletions: string[] = defaultBook.completed_chapter_ids || [];
+        const merged = Array.from(new Set([...cachedCompletions, ...backendCompletions]));
+        setCompletedChapterIds(merged);
+
+        if (defaultBook.chapters && defaultBook.chapters.length > 0) {
+          setExpandedChapterIds([defaultBook.chapters[0].id || '0']);
+        }
       }
     } else {
       setStudyBooks([]);
       setSelectedBook(null);
+      setLoadedBooksMap({});
     }
 
     const s = await fetchCellStudies(groupId);
@@ -1223,7 +1295,7 @@ export const CellGroups: React.FC = () => {
                 </button>
               </div>
 
-              {loadingBookDetails ? (
+              {loadingBookDetails && !selectedBook ? (
                 <div style={{ background: '#ffffff', borderRadius: '20px', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Carregando roteiro do estudo...
                 </div>
