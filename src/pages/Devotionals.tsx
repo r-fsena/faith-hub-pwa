@@ -24,7 +24,7 @@ export interface DevotionalItem {
 export const Devotionals: React.FC = () => {
   const [allDevotionals, setAllDevotionals] = useState<DevotionalItem[]>(() => {
     try {
-      const saved = localStorage.getItem('faithhub_cached_devotionals_v2');
+      const saved = localStorage.getItem('faithhub_cached_devotionals_v3');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -33,7 +33,7 @@ export const Devotionals: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem('faithhub_cached_devotionals_v2');
+      const saved = localStorage.getItem('faithhub_cached_devotionals_v3');
       return !saved || JSON.parse(saved).length === 0;
     } catch {
       return true;
@@ -47,10 +47,20 @@ export const Devotionals: React.FC = () => {
   const [showPastModal, setShowPastModal] = useState<boolean>(false);
   const [pastSearchTerm, setPastSearchTerm] = useState<string>('');
 
-  // Curtidas dos membros
+  // Persistência de Estudos Concluídos / Lidos
+  const [completedIds, setCompletedIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('faithhub_completed_devotionals_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Persistência de Reações / Curtidas ("❤️ Abençoado!")
   const [likedIds, setLikedIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('faithhub_liked_devotionals');
+      const saved = localStorage.getItem('faithhub_liked_devotionals_v1');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -149,7 +159,7 @@ export const Devotionals: React.FC = () => {
 
       if (list.length > 0) {
         setAllDevotionals(list);
-        localStorage.setItem('faithhub_cached_devotionals_v2', JSON.stringify(list));
+        localStorage.setItem('faithhub_cached_devotionals_v3', JSON.stringify(list));
       }
     } catch (e) {
       console.error('Erro ao carregar devocionais:', e);
@@ -162,11 +172,9 @@ export const Devotionals: React.FC = () => {
 
   // 1. Devocional de Hoje (Fixo no topo da tela)
   const todayDevotional = useMemo(() => {
-    // Procura mensagem com a data de hoje
     const exactToday = allDevotionals.find(d => d.raw_date === todayStr);
     if (exactToday) return exactToday;
 
-    // Se não houver com data de hoje, pega o mais recente disponível até a data de hoje
     const pastOrToday = allDevotionals.filter(d => (d.raw_date || '') <= todayStr);
     if (pastOrToday.length > 0) {
       return pastOrToday[pastOrToday.length - 1];
@@ -175,13 +183,14 @@ export const Devotionals: React.FC = () => {
     return allDevotionals[0] || null;
   }, [allDevotionals, todayStr]);
 
-  // 2. Próximas Mensagens (Datas futuras > todayStr)
+  // 2. Próximas Mensagens (Limitado estritamente aos próximos 7 dias à frente / semana seguinte)
   const upcomingDevotionals = useMemo(() => {
     if (!todayDevotional) return [];
     const thresholdDate = todayDevotional.raw_date || todayStr;
     return allDevotionals
       .filter(d => (d.raw_date || '') > thresholdDate && d.id !== todayDevotional.id)
-      .sort((a, b) => (a.raw_date || '').localeCompare(b.raw_date || ''));
+      .sort((a, b) => (a.raw_date || '').localeCompare(b.raw_date || ''))
+      .slice(0, 7); // Apenas os próximos 7 dias!
   }, [allDevotionals, todayDevotional, todayStr]);
 
   // 3. Dias Anteriores (Datas passadas < todayStr)
@@ -204,10 +213,20 @@ export const Devotionals: React.FC = () => {
     );
   }, [pastDevotionals, pastSearchTerm]);
 
+  // Toggle de Reação / Curtida Persistida
   const toggleLike = (id: string) => {
     setLikedIds(prev => {
       const next = prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id];
-      localStorage.setItem('faithhub_liked_devotionals', JSON.stringify(next));
+      localStorage.setItem('faithhub_liked_devotionals_v1', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Toggle de Estudo Concluído Persistido
+  const toggleCompleted = (id: string) => {
+    setCompletedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id];
+      localStorage.setItem('faithhub_completed_devotionals_v1', JSON.stringify(next));
       return next;
     });
   };
@@ -239,7 +258,7 @@ export const Devotionals: React.FC = () => {
             Palavra & Ensino
           </h2>
           <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '3px', margin: 0 }}>
-            Estudos bíblicos e meditações diárias
+            Estudos bíblicos e devocionais diários
           </p>
         </div>
 
@@ -303,30 +322,51 @@ export const Devotionals: React.FC = () => {
                   background: 'linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%)',
                   borderRadius: '24px',
                   padding: 'clamp(18px, 4vw, 26px)',
-                  border: '1.5px solid rgba(15, 118, 110, 0.20)',
+                  border: completedIds.includes(todayDevotional.id)
+                    ? '2px solid #10b981'
+                    : '1.5px solid rgba(15, 118, 110, 0.20)',
                   boxShadow: '0 10px 28px rgba(15, 118, 110, 0.08)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
               >
-                {/* Badge de Hoje e Passagem Bíblica */}
+                {/* Badge de Hoje, Passagem e Status de Concluído */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{
-                    background: 'var(--accent-primary-gradient)',
-                    color: '#ffffff',
-                    fontSize: '0.70rem',
-                    fontWeight: 900,
-                    padding: '4px 10px',
-                    borderRadius: '16px',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 2px 8px rgba(15, 118, 110, 0.25)'
-                  }}>
-                    <span>☀️</span> Mensagem de Hoje • {todayDevotional.formatted_date}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      background: 'var(--accent-primary-gradient)',
+                      color: '#ffffff',
+                      fontSize: '0.70rem',
+                      fontWeight: 900,
+                      padding: '4px 10px',
+                      borderRadius: '16px',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.25)'
+                    }}>
+                      <span>☀️</span> Mensagem de Hoje • {todayDevotional.formatted_date}
+                    </span>
+
+                    {completedIds.includes(todayDevotional.id) && (
+                      <span style={{
+                        background: '#dcfce7',
+                        color: '#15803d',
+                        border: '1px solid #86efac',
+                        fontSize: '0.68rem',
+                        fontWeight: 900,
+                        padding: '3px 8px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px'
+                      }}>
+                        <span>✅</span> Concluído
+                      </span>
+                    )}
+                  </div>
 
                   {todayDevotional.passage && (
                     <span style={{
@@ -390,25 +430,32 @@ export const Devotionals: React.FC = () => {
                   {todayDevotional.content}
                 </p>
 
-                {/* Louvor Sugerido (Tag) */}
-                {todayDevotional.suggested_song_title && (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.74rem',
-                    color: 'var(--text-secondary)',
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    border: '1px solid #e2e8f0',
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    marginBottom: '18px'
-                  }}>
-                    <span>🎵</span>
-                    <span style={{ fontWeight: 600 }}>Louvor:</span>
-                    <strong style={{ color: 'var(--text-main)' }}>{todayDevotional.suggested_song_title}</strong>
-                  </div>
-                )}
+                {/* Tags de Louvor e Reação */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+                  {todayDevotional.suggested_song_title ? (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.74rem',
+                      color: 'var(--text-secondary)',
+                      background: 'rgba(255, 255, 255, 0.85)',
+                      border: '1px solid #e2e8f0',
+                      padding: '6px 12px',
+                      borderRadius: '20px'
+                    }}>
+                      <span>🎵</span>
+                      <span style={{ fontWeight: 600 }}>Louvor:</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{todayDevotional.suggested_song_title}</strong>
+                    </div>
+                  ) : <div />}
+
+                  {likedIds.includes(todayDevotional.id) && (
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#ef4444' }}>
+                      ❤️ Abençoado por você
+                    </span>
+                  )}
+                </div>
 
                 {/* Botão de Ação: Abrir Estudo Completo da Palavra */}
                 <button
@@ -417,7 +464,9 @@ export const Devotionals: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '14px 20px',
-                    background: 'var(--accent-primary-gradient)',
+                    background: completedIds.includes(todayDevotional.id)
+                      ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                      : 'var(--accent-primary-gradient)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '16px',
@@ -433,14 +482,14 @@ export const Devotionals: React.FC = () => {
                   }}
                 >
                   <span>📖</span>
-                  <span>Abrir Estudo Completo da Palavra</span>
+                  <span>{completedIds.includes(todayDevotional.id) ? 'Rever Estudo da Palavra' : 'Abrir Estudo Completo da Palavra'}</span>
                 </button>
               </div>
             </section>
           )}
 
           {/* ======================================================= */}
-          {/* 2. SEÇÃO PRÓXIMAS MENSAGENS (DIAS FUTUROS)              */}
+          {/* 2. SEÇÃO PRÓXIMAS MENSAGENS (SEMANA SEGUINTE - 7 DIAS)  */}
           {/* ======================================================= */}
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -456,7 +505,7 @@ export const Devotionals: React.FC = () => {
                   padding: '2px 8px',
                   borderRadius: '12px'
                 }}>
-                  {upcomingDevotionals.length} disponíveis
+                  Próximos 7 dias
                 </span>
               </div>
             </div>
@@ -470,78 +519,95 @@ export const Devotionals: React.FC = () => {
                 border: '1px solid var(--panel-border)'
               }}>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Nenhuma mensagem futura agendada no momento.
+                  Nenhuma mensagem agendada para os próximos 7 dias.
                 </p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {upcomingDevotionals.map((dev) => (
-                  <div
-                    key={dev.id}
-                    onClick={() => setReadingDevotional(dev)}
-                    style={{
-                      background: '#ffffff',
-                      borderRadius: '18px',
-                      padding: '14px 18px',
-                      border: '1px solid var(--panel-border)',
-                      boxShadow: 'var(--shadow-sm)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '12px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Badge da Data */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span style={{
-                          fontSize: '0.70rem',
-                          fontWeight: 800,
-                          color: dev.is_tomorrow ? 'var(--accent-primary)' : 'var(--text-muted)',
-                          background: dev.is_tomorrow ? 'var(--accent-primary-light)' : '#f8fafc',
-                          padding: '2px 8px',
-                          borderRadius: '8px',
-                          textTransform: 'uppercase'
-                        }}>
-                          📅 {dev.date_badge}
-                        </span>
-                        {dev.passage && (
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                            • {dev.passage}
+                {upcomingDevotionals.map((dev) => {
+                  const isDone = completedIds.includes(dev.id);
+                  return (
+                    <div
+                      key={dev.id}
+                      onClick={() => setReadingDevotional(dev)}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: '18px',
+                        padding: '14px 18px',
+                        border: isDone ? '1.5px solid #10b981' : '1px solid var(--panel-border)',
+                        boxShadow: 'var(--shadow-sm)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Badge da Data e Status */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: '0.70rem',
+                            fontWeight: 800,
+                            color: dev.is_tomorrow ? 'var(--accent-primary)' : 'var(--text-muted)',
+                            background: dev.is_tomorrow ? 'var(--accent-primary-light)' : '#f8fafc',
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            textTransform: 'uppercase'
+                          }}>
+                            📅 {dev.date_badge}
                           </span>
-                        )}
+
+                          {isDone && (
+                            <span style={{
+                              background: '#dcfce7',
+                              color: '#15803d',
+                              fontSize: '0.66rem',
+                              fontWeight: 900,
+                              padding: '2px 6px',
+                              borderRadius: '8px'
+                            }}>
+                              ✅ Concluído
+                            </span>
+                          )}
+
+                          {dev.passage && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              • {dev.passage}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Título */}
+                        <div style={{
+                          fontSize: '0.90rem',
+                          fontWeight: 800,
+                          color: 'var(--text-main)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {dev.title}
+                        </div>
                       </div>
 
-                      {/* Título */}
+                      {/* Botão Ler Estudo */}
                       <div style={{
-                        fontSize: '0.90rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: isDone ? '#059669' : 'var(--accent-primary)',
+                        fontSize: '0.76rem',
                         fontWeight: 800,
-                        color: 'var(--text-main)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        flexShrink: 0
                       }}>
-                        {dev.title}
+                        <span>{isDone ? 'Concluído' : 'Ler Estudo'}</span>
+                        <span style={{ fontSize: '1rem', lineHeight: 1 }}>›</span>
                       </div>
                     </div>
-
-                    {/* Botão Ler Estudo */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      color: 'var(--accent-primary)',
-                      fontSize: '0.76rem',
-                      fontWeight: 800,
-                      flexShrink: 0
-                    }}>
-                      <span>Ler Estudo</span>
-                      <span style={{ fontSize: '1rem', lineHeight: 1 }}>›</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -598,15 +664,29 @@ export const Devotionals: React.FC = () => {
               <span>Voltar</span>
             </button>
 
-            <span style={{
-              fontSize: '0.74rem',
-              fontWeight: 800,
-              color: 'var(--accent-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em'
-            }}>
-              ☀️ {readingDevotional.formatted_date}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: 'var(--accent-primary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em'
+              }}>
+                ☀️ {readingDevotional.formatted_date}
+              </span>
+              {completedIds.includes(readingDevotional.id) && (
+                <span style={{
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  fontSize: '0.66rem',
+                  fontWeight: 900,
+                  padding: '2px 6px',
+                  borderRadius: '8px'
+                }}>
+                  ✅ Lido
+                </span>
+              )}
+            </div>
 
             <button
               type="button"
@@ -704,11 +784,37 @@ export const Devotionals: React.FC = () => {
               fontSize: '0.98rem',
               color: 'var(--text-main)',
               lineHeight: 1.8,
-              marginBottom: '28px',
+              marginBottom: '24px',
               whiteSpace: 'pre-line'
             }}>
               {readingDevotional.content}
             </div>
+
+            {/* Botão de Marcar / Concluir Leitura do Estudo */}
+            <button
+              type="button"
+              onClick={() => toggleCompleted(readingDevotional.id)}
+              style={{
+                width: '100%',
+                padding: '14px 20px',
+                borderRadius: '16px',
+                fontWeight: 900,
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '26px',
+                background: completedIds.includes(readingDevotional.id) ? '#ecfdf5' : 'var(--accent-primary-gradient)',
+                color: completedIds.includes(readingDevotional.id) ? '#059669' : '#ffffff',
+                border: completedIds.includes(readingDevotional.id) ? '2px solid #a7f3d0' : 'none',
+                boxShadow: completedIds.includes(readingDevotional.id) ? 'none' : '0 4px 16px rgba(15, 118, 110, 0.25)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>{completedIds.includes(readingDevotional.id) ? '✅ Estudo Concluído (Toque para desmarcar)' : '✓ Marcar Estudo como Concluído'}</span>
+            </button>
 
             {/* Oração Guiada do Dia */}
             {readingDevotional.prayer_indication && (
@@ -795,7 +901,7 @@ export const Devotionals: React.FC = () => {
               </div>
             )}
 
-            {/* Rodapé do Estudo: Autor & Botão de Edificante */}
+            {/* Rodapé do Estudo: Autor & Botão de Edificante (Persistido) */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -829,6 +935,7 @@ export const Devotionals: React.FC = () => {
                 </div>
               </div>
 
+              {/* Botão de Reação Persistido */}
               <button
                 type="button"
                 onClick={() => toggleLike(readingDevotional.id)}
@@ -843,7 +950,8 @@ export const Devotionals: React.FC = () => {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <span>{likedIds.includes(readingDevotional.id) ? '❤️' : '🤍'}</span>
@@ -945,48 +1053,63 @@ export const Devotionals: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                filteredPastDevotionals.map(dev => (
-                  <div
-                    key={dev.id}
-                    onClick={() => {
-                      setShowPastModal(false);
-                      setReadingDevotional(dev);
-                    }}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--panel-border)',
-                      borderRadius: '16px',
-                      padding: '14px 16px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '12px',
-                      boxShadow: 'var(--shadow-sm)',
-                      transition: 'background 0.15s ease'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                        <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-                          📅 {dev.formatted_date}
-                        </span>
-                        {dev.passage && (
-                          <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                            • {dev.passage}
+                filteredPastDevotionals.map(dev => {
+                  const isDone = completedIds.includes(dev.id);
+                  return (
+                    <div
+                      key={dev.id}
+                      onClick={() => {
+                        setShowPastModal(false);
+                        setReadingDevotional(dev);
+                      }}
+                      style={{
+                        background: '#ffffff',
+                        border: isDone ? '1.5px solid #10b981' : '1px solid var(--panel-border)',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        boxShadow: 'var(--shadow-sm)',
+                        transition: 'background 0.15s ease'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                            📅 {dev.formatted_date}
                           </span>
-                        )}
+                          {isDone && (
+                            <span style={{
+                              background: '#dcfce7',
+                              color: '#15803d',
+                              fontSize: '0.64rem',
+                              fontWeight: 900,
+                              padding: '2px 5px',
+                              borderRadius: '6px'
+                            }}>
+                              ✅ Concluído
+                            </span>
+                          )}
+                          {dev.passage && (
+                            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
+                              • {dev.passage}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                          {dev.title}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {dev.title}
-                      </div>
-                    </div>
 
-                    <span style={{ color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 800 }}>
-                      ›
-                    </span>
-                  </div>
-                ))
+                      <span style={{ color: isDone ? '#059669' : 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 800 }}>
+                        ›
+                      </span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
