@@ -692,36 +692,34 @@ export const CellGroups: React.FC = () => {
 
   if (isLoadingInitial) {
     return (
-      <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px', minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+      <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px', minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px' }}>
         <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '20px',
+          width: '68px',
+          height: '68px',
+          borderRadius: '22px',
           background: 'var(--accent-primary-light)',
           color: 'var(--accent-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.8rem',
-          boxShadow: '0 8px 24px rgba(37,99,235,0.12)'
+          fontSize: '2rem',
+          animation: 'pulseIconGlow 1.8s infinite ease-in-out'
         }}>
           👥
         </div>
+
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+          <div style={{ fontWeight: 900, fontSize: '1.08rem', color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
             Acessando Pequenos Grupos...
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
             Sincronizando encontros, roteiros e comunhão
           </div>
         </div>
-        <div style={{ width: '140px', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-          <div style={{
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, var(--accent-primary), #60a5fa)',
-            borderRadius: '2px'
-          }} />
+
+        {/* Barra de Progresso Animada Contínua */}
+        <div className="pwa-progress-track" style={{ width: '180px', height: '6px', marginTop: '2px' }}>
+          <div className="pwa-progress-indicator" />
         </div>
       </div>
     );

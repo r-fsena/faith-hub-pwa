@@ -850,3 +850,51 @@ input, select, textarea {
     gap: 8px;
   }
 }
+
+/* ==========================================================================
+   Progress Bar & Loading Animations
+   ========================================================================== */
+@keyframes indeterminateProgress {
+  0% {
+    left: -40%;
+    width: 35%;
+  }
+  50% {
+    left: 25%;
+    width: 55%;
+  }
+  100% {
+    left: 100%;
+    width: 35%;
+  }
+}
+
+@keyframes pulseIconGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 16px rgba(15, 118, 110, 0.12);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 8px 24px rgba(15, 118, 110, 0.25);
+  }
+}
+
+.pwa-progress-track {
+  width: 160px;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.pwa-progress-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, var(--accent-primary, #0f766e), #38bdf8);
+  border-radius: 999px;
+  animation: indeterminateProgress 1.4s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+
