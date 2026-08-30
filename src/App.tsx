@@ -261,14 +261,18 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { FeatureFlagProvider } from './context/FeatureFlagContext';
+
 export function App() {
   return (
     <BrandingProvider>
-      <AuthProvider>
-        <CartProvider>
-          <AppContent />
-        </CartProvider>
-      </AuthProvider>
+      <FeatureFlagProvider>
+        <AuthProvider>
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
+        </AuthProvider>
+      </FeatureFlagProvider>
     </BrandingProvider>
   );
 }

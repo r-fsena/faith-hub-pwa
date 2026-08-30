@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 
 // SVG Icons
 const HomeIcon = () => (
@@ -25,18 +26,22 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
-  const tabs = [
-    { id: 'home' as ActiveTab, label: 'Início', icon: HomeIcon },
-    { id: 'devotionals' as ActiveTab, label: 'Palavra', icon: BookIcon },
-    { id: 'cells' as ActiveTab, label: 'Células', icon: UsersIcon },
-    { id: 'store' as ActiveTab, label: 'Cantina', icon: StoreIcon },
-    { id: 'profile' as ActiveTab, label: 'Perfil', icon: UserIcon },
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  const allTabs: Array<{ id: ActiveTab; label: string; icon: React.ComponentType; flag?: string }> = [
+    { id: 'home', label: 'Início', icon: HomeIcon },
+    { id: 'devotionals', label: 'Palavra', icon: BookIcon, flag: 'devotionals.module_enabled' },
+    { id: 'cells', label: 'Células', icon: UsersIcon, flag: 'cell_groups.module_enabled' },
+    { id: 'store', label: 'Cantina', icon: StoreIcon, flag: 'pdv.module_enabled' },
+    { id: 'profile', label: 'Perfil', icon: UserIcon },
   ];
+
+  const visibleTabs = allTabs.filter(tab => !tab.flag || isFeatureEnabled(tab.flag));
 
   return (
     <nav className="pwa-bottom-nav">
       <div className="pwa-bottom-nav-inner">
-        {tabs.map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
 

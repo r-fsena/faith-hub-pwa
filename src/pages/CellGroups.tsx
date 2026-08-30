@@ -233,7 +233,8 @@ export const CellGroups: React.FC = () => {
 
   const handleRequestJoin = async (id: string) => {
     setPendingGroupId(id);
-    await requestJoinCell('user_me', id);
+    const userId = user?.userId || 'me';
+    await requestJoinCell(userId, id, user?.email);
     alert('Solicitação enviada com sucesso ao líder da célula!');
   };
 

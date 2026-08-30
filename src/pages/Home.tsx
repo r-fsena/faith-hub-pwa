@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
 import { BottomSheet } from '../components/BottomSheet';
@@ -45,6 +46,7 @@ export const Home: React.FC<HomeProps> = ({
 }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [todayDevotional, setTodayDevotional] = useState<any>(null);
@@ -96,49 +98,55 @@ export const Home: React.FC<HomeProps> = ({
 
   const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
 
-  // 8 Serviços & Atalhos com Ícones SVG do Design System
-  const quickActions = [
+  // 8 Serviços & Atalhos com Ícones SVG do Design System condicionados a Feature Flags
+  const allQuickActions = [
     { 
       label: 'Cultos ao Vivo', 
       icon: <LiveIcon size={22} color="#dc2626" />, 
       bg: 'rgba(239, 68, 68, 0.12)', 
       border: 'rgba(239, 68, 68, 0.25)', 
-      action: onOpenLive 
+      action: onOpenLive,
+      flag: 'broadcasts.module_enabled'
     },
     { 
       label: 'Palavra & Ensino', 
       icon: <BookOpenIcon size={22} color="#0284c7" />, 
       bg: 'rgba(2, 132, 199, 0.12)', 
       border: 'rgba(2, 132, 199, 0.25)', 
-      action: () => onNavigate('devotionals') 
+      action: () => onNavigate('devotionals'),
+      flag: 'devotionals.module_enabled'
     },
     { 
       label: 'Células & Redes', 
       icon: <UsersGroupIcon size={22} color="var(--accent-primary)" />, 
       bg: 'var(--accent-primary-light)', 
       border: 'rgba(15, 118, 110, 0.25)', 
-      action: () => onNavigate('cells') 
+      action: () => onNavigate('cells'),
+      flag: 'cell_groups.module_enabled'
     },
     { 
       label: 'Cantina & Loja', 
       icon: <ShoppingBagIcon size={22} color="#059669" />, 
       bg: 'rgba(5, 150, 105, 0.12)', 
       border: 'rgba(5, 150, 105, 0.25)', 
-      action: () => onNavigate('store') 
+      action: () => onNavigate('store'),
+      flag: 'pdv.module_enabled'
     },
     { 
       label: 'Dízimos & Ofertas', 
       icon: <GivingHeartIcon size={22} color="#9333ea" />, 
       bg: 'rgba(147, 51, 234, 0.12)', 
       border: 'rgba(147, 51, 234, 0.25)', 
-      action: onOpenGiving 
+      action: onOpenGiving,
+      flag: 'financial.online_pix_giving'
     },
     { 
       label: 'Eventos & Cursos', 
       icon: <CalendarEventIcon size={22} color="#ea580c" />, 
       bg: 'rgba(234, 88, 12, 0.12)', 
       border: 'rgba(234, 88, 12, 0.25)', 
-      action: onOpenEvents 
+      action: onOpenEvents,
+      flag: 'events.module_enabled'
     },
     { 
       label: 'Bíblia Sagrada', 
@@ -146,16 +154,20 @@ export const Home: React.FC<HomeProps> = ({
       bg: 'rgba(71, 85, 105, 0.12)', 
       border: 'rgba(71, 85, 105, 0.25)', 
       action: onOpenBible,
-      isBible: true
+      isBible: true,
+      flag: 'bible.module_enabled'
     },
     { 
       label: 'Mural de Oração', 
       icon: <PrayerChatIcon size={22} color="#4f46e5" />, 
       bg: 'rgba(79, 70, 229, 0.12)', 
       border: 'rgba(79, 70, 229, 0.25)', 
-      action: onOpenPrayers 
+      action: onOpenPrayers,
+      flag: 'prayers.module_enabled'
     },
   ];
+
+  const quickActions = allQuickActions.filter(qa => !qa.flag || isFeatureEnabled(qa.flag));
 
   return (
     <div className="pwa-content animate-fade-in" style={{ gap: '18px' }}>

@@ -80,7 +80,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             {branding.logo_icon_url ? (
               <img src={branding.logo_icon_url} alt={branding.church_name} />
             ) : (
-              <span>{getInitials(branding.church_name)}</span>
+              <img src="/brand/logo-symbol.png" alt={branding.church_name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             )}
           </div>
           <div className="pwa-church-title">

@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
     const session = await fetchAuthSession();
-    const token = session.tokens?.idToken?.toString();
+    const token = session.tokens?.idToken?.toString() || session.tokens?.accessToken?.toString();
     if (token) {
       return {
         'Authorization': `Bearer ${token}`,
@@ -190,18 +190,20 @@ export async function fetchCellGroups() {
   return [];
 }
 
-export async function requestJoinCell(userId: string, cellGroupId: string) {
+export async function requestJoinCell(userId: string, cellGroupId: string, email?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/members/${userId}/request-cell`, {
+    const headers = await getAuthHeaders();
+    const targetId = userId && userId !== 'user_me' ? userId : 'me';
+    const res = await fetch(`${API_BASE_URL}/members/${targetId}/request-cell`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cellGroupId })
+      headers,
+      body: JSON.stringify({ cellGroupId, userId: targetId, email })
     });
     return res.ok;
   } catch (e) {
-    console.log("Request cell API fallback", e);
+    console.log("Request cell API error", e);
+    return false;
   }
-  return true;
 }
 
 export async function fetchCellPosts(groupId?: string) {

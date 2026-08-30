@@ -977,23 +977,35 @@ export const Profile: React.FC = () => {
         
         {/* Logo & Header no mesmo padrão do Web Studio */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            background: 'var(--accent-primary-gradient)',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px',
-            color: '#ffffff',
-            fontWeight: 900,
-            fontSize: '1.4rem',
-            boxShadow: '0 8px 20px rgba(15, 118, 110, 0.25)',
-            letterSpacing: '-0.5px'
-          }}>
-            FH
-          </div>
+          {branding.logo_icon_url ? (
+            <img
+              src={branding.logo_icon_url}
+              alt={branding.church_name}
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                objectFit: 'cover',
+                margin: '0 auto 12px',
+                display: 'block',
+                boxShadow: '0 8px 20px rgba(15, 118, 110, 0.25)'
+              }}
+            />
+          ) : (
+            <img
+              src="/brand/logo-symbol.png"
+              alt="Faith-Hub"
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                objectFit: 'contain',
+                margin: '0 auto 12px',
+                display: 'block',
+                boxShadow: '0 8px 20px rgba(15, 118, 110, 0.25)'
+              }}
+            />
+          )}
           <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0 }}>
             {branding.church_name || 'Faith-Hub Community'}
           </h2>
