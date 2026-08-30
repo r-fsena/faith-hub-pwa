@@ -4,6 +4,7 @@ import {
   fetchCellGroups, 
   fetchCellPosts, 
   createCellPost, 
+  reactToCellPost,
   fetchCellStudies, 
   fetchCellPartilhas, 
   togglePartilhaItem,
@@ -38,12 +39,21 @@ interface CellGroup {
 
 interface CellPost {
   id: string;
-  author?: string;
+  cell_group_id?: string;
+  author_id?: string;
   author_name?: string;
+  author?: string;
+  author_role?: string;
+  author_avatar?: string;
   avatar?: string;
   time_ago?: string;
   created_at?: string;
   content: string;
+  content_text?: string;
+  reply_to_id?: string;
+  reply_to_author?: string;
+  reply_to_text?: string;
+  reactions?: Record<string, string[]>;
   likes?: number;
 }
 
@@ -95,6 +105,9 @@ export const CellGroups: React.FC = () => {
   // Portal State
   const [posts, setPosts] = useState<CellPost[]>([]);
   const [newPostText, setNewPostText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<CellPost | null>(null);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const [activeReactionPickerPostId, setActiveReactionPickerPostId] = useState<string | null>(null);
   const [study, setStudy] = useState<CellStudy | null>(null);
   const [snacks, setSnacks] = useState<SnackAssignment[]>([]);
 
@@ -117,6 +130,48 @@ export const CellGroups: React.FC = () => {
   const [editWhatsapp, setEditWhatsapp] = useState('');
   const [savingMeeting, setSavingMeeting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'M';
+    const parts = name.trim().split(' ').filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const getAvatarBg = (name?: string) => {
+    const gradients = [
+      'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+      'linear-gradient(135deg, #10b981, #047857)',
+      'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+      'linear-gradient(135deg, #f59e0b, #b45309)',
+      'linear-gradient(135deg, #ec4899, #be185d)',
+      'linear-gradient(135deg, #06b6d4, #0e7490)'
+    ];
+    if (!name) return gradients[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const index = Math.abs(hash) % gradients.length;
+    return gradients[index];
+  };
+
+  const formatPostTime = (dateStr?: string) => {
+    if (!dateStr) return 'Agora';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'Agora';
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      if (isToday) return `Hoje às ${hours}:${minutes}`;
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (d.toDateString() === yesterday.toDateString()) return `Ontem às ${hours}:${minutes}`;
+      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} às ${hours}:${minutes}`;
+    } catch {
+      return 'Recente';
+    }
+  };
 
   useEffect(() => {
     loadAllData();
@@ -182,7 +237,15 @@ export const CellGroups: React.FC = () => {
 
   const loadGroupSpecifics = async (groupId: string, groupList?: CellGroup[]) => {
     const p = await fetchCellPosts(groupId);
-    if (Array.isArray(p)) setPosts(p);
+    if (Array.isArray(p)) {
+      const normalized = p.map((item: any) => ({
+        ...item,
+        content: item.content || item.content_text || '',
+        author_name: item.author_name || item.author || 'Membro',
+        reactions: typeof item.reactions === 'string' ? JSON.parse(item.reactions || '{}') : (item.reactions || {})
+      }));
+      setPosts(normalized);
+    }
 
     const s = await fetchCellStudies(groupId);
     if (Array.isArray(s) && s.length > 0) setStudy(s[0]);
@@ -237,23 +300,69 @@ export const CellGroups: React.FC = () => {
 
   const handleAddPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPostText.trim() || !myGroupId) return;
-    const res = await createCellPost({
+    if (!newPostText.trim() || !myGroupId || isSubmittingPost) return;
+    
+    setIsSubmittingPost(true);
+    const authorName = user?.name || (user?.email ? user.email.split('@')[0] : 'Membro');
+    const authorId = user?.userId || `usr_${Date.now()}`;
+    const authorRole = isCellLeader ? 'Líder' : 'Membro';
+
+    const payload = {
       group_id: myGroupId,
       content: newPostText.trim(),
-      author_name: 'Membro'
-    });
-
-    const newPost: CellPost = res || {
-      id: `p_${Date.now()}`,
-      author: 'Eu (Membro)',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-      time_ago: 'Agora mesmo',
-      content: newPostText.trim(),
-      likes: 1
+      author_name: authorName,
+      author_id: authorId,
+      author_role: authorRole,
+      reply_to_id: replyingTo?.id,
+      reply_to_author: replyingTo ? (replyingTo.author_name || replyingTo.author || 'Membro') : undefined,
+      reply_to_text: replyingTo ? (replyingTo.content || replyingTo.content_text || '') : undefined
     };
-    setPosts([newPost, ...posts]);
+
+    const res = await createCellPost(payload);
+
+    const newPost: CellPost = res?.post || {
+      id: res?.id || `p_${Date.now()}`,
+      cell_group_id: myGroupId,
+      author_id: authorId,
+      author_name: authorName,
+      author: authorName,
+      author_role: authorRole,
+      created_at: new Date().toISOString(),
+      content: newPostText.trim(),
+      content_text: newPostText.trim(),
+      reply_to_id: replyingTo?.id,
+      reply_to_author: replyingTo ? (replyingTo.author_name || replyingTo.author || 'Membro') : undefined,
+      reply_to_text: replyingTo ? (replyingTo.content || replyingTo.content_text || '') : undefined,
+      reactions: {}
+    };
+
+    setPosts(prev => [...prev, newPost]);
     setNewPostText('');
+    setReplyingTo(null);
+    setIsSubmittingPost(false);
+  };
+
+  const handleReactPost = async (postId: string, emoji: string) => {
+    const effectiveUserId = user?.userId || user?.email || 'anonymous';
+    
+    // Optimistic UI update
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        const current = { ...(p.reactions || {}) };
+        const users = Array.isArray(current[emoji]) ? [...current[emoji]] : [];
+        if (users.includes(effectiveUserId)) {
+          current[emoji] = users.filter(u => u !== effectiveUserId);
+          if (current[emoji].length === 0) delete current[emoji];
+        } else {
+          current[emoji] = [...users, effectiveUserId];
+        }
+        return { ...p, reactions: current };
+      }
+      return p;
+    }));
+
+    setActiveReactionPickerPostId(null);
+    await reactToCellPost(postId, emoji, effectiveUserId);
   };
 
   const handleVolunteerSnack = async (snackId: string) => {
@@ -510,34 +619,353 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: MURAL */}
+          {/* TAB 2: MURAL - ESTILO COMUNIDADE / WHATSAPP */}
           {portalTab === 'mural' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <form onSubmit={handleAddPost} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <textarea
-                  className="input-pwa"
-                  placeholder="Compartilhe um recado, aviso ou gratidão com a célula..."
-                  rows={3}
-                  value={newPostText}
-                  onChange={e => setNewPostText(e.target.value)}
-                />
-                <button type="submit" className="btn-pwa-primary" style={{ padding: '10px', fontSize: '0.82rem' }}>
-                  Publicar no Mural
-                </button>
-              </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Top Summary Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                border: '1px solid var(--panel-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>💬</span>
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      Mural da Célula {myGroup.name}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      {posts.length} {posts.length === 1 ? 'mensagem compartilhada' : 'mensagens compartilhadas'}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.72rem', background: '#dbeafe', color: '#1d4ed8', fontWeight: 800, padding: '4px 10px', borderRadius: '12px' }}>
+                  Comunidade Viva
+                </div>
+              </div>
 
+              {/* Feed de Mensagens */}
               {posts.length === 0 ? (
-                <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                  Nenhum recado no mural ainda. Seja o primeiro a publicar!
+                <div style={{ 
+                  background: '#ffffff', 
+                  borderRadius: '20px', 
+                  padding: '36px 20px', 
+                  textAlign: 'center', 
+                  border: '1px dashed #cbd5e1' 
+                }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🕊️</span>
+                  <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                    O mural da célula está tranquilo
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>
+                    Compartilhe um versículo, um pedido de oração ou avise a turma sobre o encontro!
+                  </p>
                 </div>
               ) : (
-                posts.map(p => (
-                  <div key={p.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid var(--panel-border)' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>{p.author || p.author_name || 'Membro'}</div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '6px 0 0 0' }}>{p.content}</p>
-                  </div>
-                ))
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {posts.map((p) => {
+                    const authorDisplayName = p.author_name || p.author || 'Membro';
+                    const isCurrentUser = Boolean(
+                      (user?.name && authorDisplayName.toLowerCase() === user.name.toLowerCase()) ||
+                      (user?.email && p.author_id === user.userId)
+                    );
+                    const isLeaderPost = p.author_role === 'Líder' || p.author_role === 'LEADER' || p.author_role === 'PASTOR' || p.author_role === 'SUPERADMIN';
+                    const reactionsObj = p.reactions || {};
+                    const reactionKeys = Object.keys(reactionsObj);
+                    const effectiveUserId = user?.userId || user?.email || 'anonymous';
+
+                    return (
+                      <div 
+                        key={p.id} 
+                        style={{
+                          background: isCurrentUser ? '#f0fdf4' : '#ffffff',
+                          borderRadius: '20px',
+                          padding: '16px',
+                          border: isCurrentUser ? '1.5px solid #bbf7d0' : '1px solid var(--panel-border)',
+                          boxShadow: 'var(--shadow-sm)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Header da Mensagem (Avatar + Nome + Badge + Horário) */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                            {/* Avatar com Gradiente e Iniciais */}
+                            <div style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '50%',
+                              background: getAvatarBg(authorDisplayName),
+                              color: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 900,
+                              fontSize: '0.82rem',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+                            }}>
+                              {getInitials(authorDisplayName)}
+                            </div>
+
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {authorDisplayName}
+                                </span>
+                                
+                                {isCurrentUser && (
+                                  <span style={{ fontSize: '0.64rem', background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '1px 6px', borderRadius: '6px' }}>
+                                    Você
+                                  </span>
+                                )}
+
+                                {isLeaderPost && (
+                                  <span style={{ fontSize: '0.64rem', background: '#fef3c7', color: '#b45309', fontWeight: 800, padding: '1px 6px', borderRadius: '6px' }}>
+                                    👑 Líder
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
+                                {formatPostTime(p.created_at)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Botão Responder Rápido */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyingTo(p);
+                              const inputEl = document.getElementById('cell-mural-input');
+                              if (inputEl) {
+                                inputEl.focus();
+                                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }
+                            }}
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '10px',
+                              padding: '5px 9px',
+                              fontSize: '0.70rem',
+                              fontWeight: 800,
+                              color: 'var(--accent-primary)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              flexShrink: 0
+                            }}
+                          >
+                            <span>↩️</span>
+                            <span>Responder</span>
+                          </button>
+                        </div>
+
+                        {/* Card de Mensagem Respondida (Estilo WhatsApp Quote) */}
+                        {p.reply_to_text && (
+                          <div style={{
+                            background: isCurrentUser ? '#dcfce7' : '#f1f5f9',
+                            borderLeft: '3.5px solid var(--accent-primary)',
+                            borderRadius: '10px',
+                            padding: '8px 12px',
+                            fontSize: '0.76rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px'
+                          }}>
+                            <div style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.72rem' }}>
+                              @{p.reply_to_author || 'Membro'}
+                            </div>
+                            <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              "{p.reply_to_text}"
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Corpo da Mensagem */}
+                        <div style={{
+                          fontSize: '0.88rem',
+                          color: 'var(--text-main)',
+                          lineHeight: 1.5,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          {p.content || p.content_text || ''}
+                        </div>
+
+                        {/* Barra de Reações e Emojis Rápidos */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '6px',
+                          paddingTop: '6px',
+                          borderTop: isCurrentUser ? '1px solid #dcfce7' : '1px solid #f1f5f9'
+                        }}>
+                          {/* Reações Ativas com Contador */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                            {reactionKeys.map(emoji => {
+                              const userList = reactionsObj[emoji] || [];
+                              const hasReacted = userList.includes(effectiveUserId);
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => handleReactPost(p.id, emoji)}
+                                  style={{
+                                    background: hasReacted ? '#e0e7ff' : '#f8fafc',
+                                    border: hasReacted ? '1px solid #818cf8' : '1px solid #e2e8f0',
+                                    color: hasReacted ? '#3730a3' : 'var(--text-main)',
+                                    borderRadius: '16px',
+                                    padding: '2px 8px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <span>{emoji}</span>
+                                  <span>{userList.length}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Quick Emoji Reaction Buttons */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {['❤️', '🙏', '🔥', '👏', '😍'].map(emoji => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => handleReactPost(p.id, emoji)}
+                                title={`Reagir com ${emoji}`}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  fontSize: '0.96rem',
+                                  cursor: 'pointer',
+                                  padding: '2px 3px',
+                                  borderRadius: '6px',
+                                  lineHeight: 1,
+                                  transition: 'transform 0.15s ease'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.25)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
+
+              {/* Caixa de Entrada e Envio de Mensagens Estilo WhatsApp */}
+              <form 
+                onSubmit={handleAddPost} 
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '22px',
+                  padding: '14px',
+                  border: '1.5px solid var(--panel-border)',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                {/* Banner de Citação Ativa se estiver Respondendo */}
+                {replyingTo && (
+                  <div style={{
+                    background: '#eff6ff',
+                    borderLeft: '4px solid var(--accent-primary)',
+                    borderRadius: '12px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px'
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                        Respondendo a @{replyingTo.author_name || replyingTo.author || 'Membro'}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        "{replyingTo.content || replyingTo.content_text}"
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReplyingTo(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        fontWeight: 900
+                      }}
+                      title="Cancelar resposta"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                  <textarea
+                    id="cell-mural-input"
+                    className="input-pwa"
+                    placeholder={replyingTo ? `Responda para @${replyingTo.author_name || replyingTo.author}...` : "Escreva uma mensagem para o mural da célula..."}
+                    rows={replyingTo ? 2 : 3}
+                    value={newPostText}
+                    onChange={e => setNewPostText(e.target.value)}
+                    style={{
+                      flex: 1,
+                      resize: 'none',
+                      padding: '10px 14px',
+                      fontSize: '0.84rem',
+                      borderRadius: '14px',
+                      border: '1px solid #cbd5e1'
+                    }}
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!newPostText.trim() || isSubmittingPost}
+                    className="btn-pwa-primary" 
+                    style={{ 
+                      padding: '12px 16px', 
+                      fontSize: '0.82rem',
+                      borderRadius: '14px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      opacity: (!newPostText.trim() || isSubmittingPost) ? 0.6 : 1,
+                      flexShrink: 0
+                    }}
+                  >
+                    <span>{isSubmittingPost ? '...' : '➤'}</span>
+                    <span>{replyingTo ? 'Responder' : 'Enviar'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

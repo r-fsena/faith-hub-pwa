@@ -217,7 +217,17 @@ export async function fetchCellPosts(groupId?: string) {
   return [];
 }
 
-export async function createCellPost(payload: { group_id?: string; content: string; author_name: string }) {
+export async function createCellPost(payload: { 
+  group_id?: string; 
+  content: string; 
+  author_name: string; 
+  author_id?: string;
+  reply_to_id?: string;
+  reply_to_author?: string;
+  reply_to_text?: string;
+  author_role?: string;
+  author_avatar?: string;
+}) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/posts`, {
@@ -228,6 +238,21 @@ export async function createCellPost(payload: { group_id?: string; content: stri
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Create cell post fallback", e);
+  }
+  return null;
+}
+
+export async function reactToCellPost(postId: string, emoji: string, userId?: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}/react`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ emoji, userId })
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("React to cell post error", e);
   }
   return null;
 }
