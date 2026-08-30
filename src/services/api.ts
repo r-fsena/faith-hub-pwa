@@ -257,6 +257,34 @@ export async function reactToCellPost(postId: string, emoji: string, userId?: st
   return null;
 }
 
+export async function fetchStudyBooks(groupId?: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/study-books${groupId ? `?group_id=${groupId}` : ''}`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.data || []);
+    }
+  } catch (e) {
+    console.log("Offline/fallback study books", e);
+  }
+  return [];
+}
+
+export async function fetchStudyBookDetails(bookId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/study-books/${bookId}`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      return data.data || data;
+    }
+  } catch (e) {
+    console.log("Offline/fallback study book details", e);
+  }
+  return null;
+}
+
 export async function fetchCellStudies(groupId?: string) {
   try {
     const headers = await getAuthHeaders();
