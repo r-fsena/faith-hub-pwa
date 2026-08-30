@@ -127,6 +127,7 @@ type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [cells, setCells] = useState<CellGroup[]>([]);
+  const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('discover');
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
   const [portalTab, setPortalTab] = useState<PortalTab>('dashboard');
@@ -223,29 +224,30 @@ export const CellGroups: React.FC = () => {
 
   const loadAllData = async () => {
     try {
-      const groupList = await fetchCellGroups();
+      // Busca grupos e perfil do membro simultaneamente em paralelo
+      const [groupList, member] = await Promise.all([
+        fetchCellGroups(),
+        (user?.email || isAuthenticated) ? fetchCurrentMember() : Promise.resolve(null)
+      ]);
+
       const cellsArray = Array.isArray(groupList) ? groupList : [];
       setCells(cellsArray);
 
       let assignedGroupId: string | null = null;
       let userRole = 'Membro';
 
-      // 1. Busca perfil do membro autenticado com token JWT
-      if (user?.email || isAuthenticated) {
-        const member = await fetchCurrentMember();
-        if (member) {
-          userRole = member.role || 'Membro';
-          if (member.cell_group_id) {
-            assignedGroupId = member.cell_group_id;
-            if (user?.email) {
-              localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, member.cell_group_id);
-            }
+      if (member) {
+        userRole = member.role || 'Membro';
+        if (member.cell_group_id) {
+          assignedGroupId = member.cell_group_id;
+          if (user?.email) {
+            localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, member.cell_group_id);
           }
-          if (member.pending_cell_group_id && member.pending_cell_group_id !== member.cell_group_id) {
-            setPendingGroupId(member.pending_cell_group_id);
-          } else {
-            setPendingGroupId(null);
-          }
+        }
+        if (member.pending_cell_group_id && member.pending_cell_group_id !== member.cell_group_id) {
+          setPendingGroupId(member.pending_cell_group_id);
+        } else {
+          setPendingGroupId(null);
         }
       }
 
@@ -268,6 +270,7 @@ export const CellGroups: React.FC = () => {
         );
         setIsCellLeader(isLeader);
 
+        // Aguarda carregar todos os dados específicos (posts, estudos pré-carregados, lanches) antes de exibir a tela
         await loadGroupSpecifics(matchedGroup.id, cellsArray);
       } else {
         setMyGroupId(null);
@@ -276,6 +279,8 @@ export const CellGroups: React.FC = () => {
       }
     } catch (e) {
       console.error('Erro ao carregar dados de células:', e);
+    } finally {
+      setIsLoadingInitial(false);
     }
   };
 
@@ -684,6 +689,43 @@ export const CellGroups: React.FC = () => {
     }
     setSavingMeeting(false);
   };
+
+  if (isLoadingInitial) {
+    return (
+      <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px', minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '20px',
+          background: 'var(--accent-primary-light)',
+          color: 'var(--accent-primary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.8rem',
+          boxShadow: '0 8px 24px rgba(37,99,235,0.12)'
+        }}>
+          👥
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+            Acessando Pequenos Grupos...
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Sincronizando encontros, roteiros e comunhão
+          </div>
+        </div>
+        <div style={{ width: '140px', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, var(--accent-primary), #60a5fa)',
+            borderRadius: '2px'
+          }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px' }}>
