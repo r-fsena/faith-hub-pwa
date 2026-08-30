@@ -325,12 +325,17 @@ export async function fetchCellPartilhas(groupId?: string) {
   return [];
 }
 
-export async function togglePartilhaItem(id: string) {
+export async function togglePartilhaItem(id: string, isConfirmed?: boolean, userName?: string, userId?: string) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/partilhas/${id}/toggle`, {
       method: 'PUT',
-      headers
+      headers,
+      body: JSON.stringify({
+        is_confirmed: isConfirmed,
+        user_name: userName,
+        user_id: userId
+      })
     });
     return res.ok;
   } catch (e) {

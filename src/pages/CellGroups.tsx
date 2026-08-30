@@ -106,12 +106,44 @@ interface CellStudy {
 
 interface SnackAssignment {
   id: string;
-  user_name: string;
-  item_name: string;
+  user_id?: string;
+  user_name?: string;
+  member_name?: string;
+  person?: string;
+  item_name?: string;
+  item?: string;
   quantity?: string;
-  event_date: string;
+  event_date?: string;
+  scheduled_date?: string;
+  date?: string;
   confirmed?: boolean;
+  is_confirmed?: boolean;
+  category?: string;
 }
+
+const SNACK_QUICK_SUGGESTIONS = [
+  { name: 'Refrigerante 2L', qty: '2 garrafas', category: 'BEBIDAS', icon: '🥤' },
+  { name: 'Suco Natural 1L', qty: '2 garrafas', category: 'BEBIDAS', icon: '🧃' },
+  { name: 'Salgadinhos (Cento)', qty: '1 cento', category: 'SALGADOS', icon: '🥟' },
+  { name: 'Pão de Queijo', qty: '1 pacote grande', category: 'SALGADOS', icon: '🧀' },
+  { name: 'Bolo Caseiro', qty: '1 bolo', category: 'DOCES', icon: '🍰' },
+  { name: 'Sanduíches Naturais', qty: '1 bandeja', category: 'SALGADOS', icon: '🥪' },
+  { name: 'Frutas da Estação', qty: '1 porção', category: 'FRUTAS', icon: '🍉' },
+  { name: 'Copos & Guardanapos', qty: '1 kit', category: 'DESCARTAVEIS', icon: '🍽️' },
+  { name: 'Café Quentinho', qty: '1 garrafa', category: 'BEBIDAS', icon: '☕' },
+];
+
+const getSnackIcon = (itemText?: string) => {
+  if (!itemText) return '🥪';
+  const t = itemText.toLowerCase();
+  if (t.includes('refri') || t.includes('coca') || t.includes('suco') || t.includes('bebida') || t.includes('água') || t.includes('cha') || t.includes('chá')) return '🥤';
+  if (t.includes('café') || t.includes('cafe')) return '☕';
+  if (t.includes('salgad') || t.includes('coxinha') || t.includes('kibe') || t.includes('empada') || t.includes('pão') || t.includes('pao') || t.includes('torta') || t.includes('sandu') || t.includes('queijo')) return '🥟';
+  if (t.includes('bolo') || t.includes('doce') || t.includes('brigadeiro') || t.includes('sobremesa') || t.includes('pudim') || t.includes('torta')) return '🍰';
+  if (t.includes('fruta') || t.includes('melancia') || t.includes('banana') || t.includes('uva') || t.includes('maçã') || t.includes('maca')) return '🍉';
+  if (t.includes('copo') || t.includes('guardanapo') || t.includes('prato') || t.includes('descart')) return '🍽️';
+  return '🥪';
+};
 
 interface CellMember {
   id: string;
@@ -156,17 +188,22 @@ export const CellGroups: React.FC = () => {
   const [, setTogglingChapterId] = useState<string | null>(null);
   const [snacks, setSnacks] = useState<SnackAssignment[]>([]);
 
+  // Lanches & Partilha State
+  const [isSnackModalOpen, setIsSnackModalOpen] = useState(false);
+  const [snackFilterCategory, setSnackFilterCategory] = useState<string>('ALL');
+  const [newSnackItem, setNewSnackItem] = useState('');
+  const [newSnackDate, setNewSnackDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newSnackQty, setNewSnackQty] = useState('');
+  const [newSnackCategory, setNewSnackCategory] = useState<string>('SALGADOS');
+  const [newSnackAssigneeMode, setNewSnackAssigneeMode] = useState<'me' | 'open' | 'member'>('me');
+  const [newSnackAssignedMemberId, setNewSnackAssignedMemberId] = useState<string>('');
+  const [isAddingSnack, setIsAddingSnack] = useState(false);
+
   // Leader Hub State
   const [leaderSubTab, setLeaderSubTab] = useState<LeaderSubTab>('requests');
   const [pendingUsers, setPendingUsers] = useState<CellMember[]>([]);
   const [groupMembers, setGroupMembers] = useState<CellMember[]>([]);
   const [, setLoadingDetails] = useState(false);
-  
-  // Form add snack
-  const [newSnackItem, setNewSnackItem] = useState('');
-  const [newSnackDate, setNewSnackDate] = useState(new Date().toISOString().split('T')[0]);
-  const [newSnackQty, setNewSnackQty] = useState('');
-  const [isAddingSnack, setIsAddingSnack] = useState(false);
 
   // Form edit meeting
   const [editMeetingDay, setEditMeetingDay] = useState('');
@@ -589,14 +626,50 @@ export const CellGroups: React.FC = () => {
   };
 
   const handleVolunteerSnack = async (snackId: string) => {
-    await togglePartilhaItem(snackId);
+    const currentName = user?.name || (user?.email ? user.email.split('@')[0] : 'Voluntário');
+    const currentId = user?.userId || 'me';
+
     setSnacks(prev => prev.map(s => {
       if (s.id === snackId) {
-        return { ...s, person: 'Eu (Voluntário)', member_name: 'Eu (Voluntário)', confirmed: true, is_confirmed: true };
+        return {
+          ...s,
+          user_name: currentName,
+          member_name: currentName,
+          person: currentName,
+          user_id: currentId,
+          confirmed: true,
+          is_confirmed: true
+        };
       }
       return s;
     }));
-    alert('Obrigado por abençoar a célula com o lanche!');
+
+    await togglePartilhaItem(snackId, true, currentName, currentId);
+  };
+
+  const handleUnvolunteerSnack = async (snackId: string) => {
+    setSnacks(prev => prev.map(s => {
+      if (s.id === snackId) {
+        return {
+          ...s,
+          user_name: 'A definir',
+          member_name: 'A definir',
+          person: 'A definir',
+          user_id: undefined,
+          confirmed: false,
+          is_confirmed: false
+        };
+      }
+      return s;
+    }));
+
+    await togglePartilhaItem(snackId, false, 'A definir', undefined);
+  };
+
+  const handleSelectQuickSuggestion = (sug: { name: string; qty: string; category: string }) => {
+    setNewSnackItem(sug.name);
+    setNewSnackQty(sug.qty);
+    setNewSnackCategory(sug.category);
   };
 
   // --- LÍDER ACTIONS ---
@@ -633,25 +706,62 @@ export const CellGroups: React.FC = () => {
 
   const handleCreateSnack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!myGroupId || !newSnackItem.trim() || !newSnackDate) return;
+    if (!myGroupId || !newSnackItem.trim() || !newSnackDate || isAddingSnack) return;
     setIsAddingSnack(true);
-    const res = await createPartilhaItem({
+
+    let assignedName = 'A definir';
+    let assignedId = undefined;
+    let isConfirmed = false;
+
+    if (newSnackAssigneeMode === 'me') {
+      assignedName = user?.name || (user?.email ? user.email.split('@')[0] : 'Voluntário');
+      assignedId = user?.userId || 'me';
+      isConfirmed = true;
+    } else if (newSnackAssigneeMode === 'member' && newSnackAssignedMemberId) {
+      const found = groupMembers.find(m => m.id === newSnackAssignedMemberId);
+      if (found) {
+        assignedName = found.name;
+        assignedId = found.id;
+        isConfirmed = true;
+      }
+    }
+
+    const payload = {
       cell_group_id: myGroupId,
       item_name: newSnackItem.trim(),
+      quantity: newSnackQty.trim(),
       event_date: newSnackDate,
-      quantity: newSnackQty.trim()
-    });
+      user_name: assignedName,
+      user_id: assignedId
+    };
+
+    const res = await createPartilhaItem(payload);
     if (res && res.partilha) {
-      setSnacks(prev => [res.partilha, ...prev]);
+      const createdItem: SnackAssignment = {
+        ...res.partilha,
+        is_confirmed: isConfirmed,
+        confirmed: isConfirmed,
+        user_name: assignedName,
+        item_name: newSnackItem.trim(),
+        quantity: newSnackQty.trim(),
+        event_date: newSnackDate,
+        category: newSnackCategory
+      };
+
+      if (isConfirmed) {
+        await togglePartilhaItem(res.partilha.id, true, assignedName, assignedId);
+      }
+
+      setSnacks(prev => [createdItem, ...prev]);
       setNewSnackItem('');
       setNewSnackQty('');
-      alert('✓ Item adicionado à escala de lanche da célula!');
+      setIsSnackModalOpen(false);
     }
     setIsAddingSnack(false);
   };
 
   const handleDeleteSnack = async (snackId: string) => {
-    if (!confirm('Remover este item da escala?')) return;
+    if (!confirm('Remover este item da escala de comunhão?')) return;
     const ok = await deletePartilhaItem(snackId);
     if (ok) {
       setSnacks(prev => prev.filter(s => s.id !== snackId));
@@ -1805,52 +1915,323 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: LANCHES / PARTILHA (VISÃO MEMBROS) */}
+          {/* TAB 4: LANCHES / PARTILHA (VISÃO MEMBROS & LIDERANÇA) */}
           {portalTab === 'lanches' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  Escala de Lanches & Comunhão
-                </span>
-                <button 
-                  type="button"
-                  onClick={() => { setPortalTab('lideranca'); setLeaderSubTab('lanches'); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  + Adicionar Item (Líder)
-                </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* 1. CARD HERO DA MESA DE COMUNHÃO */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                borderRadius: '22px',
+                padding: '18px 20px',
+                color: '#ffffff',
+                boxShadow: '0 6px 18px rgba(217,119,6,0.22)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.22)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem'
+                    }}>
+                      🥐
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 900, fontSize: '1.05rem', letterSpacing: '-0.2px' }}>
+                        Mesa de Comunhão
+                      </div>
+                      <div style={{ fontSize: '0.74rem', opacity: 0.9 }}>
+                        Escala colaborativa de partilha da célula
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsSnackModalOpen(true)}
+                    style={{
+                      background: '#ffffff',
+                      color: '#b45309',
+                      border: 'none',
+                      padding: '8px 14px',
+                      borderRadius: '12px',
+                      fontWeight: 900,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>＋</span>
+                    <span>Adicionar Item</span>
+                  </button>
+                </div>
+
+                {/* Resumo da Cobertura da Mesa */}
+                <div style={{
+                  background: 'rgba(0,0,0,0.14)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 800 }}>
+                    <span>🍽️ Cobertura da Mesa</span>
+                    <span>
+                      {snacks.filter(s => s.confirmed || s.is_confirmed).length} de {snacks.length} itens confirmados
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.25)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${snacks.length > 0 ? (snacks.filter(s => s.confirmed || s.is_confirmed).length / snacks.length) * 100 : 0}%`,
+                      height: '100%',
+                      background: '#ffffff',
+                      borderRadius: '3px',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                </div>
               </div>
 
-              {snacks.length === 0 ? (
-                <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                  Nenhum item de lanche cadastrado para os próximos encontros.
-                </div>
-              ) : (
-                snacks.map(snack => {
-                  const isConfirmed = snack.confirmed || snack.is_confirmed;
+              {/* 2. FILTROS DE CATEGORIA EM PÍLULAS */}
+              <div style={{
+                display: 'flex',
+                gap: '6px',
+                overflowX: 'auto',
+                paddingBottom: '4px',
+                scrollbarWidth: 'none'
+              }}>
+                {[
+                  { id: 'ALL', label: `Todos (${snacks.length})`, icon: '🍽️' },
+                  { id: 'BEBIDAS', label: 'Bebidas', icon: '🥤' },
+                  { id: 'SALGADOS', label: 'Salgados', icon: '🥟' },
+                  { id: 'DOCES', label: 'Doces & Bolos', icon: '🍰' },
+                  { id: 'FRUTAS', label: 'Frutas', icon: '🍉' },
+                  { id: 'DESCARTAVEIS', label: 'Descartáveis', icon: '🍴' }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSnackFilterCategory(cat.id)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: snackFilterCategory === cat.id ? 'var(--accent-primary)' : '#ffffff',
+                      color: snackFilterCategory === cat.id ? '#ffffff' : 'var(--text-secondary)',
+                      fontWeight: 800,
+                      fontSize: '0.74rem',
+                      cursor: 'pointer',
+                      boxShadow: snackFilterCategory === cat.id ? '0 2px 8px rgba(15,118,110,0.25)' : 'var(--shadow-sm)',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* 3. LISTA DE ITENS DA PARTILHA */}
+              {(() => {
+                const filtered = snacks.filter(snack => {
+                  if (snackFilterCategory === 'ALL') return true;
+                  const name = (snack.item || snack.item_name || '').toLowerCase();
+                  const cat = snack.category || '';
+                  if (snackFilterCategory === 'BEBIDAS') {
+                    return cat === 'BEBIDAS' || name.includes('refri') || name.includes('suco') || name.includes('bebida') || name.includes('água') || name.includes('café') || name.includes('chá');
+                  }
+                  if (snackFilterCategory === 'SALGADOS') {
+                    return cat === 'SALGADOS' || name.includes('salgad') || name.includes('coxinha') || name.includes('pão') || name.includes('pao') || name.includes('sandu') || name.includes('torta') || name.includes('queijo');
+                  }
+                  if (snackFilterCategory === 'DOCES') {
+                    return cat === 'DOCES' || name.includes('bolo') || name.includes('doce') || name.includes('brigadeiro') || name.includes('pudim');
+                  }
+                  if (snackFilterCategory === 'FRUTAS') {
+                    return cat === 'FRUTAS' || name.includes('fruta') || name.includes('melancia') || name.includes('banana') || name.includes('uva') || name.includes('maçã');
+                  }
+                  if (snackFilterCategory === 'DESCARTAVEIS') {
+                    return cat === 'DESCARTAVEIS' || name.includes('copo') || name.includes('guardanapo') || name.includes('prato') || name.includes('descart');
+                  }
+                  return true;
+                });
+
+                if (filtered.length === 0) {
                   return (
-                    <div key={snack.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
-                          {snack.item || snack.item_name} {snack.quantity ? `(${snack.quantity})` : ''}
-                        </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                          🗓️ {snack.event_date || snack.scheduled_date || snack.date || 'Próximo Encontro'} • 👤 {snack.person || snack.member_name || snack.user_name || 'A definir'}
-                        </div>
+                    <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px dashed #cbd5e1' }}>
+                      <span style={{ fontSize: '2.2rem', display: 'block', marginBottom: '8px' }}>🥐</span>
+                      <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                        Mesa aguardando itens
                       </div>
-                      {!isConfirmed ? (
-                        <button type="button" className="btn-pwa-primary" onClick={() => handleVolunteerSnack(snack.id)} style={{ width: 'auto', padding: '6px 12px', fontSize: '0.74rem' }}>
-                          Eu Levo!
-                        </button>
-                      ) : (
-                        <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800 }}>
-                          ✓ Confirmado
-                        </span>
-                      )}
+                      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: '0 0 14px 0' }}>
+                        Toque no botão abaixo para sugerir ou voluntariar um prato/bebida!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsSnackModalOpen(true)}
+                        className="btn-pwa-primary"
+                        style={{ margin: '0 auto', padding: '10px 18px', fontSize: '0.80rem' }}
+                      >
+                        ＋ Adicionar Item Agora
+                      </button>
                     </div>
                   );
-                })
-              )}
+                }
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {filtered.map(snack => {
+                      const isConfirmed = snack.confirmed || snack.is_confirmed;
+                      const itemName = snack.item || snack.item_name || 'Item de Partilha';
+                      const itemIcon = getSnackIcon(itemName);
+                      const assignedPerson = snack.person || snack.member_name || snack.user_name || 'A definir';
+                      const isMe = assignedPerson === user?.name || (user?.email && assignedPerson.toLowerCase().includes(user.email.split('@')[0].toLowerCase()));
+
+                      return (
+                        <div
+                          key={snack.id}
+                          style={{
+                            background: '#ffffff',
+                            borderRadius: '18px',
+                            padding: '14px 16px',
+                            border: isConfirmed ? '1px solid #e2e8f0' : '1px solid #fed7aa',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '44px',
+                              height: '44px',
+                              borderRadius: '14px',
+                              background: isConfirmed ? '#f0fdf4' : '#fff7ed',
+                              color: isConfirmed ? '#16a34a' : '#ea580c',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.4rem',
+                              flexShrink: 0
+                            }}>
+                              {itemIcon}
+                            </div>
+
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)' }}>
+                                {itemName} {snack.quantity ? <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.78rem' }}>({snack.quantity})</span> : ''}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
+                                  🗓️ {snack.event_date || snack.scheduled_date || 'Próximo Encontro'}
+                                </span>
+                                <span style={{ fontSize: '0.70rem', color: '#cbd5e1' }}>•</span>
+                                {isConfirmed ? (
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    ✓ {assignedPerson} vai levar
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706' }}>
+                                    ⏳ Aberto para voluntário
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            {!isConfirmed ? (
+                              <button
+                                type="button"
+                                onClick={() => handleVolunteerSnack(snack.id)}
+                                style={{
+                                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '8px 14px',
+                                  borderRadius: '12px',
+                                  fontWeight: 800,
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 6px rgba(16,185,129,0.3)',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                🙋 Eu Levo!
+                              </button>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {isMe && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUnvolunteerSnack(snack.id)}
+                                    title="Desmarcar minha contribuição"
+                                    style={{
+                                      background: '#f1f5f9',
+                                      color: 'var(--text-muted)',
+                                      border: 'none',
+                                      padding: '6px 10px',
+                                      borderRadius: '10px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Liberar
+                                  </button>
+                                )}
+                                <span style={{
+                                  background: '#ecfdf5',
+                                  color: '#059669',
+                                  padding: '5px 9px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800
+                                }}>
+                                  ✓ Confirmado
+                                </span>
+                              </div>
+                            )}
+
+                            {isCellLeader && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSnack(snack.id)}
+                                title="Excluir item da lista"
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  fontSize: '0.80rem',
+                                  cursor: 'pointer',
+                                  padding: '4px 6px'
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -2007,91 +2388,69 @@ export const CellGroups: React.FC = () => {
                 </div>
               )}
 
-              {/* SUBTAB 3: LANCHES & PARTILHA (GESTÃO DO LÍDER) */}
+              {/* SUBTAB 3: LANCHES & PARTILHA (GESTÃO DIRETA DO LÍDER) */}
               {leaderSubTab === 'lanches' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  
-                  {/* Formulário para Adicionar Item */}
-                  <form onSubmit={handleCreateSnack} style={{ background: '#ffffff', borderRadius: '18px', padding: '16px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
-                      + Adicionar Item na Escala de Lanches
-                    </div>
-                    
-                    <input 
-                      type="text" 
-                      className="input-pwa"
-                      placeholder="Ex: Bolo de Cenoura, Salgadinhos, Suco de Laranja..."
-                      value={newSnackItem}
-                      onChange={e => setNewSnackItem(e.target.value)}
-                      required
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
-                      <div>
-                        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Data do Encontro</label>
-                        <input 
-                          type="date" 
-                          className="input-pwa"
-                          value={newSnackDate}
-                          onChange={e => setNewSnackDate(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Quantidade (Opcional)</label>
-                        <input 
-                          type="text" 
-                          className="input-pwa"
-                          placeholder="Ex: 2 garrafas"
-                          value={newSnackQty}
-                          onChange={e => setNewSnackQty(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className="btn-pwa-primary"
-                      disabled={isAddingSnack}
-                      style={{ marginTop: '4px', padding: '10px', fontSize: '0.80rem' }}
-                    >
-                      {isAddingSnack ? 'Adicionando...' : 'Adicionar à Escala'}
-                    </button>
-                  </form>
-
-                  {/* Lista de Itens com opção de excluir */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      Itens Ativos na Escala ({snacks.length}):
+                      Mesa de Lanches da Célula ({snacks.length} itens cadastrados)
                     </div>
-
-                    {snacks.length === 0 ? (
-                      <div style={{ background: '#ffffff', borderRadius: '14px', padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                        Nenhum item adicionado ainda.
-                      </div>
-                    ) : (
-                      snacks.map(snack => (
-                        <div key={snack.id} style={{ background: '#ffffff', borderRadius: '14px', padding: '12px 14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>
-                              {snack.item || snack.item_name} {snack.quantity ? `(${snack.quantity})` : ''}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              🗓️ {snack.event_date || snack.scheduled_date || 'Encontro'} • 👤 {snack.person || snack.member_name || snack.user_name || 'A definir'}
-                            </div>
-                          </div>
-                          <button 
-                            type="button" 
-                            onClick={() => handleDeleteSnack(snack.id)}
-                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '0.80rem', cursor: 'pointer', padding: '4px' }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      ))
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsSnackModalOpen(true)}
+                      className="btn-pwa-primary"
+                      style={{ padding: '8px 14px', fontSize: '0.75rem' }}
+                    >
+                      ＋ Adicionar Item
+                    </button>
                   </div>
 
+                  {snacks.length === 0 ? (
+                    <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                      Nenhum item de lanche cadastrado. Toque no botão acima para adicionar!
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {snacks.map(snack => {
+                        const isConfirmed = snack.confirmed || snack.is_confirmed;
+                        return (
+                          <div key={snack.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '1.4rem' }}>{getSnackIcon(snack.item || snack.item_name)}</span>
+                              <div>
+                                <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                                  {snack.item || snack.item_name} {snack.quantity ? `(${snack.quantity})` : ''}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                  🗓️ {snack.event_date || snack.scheduled_date || 'Encontro'} • 👤 {snack.person || snack.member_name || snack.user_name || 'A definir'}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                background: isConfirmed ? '#ecfdf5' : '#fff7ed',
+                                color: isConfirmed ? '#059669' : '#ea580c',
+                                padding: '4px 8px',
+                                borderRadius: '8px',
+                                fontSize: '0.70rem',
+                                fontWeight: 800
+                              }}>
+                                {isConfirmed ? '✓ Confirmado' : '⏳ Aberto'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSnack(snack.id)}
+                                title="Excluir"
+                                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.80rem', cursor: 'pointer', padding: '4px' }}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2234,6 +2593,281 @@ export const CellGroups: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL / BOTTOM DRAWER DE ADICIONAR ITEM À PARTILHA
+          ======================================================== */}
+      {isSnackModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          padding: '0'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            width: '100%',
+            maxWidth: '500px',
+            borderTopLeftRadius: '28px',
+            borderTopRightRadius: '28px',
+            padding: '24px 20px calc(24px + env(safe-area-inset-bottom, 0px)) 20px',
+            maxHeight: '88vh',
+            overflowY: 'auto',
+            boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            {/* Header do Modal */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '14px',
+                  background: '#fef3c7',
+                  color: '#d97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.4rem'
+                }}>
+                  🥐
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                    Mesa de Comunhão
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    Adicionar item ou sugerir para a célula
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSnackModalOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  fontSize: '0.90rem',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Sugestões Rápidas em Pílulas com 1 Toque */}
+            <div>
+              <label style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                ✨ Sugestões Rápidas (1 Toque para Preencher):
+              </label>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '6px'
+              }}>
+                {SNACK_QUICK_SUGGESTIONS.map((sug, sIdx) => {
+                  const isSelected = newSnackItem === sug.name;
+                  return (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => handleSelectQuickSuggestion(sug)}
+                      style={{
+                        background: isSelected ? 'var(--accent-primary)' : '#f8fafc',
+                        color: isSelected ? '#ffffff' : 'var(--text-main)',
+                        border: isSelected ? '1px solid var(--accent-primary)' : '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '7px 11px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>{sug.icon}</span>
+                      <span>{sug.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Formulário de Cadastro */}
+            <form onSubmit={handleCreateSnack} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Nome do Item */}
+              <div>
+                <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  Nome do Alimento / Bebida *
+                </label>
+                <input
+                  type="text"
+                  className="input-pwa"
+                  placeholder="Ex: Bolo de Cenoura, Salgadinhos, Suco..."
+                  value={newSnackItem}
+                  onChange={e => setNewSnackItem(e.target.value)}
+                  required
+                  style={{ width: '100%', fontSize: '0.86rem' }}
+                />
+              </div>
+
+              {/* Quantidade & Data do Encontro */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                    Quantidade Sugerida
+                  </label>
+                  <input
+                    type="text"
+                    className="input-pwa"
+                    placeholder="Ex: 2 garrafas, 1 cento"
+                    value={newSnackQty}
+                    onChange={e => setNewSnackQty(e.target.value)}
+                    style={{ width: '100%', fontSize: '0.84rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                    Data do Encontro *
+                  </label>
+                  <input
+                    type="date"
+                    className="input-pwa"
+                    value={newSnackDate}
+                    onChange={e => setNewSnackDate(e.target.value)}
+                    required
+                    style={{ width: '100%', fontSize: '0.84rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* Quem vai levar? */}
+              <div>
+                <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Quem vai levar este item?
+                </label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '6px',
+                  background: '#f1f5f9',
+                  padding: '4px',
+                  borderRadius: '12px'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setNewSnackAssigneeMode('me')}
+                    style={{
+                      padding: '9px 8px',
+                      borderRadius: '9px',
+                      border: 'none',
+                      background: newSnackAssigneeMode === 'me' ? '#ffffff' : 'transparent',
+                      color: newSnackAssigneeMode === 'me' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontWeight: 800,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      boxShadow: newSnackAssigneeMode === 'me' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                    }}
+                  >
+                    🙋 Eu mesmo levo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewSnackAssigneeMode('open')}
+                    style={{
+                      padding: '9px 8px',
+                      borderRadius: '9px',
+                      border: 'none',
+                      background: newSnackAssigneeMode === 'open' ? '#ffffff' : 'transparent',
+                      color: newSnackAssigneeMode === 'open' ? '#d97706' : 'var(--text-secondary)',
+                      fontWeight: 800,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      boxShadow: newSnackAssigneeMode === 'open' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                    }}
+                  >
+                    ⏳ Deixar em Aberto
+                  </button>
+                </div>
+
+                {/* Seção extra se for Líder e quiser atribuir a um membro específico */}
+                {isCellLeader && groupMembers.length > 0 && (
+                  <div style={{ marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setNewSnackAssigneeMode('member')}
+                      style={{
+                        background: newSnackAssigneeMode === 'member' ? 'var(--accent-primary-light)' : 'transparent',
+                        border: 'none',
+                        color: 'var(--accent-primary)',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      👥 Ou atribuir a um membro específico...
+                    </button>
+
+                    {newSnackAssigneeMode === 'member' && (
+                      <select
+                        className="input-pwa"
+                        value={newSnackAssignedMemberId}
+                        onChange={e => setNewSnackAssignedMemberId(e.target.value)}
+                        style={{ width: '100%', marginTop: '6px', fontSize: '0.82rem' }}
+                      >
+                        <option value="">Selecione um membro...</option>
+                        {groupMembers.map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Botão Salvar */}
+              <button
+                type="submit"
+                disabled={isAddingSnack || !newSnackItem.trim()}
+                className="btn-pwa-primary"
+                style={{
+                  marginTop: '8px',
+                  padding: '14px',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.25)'
+                }}
+              >
+                {isAddingSnack ? 'Salvando na Escala...' : '✨ Adicionar à Mesa de Comunhão'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
