@@ -7,6 +7,7 @@ import {
   reactToCellPost,
   fetchStudyBooks,
   fetchStudyBookDetails,
+  toggleChapterCompletion,
   fetchCellStudies, 
   fetchCellPartilhas, 
   togglePartilhaItem,
@@ -35,6 +36,7 @@ interface Chapter {
   media_link?: string;
   scheduled_date?: string;
   status?: string;
+  completed?: boolean;
 }
 
 interface StudyBook {
@@ -46,10 +48,11 @@ interface StudyBook {
   cover_color?: string;
   cover_url?: string;
   status?: string;
-  target_group_id?: string;
-  target_group_name?: string;
+  target_group_id?: string | null;
+  target_group_name?: string | null;
   chapter_count?: number;
   chapters?: Chapter[];
+  completed_chapter_ids?: string[];
 }
 
 interface CellGroup {
@@ -142,10 +145,13 @@ export const CellGroups: React.FC = () => {
   const [activeReactionPickerPostId, setActiveReactionPickerPostId] = useState<string | null>(null);
   const [study, setStudy] = useState<CellStudy | null>(null);
   const [studyBooks, setStudyBooks] = useState<StudyBook[]>([]);
+  const [studyScope, setStudyScope] = useState<'cell' | 'church'>('cell');
   const [selectedBook, setSelectedBook] = useState<StudyBook | null>(null);
-  const [selectedChapterIndex, setSelectedChapterIndex] = useState<number>(0);
+  const [expandedChapterIds, setExpandedChapterIds] = useState<string[]>([]);
+  const [completedChapterIds, setCompletedChapterIds] = useState<string[]>([]);
   const [showPreface, setShowPreface] = useState<boolean>(false);
   const [loadingBookDetails, setLoadingBookDetails] = useState<boolean>(false);
+  const [, setTogglingChapterId] = useState<string | null>(null);
   const [snacks, setSnacks] = useState<SnackAssignment[]>([]);
 
   // Leader Hub State
@@ -272,17 +278,89 @@ export const CellGroups: React.FC = () => {
     }
   };
 
-  const handleSelectBook = async (bookId: string) => {
+  const loadBookWithCompletions = async (bookId: string) => {
     setLoadingBookDetails(true);
     try {
-      const fullBook = await fetchStudyBookDetails(bookId);
+      const userIdentifier = user?.email || 'guest';
+      const fullBook = await fetchStudyBookDetails(bookId, userIdentifier);
       if (fullBook) {
         setSelectedBook(fullBook);
-        setSelectedChapterIndex(0);
-        setShowPreface(false);
+        
+        // Sincroniza conclusões do localStorage + backend
+        const localKey = `faithhub_completed_chapters_${user?.email || 'guest'}_${bookId}`;
+        let cachedCompletions: string[] = [];
+        try {
+          cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]');
+        } catch {}
+        const backendCompletions: string[] = fullBook.completed_chapter_ids || [];
+        const mergedCompletions = Array.from(new Set([...cachedCompletions, ...backendCompletions]));
+        
+        setCompletedChapterIds(mergedCompletions);
+        
+        // Se houver capítulos, expande o primeiro por padrão se nenhum estiver expandido
+        if (fullBook.chapters && fullBook.chapters.length > 0) {
+          setExpandedChapterIds([fullBook.chapters[0].id || '0']);
+        }
       }
     } finally {
       setLoadingBookDetails(false);
+    }
+  };
+
+  const handleSwitchScope = async (scope: 'cell' | 'church') => {
+    setStudyScope(scope);
+    setShowPreface(false);
+    
+    let targetBook: StudyBook | undefined;
+    if (scope === 'cell') {
+      targetBook = studyBooks.find(b => b.target_group_id === myGroupId) || studyBooks.find(b => b.target_group_id);
+    } else {
+      targetBook = studyBooks.find(b => !b.target_group_id);
+    }
+    
+    if (targetBook) {
+      await loadBookWithCompletions(targetBook.id);
+    } else {
+      setSelectedBook(null);
+    }
+  };
+
+  const handleToggleExpandChapter = (chapterId: string) => {
+    setExpandedChapterIds(prev => 
+      prev.includes(chapterId) 
+        ? prev.filter(id => id !== chapterId) 
+        : [...prev, chapterId]
+    );
+  };
+
+  const handleToggleCompletion = async (chapterId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!selectedBook) return;
+
+    setTogglingChapterId(chapterId);
+    const userIdentifier = user?.email || 'guest';
+    const isCurrentlyCompleted = completedChapterIds.includes(chapterId);
+    
+    // Atualização otimista imediata
+    const newCompletions = isCurrentlyCompleted 
+      ? completedChapterIds.filter(id => id !== chapterId)
+      : [...completedChapterIds, chapterId];
+    
+    setCompletedChapterIds(newCompletions);
+    
+    const localKey = `faithhub_completed_chapters_${user?.email || 'guest'}_${selectedBook.id}`;
+    localStorage.setItem(localKey, JSON.stringify(newCompletions));
+
+    try {
+      const res = await toggleChapterCompletion(chapterId, selectedBook.id, userIdentifier);
+      if (res && Array.isArray(res.completed_chapter_ids)) {
+        setCompletedChapterIds(res.completed_chapter_ids);
+        localStorage.setItem(localKey, JSON.stringify(res.completed_chapter_ids));
+      }
+    } catch (err) {
+      console.log('Mantido offline com sucesso', err);
+    } finally {
+      setTogglingChapterId(null);
     }
   };
 
@@ -302,10 +380,13 @@ export const CellGroups: React.FC = () => {
     const books = await fetchStudyBooks(groupId);
     if (Array.isArray(books) && books.length > 0) {
       setStudyBooks(books);
-      const fullBook = await fetchStudyBookDetails(books[0].id);
-      if (fullBook) {
-        setSelectedBook(fullBook);
-        setSelectedChapterIndex(0);
+      const cellBook = books.find(b => b.target_group_id === groupId || b.target_group_id);
+      const churchBook = books.find(b => !b.target_group_id);
+      
+      const targetBook = cellBook || churchBook || books[0];
+      if (targetBook) {
+        setStudyScope(targetBook.target_group_id ? 'cell' : 'church');
+        await loadBookWithCompletions(targetBook.id);
       }
     } else {
       setStudyBooks([]);
@@ -657,16 +738,23 @@ export const CellGroups: React.FC = () => {
                 onClick={() => setPortalTab('estudos')}
                 style={{ background: '#ffffff', border: '1px solid var(--panel-border)', borderRadius: '18px', padding: '16px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
               >
-                <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                  LIVRO DE ESTUDO DA SEMANA
-                </span>
-                <h4 style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--text-main)', margin: '4px 0 2px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                    {selectedBook?.target_group_id ? '👥 ESTUDO DA CÉLULA' : '🌐 ESTUDO GERAL DA IGREJA'}
+                  </span>
+                  {selectedBook && (
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '8px' }}>
+                      {completedChapterIds.length}/{selectedBook.chapters?.length || 0} Concluídos
+                    </span>
+                  )}
+                </div>
+                <h4 style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 2px 0' }}>
                   {selectedBook ? selectedBook.title : (study?.title || 'Nenhum estudo publicado')}
                 </h4>
                 <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0 }}>
-                  {selectedBook?.chapters?.[selectedChapterIndex] 
-                    ? `Capítulo ${selectedBook.chapters[selectedChapterIndex].chapter_number}: ${selectedBook.chapters[selectedChapterIndex].title}` 
-                    : (study?.verse || study?.verse_reference || 'Toque para abrir a lição e roteiro da semana')}
+                  {selectedBook?.chapters && selectedBook.chapters.length > 0 
+                    ? `${selectedBook.chapters.length} encontros estruturados • Toque para ver o roteiro` 
+                    : (study?.verse || study?.verse_reference || 'Toque para abrir a lição e roteiro')}
                 </p>
               </div>
 
@@ -1072,43 +1160,76 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 3: ESTUDOS - LEITOR DIGITAL DE LIVRO E CAPÍTULOS */}
+          {/* TAB 3: ESTUDOS - LEITOR DIGITAL DE LIVROS, SESSÕES & CHECK DE CONCLUSÃO */}
           {portalTab === 'estudos' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* 1. SELETOR DE ESCOPO: CÉLULA VS IGREJA */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                background: '#f1f5f9',
+                padding: '4px',
+                borderRadius: '16px',
+                gap: '4px',
+                border: '1px solid var(--panel-border)'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchScope('cell')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: studyScope === 'cell' ? '#ffffff' : 'transparent',
+                    color: studyScope === 'cell' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontWeight: 800,
+                    fontSize: '0.80rem',
+                    cursor: 'pointer',
+                    boxShadow: studyScope === 'cell' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span>👥</span>
+                  <span>Estudo da Célula</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchScope('church')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: studyScope === 'church' ? '#ffffff' : 'transparent',
+                    color: studyScope === 'church' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontWeight: 800,
+                    fontSize: '0.80rem',
+                    cursor: 'pointer',
+                    boxShadow: studyScope === 'church' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span>🌐</span>
+                  <span>Geral da Igreja</span>
+                </button>
+              </div>
+
               {loadingBookDetails ? (
                 <div style={{ background: '#ffffff', borderRadius: '20px', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Carregando lição do livro...
+                  Carregando roteiro do estudo...
                 </div>
               ) : selectedBook ? (
                 <>
-                  {/* Seletor de Livros (se houver mais de 1) */}
-                  {studyBooks.length > 1 && (
-                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                      {studyBooks.map(b => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => handleSelectBook(b.id)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '12px',
-                            border: selectedBook.id === b.id ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                            background: selectedBook.id === b.id ? 'var(--accent-primary-light)' : '#ffffff',
-                            color: selectedBook.id === b.id ? 'var(--accent-primary)' : 'var(--text-main)',
-                            fontWeight: 800,
-                            fontSize: '0.74rem',
-                            whiteSpace: 'nowrap',
-                            cursor: 'pointer',
-                            flexShrink: 0
-                          }}
-                        >
-                          📖 {b.title}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Card Capa do Livro */}
+                  {/* 2. CARD CAPA DO LIVRO COM ESCOPO CLARO */}
                   <div style={{
                     background: selectedBook.cover_color || 'linear-gradient(135deg, #1e3a8a, #3b82f6)',
                     borderRadius: '22px',
@@ -1121,8 +1242,16 @@ export const CellGroups: React.FC = () => {
                     position: 'relative'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.64rem', fontWeight: 900, background: 'rgba(255,255,255,0.22)', padding: '2px 8px', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        LIVRO DE ESTUDO DA CÉLULA
+                      <span style={{ 
+                        fontSize: '0.64rem', 
+                        fontWeight: 900, 
+                        background: 'rgba(255,255,255,0.22)', 
+                        padding: '3px 10px', 
+                        borderRadius: '8px', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.5px' 
+                      }}>
+                        {selectedBook.target_group_id ? `👥 CÉLULA: ${selectedBook.target_group_name || myGroup?.name || 'GRUPO'}` : '🌐 SÉRIE GERAL DA IGREJA'}
                       </span>
                       {selectedBook.preface && (
                         <button
@@ -1184,326 +1313,383 @@ export const CellGroups: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Sumário / Barra de Encontros e Capítulos */}
-                  {selectedBook.chapters && selectedBook.chapters.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', paddingLeft: '4px' }}>
-                        Sumário de Encontros ({selectedBook.chapters.length})
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                        {selectedBook.chapters.map((ch, idx) => {
-                          const isSelected = selectedChapterIndex === idx;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setSelectedChapterIndex(idx)}
-                              style={{
-                                padding: '8px 14px',
-                                borderRadius: '14px',
-                                border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                                background: isSelected ? 'var(--accent-primary)' : '#ffffff',
-                                color: isSelected ? '#ffffff' : 'var(--text-main)',
-                                fontWeight: 800,
-                                fontSize: '0.76rem',
-                                whiteSpace: 'nowrap',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                boxShadow: isSelected ? '0 2px 8px rgba(37,99,235,0.3)' : 'var(--shadow-sm)',
-                                flexShrink: 0,
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <span>Cap. {ch.chapter_number}</span>
-                              {ch.scheduled_date && (
-                                <span style={{ opacity: isSelected ? 0.9 : 0.6, fontSize: '0.68rem', fontWeight: 600 }}>
-                                  ({ch.scheduled_date.split('-').reverse().slice(0, 2).join('/')})
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Leitor do Capítulo Selecionado */}
+                  {/* 3. CARD DE PROGRESSO DA SÉRIE (CHECK DE CONCLUSÃO) */}
                   {(() => {
-                    const currentChapter = selectedBook.chapters?.[selectedChapterIndex];
-                    if (!currentChapter) {
-                      return (
-                        <div style={{ background: '#ffffff', borderRadius: '20px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                          Nenhum capítulo cadastrado para este livro.
-                        </div>
-                      );
-                    }
+                    const totalChapters = selectedBook.chapters?.length || 0;
+                    const completedCount = (selectedBook.chapters || []).filter(c => completedChapterIds.includes(c.id || '')).length;
+                    const progressPercent = totalChapters > 0 ? Math.round((completedCount / totalChapters) * 100) : 0;
+                    const isAllDone = totalChapters > 0 && completedCount === totalChapters;
 
                     return (
                       <div style={{
                         background: '#ffffff',
-                        borderRadius: '22px',
-                        padding: '22px',
+                        borderRadius: '18px',
+                        padding: '16px',
                         border: '1px solid var(--panel-border)',
                         boxShadow: 'var(--shadow-sm)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '16px'
+                        gap: '10px'
                       }}>
-                        {/* Header do Capítulo */}
-                        <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              CAPÍTULO {currentChapter.chapter_number} DE {selectedBook.chapters?.length || 1}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '1rem' }}>{isAllDone ? '🏆' : '🎯'}</span>
+                            <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)' }}>
+                              Progresso dos Encontros
                             </span>
-                            {currentChapter.scheduled_date && (
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                                🗓️ Encontro: {currentChapter.scheduled_date.split('-').reverse().join('/')}
-                              </span>
-                            )}
                           </div>
-
-                          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: '2px 0 6px 0', lineHeight: 1.3 }}>
-                            {currentChapter.title}
-                          </h3>
-
-                          {currentChapter.verse_reference && (
-                            <div style={{
-                              background: '#eff6ff',
-                              borderLeft: '3.5px solid var(--accent-primary)',
-                              borderRadius: '10px',
-                              padding: '8px 12px',
-                              fontSize: '0.80rem',
-                              fontWeight: 700,
-                              color: 'var(--accent-primary)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}>
-                              <span>📖</span>
-                              <span>Texto Bíblico Base: {currentChapter.verse_reference}</span>
-                            </div>
-                          )}
+                          <span style={{
+                            fontSize: '0.74rem',
+                            fontWeight: 900,
+                            color: isAllDone ? '#059669' : 'var(--accent-primary)',
+                            background: isAllDone ? '#ecfdf5' : '#eff6ff',
+                            padding: '2px 8px',
+                            borderRadius: '8px'
+                          }}>
+                            {completedCount} de {totalChapters} Concluídos ({progressPercent}%)
+                          </span>
                         </div>
 
-                        {/* Bloco 1: Quebra-Gelo */}
-                        {currentChapter.icebreaker && (
+                        {/* Barra de Progresso */}
+                        <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{
-                            background: '#f0fdfa',
-                            borderRadius: '16px',
-                            padding: '14px 16px',
-                            border: '1px solid #ccfbf1',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px'
-                          }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#0f766e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>🧊</span>
-                              <span>Quebra-Gelo / Dinâmica de Abertura</span>
-                            </div>
-                            <div style={{ fontSize: '0.84rem', color: '#134e4a', lineHeight: 1.45 }}>
-                              {currentChapter.icebreaker}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Bloco 2: Ministração da Palavra */}
-                        {currentChapter.content_text && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>💡</span>
-                              <span>Estudo & Ministração da Palavra</span>
-                            </div>
-                            <div style={{
-                              fontSize: '0.90rem',
-                              color: 'var(--text-main)',
-                              lineHeight: 1.6,
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
-                              background: '#fafafa',
-                              borderRadius: '14px',
-                              padding: '16px',
-                              border: '1px solid #f1f5f9'
-                            }}>
-                              {currentChapter.content_text}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Bloco 3: Perguntas de Debate */}
-                        {currentChapter.discussion_questions && currentChapter.discussion_questions.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>💬</span>
-                              <span>Perguntas para Debate & Compartilhamento</span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              {currentChapter.discussion_questions.map((q, qIdx) => (
-                                <div 
-                                  key={qIdx}
-                                  style={{
-                                    background: '#fffbeb',
-                                    borderRadius: '12px',
-                                    padding: '10px 14px',
-                                    border: '1px solid #fef3c7',
-                                    fontSize: '0.84rem',
-                                    color: '#78350f',
-                                    lineHeight: 1.4,
-                                    display: 'flex',
-                                    gap: '8px'
-                                  }}
-                                >
-                                  <span style={{ fontWeight: 900, color: '#d97706' }}>{qIdx + 1}.</span>
-                                  <span>{q}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Bloco 4: Desafio Prático & Oração */}
-                        {currentChapter.practical_challenge && (
-                          <div style={{
-                            background: '#fefce8',
-                            borderRadius: '16px',
-                            padding: '14px 16px',
-                            border: '1px solid #fef08a',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px'
-                          }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#854d0e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>🎯</span>
-                              <span>Desafio Prático & Oração da Semana</span>
-                            </div>
-                            <div style={{ fontSize: '0.84rem', color: '#713f12', lineHeight: 1.45 }}>
-                              {currentChapter.practical_challenge}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Bloco 5: Mídia de Apoio */}
-                        {currentChapter.media_type !== 'NONE' && currentChapter.media_link && (
-                          <div style={{ display: 'flex', gap: '10px', paddingTop: '6px' }}>
-                            <a
-                              href={currentChapter.media_link}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn-pwa-secondary"
-                              style={{
-                                textDecoration: 'none',
-                                flex: 1,
-                                padding: '10px',
-                                fontSize: '0.80rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px'
-                              }}
-                            >
-                              <span>{currentChapter.media_type === 'VIDEO' ? '🎥 Assistir Vídeo' : '📕 Abrir Arquivo PDF'}</span>
-                            </a>
-                          </div>
-                        )}
-
-                        {/* Rodapé: Navegação Entre Capítulos */}
-                        {selectedBook.chapters && selectedBook.chapters.length > 1 && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            paddingTop: '12px',
-                            borderTop: '1px solid #f1f5f9',
-                            marginTop: '6px'
-                          }}>
-                            <button
-                              type="button"
-                              disabled={selectedChapterIndex === 0}
-                              onClick={() => {
-                                setSelectedChapterIndex(prev => Math.max(0, prev - 1));
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              style={{
-                                background: '#f1f5f9',
-                                border: 'none',
-                                padding: '8px 14px',
-                                borderRadius: '12px',
-                                fontSize: '0.76rem',
-                                fontWeight: 800,
-                                color: selectedChapterIndex === 0 ? 'var(--text-muted)' : 'var(--text-main)',
-                                cursor: selectedChapterIndex === 0 ? 'not-allowed' : 'pointer',
-                                opacity: selectedChapterIndex === 0 ? 0.4 : 1
-                              }}
-                            >
-                              ‹ Anterior
-                            </button>
-
-                            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-                              Capítulo {selectedChapterIndex + 1} de {selectedBook.chapters.length}
-                            </span>
-
-                            <button
-                              type="button"
-                              disabled={selectedChapterIndex === selectedBook.chapters.length - 1}
-                              onClick={() => {
-                                setSelectedChapterIndex(prev => Math.min((selectedBook.chapters?.length || 1) - 1, prev + 1));
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              style={{
-                                background: 'var(--accent-primary)',
-                                color: '#ffffff',
-                                border: 'none',
-                                padding: '8px 14px',
-                                borderRadius: '12px',
-                                fontSize: '0.76rem',
-                                fontWeight: 800,
-                                cursor: selectedChapterIndex === selectedBook.chapters.length - 1 ? 'not-allowed' : 'pointer',
-                                opacity: selectedChapterIndex === selectedBook.chapters.length - 1 ? 0.4 : 1
-                              }}
-                            >
-                              Próximo ›
-                            </button>
-                          </div>
-                        )}
-
+                            width: `${progressPercent}%`,
+                            height: '100%',
+                            background: isAllDone 
+                              ? 'linear-gradient(90deg, #10b981, #059669)' 
+                              : 'linear-gradient(90deg, #3b82f6, #1d4ed8)',
+                            borderRadius: '4px',
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
                       </div>
                     );
                   })()}
+
+                  {/* 4. SESSÕES / ENCONTROS VERTICAIS EM ACORDEÃO (UI & UX ERGONÔMICO) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        Sessões & Lições do Livro ({selectedBook.chapters?.length || 0})
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Toque no card para abrir ou recolher
+                      </span>
+                    </div>
+
+                    {(selectedBook.chapters || []).map((ch) => {
+                      const chapterId = ch.id || String(ch.chapter_number);
+                      const isExpanded = expandedChapterIds.includes(chapterId);
+                      const isCompleted = completedChapterIds.includes(chapterId);
+
+                      return (
+                        <div
+                          key={chapterId}
+                          style={{
+                            background: '#ffffff',
+                            borderRadius: '18px',
+                            border: isCompleted 
+                              ? '1.5px solid #a7f3d0' 
+                              : (isExpanded ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)'),
+                            boxShadow: isExpanded ? '0 4px 14px rgba(0,0,0,0.06)' : 'var(--shadow-sm)',
+                            overflow: 'hidden',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {/* Header da Sessão (Acordeão) */}
+                          <div
+                            onClick={() => handleToggleExpandChapter(chapterId)}
+                            style={{
+                              padding: '14px 18px',
+                              background: isCompleted ? '#f0fdf4' : (isExpanded ? '#f8fafc' : '#ffffff'),
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '12px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                              {/* Ícone de Status do Capítulo */}
+                              <div 
+                                onClick={(e) => handleToggleCompletion(chapterId, e)}
+                                title={isCompleted ? "Concluído (toque para desmarcar)" : "Pendente (toque para concluir)"}
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '50%',
+                                  background: isCompleted ? '#059669' : 'var(--accent-primary-light)',
+                                  color: isCompleted ? '#ffffff' : 'var(--accent-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: isCompleted ? '0.90rem' : '0.78rem',
+                                  fontWeight: 900,
+                                  flexShrink: 0,
+                                  boxShadow: isCompleted ? '0 2px 6px rgba(5,150,105,0.3)' : 'none',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                {isCompleted ? '✓' : ch.chapter_number}
+                              </div>
+
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
+                                  {ch.title}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                  {ch.verse_reference && <span>📖 {ch.verse_reference}</span>}
+                                  {ch.scheduled_date && (
+                                    <span>🗓️ {ch.scheduled_date.split('-').reverse().slice(0, 2).join('/')}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                              {isCompleted ? (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  color: '#059669',
+                                  background: '#dcfce7',
+                                  padding: '3px 8px',
+                                  borderRadius: '8px'
+                                }}>
+                                  ✓ Concluído
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  color: 'var(--text-muted)',
+                                  background: '#f1f5f9',
+                                  padding: '3px 8px',
+                                  borderRadius: '8px'
+                                }}>
+                                  Pendente
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                                {isExpanded ? '▲' : '▼'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Corpo Expansível da Lição */}
+                          {isExpanded && (
+                            <div style={{ padding: '18px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                              
+                              {/* Texto Bíblico Base */}
+                              {ch.verse_reference && (
+                                <div style={{
+                                  background: '#eff6ff',
+                                  borderLeft: '3.5px solid var(--accent-primary)',
+                                  borderRadius: '10px',
+                                  padding: '8px 12px',
+                                  fontSize: '0.80rem',
+                                  fontWeight: 700,
+                                  color: 'var(--accent-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}>
+                                  <span>📖</span>
+                                  <span>Texto Bíblico Base: {ch.verse_reference}</span>
+                                </div>
+                              )}
+
+                              {/* Bloco 1: Quebra-Gelo */}
+                              {ch.icebreaker && (
+                                <div style={{
+                                  background: '#f0fdfa',
+                                  borderRadius: '14px',
+                                  padding: '12px 14px',
+                                  border: '1px solid #ccfbf1',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px'
+                                }}>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#0f766e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>🧊</span>
+                                    <span>Quebra-Gelo / Dinâmica de Abertura</span>
+                                  </div>
+                                  <div style={{ fontSize: '0.82rem', color: '#134e4a', lineHeight: 1.45 }}>
+                                    {ch.icebreaker}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bloco 2: Ministração da Palavra */}
+                              {ch.content_text && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>💡</span>
+                                    <span>Ministração & Estudo Bíblico</span>
+                                  </div>
+                                  <div style={{
+                                    fontSize: '0.88rem',
+                                    color: 'var(--text-main)',
+                                    lineHeight: 1.6,
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    background: '#fafafa',
+                                    borderRadius: '14px',
+                                    padding: '14px',
+                                    border: '1px solid #f1f5f9'
+                                  }}>
+                                    {ch.content_text}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bloco 3: Perguntas de Debate */}
+                              {ch.discussion_questions && ch.discussion_questions.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>💬</span>
+                                    <span>Perguntas para Debate & Compartilhamento</span>
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {ch.discussion_questions.map((q, qIdx) => (
+                                      <div 
+                                        key={qIdx}
+                                        style={{
+                                          background: '#fffbeb',
+                                          borderRadius: '12px',
+                                          padding: '10px 12px',
+                                          border: '1px solid #fef3c7',
+                                          fontSize: '0.82rem',
+                                          color: '#78350f',
+                                          lineHeight: 1.4,
+                                          display: 'flex',
+                                          gap: '8px'
+                                        }}
+                                      >
+                                        <span style={{ fontWeight: 900, color: '#d97706' }}>{qIdx + 1}.</span>
+                                        <span>{q}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bloco 4: Desafio Prático & Oração */}
+                              {ch.practical_challenge && (
+                                <div style={{
+                                  background: '#fefce8',
+                                  borderRadius: '14px',
+                                  padding: '12px 14px',
+                                  border: '1px solid #fef08a',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px'
+                                }}>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 900, color: '#854d0e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>🎯</span>
+                                    <span>Desafio Prático & Oração da Semana</span>
+                                  </div>
+                                  <div style={{ fontSize: '0.82rem', color: '#713f12', lineHeight: 1.45 }}>
+                                    {ch.practical_challenge}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bloco 5: Mídia de Apoio */}
+                              {ch.media_type !== 'NONE' && ch.media_link && (
+                                <a
+                                  href={ch.media_link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn-pwa-secondary"
+                                  style={{
+                                    textDecoration: 'none',
+                                    padding: '10px',
+                                    fontSize: '0.80rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }}
+                                >
+                                  <span>{ch.media_type === 'VIDEO' ? '🎥 Assistir Vídeo' : '📕 Abrir Arquivo PDF'}</span>
+                                </a>
+                              )}
+
+                              {/* 5. BOTÃO DE AÇÃO: CONCLUIR / REABRIR ESTUDO */}
+                              <div style={{ paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                                {isCompleted ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleCompletion(chapterId, e)}
+                                    style={{
+                                      width: '100%',
+                                      background: '#ecfdf5',
+                                      color: '#059669',
+                                      border: '1.5px solid #a7f3d0',
+                                      borderRadius: '14px',
+                                      padding: '12px 18px',
+                                      fontWeight: 800,
+                                      fontSize: '0.82rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '8px',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <span>✓</span>
+                                    <span>Estudo Concluído (Toque para reabrir)</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleCompletion(chapterId, e)}
+                                    style={{
+                                      width: '100%',
+                                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                                      color: '#ffffff',
+                                      border: 'none',
+                                      borderRadius: '14px',
+                                      padding: '12px 18px',
+                                      fontWeight: 800,
+                                      fontSize: '0.82rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '8px',
+                                      boxShadow: '0 2px 8px rgba(16,185,129,0.25)',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <span>✅</span>
+                                    <span>Marcar este Estudo como Concluído</span>
+                                  </button>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </>
               ) : (
-                /* Fallback para estudo avulso legado ou nenhum estudo */
-                study ? (
-                  <div style={{ background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                      {study.theme || 'Estudo Bíblico'}
-                    </span>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
-                      {study.title}
-                    </h3>
-                    {study.passage && (
-                      <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', borderLeft: '3px solid var(--accent-primary)', fontSize: '0.82rem', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
-                        {study.passage}
-                      </div>
-                    )}
-                    {study.content && (
-                      <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-                        {study.content}
-                      </div>
-                    )}
+                /* Fallback se nenhum livro for encontrado para o escopo */
+                <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed #cbd5e1' }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>📖</span>
+                  <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                    Nenhum Estudo {studyScope === 'cell' ? 'Exclusivo da Célula' : 'Geral da Igreja'}
                   </div>
-                ) : (
-                  <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed #cbd5e1' }}>
-                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>📖</span>
-                    <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
-                      Nenhum Livro de Estudo Ativo
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
-                      Os estudos e roteiros bíblicos publicados pela liderança aparecerão aqui.
-                    </p>
-                  </div>
-                )
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Alterne para a outra aba acima ou aguarde a publicação da liderança.
+                  </p>
+                </div>
               )}
+
             </div>
           )}
 

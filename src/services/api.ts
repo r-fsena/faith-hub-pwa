@@ -271,16 +271,34 @@ export async function fetchStudyBooks(groupId?: string) {
   return [];
 }
 
-export async function fetchStudyBookDetails(bookId: string) {
+export async function fetchStudyBookDetails(bookId: string, userId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/study-books/${bookId}`, { headers });
+    const userParam = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
+    const res = await fetch(`${API_BASE_URL}/study-books/${bookId}${userParam}`, { headers });
     if (res.ok) {
       const data = await res.json();
       return data.data || data;
     }
   } catch (e) {
     console.log("Offline/fallback study book details", e);
+  }
+  return null;
+}
+
+export async function toggleChapterCompletion(chapterId: string, bookId?: string, userId?: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/study-chapters/${chapterId}/toggle-completion`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ book_id: bookId, user_id: userId })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Offline/fallback toggle chapter completion", e);
   }
   return null;
 }
