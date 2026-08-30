@@ -13,7 +13,8 @@ import {
   createPartilhaItem,
   deletePartilhaItem,
   removeCellMember,
-  updateCellGroupDetails
+  updateCellGroupDetails,
+  fetchCurrentMember
 } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
@@ -49,34 +50,27 @@ interface CellPost {
 interface CellStudy {
   id: string;
   title: string;
+  passage?: string;
   theme?: string;
-  verse?: string;
-  verse_reference?: string;
-  icebreaker?: string;
-  discussion_points?: string[] | string;
-  practical_application?: string;
+  verse_text?: string;
   content?: string;
+  questions?: string[];
+  pdf_url?: string;
+  created_at?: string;
 }
 
 interface SnackAssignment {
   id: string;
-  date?: string;
-  scheduled_date?: string;
-  event_date?: string;
-  person?: string;
-  member_name?: string;
-  user_name?: string;
-  item: string;
-  item_name?: string;
+  user_name: string;
+  item_name: string;
   quantity?: string;
+  event_date: string;
   confirmed?: boolean;
-  is_confirmed?: boolean;
 }
 
 interface CellMember {
   id: string;
   name: string;
-  phone?: string;
   email?: string;
   role?: string;
   created_at?: string;
@@ -129,57 +123,60 @@ export const CellGroups: React.FC = () => {
   }, [user, isAuthenticated]);
 
   const loadAllData = async () => {
-    const groupList = await fetchCellGroups();
-    const cellsArray = Array.isArray(groupList) ? groupList : [];
-    setCells(cellsArray);
+    try {
+      const groupList = await fetchCellGroups();
+      const cellsArray = Array.isArray(groupList) ? groupList : [];
+      setCells(cellsArray);
 
-    let assignedGroupId: string | null = null;
-    let userRole = 'Membro';
+      let assignedGroupId: string | null = null;
+      let userRole = 'Membro';
 
-    if (user?.email) {
-      try {
-        const res = await fetch(`${API_URL}/members?organization_id=org_default`);
-        if (res.ok) {
-          const json = await res.json();
-          const member = (json.data || []).find((m: any) => 
-            m.email?.toLowerCase() === user.email?.toLowerCase() || m.id === user.userId
-          );
-          if (member) {
-            userRole = member.role || 'Membro';
-            if (member.cell_group_id) {
-              assignedGroupId = member.cell_group_id;
-            }
-            if (member.pending_cell_group_id) {
-              setPendingGroupId(member.pending_cell_group_id);
+      // 1. Busca perfil do membro autenticado com token JWT
+      if (user?.email || isAuthenticated) {
+        const member = await fetchCurrentMember();
+        if (member) {
+          userRole = member.role || 'Membro';
+          if (member.cell_group_id) {
+            assignedGroupId = member.cell_group_id;
+            if (user?.email) {
+              localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, member.cell_group_id);
             }
           }
+          if (member.pending_cell_group_id && member.pending_cell_group_id !== member.cell_group_id) {
+            setPendingGroupId(member.pending_cell_group_id);
+          } else {
+            setPendingGroupId(null);
+          }
         }
-      } catch (e) {}
+      }
 
-      if (!assignedGroupId) {
+      // Fallback local se necessário
+      if (!assignedGroupId && user?.email) {
         assignedGroupId = localStorage.getItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`);
       }
-    }
 
-    const matchedGroup = cellsArray.find(c => c.id === assignedGroupId);
+      const matchedGroup = cellsArray.find(c => c.id === assignedGroupId);
 
-    if (matchedGroup) {
-      setMyGroupId(matchedGroup.id);
-      setViewMode('portal');
+      if (matchedGroup) {
+        setMyGroupId(matchedGroup.id);
+        setViewMode('portal');
 
-      const roleUpper = userRole.toUpperCase();
-      const isLeader = Boolean(
-        (matchedGroup.leader_name && user?.name && matchedGroup.leader_name.toLowerCase() === user.name.toLowerCase()) ||
-        (matchedGroup.leader && user?.name && matchedGroup.leader.toLowerCase() === user.name.toLowerCase()) ||
-        ['ADMIN', 'PASTOR', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(roleUpper)
-      );
-      setIsCellLeader(isLeader);
+        const roleUpper = userRole.toUpperCase();
+        const isLeader = Boolean(
+          (matchedGroup.leader_name && user?.name && matchedGroup.leader_name.toLowerCase() === user.name.toLowerCase()) ||
+          (matchedGroup.leader && user?.name && matchedGroup.leader.toLowerCase() === user.name.toLowerCase()) ||
+          ['ADMIN', 'PASTOR', 'SUPERADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(roleUpper)
+        );
+        setIsCellLeader(isLeader);
 
-      loadGroupSpecifics(matchedGroup.id, cellsArray);
-    } else {
-      setMyGroupId(null);
-      setViewMode('discover');
-      setIsCellLeader(false);
+        await loadGroupSpecifics(matchedGroup.id, cellsArray);
+      } else {
+        setMyGroupId(null);
+        setViewMode('discover');
+        setIsCellLeader(false);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar dados de células:', e);
     }
   };
 

@@ -453,4 +453,22 @@ export async function fetchCampuses() {
   return [];
 }
 
+// ----------------------------------------------------
+// 10. PERFIL DO MEMBRO & VÍNCULO DE CÉLULA
+// ----------------------------------------------------
+export async function fetchCurrentMember(): Promise<any> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/members/me`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      return data.data || data;
+    }
+  } catch (e) {
+    console.log("Fetch current member fallback", e);
+  }
+  return null;
+}
+
+
 
