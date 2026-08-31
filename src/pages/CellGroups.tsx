@@ -256,6 +256,32 @@ export const CellGroups: React.FC = () => {
   };
 
   useEffect(() => {
+    // 1. Hidratação Instantânea por Cache Local (0ms):
+    if (user?.email) {
+      try {
+        const cachedGroupId = localStorage.getItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`);
+        if (cachedGroupId) {
+          setMyGroupId(cachedGroupId);
+          setViewMode('portal');
+
+          const cachedPosts = localStorage.getItem(`faithhub_cache_posts_${cachedGroupId}`);
+          if (cachedPosts) setPosts(JSON.parse(cachedPosts));
+
+          const cachedSnacks = localStorage.getItem(`faithhub_cache_snacks_${cachedGroupId}`);
+          if (cachedSnacks) setSnacks(JSON.parse(cachedSnacks));
+
+          const cachedBooks = localStorage.getItem(`faithhub_cache_books_${cachedGroupId}`);
+          if (cachedBooks) {
+            const parsedBooks = JSON.parse(cachedBooks);
+            setStudyBooks(parsedBooks);
+            if (parsedBooks.length > 0) setSelectedBook(parsedBooks[0]);
+          }
+
+          // Se já tem cache, desativa o loading em tela cheia na hora
+          setIsLoadingInitial(false);
+        }
+      } catch {}
+    }
     loadAllData();
   }, [user, isAuthenticated]);
 
@@ -307,7 +333,7 @@ export const CellGroups: React.FC = () => {
         );
         setIsCellLeader(isLeader);
 
-        // Aguarda carregar todos os dados específicos (posts, estudos pré-carregados, lanches) antes de exibir a tela
+        // Carrega todos os dados específicos da célula em paralelo ultra-rápido
         await loadGroupSpecifics(matchedGroup.id, cellsArray);
       } else {
         setMyGroupId(null);
@@ -445,7 +471,18 @@ export const CellGroups: React.FC = () => {
   };
 
   const loadGroupSpecifics = async (groupId: string, groupList?: CellGroup[]) => {
-    const p = await fetchCellPosts(groupId);
+    const userIdentifier = user?.email || 'guest';
+
+    // Dispara TODAS as 5 requisições em paralelo simultâneo (1 único roundtrip):
+    const [p, books, s, l, details] = await Promise.all([
+      fetchCellPosts(groupId),
+      fetchStudyBooks(groupId),
+      fetchCellStudies(groupId),
+      fetchCellPartilhas(groupId),
+      fetchCellGroupDetails(groupId)
+    ]);
+
+    // 1. Processa Posts do Mural
     if (Array.isArray(p)) {
       const normalized = p.map((item: any) => ({
         ...item,
@@ -454,35 +491,25 @@ export const CellGroups: React.FC = () => {
         reactions: typeof item.reactions === 'string' ? JSON.parse(item.reactions || '{}') : (item.reactions || {})
       }));
       setPosts(normalized);
+      try { localStorage.setItem(`faithhub_cache_posts_${groupId}`, JSON.stringify(normalized)); } catch {}
     }
 
-    // Carrega Livros de Estudo da Célula e da Igreja antecipadamente em paralelo
-    const books = await fetchStudyBooks(groupId);
+    // 2. Processa Partilhas / Lanches
+    if (Array.isArray(l)) {
+      setSnacks(l);
+      try { localStorage.setItem(`faithhub_cache_snacks_${groupId}`, JSON.stringify(l)); } catch {}
+    }
+
+    // 3. Processa Estudos
+    if (Array.isArray(s) && s.length > 0) setStudy(s[0]);
+
     if (Array.isArray(books) && books.length > 0) {
       setStudyBooks(books);
-      const userIdentifier = user?.email || 'guest';
+      try { localStorage.setItem(`faithhub_cache_books_${groupId}`, JSON.stringify(books)); } catch {}
 
-      // Pré-carrega os detalhes de TODOS os livros (Célula e Igreja) em paralelo
-      const detailsList = await Promise.all(
-        books.map(async (b) => {
-          try {
-            const detail = await fetchStudyBookDetails(b.id, userIdentifier);
-            return detail || b;
-          } catch {
-            return b;
-          }
-        })
-      );
-
-      const bookMap: Record<string, StudyBook> = {};
-      detailsList.forEach((b) => {
-        if (b && b.id) bookMap[b.id] = b;
-      });
-      setLoadedBooksMap(bookMap);
-
-      const cellBook = detailsList.find(b => b && (b.target_group_id === groupId || b.target_group_id));
-      const churchBook = detailsList.find(b => b && !b.target_group_id);
-      const defaultBook = cellBook || churchBook || detailsList[0];
+      const cellBook = books.find(b => b.target_group_id === groupId || b.target_group_id);
+      const churchBook = books.find(b => !b.target_group_id);
+      const defaultBook = cellBook || churchBook || books[0];
 
       if (defaultBook) {
         setSelectedBook(defaultBook);
@@ -490,9 +517,7 @@ export const CellGroups: React.FC = () => {
 
         const localKey = `faithhub_completed_chapters_${userIdentifier}_${defaultBook.id}`;
         let cachedCompletions: string[] = [];
-        try {
-          cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]');
-        } catch {}
+        try { cachedCompletions = JSON.parse(localStorage.getItem(localKey) || '[]'); } catch {}
         const backendCompletions: string[] = defaultBook.completed_chapter_ids || [];
         const merged = Array.from(new Set([...cachedCompletions, ...backendCompletions]));
         setCompletedChapterIds(merged);
@@ -501,25 +526,41 @@ export const CellGroups: React.FC = () => {
           setExpandedChapterIds([defaultBook.chapters[0].id || '0']);
         }
       }
+
+      // Pré-carrega capítulos completos dos livros em background silencioso (NÃO trava a tela!)
+      Promise.all(
+        books.map(async (b) => {
+          try {
+            const detail = await fetchStudyBookDetails(b.id, userIdentifier);
+            return detail || b;
+          } catch {
+            return b;
+          }
+        })
+      ).then(detailsList => {
+        const bookMap: Record<string, StudyBook> = {};
+        detailsList.forEach((b) => {
+          if (b && b.id) bookMap[b.id] = b;
+        });
+        setLoadedBooksMap(bookMap);
+
+        const fullCellBook = detailsList.find(b => b && (b.target_group_id === groupId || b.target_group_id));
+        const fullChurchBook = detailsList.find(b => b && !b.target_group_id);
+        const activeFull = (studyScope === 'cell' ? fullCellBook : fullChurchBook) || defaultBook;
+        if (activeFull && activeFull.chapters) {
+          setSelectedBook(activeFull);
+        }
+      });
     } else {
       setStudyBooks([]);
       setSelectedBook(null);
       setLoadedBooksMap({});
     }
 
-    const s = await fetchCellStudies(groupId);
-    if (Array.isArray(s) && s.length > 0) setStudy(s[0]);
-
-    const l = await fetchCellPartilhas(groupId);
-    if (Array.isArray(l)) setSnacks(l);
-
-    // Carrega dados completos de liderança (pedidos pendentes e membros)
-    setLoadingDetails(true);
-    const details = await fetchCellGroupDetails(groupId);
+    // 4. Processa Liderança e Encontro
     if (details) {
       if (Array.isArray(details.pending_users)) setPendingUsers(details.pending_users);
       if (Array.isArray(details.members)) setGroupMembers(details.members);
-      
       setEditMeetingDay(details.meeting_day || '');
       setEditMeetingTime(details.meeting_time || '');
       setEditAddress(details.address || '');
@@ -533,7 +574,6 @@ export const CellGroups: React.FC = () => {
         setEditWhatsapp(activeCell.whatsapp || activeCell.whatsapp_contact || '');
       }
     }
-    setLoadingDetails(false);
   };
 
   const myGroup = cells.find(g => g.id === myGroupId) || cells[0];
@@ -1919,37 +1959,38 @@ export const CellGroups: React.FC = () => {
           {portalTab === 'lanches' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
-              {/* 1. CARD HERO DA MESA DE COMUNHÃO */}
+              {/* 1. CARD DISCRETO E ELEGANTE DA MESA DE COMUNHÃO */}
               <div style={{
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                borderRadius: '22px',
-                padding: '18px 20px',
-                color: '#ffffff',
-                boxShadow: '0 6px 18px rgba(217,119,6,0.22)',
+                background: '#ffffff',
+                borderRadius: '18px',
+                padding: '16px',
+                border: '1px solid var(--panel-border)',
+                boxShadow: 'var(--shadow-sm)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '14px',
-                      background: 'rgba(255,255,255,0.22)',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      background: 'var(--accent-primary-light)',
+                      color: 'var(--accent-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.5rem'
+                      fontSize: '1.3rem'
                     }}>
                       🥐
                     </div>
                     <div>
-                      <div style={{ fontWeight: 900, fontSize: '1.05rem', letterSpacing: '-0.2px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
                         Mesa de Comunhão
                       </div>
-                      <div style={{ fontSize: '0.74rem', opacity: 0.9 }}>
-                        Escala colaborativa de partilha da célula
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Partilha de alimentos para nosso próximo encontro
                       </div>
                     </div>
                   </div>
@@ -1958,18 +1999,18 @@ export const CellGroups: React.FC = () => {
                     type="button"
                     onClick={() => setIsSnackModalOpen(true)}
                     style={{
-                      background: '#ffffff',
-                      color: '#b45309',
+                      background: 'var(--accent-primary-light)',
+                      color: 'var(--accent-primary)',
                       border: 'none',
-                      padding: '8px 14px',
-                      borderRadius: '12px',
-                      fontWeight: 900,
-                      fontSize: '0.75rem',
+                      padding: '7px 12px',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.74rem',
                       cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      gap: '4px',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     <span>＋</span>
@@ -1977,26 +2018,30 @@ export const CellGroups: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Resumo da Cobertura da Mesa */}
+                {/* Resumo Discreto de Cobertura */}
                 <div style={{
-                  background: 'rgba(0,0,0,0.14)',
-                  borderRadius: '14px',
-                  padding: '10px 14px',
+                  background: '#f8fafc',
+                  borderRadius: '12px',
+                  padding: '10px 12px',
+                  border: '1px solid #f1f5f9',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 800 }}>
-                    <span>🍽️ Cobertura da Mesa</span>
-                    <span>
-                      {snacks.filter(s => s.confirmed || s.is_confirmed).length} de {snacks.length} itens confirmados
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>🍽️</span>
+                      <span>Cobertura da Mesa</span>
+                    </span>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>
+                      {snacks.filter(s => s.confirmed || s.is_confirmed).length} de {snacks.length} confirmados ({snacks.length > 0 ? Math.round((snacks.filter(s => s.confirmed || s.is_confirmed).length / snacks.length) * 100) : 0}%)
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.25)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '5px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{
                       width: `${snacks.length > 0 ? (snacks.filter(s => s.confirmed || s.is_confirmed).length / snacks.length) * 100 : 0}%`,
                       height: '100%',
-                      background: '#ffffff',
+                      background: 'var(--accent-primary)',
                       borderRadius: '3px',
                       transition: 'width 0.3s ease'
                     }} />
