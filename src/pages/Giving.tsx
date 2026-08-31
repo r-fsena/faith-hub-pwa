@@ -126,6 +126,36 @@ export const Giving: React.FC = () => {
     }).catch(() => {});
   };
 
+  const [confirmSuccess, setConfirmSuccess] = useState(false);
+
+  const handleConfirmContribution = async (customKey?: string, projectId?: string, customTitle?: string) => {
+    try {
+      await fetch(`${API_URL}/financial/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_id: orgId,
+          type: 'INCOME',
+          category: projectId ? 'Campanha / Projeto' : purpose,
+          description: projectId ? `Contribuição Projeto PIX: ${customTitle || branding.church_name}` : `${purpose} via App PWA`,
+          amount: currentAmount,
+          payment_method: 'PIX',
+          status: 'PAID',
+          member_name: user?.name || user?.email || 'Membro do App',
+          origin_module: 'TITHES',
+          project_id: projectId || null
+        })
+      });
+      setConfirmSuccess(true);
+      setTimeout(() => {
+        setConfirmSuccess(false);
+        setShowQrCode(false);
+      }, 2000);
+    } catch {
+      setShowQrCode(false);
+    }
+  };
+
   const handleOpenQrCodeModal = (customKey?: string, projectId?: string, customTitle?: string) => {
     setActiveModalPixKey(customKey || churchPixKey);
     setActiveModalProjectId(projectId || null);
@@ -508,18 +538,27 @@ export const Giving: React.FC = () => {
               <button 
                 type="button" 
                 className="btn-pwa-secondary"
+                style={{ borderColor: '#059669', color: '#059669', background: '#ecfdf5', fontWeight: 800, padding: '12px' }}
+                onClick={() => handleConfirmContribution(activeModalPixKey, activeModalProjectId || undefined, activeModalTitle)}
+              >
+                {confirmSuccess ? '🎉 Pagamento Confirmado com Sucesso!' : '✅ Já realizei o pagamento (Confirmar)'}
+              </button>
+
+              <button 
+                type="button" 
                 onClick={() => {
                   setShowQrCode(false);
                   setShowAttachModal(true);
                 }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', padding: '6px' }}
               >
-                📷 Já pagou? Anexar Comprovante
+                📷 Anexar Comprovante (Opcional)
               </button>
 
               <button 
                 type="button" 
                 onClick={() => setShowQrCode(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', padding: '6px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', padding: '4px' }}
               >
                 Fechar
               </button>
