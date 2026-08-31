@@ -58,6 +58,10 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     loadPrayers();
   }, [selectedCategory, orgId, campusId, activeTab]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const loadPrayers = async () => {
     setLoading(true);
     // 1. Carrega do cache
@@ -142,22 +146,30 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         category,
         privacy,
         content: content.trim(),
-        praying_count: 1,
+        praying_count: 0,
         time_ago: 'Agora mesmo',
-        is_praying: true,
+        is_praying: false,
         created_at: new Date().toISOString()
       };
 
-      if (privacy === 'CONFIDENTIAL') {
-        alert("🔒 Seu pedido confidencial foi enviado com sigilo diretamente ao Corpo Pastoral da igreja.");
-      } else {
-        savePrayers([newPrayer, ...prayers]);
-        alert("✨ Seu pedido de oração foi publicado no mural da comunidade!");
-      }
+      // Salva na lista local para exibição imediata
+      savePrayers([newPrayer, ...prayers]);
 
       setShowModal(false);
       setContent('');
       if (!user?.name) setAuthorName('');
+
+      // Redireciona para a aba "Meus Pedidos" e rola suavemente para o topo
+      setActiveTab('my_prayers');
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+
+      if (privacy === 'CONFIDENTIAL') {
+        alert("🔒 Seu pedido confidencial foi enviado com sigilo diretamente ao Corpo Pastoral da igreja.");
+      } else {
+        alert("✨ Seu pedido de oração foi publicado com sucesso!");
+      }
     } catch (err) {
       console.error("Erro salvando oração", err);
     } finally {
