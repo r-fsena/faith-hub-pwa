@@ -9,6 +9,7 @@ import { CartFloatingButton, CartDrawer } from './components/CartDrawer';
 import { LivePlayerModal } from './components/LivePlayerModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { AuthGate } from './components/AuthGate';
+import { SplashScreen } from './components/SplashScreen';
 
 import { Home } from './pages/Home';
 import { Devotionals } from './pages/Devotionals';
@@ -122,6 +123,9 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="pwa-app-shell">
+      {/* Splash Screen Dinâmico com Identidade Visual da Igreja */}
+      <SplashScreen />
+
       {/* Top Header com suporte a navegação e botão Voltar */}
       <TopHeader 
         onOpenNotifications={() => {
