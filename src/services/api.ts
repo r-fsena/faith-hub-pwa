@@ -459,12 +459,14 @@ export async function fetchChurchSettings(slug?: string) {
 // ----------------------------------------------------
 // 8. ORAÇÕES & INTERCESSÃO
 // ----------------------------------------------------
-export async function fetchPrayers(category?: string, userId?: string) {
+export async function fetchPrayers(category?: string, userId?: string, orgId?: string, campusId?: string) {
   try {
     let url = `${API_BASE_URL}/prayers`;
     const params = new URLSearchParams();
     if (category && category !== 'ALL') params.append('category', category);
     if (userId) params.append('user_id', userId);
+    if (orgId) params.append('organization_id', orgId);
+    if (campusId && campusId !== 'all') params.append('campus_id', campusId);
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
 
@@ -478,11 +480,14 @@ export async function fetchPrayers(category?: string, userId?: string) {
 
 export async function createPrayerRequest(payload: {
   author_name: string;
+  author_phone?: string;
   is_anonymous: boolean;
   category: string;
   privacy: string;
   content: string;
   user_id?: string;
+  organization_id?: string;
+  campus_id?: string;
 }) {
   try {
     const headers = await getAuthHeaders();
@@ -509,6 +514,21 @@ export async function prayForRequest(prayerId: string, userId?: string) {
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Pray for request fallback", e);
+  }
+  return null;
+}
+
+export async function submitPrayerTestimony(prayerId: string, testimonyText: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/prayers/${prayerId}/testimony`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ testimony_text: testimonyText })
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Submit testimony fallback", e);
   }
   return null;
 }
