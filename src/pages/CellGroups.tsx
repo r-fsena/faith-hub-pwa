@@ -370,7 +370,13 @@ export const CellGroups: React.FC = () => {
         setCompletedChapterIds(mergedCompletions);
         
         if (fullBook.chapters && fullBook.chapters.length > 0) {
-          setExpandedChapterIds(prev => prev.length === 0 ? [fullBook.chapters[0].id || '0'] : prev);
+          // Expande apenas o primeiro capítulo que ainda estiver pendente (se todos concluídos, deixa todos recolhidos)
+          const firstPending = fullBook.chapters.find((ch, idx) => !mergedCompletions.includes(ch.id || String(idx)));
+          if (firstPending) {
+            setExpandedChapterIds([firstPending.id || '0']);
+          } else {
+            setExpandedChapterIds([]);
+          }
         }
       }
     } finally {
@@ -406,7 +412,12 @@ export const CellGroups: React.FC = () => {
       setCompletedChapterIds(mergedCompletions);
 
       if (fullBook.chapters && fullBook.chapters.length > 0) {
-        setExpandedChapterIds([fullBook.chapters[0].id || '0']);
+        const firstPending = fullBook.chapters.find((ch, idx) => !mergedCompletions.includes(ch.id || String(idx)));
+        if (firstPending) {
+          setExpandedChapterIds([firstPending.id || '0']);
+        } else {
+          setExpandedChapterIds([]);
+        }
       }
 
       // Carrega silenciosamente em background se faltar dados
@@ -434,6 +445,11 @@ export const CellGroups: React.FC = () => {
     const userIdentifier = user?.email || 'guest';
     const isCurrentlyCompleted = completedChapterIds.includes(chapterId);
     
+    // Se está sendo concluído agora, RECOLHE automaticamente para economizar espaço
+    if (!isCurrentlyCompleted) {
+      setExpandedChapterIds(prev => prev.filter(id => id !== chapterId));
+    }
+
     // Atualização otimista imediata
     const newCompletions = isCurrentlyCompleted 
       ? completedChapterIds.filter(id => id !== chapterId)
@@ -523,7 +539,12 @@ export const CellGroups: React.FC = () => {
         setCompletedChapterIds(merged);
 
         if (defaultBook.chapters && defaultBook.chapters.length > 0) {
-          setExpandedChapterIds([defaultBook.chapters[0].id || '0']);
+          const firstPending = defaultBook.chapters.find((ch, idx) => !merged.includes(ch.id || String(idx)));
+          if (firstPending) {
+            setExpandedChapterIds([firstPending.id || '0']);
+          } else {
+            setExpandedChapterIds([]);
+          }
         }
       }
 
