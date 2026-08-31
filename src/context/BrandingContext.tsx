@@ -37,6 +37,7 @@ export interface ChurchBranding {
     store_subtitle?: string;
     store_tab_title?: string;
     store_counter_label?: string;
+    product_groups?: Array<{ id?: string; name: string; active?: boolean } | string>;
   };
   bible_config?: {
     enabled_versions: string[];

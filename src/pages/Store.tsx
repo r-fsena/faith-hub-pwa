@@ -29,46 +29,67 @@ export const Store: React.FC = () => {
 
   useEffect(() => {
     loadProductsFromBackend();
-    loadGroupsOrder();
     loadMyOrders();
   }, []);
 
-  const loadProductsFromBackend = async () => {
-    const backendProducts = await fetchPdvProducts();
-    if (backendProducts && Array.isArray(backendProducts) && backendProducts.length > 0) {
-      const mapped = backendProducts.map((p: any) => ({
-        id: p.id,
-        name: p.name || p.title,
-        category: p.category || 'Geral',
-        description: p.description || '',
-        price: Number(p.price) || 0,
-        image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
-      }));
-      setProducts(mapped);
+  // Recalcula grupos sempre que os produtos ou o branding mudarem
+  useEffect(() => {
+    updateVisibleGroups(products);
+  }, [products, branding.store_config]);
+
+  const updateVisibleGroups = (productList: Product[]) => {
+    // 1. Extrai apenas as categorias únicas que POSSUEM produtos cadastrados
+    const existingCategories = Array.from(
+      new Set(productList.map(p => p.category?.trim()).filter(Boolean))
+    );
+
+    if (existingCategories.length === 0) {
+      setGroups([]);
+      setSelectedGroup('ALL');
+      return;
+    }
+
+    // 2. Se a igreja tiver configurado uma lista/ordem de grupos personalizada
+    const configuredList = branding.store_config?.product_groups;
+    if (Array.isArray(configuredList) && configuredList.length > 0) {
+      const activeConfiguredNames = configuredList
+        .filter((g: any) => typeof g === 'string' ? true : g.active !== false)
+        .map((g: any) => typeof g === 'string' ? g.trim() : g.name?.trim())
+        .filter((name: string) => existingCategories.includes(name)); // SÓ inclui se houver produtos
+
+      // Inclui categorias existentes que porventura ainda não estejam na lista de ordenação
+      const missing = existingCategories.filter(cat => !activeConfiguredNames.includes(cat));
+      const finalList = [...activeConfiguredNames, ...missing];
+      setGroups(finalList);
+
+      if (selectedGroup !== 'ALL' && !finalList.includes(selectedGroup)) {
+        setSelectedGroup('ALL');
+      }
+    } else {
+      setGroups(existingCategories);
+      if (selectedGroup !== 'ALL' && !existingCategories.includes(selectedGroup)) {
+        setSelectedGroup('ALL');
+      }
     }
   };
 
-  const loadGroupsOrder = () => {
-    const savedGroups = localStorage.getItem('faithhub_pdv_groups');
-    if (savedGroups) {
-      try {
-        const parsed = JSON.parse(savedGroups);
-        if (Array.isArray(parsed)) {
-          const activeOnly = parsed
-            .filter((g: any) => typeof g === 'string' ? true : g.active !== false)
-            .map((g: any) => typeof g === 'string' ? g : g.name);
-          setGroups(activeOnly);
-          return;
-        }
-      } catch (e) {}
+  const loadProductsFromBackend = async () => {
+    try {
+      const backendProducts = await fetchPdvProducts();
+      if (backendProducts && Array.isArray(backendProducts)) {
+        const mapped: Product[] = backendProducts.map((p: any) => ({
+          id: p.id,
+          name: p.name || p.title,
+          category: (p.category || 'Geral').trim(),
+          description: p.description || '',
+          price: Number(p.price) || 0,
+          image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
+        }));
+        setProducts(mapped);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar produtos:', err);
     }
-    setGroups([
-      'Salgados & Lanches',
-      'Doces e Sobremesas',
-      'Bebidas & Cafeteria',
-      'Livraria & Bíblias',
-      'Vestuário & Camisas'
-    ]);
   };
 
   const loadMyOrders = () => {
@@ -151,50 +172,53 @@ export const Store: React.FC = () => {
           ======================================================== */}
       {viewMode === 'catalog' ? (
         <>
-          {/* Segmented Filter Bar com Grupos Ordenados */}
-          <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
-            <button
-              type="button"
-              onClick={() => setSelectedGroup('ALL')}
-              style={{
-                padding: '7px 14px',
-                borderRadius: '999px',
-                border: '1px solid var(--panel-border)',
-                background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : '#ffffff',
-                color: selectedGroup === 'ALL' ? '#ffffff' : 'var(--text-main)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Todos ({products.length})
-            </button>
+          {/* Segmented Filter Bar com Grupos Ordenados (só exibe se houver grupos com produtos) */}
+          {groups.length > 0 && (
+            <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedGroup('ALL')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid var(--panel-border)',
+                  background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : '#ffffff',
+                  color: selectedGroup === 'ALL' ? '#ffffff' : 'var(--text-main)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Todos ({products.length})
+              </button>
 
-            {groups.map((group) => {
-              const count = products.filter(p => p.category === group).length;
-              return (
-                <button
-                  key={group}
-                  type="button"
-                  onClick={() => setSelectedGroup(group)}
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: '999px',
-                    border: '1px solid var(--panel-border)',
-                    background: selectedGroup === group ? 'var(--accent-primary)' : '#ffffff',
-                    color: selectedGroup === group ? '#ffffff' : 'var(--text-main)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {group} ({count})
-                </button>
-              );
-            })}
-          </div>
+              {groups.map((group) => {
+                const count = products.filter(p => p.category === group).length;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={group}
+                    type="button"
+                    onClick={() => setSelectedGroup(group)}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '999px',
+                      border: '1px solid var(--panel-border)',
+                      background: selectedGroup === group ? 'var(--accent-primary)' : '#ffffff',
+                      color: selectedGroup === group ? '#ffffff' : 'var(--text-main)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {group} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Grid de Produtos */}
           {filteredProducts.length === 0 ? (
