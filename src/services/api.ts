@@ -69,11 +69,15 @@ export function setActiveCampusId(campusId: string): void {
 // ----------------------------------------------------
 // 3. EVENTOS & TICKETS / PASSAPORTES
 // ----------------------------------------------------
-export async function fetchEvents(campusId?: string) {
+export async function fetchEvents(organizationId?: string, campusId?: string) {
   try {
     const activeCampus = campusId || getActiveCampusId();
-    const queryParam = activeCampus && activeCampus !== 'all' ? `?campus_id=${activeCampus}` : '';
-    const res = await fetch(`${API_BASE_URL}/events${queryParam}`);
+    const queryParams = new URLSearchParams();
+    if (organizationId) queryParams.set('organization_id', organizationId);
+    if (activeCampus && activeCampus !== 'all') queryParams.set('campus_id', activeCampus);
+
+    const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/events${qs}`);
     if (res.ok) {
       const data = await res.json();
       return data.data || data;
@@ -86,10 +90,13 @@ export async function fetchEvents(campusId?: string) {
 
 export async function checkoutTicket(payload: {
   event_id: string;
+  lot_id?: string;
   batch_id?: string;
+  user_id?: string;
   attendee_name: string;
   attendee_cpf?: string;
   attendee_whatsapp: string;
+  attendee_email?: string;
   dietary_notes?: string;
   payment_method: 'PIX' | 'CREDIT_CARD';
 }) {
@@ -107,8 +114,11 @@ export async function checkoutTicket(payload: {
   // Retorna mock de sucesso se backend local estiver offline
   return {
     ticket_id: `TCK-${Date.now().toString().slice(-6)}`,
-    status: 'CONFIRMED',
-    qr_code_data: `TICKET_${payload.event_id}_${payload.attendee_whatsapp}`
+    short_code: `FH-${Math.floor(100000 + Math.random() * 900000)}`,
+    status: 'PAID',
+    qrcode_token: `TICKET_${payload.event_id}_${payload.attendee_whatsapp}`,
+    qr_code_data: `TICKET_${payload.event_id}_${payload.attendee_whatsapp}`,
+    success: true
   };
 }
 

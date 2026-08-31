@@ -4,6 +4,7 @@ import { CreditCardForm } from '../components/CreditCardForm';
 import { EventTicketPassModal, type EventTicketData } from '../components/EventTicketPassModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -24,14 +25,19 @@ interface ChurchEvent {
   price: number;
   description: string;
   cover_url: string;
+  type?: number;
   batches?: EventBatch[];
+  campus_id?: string;
 }
 
 export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user } = useAuth();
+  const { branding, selectedCampus } = useBranding();
+
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [viewTab, setViewTab] = useState<'events' | 'my_tickets'>('events');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [myTickets, setMyTickets] = useState<EventTicketData[]>([]);
 
   // Modal de Inscrição
@@ -41,22 +47,29 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [attendeeCpf, setAttendeeCpf] = useState('');
   const [attendeePhone, setAttendeePhone] = useState('');
   const [dietaryNotes, setDietaryNotes] = useState('');
-  const [paymentMode, setPaymentMode] = useState<'details' | 'card'>('details');
+  const [paymentMode, setPaymentMode] = useState<'details' | 'card' | 'pix_confirm'>('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modais de Passaporte e Scanner
   const [selectedTicketPass, setSelectedTicketPass] = useState<EventTicketData | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
+  const orgId = branding.organization_id || 'org_default';
+  const campusId = selectedCampus?.id || branding.campus_id;
+
   useEffect(() => {
     loadEventsFromBackend();
     loadMyTickets();
-  }, [user]);
+  }, [user, orgId, campusId]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [viewTab]);
 
   const loadEventsFromBackend = async () => {
     setLoading(true);
     try {
-      const data = await fetchEvents();
+      const data = await fetchEvents(orgId, campusId);
       if (Array.isArray(data)) {
         const mapped: ChurchEvent[] = data.map((ev: any) => {
           const startDate = ev.start_date ? new Date(ev.start_date) : null;
@@ -64,18 +77,20 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           const timeFormatted = ev.time || (startDate ? startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '19:30');
           const numPrice = Number(ev.price) || 0;
           const coverUrl = ev.cover_url || ev.image_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800';
-          const category = ev.category || (ev.type === 1 ? 'Curso & Capacitação' : 'Conferência / Culto');
+          const category = ev.category || (Number(ev.type) === 1 ? 'Cursos & Trilhas' : 'Conferência / Culto');
 
           return {
             id: ev.id,
             title: ev.title || 'Evento Especial',
             description: ev.description || '',
             category,
+            type: Number(ev.type) || 0,
             date_formatted: dateFormatted,
             time: timeFormatted,
             location: ev.location || 'Templo Principal',
             price: numPrice,
             cover_url: coverUrl,
+            campus_id: ev.campus_id,
             batches: Array.isArray(ev.batches) && ev.batches.length > 0 ? ev.batches : (
               Array.isArray(ev.lots) && ev.lots.length > 0 ? ev.lots.map((l: any) => ({
                 id: l.id,
@@ -100,11 +115,9 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const loadMyTickets = async () => {
     // 1. Tenta carregar do cache local primeiro
     const saved = localStorage.getItem('faithhub_my_tickets');
-    let localList: EventTicketData[] = [];
     if (saved) {
       try {
-        localList = JSON.parse(saved);
-        setMyTickets(localList);
+        setMyTickets(JSON.parse(saved));
       } catch (e) {}
     }
 
@@ -169,17 +182,17 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const initialBatch = ev.batches && ev.batches.length > 0 ? ev.batches[0] : { id: 'b1', name: 'Geral', price: ev.price, available: true };
     setSelectedBatch(initialBatch);
 
-    // Preenche dados padrão se logado
     const defaultName = localStorage.getItem('faithhub_user_name') || user?.name || '';
     const defaultPhone = localStorage.getItem('faithhub_user_phone') || '';
     setAttendeeName(defaultName);
     setAttendeePhone(defaultPhone);
+    setPaymentMode('details');
   };
 
-  const handleConfirmRegistration = async (e?: React.FormEvent, paymentMethod: 'PIX' | 'CREDIT_CARD' = 'PIX', extraInfo?: string) => {
+  const handleConfirmRegistration = async (e?: React.FormEvent, paymentMethod: 'PIX' | 'CREDIT_CARD' | 'FREE' = 'FREE', extraInfo?: string) => {
     if (e) e.preventDefault();
     if (!selectedEvent || !attendeeName.trim() || !attendeePhone.trim()) {
-      alert("Por favor, preencha nome e telefone de contato.");
+      alert("Por favor, preencha nome e WhatsApp de contato.");
       return;
     }
 
@@ -198,7 +211,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         attendee_whatsapp: attendeePhone.trim(),
         attendee_email: uEmail || undefined,
         dietary_notes: dietaryNotes.trim() || undefined,
-        payment_method: paymentMethod
+        payment_method: paymentMethod === 'FREE' ? 'PIX' : paymentMethod
       });
 
       const newTicket: EventTicketData = {
@@ -224,9 +237,12 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       localStorage.setItem('faithhub_my_tickets', JSON.stringify(updated));
 
       setSelectedEvent(null);
+      setViewTab('my_tickets');
       setSelectedTicketPass(newTicket);
       setPaymentMode('details');
       setDietaryNotes('');
+
+      alert("🎉 Inscrição confirmada com sucesso! Seu passaporte digital com QR Code já está disponível.");
     } catch (err: any) {
       console.error(err);
       alert('Erro ao processar inscrição: ' + (err.message || 'Tente novamente'));
@@ -235,22 +251,31 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     }
   };
 
+  // Filtros
+  const filteredEvents = events.filter(ev => {
+    if (selectedCategory === 'COURSES') return Number(ev.type) === 1 || ev.category.toLowerCase().includes('curso');
+    if (selectedCategory === 'CONFERENCES') return Number(ev.type) === 0 || ev.category.toLowerCase().includes('conferência') || ev.category.toLowerCase().includes('culto');
+    if (selectedCategory === 'FREE') return ev.price === 0;
+    if (selectedCategory === 'PAID') return ev.price > 0;
+    return true;
+  });
+
   return (
-    <div className="pwa-content animate-fade-in" style={{ gap: '16px' }}>
+    <div className="pwa-content animate-fade-in" style={{ gap: '16px', paddingBottom: '90px' }}>
       
-      {/* Header com Switch entre Eventos, Meus Passaportes e Scanner de Portaria */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+      {/* Header com Switch entre Eventos, Meus Passaportes e Scanner */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
         <div>
           {onBack && (
             <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer', marginBottom: '4px' }}>
               ← Voltar ao Início
             </button>
           )}
-          <h2 className="section-title" style={{ fontSize: '1.30rem' }}>
-            {viewTab === 'events' ? 'Eventos & Cursos' : 'Meus Passaportes'}
+          <h2 className="section-title" style={{ fontSize: '1.30rem', margin: 0, letterSpacing: '-0.3px' }}>
+            {viewTab === 'events' ? 'Eventos & Cursos' : 'Meus Passaportes & Carteira'}
           </h2>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-            {viewTab === 'events' ? 'Garanta sua presença nas programações' : 'Apresente seu QR Code na portaria'}
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+            {selectedCampus ? `Unidade ${selectedCampus.name}` : branding.church_name} • {viewTab === 'events' ? 'Garanta sua vaga' : 'Apresente seu QR Code na portaria'}
           </p>
         </div>
 
@@ -286,24 +311,57 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               background: 'var(--accent-primary-light)',
               color: 'var(--accent-primary)',
               border: 'none',
-              padding: '8px 12px',
+              padding: '8px 14px',
               borderRadius: '10px',
               fontWeight: 800,
               fontSize: '0.74rem',
               cursor: 'pointer'
             }}
           >
-            {viewTab === 'events' ? `🎟️ Meus Ingressos (${myTickets.length})` : '🗓️ Ver Eventos'}
+            {viewTab === 'events' ? `🎟️ Meus Ingressos (${myTickets.length})` : '🗓️ Ver Catálogo'}
           </button>
         </div>
       </div>
+
+      {/* Abas de Filtros de Categoria (Apenas na aba Eventos) */}
+      {viewTab === 'events' && (
+        <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
+          {[
+            { id: 'ALL', label: '🌟 Todos', icon: '🌟' },
+            { id: 'CONFERENCES', label: '🏛️ Conferências & Cultos', icon: '🏛️' },
+            { id: 'COURSES', label: '🎓 Cursos & Trilhas', icon: '🎓' },
+            { id: 'FREE', label: '💚 Gratuitos', icon: '💚' },
+            { id: 'PAID', label: '🎟️ Ingressos Pagos', icon: '🎟️' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setSelectedCategory(tab.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '999px',
+                border: selectedCategory === tab.id ? '1px solid var(--accent-primary)' : '1px solid var(--panel-border)',
+                background: selectedCategory === tab.id ? 'var(--accent-primary)' : '#ffffff',
+                color: selectedCategory === tab.id ? '#ffffff' : 'var(--text-secondary)',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ========================================================
           MODO 1: LISTA DE EVENTOS E CURSOS
           ======================================================== */}
       {viewTab === 'events' ? (
         loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '16px', minHeight: '50vh' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '16px', minHeight: '40vh' }}>
             {[1, 2, 3].map(n => (
               <div key={n} style={{ background: '#ffffff', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--panel-border)', padding: '16px' }}>
                 <div style={{ height: '140px', background: '#f1f5f9', borderRadius: '14px', marginBottom: '12px' }} />
@@ -313,19 +371,19 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               </div>
             ))}
           </div>
-        ) : events.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🗓️</div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-              Nenhum evento agendado no momento
+              Nenhum evento ou curso encontrado nesta categoria
             </h3>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
-              As conferências, cultos especiais e cursos cadastrados no Portal Web aparecerão aqui automaticamente.
+              Fique ligado! Em breve novas conferências e capacitações serão abertas para inscrição.
             </p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '18px' }}>
-            {events.map(ev => (
+            {filteredEvents.map(ev => (
               <div 
                 key={ev.id}
                 style={{
@@ -338,46 +396,62 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   flexDirection: 'column'
                 }}
               >
-                <div style={{ height: '140px', background: `url(${ev.cover_url})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                    <span style={{ background: 'rgba(15, 23, 42, 0.85)', color: '#ffffff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.68rem', fontWeight: 800 }}>
+                {/* Imagem de Capa com Badges */}
+                <div style={{ height: '150px', background: `url(${ev.cover_url})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px' }}>
+                    <span style={{ background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)', color: '#ffffff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.68rem', fontWeight: 800 }}>
                       {ev.category}
+                    </span>
+                  </div>
+
+                  <div style={{ position: 'absolute', bottom: '10px', right: '10px' }}>
+                    <span style={{
+                      background: ev.price === 0 ? '#059669' : '#ffffff',
+                      color: ev.price === 0 ? '#ffffff' : '#0f172a',
+                      padding: '4px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.74rem',
+                      fontWeight: 900,
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                    }}>
+                      {ev.price === 0 ? 'GRATUITO' : `R$ ${ev.price.toFixed(2).replace('.', ',')}`}
                     </span>
                   </div>
                 </div>
 
+                {/* Conteúdo do Evento */}
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
                   <div>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
                       🗓️ {ev.date_formatted} • {ev.time}
                     </span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
                       {ev.title}
                     </h3>
-                    <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
+                    <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
                       {ev.description}
                     </p>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 'auto' }}>
-                    📍 {ev.location}
+                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📍</span> <span>{ev.location}</span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border)', paddingTop: '12px' }}>
                     <div>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Entrada</span>
-                      <span style={{ fontSize: '1rem', fontWeight: 800, color: ev.price === 0 ? '#059669' : 'var(--text-main)' }}>
-                        {ev.price === 0 ? 'Gratuito' : `A partir de R$ ${ev.price.toFixed(2).replace('.', ',')}`}
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Vagas</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#059669' }}>
+                        Inscrições Abertas
                       </span>
                     </div>
 
                     <button 
                       type="button" 
                       className="btn-pwa-primary" 
-                      style={{ width: 'auto', padding: '10px 20px', fontSize: '0.82rem' }}
+                      style={{ width: 'auto', padding: '10px 18px', fontSize: '0.80rem' }}
                       onClick={() => handleOpenSignup(ev)}
                     >
-                      Garantir Inscrição →
+                      {ev.price === 0 ? 'Inscrever-se Grátis →' : 'Garantir Ingresso →'}
                     </button>
                   </div>
                 </div>
@@ -387,17 +461,17 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         )
       ) : (
         /* ========================================================
-            MODO 2: MEUS PASSAPORTES / INGRESSOS DIGITAIS
+            MODO 2: MEUS PASSAPORTES / CARTEIRA DIGITAL
             ======================================================== */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '14px' }}>
           {myTickets.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '20px', border: '1px solid var(--panel-border)', width: '100%' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>🎟️</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                Nenhum ingresso emitido
+                Sua carteira de ingressos está vazia
               </h3>
               <p style={{ fontSize: '0.80rem', color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
-                Inscreva-se em um evento ou curso para gerar seu passaporte com QR Code.
+                Inscreva-se em um evento ou curso para gerar seu passaporte com QR Code e adicionar à Carteira Apple / Google.
               </p>
               <button
                 type="button"
@@ -405,7 +479,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 onClick={() => setViewTab('events')}
                 style={{ width: 'auto', padding: '10px 24px', margin: '0 auto', fontSize: '0.84rem' }}
               >
-                Explorar Eventos
+                Explorar Eventos & Cursos
               </button>
             </div>
           ) : (
@@ -419,17 +493,17 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   key={tck.id || tck.ticket_id || shortCode}
                   onClick={() => setSelectedTicketPass(tck)}
                   style={{
-                    background: isUsed ? '#f8fafc' : '#ffffff',
+                    background: isUsed ? '#f8fafc' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                     borderRadius: '20px',
                     padding: '16px',
                     border: isUsed ? '1px solid #e2e8f0' : '1.5px solid var(--panel-border)',
-                    boxShadow: isUsed ? 'none' : 'var(--shadow-sm)',
+                    boxShadow: isUsed ? 'none' : '0 4px 14px rgba(0,0,0,0.05)',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px',
                     position: 'relative',
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                    transition: 'transform 0.15s ease'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -444,7 +518,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       {isUsed ? '✓ CHECK-IN REALIZADO' : (isPending ? '⏳ PENDENTE' : '● VÁLIDO')}
                     </span>
 
-                    <span style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
                       {shortCode}
                     </span>
                   </div>
@@ -454,22 +528,22 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       width: '46px',
                       height: '46px',
                       borderRadius: '14px',
-                      background: isUsed ? '#e2e8f0' : 'var(--accent-primary-light)',
-                      color: isUsed ? '#64748b' : 'var(--accent-primary)',
+                      background: isUsed ? '#e2e8f0' : 'linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%)',
+                      color: isUsed ? '#64748b' : '#ffffff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.4rem'
+                      fontSize: '1.3rem'
                     }}>
                       🎟️
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tck.event_title}
                       </h4>
                       <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                        Titular: <strong>{tck.attendee_name}</strong>
+                        Titular: <strong>{tck.attendee_name}</strong> • Lote: <strong>{tck.lot_name || 'Geral'}</strong>
                       </div>
                     </div>
                   </div>
@@ -483,8 +557,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     fontSize: '0.72rem',
                     color: 'var(--text-muted)'
                   }}>
-                    <span>📍 {tck.location || tck.event_location || 'Templo Principal'}</span>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>Toque para ver QR ➔</span>
+                    <span>🗓️ {tck.date_formatted}</span>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>Abrir Passaporte ➔</span>
                   </div>
                 </div>
               );
@@ -492,6 +566,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           )}
         </div>
       )}
+
 
       {/* ========================================================
           MODAL DE INSCRIÇÃO / CHECKOUT
