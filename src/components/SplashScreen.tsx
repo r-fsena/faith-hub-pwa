@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useBranding } from '../context/BrandingContext';
 
 interface SplashScreenProps {
   onFinish?: () => void;
   minDurationMs?: number;
 }
+
+const FAITHHUB_DEFAULT_LOGO = '/brand/logo-transparent.png';
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onFinish,
@@ -15,13 +18,23 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
-    // Garante que o splash seja exibido pelo tempo mínimo agradável (1.8s)
+    // Remove o placeholder splash estático do HTML inicial se ele ainda existir
+    const initialSplash = document.getElementById('initial-splash');
+    if (initialSplash) {
+      initialSplash.style.transition = 'opacity 0.25s ease';
+      initialSplash.style.opacity = '0';
+      setTimeout(() => {
+        initialSplash.remove();
+      }, 250);
+    }
+
+    // Exibe o splash pelo tempo mínimo agradável para fixar a marca
     const timer = setTimeout(() => {
       setIsFadingOut(true);
       const removeTimer = setTimeout(() => {
         setIsVisible(false);
         if (onFinish) onFinish();
-      }, 500); // tempo da animação de fade-out
+      }, 450); // tempo de fade-out
 
       return () => clearTimeout(removeTimer);
     }, minDurationMs);
@@ -33,29 +46,37 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   const primaryColor = branding.primary_color || '#0f766e';
   const secondaryColor = branding.secondary_color || '#14b8a6';
-  const churchName = branding.church_name || 'Comunidade Viva';
+  const churchName = branding.church_name || 'Faith-Hub';
   const tagline = branding.tagline || 'Conectando corações, transformando vidas';
-  const logoUrl = branding.logo_header_url || branding.logo_icon_url || '/brand/logo-white.png';
+  
+  // Se não houver logo customizado na congregação, usa o logo oficial Faith-Hub
+  const customLogo = (branding.logo_header_url || branding.logo_icon_url || '').trim();
+  const logoUrl = customLogo ? customLogo : FAITHHUB_DEFAULT_LOGO;
 
-  return (
+  return createPortal(
     <div
+      id="faithhub-splash-portal"
       style={{
         position: 'fixed',
+        inset: 0,
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
-        zIndex: 99999,
+        height: '100dvh',
+        minHeight: '100vh',
+        zIndex: 999999,
+        backgroundColor: '#0f172a',
         background: `radial-gradient(circle at 50% 35%, #1e293b 0%, #0f172a 60%, #020617 100%)`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 'calc(env(safe-area-inset-top, 24px) + 32px) 24px calc(env(safe-area-inset-bottom, 24px) + 24px) 24px',
+        padding: 'calc(env(safe-area-inset-top, 24px) + 36px) 24px calc(env(safe-area-inset-bottom, 24px) + 28px) 24px',
+        boxSizing: 'border-box',
         opacity: isFadingOut ? 0 : 1,
-        transform: isFadingOut ? 'scale(1.04)' : 'scale(1)',
+        transform: isFadingOut ? 'scale(1.03)' : 'scale(1)',
         transition: 'opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: isFadingOut ? 'none' : 'auto',
         overflow: 'hidden',
@@ -66,23 +87,23 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       <div
         style={{
           position: 'absolute',
-          top: '30%',
+          top: '32%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '320px',
-          height: '320px',
+          width: '340px',
+          height: '340px',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${primaryColor}40 0%, ${secondaryColor}15 50%, transparent 75%)`,
+          background: `radial-gradient(circle, ${primaryColor}45 0%, ${secondaryColor}20 45%, transparent 75%)`,
           filter: 'blur(45px)',
           pointerEvents: 'none',
           animation: 'splash-aura 3s ease-in-out infinite alternate'
         }}
       />
 
-      {/* Top Space */}
-      <div style={{ height: '20px' }} />
+      {/* Espaçador Superior */}
+      <div style={{ height: '10px' }} />
 
-      {/* Conteúdo Central: Logo + Nome + Slogan */}
+      {/* Conteúdo Central: Logo + Nome da Igreja + Slogan */}
       <div
         style={{
           display: 'flex',
@@ -92,46 +113,46 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           position: 'relative',
           zIndex: 2,
           maxWidth: '340px',
+          width: '100%',
           animation: 'splash-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}
       >
-        {/* Container do Logo com Anel Luminoso */}
+        {/* Card do Logo com Reflexo e Sombra Suave */}
         <div
           style={{
             position: 'relative',
-            width: '104px',
-            height: '104px',
+            width: '110px',
+            height: '110px',
             borderRadius: '28px',
             background: 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            border: `1.5px solid rgba(255, 255, 255, 0.18)`,
-            boxShadow: `0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px ${primaryColor}44`,
+            border: `1.5px solid rgba(255, 255, 255, 0.20)`,
+            boxShadow: `0 20px 45px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryColor}55`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '24px',
-            overflow: 'hidden'
+            marginBottom: '22px',
+            padding: '12px',
+            boxSizing: 'border-box'
           }}
         >
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={churchName}
-              style={{
-                maxWidth: '72%',
-                maxHeight: '72%',
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))'
-              }}
-              onError={(e) => {
-                // Fallback para ícone padrão se der erro ao carregar logo
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <span style={{ fontSize: '2.6rem' }}>✝️</span>
-          )}
+          <img
+            src={logoUrl}
+            alt={churchName}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.35))'
+            }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== FAITHHUB_DEFAULT_LOGO) {
+                target.src = FAITHHUB_DEFAULT_LOGO;
+              }
+            }}
+          />
         </div>
 
         {/* Nome da Igreja */}
@@ -143,7 +164,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             margin: '0 0 6px 0',
             letterSpacing: '-0.5px',
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-            textShadow: '0 2px 14px rgba(0,0,0,0.5)'
+            textShadow: '0 2px 14px rgba(0,0,0,0.5)',
+            lineHeight: 1.25
           }}
         >
           {churchName}
@@ -154,7 +176,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           style={{
             fontSize: '0.84rem',
             color: 'rgba(255, 255, 255, 0.72)',
-            margin: '0 0 28px 0',
+            margin: '0 0 26px 0',
             lineHeight: 1.4,
             fontWeight: 500,
             letterSpacing: '0.01em'
@@ -166,7 +188,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* Barra de Progresso / Loading Shimmer */}
         <div
           style={{
-            width: '140px',
+            width: '130px',
             height: '4px',
             borderRadius: '999px',
             background: 'rgba(255, 255, 255, 0.12)',
@@ -189,7 +211,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         </div>
       </div>
 
-      {/* Rodapé: Powered by Faith-Hub */}
+      {/* Rodapé Oficial: Powered by Faith-Hub */}
       <div
         style={{
           display: 'flex',
@@ -197,14 +219,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           alignItems: 'center',
           gap: '4px',
           zIndex: 2,
-          opacity: 0.8
+          opacity: 0.85
         }}
       >
         <span
           style={{
-            fontSize: '0.66rem',
+            fontSize: '0.65rem',
             fontWeight: 700,
-            color: 'rgba(255, 255, 255, 0.5)',
+            color: 'rgba(255, 255, 255, 0.45)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase'
           }}
@@ -212,10 +234,10 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           Aplicativo Oficial
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '0.72rem', color: '#ffffff', fontWeight: 800, letterSpacing: '0.02em' }}>
+          <span style={{ fontSize: '0.74rem', color: '#ffffff', fontWeight: 800, letterSpacing: '0.02em' }}>
             Faith-Hub Ecosystem
           </span>
-          <span style={{ fontSize: '0.62rem', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+          <span style={{ fontSize: '0.60rem', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
             v2.4
           </span>
         </div>
@@ -236,6 +258,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           100% { left: 100%; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };
