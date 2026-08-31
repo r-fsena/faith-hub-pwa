@@ -125,7 +125,7 @@ export const Home: React.FC<HomeProps> = ({
       flag: 'cell_groups.module_enabled'
     },
     { 
-      label: 'Loja Oficial', 
+      label: branding.store_title || 'Loja Oficial', 
       icon: <ShoppingBagIcon size={22} color="#059669" />, 
       bg: 'rgba(5, 150, 105, 0.12)', 
       border: 'rgba(5, 150, 105, 0.25)', 

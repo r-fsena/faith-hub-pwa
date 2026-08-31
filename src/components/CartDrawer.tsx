@@ -186,7 +186,7 @@ export const CartDrawer: React.FC = () => {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                Seu Pedido (Loja Oficial)
+                Seu Pedido ({branding.store_title || 'Loja Oficial'})
               </h3>
               <button
                 type="button"
@@ -552,7 +552,7 @@ export const CartDrawer: React.FC = () => {
               Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado no sistema da igreja e está sendo preparado.
             </p>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', width: '100%', fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
-              {deliveryMethod === 'church' ? 'Apresente seu nome ou código no balcão da loja da igreja.' : 'Seu pedido será entregue no endereço informado.'}
+              {deliveryMethod === 'church' ? `Apresente seu nome ou código no ${branding.store_counter_label || 'balcão da loja da igreja'}.` : 'Seu pedido será entregue no endereço informado.'}
             </div>
             <button type="button" className="btn-pwa-primary" onClick={handleClose}>
               Concluir & Ver Pedidos

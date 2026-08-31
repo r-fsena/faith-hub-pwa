@@ -1,5 +1,6 @@
 import React from 'react';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { useBranding } from '../context/BrandingContext';
 
 // SVG Icons
 const HomeIcon = () => (
@@ -27,12 +28,13 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
   const { isFeatureEnabled } = useFeatureFlags();
+  const { branding } = useBranding();
 
   const allTabs: Array<{ id: ActiveTab; label: string; icon: React.ComponentType; flag?: string }> = [
     { id: 'home', label: 'Início', icon: HomeIcon },
     { id: 'devotionals', label: 'Palavra', icon: BookIcon, flag: 'devotionals.module_enabled' },
     { id: 'cells', label: 'Células', icon: UsersIcon, flag: 'cell_groups.module_enabled' },
-    { id: 'store', label: 'Loja', icon: StoreIcon, flag: 'pdv.module_enabled' },
+    { id: 'store', label: branding.store_tab_title || 'Loja', icon: StoreIcon, flag: 'pdv.module_enabled' },
     { id: 'profile', label: 'Perfil', icon: UserIcon },
   ];
 

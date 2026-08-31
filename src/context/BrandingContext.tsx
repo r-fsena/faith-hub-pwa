@@ -28,6 +28,16 @@ export interface ChurchBranding {
   status?: string;
   pix_key?: string;
   pix_key_type?: string;
+  store_title?: string;
+  store_subtitle?: string;
+  store_tab_title?: string;
+  store_counter_label?: string;
+  store_config?: {
+    store_title?: string;
+    store_subtitle?: string;
+    store_tab_title?: string;
+    store_counter_label?: string;
+  };
   bible_config?: {
     enabled_versions: string[];
     default_version: string;
@@ -66,7 +76,11 @@ const DEFAULT_BRANDING: ChurchBranding = {
   custom_domain: '',
   pwa_description: '',
   pwa_theme_color: '#0f766e',
-  pwa_splash_bg: '#0f172a'
+  pwa_splash_bg: '#0f172a',
+  store_title: 'Loja Oficial',
+  store_subtitle: 'Livros, vestuário, devocionais e itens com retirada expressa',
+  store_tab_title: 'Loja',
+  store_counter_label: 'Balcão da Loja da Igreja'
 };
 
 interface BrandingContextType {
@@ -164,7 +178,12 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           pwa_slug: backendSettings.pwa_slug || DEFAULT_BRANDING.pwa_slug,
           pwa_theme_color: backendSettings.pwa_theme_color || backendSettings.primary_color || DEFAULT_BRANDING.pwa_theme_color,
           status: backendSettings.status || 'ACTIVE',
-          bible_config: backendSettings.bible_config || undefined
+          bible_config: backendSettings.bible_config || undefined,
+          store_config: backendSettings.store_config || undefined,
+          store_title: backendSettings.store_config?.store_title || backendSettings.store_title || DEFAULT_BRANDING.store_title,
+          store_subtitle: backendSettings.store_config?.store_subtitle || backendSettings.store_subtitle || DEFAULT_BRANDING.store_subtitle,
+          store_tab_title: backendSettings.store_config?.store_tab_title || backendSettings.store_tab_title || DEFAULT_BRANDING.store_tab_title,
+          store_counter_label: backendSettings.store_config?.store_counter_label || backendSettings.store_counter_label || DEFAULT_BRANDING.store_counter_label
         };
         const updated = { ...DEFAULT_BRANDING, ...mapped };
         setBranding(updated);

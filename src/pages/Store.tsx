@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import { fetchPdvProducts } from '../services/api';
 
 interface Product {
@@ -15,6 +16,7 @@ interface Product {
 export const Store: React.FC = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
+  const { branding } = useBranding();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
@@ -112,10 +114,10 @@ export const Store: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
-            {viewMode === 'catalog' ? 'Loja Oficial' : 'Meus Pedidos'}
+            {viewMode === 'catalog' ? (branding.store_title || 'Loja Oficial') : 'Meus Pedidos'}
           </h2>
           <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-            {viewMode === 'catalog' ? 'Livros, vestuário, devocionais e itens com retirada expressa' : 'Acompanhe o status do preparo dos seus itens'}
+            {viewMode === 'catalog' ? (branding.store_subtitle || 'Livros, vestuário, devocionais e itens com retirada expressa') : 'Acompanhe o status do preparo dos seus itens'}
           </p>
         </div>
 
