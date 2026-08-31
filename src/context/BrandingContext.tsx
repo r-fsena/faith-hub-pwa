@@ -26,6 +26,8 @@ export interface ChurchBranding {
   pwa_theme_color: string;
   pwa_splash_bg: string;
   status?: string;
+  pix_key?: string;
+  pix_key_type?: string;
   bible_config?: {
     enabled_versions: string[];
     default_version: string;
@@ -43,6 +45,8 @@ const DEFAULT_BRANDING: ChurchBranding = {
   church_name: 'Faith-Hub',
   tagline: '',
   cnpj: '',
+  pix_key: '',
+  pix_key_type: 'CNPJ',
   address: '',
   city: '',
   state: '',

@@ -4,8 +4,8 @@ import { useBranding } from '../context/BrandingContext';
 import { createPdvOrder } from '../services/api';
 import { CreditCardForm } from './CreditCardForm';
 import { BottomSheet } from './BottomSheet';
-
 import { useAuth } from '../context/AuthContext';
+import { generatePixBrCode, getPixQrCodeImageUrl } from '../services/pixGenerator';
 
 export const CartFloatingButton: React.FC = () => {
   const { totalItemsCount, totalPrice, setIsCartOpen } = useCart();
@@ -141,9 +141,30 @@ export const CartDrawer: React.FC = () => {
     }
   };
 
+  const getCartPixBrCode = () => {
+    const rawKey = branding.pix_key || branding.cnpj || branding.email || '';
+    if (!rawKey) return '';
+    try {
+      return generatePixBrCode({
+        pixKey: rawKey,
+        merchantName: branding.church_name || 'Igreja',
+        merchantCity: branding.city || 'Brasil',
+        amount: totalPrice,
+        txId: createdOrderId ? `PED${createdOrderId.substring(0, 10)}` : 'LOJA',
+        description: `Pedido ${createdOrderId || ''} ${branding.church_name}`.substring(0, 25)
+      });
+    } catch {
+      return rawKey;
+    }
+  };
+
   const handleCopyPix = () => {
-    const samplePixCode = `00020126580014br.gov.bcb.pix0136${branding.pwa_slug || 'faithhub'}520400005303986540${totalPrice.toFixed(2)}5802BR5913${branding.church_name.substring(0, 13)}6009SAO PAULO62070503***6304`;
-    navigator.clipboard.writeText(samplePixCode);
+    const pixCode = getCartPixBrCode();
+    if (!pixCode) {
+      alert("Chave Pix da igreja não cadastrada.");
+      return;
+    }
+    navigator.clipboard.writeText(pixCode);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 3000);
   };
@@ -493,7 +514,7 @@ export const CartDrawer: React.FC = () => {
 
             <div style={{ background: '#ffffff', padding: '12px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`Pix:${branding.church_name}:${totalPrice}:${createdOrderId}`)}`}
+                src={getPixQrCodeImageUrl(getCartPixBrCode(), 200)}
                 alt="QR Code Pix"
                 style={{ width: '160px', height: '160px', display: 'block' }}
               />
