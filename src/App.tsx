@@ -227,8 +227,8 @@ const AppContent: React.FC = () => {
             {activeTab === 'store' && (
               !isAuthenticated ? (
                 <AuthGate 
-                  featureName="Cantina & Loja"
-                  featureDescription="Faça pedidos com retirada expressa no balcão e acompanhe o status de preparo dos seus lanches."
+                  featureName="Loja Oficial"
+                  featureDescription="Compre livros, devocionais, vestuário e itens com retirada expressa no balcão da igreja."
                   onGoToLogin={() => handleTabChange('profile')}
                   onGoToBible={() => setSubView('bible')}
                   onBack={() => handleTabChange('home')}

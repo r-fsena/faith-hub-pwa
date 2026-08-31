@@ -112,10 +112,10 @@ export const Store: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
-            {viewMode === 'catalog' ? 'Cantina & Loja' : 'Meus Pedidos'}
+            {viewMode === 'catalog' ? 'Loja Oficial' : 'Meus Pedidos'}
           </h2>
           <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-            {viewMode === 'catalog' ? 'Peça e retire no balcão da igreja sem filas' : 'Acompanhe o status do preparo dos seus lanches'}
+            {viewMode === 'catalog' ? 'Livros, vestuário, devocionais e itens com retirada expressa' : 'Acompanhe o status do preparo dos seus itens'}
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export const Store: React.FC = () => {
             cursor: 'pointer'
           }}
         >
-          {viewMode === 'catalog' ? '📋 Meus Pedidos' : '🛒 Ver Cardápio'}
+          {viewMode === 'catalog' ? '📋 Meus Pedidos' : '🛍️ Ver Catálogo'}
         </button>
       </div>
 
@@ -197,12 +197,12 @@ export const Store: React.FC = () => {
           {/* Grid de Produtos */}
           {filteredProducts.length === 0 ? (
             <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🛒</div>
+              <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🛍️</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-                Nenhum produto cadastrado na cantina
+                Nenhum produto cadastrado na loja
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
-                Os itens do cardápio, lanches e livraria cadastrados no Portal Web aparecerão aqui automaticamente.
+                Os itens de livraria, vestuário e produtos cadastrados no Portal Web aparecerão aqui automaticamente.
               </p>
             </div>
           ) : (

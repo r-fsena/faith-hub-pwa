@@ -32,7 +32,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) 
     { id: 'home', label: 'Início', icon: HomeIcon },
     { id: 'devotionals', label: 'Palavra', icon: BookIcon, flag: 'devotionals.module_enabled' },
     { id: 'cells', label: 'Células', icon: UsersIcon, flag: 'cell_groups.module_enabled' },
-    { id: 'store', label: 'Cantina', icon: StoreIcon, flag: 'pdv.module_enabled' },
+    { id: 'store', label: 'Loja', icon: StoreIcon, flag: 'pdv.module_enabled' },
     { id: 'profile', label: 'Perfil', icon: UserIcon },
   ];
 

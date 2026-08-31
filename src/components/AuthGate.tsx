@@ -23,9 +23,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({
       case 'células & redes':
       case 'células':
         return '👥';
+      case 'loja oficial':
+      case 'loja & store':
+      case 'loja':
+      case 'store':
       case 'cantina & loja':
       case 'cantina':
-        return '🛒';
+        return '🛍️';
       case 'palavra & ensino':
       case 'devocionais':
         return '📖';
@@ -131,7 +135,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>✓</span>
-            <span>Pedidos na cantina e mural de intercessão</span>
+            <span>Compras na loja oficial e mural de intercessão</span>
           </div>
         </div>
 
