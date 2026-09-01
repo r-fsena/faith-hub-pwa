@@ -1,7 +1,6 @@
-const CACHE_NAME = 'faith-hub-pwa-v1.2';
+const CACHE_NAME = 'faith-hub-pwa-v1.4';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/brand/logo-symbol.png',
   '/brand/logo-original.png',
