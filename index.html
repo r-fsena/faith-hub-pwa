@@ -31,6 +31,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Fallback de segurança para garantir que o splash estático nunca trave na tela
+      setTimeout(function() {
+        var s = document.getElementById('initial-splash');
+        if (s) {
+          s.style.transition = 'opacity 0.3s ease';
+          s.style.opacity = '0';
+          setTimeout(function() { if (s && s.parentNode) s.parentNode.removeChild(s); }, 300);
+        }
+      }, 2500);
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
