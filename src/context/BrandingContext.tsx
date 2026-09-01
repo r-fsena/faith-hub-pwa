@@ -161,6 +161,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const backendSettings = await fetchChurchSettings(activeSlug);
       if (backendSettings && backendSettings.church_name) {
         const mapped: Partial<ChurchBranding> = {
+          organization_id: backendSettings.organization_id || 'org_default',
           church_name: backendSettings.church_name,
           tagline: backendSettings.slogan !== undefined ? (backendSettings.slogan || '') : (backendSettings.tagline || ''),
           cnpj: backendSettings.cnpj || '',

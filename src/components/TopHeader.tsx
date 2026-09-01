@@ -77,16 +77,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       <div className="pwa-topbar-inner">
         <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
           <div className="pwa-church-avatar">
-            {branding.logo_icon_url ? (
-              <img src={branding.logo_icon_url} alt={branding.church_name} />
-            ) : (
-              <img src="/brand/logo-symbol.png" alt={branding.church_name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            )}
+            <img 
+              src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
+              alt={branding.church_name || 'Faith-Hub'} 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.src.endsWith('/brand/logo-symbol.png')) {
+                  target.src = '/brand/logo-symbol.png';
+                }
+              }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px', boxSizing: 'border-box' }} 
+            />
           </div>
           <div className="pwa-church-title">
-            <span className="pwa-church-name">{branding.church_name}</span>
+            <span className="pwa-church-name">{branding.church_name || 'Faith-Hub'}</span>
             <span className="pwa-greeting">
-              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a) à comunidade'}
+              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.tagline || 'Bem-vindo(a) à comunidade')}
             </span>
           </div>
         </div>
