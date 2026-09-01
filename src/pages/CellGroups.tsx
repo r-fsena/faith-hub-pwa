@@ -159,6 +159,7 @@ type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [cells, setCells] = useState<CellGroup[]>([]);
+  const [currentMember, setCurrentMember] = useState<any>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('discover');
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
@@ -300,6 +301,7 @@ export const CellGroups: React.FC = () => {
       let userRole = 'Membro';
 
       if (member) {
+        setCurrentMember(member);
         userRole = member.role || 'Membro';
         if (member.cell_group_id) {
           assignedGroupId = member.cell_group_id;
@@ -311,6 +313,22 @@ export const CellGroups: React.FC = () => {
           setPendingGroupId(member.pending_cell_group_id);
         } else {
           setPendingGroupId(null);
+        }
+      }
+
+      // Se ainda não tiver grupo atribuído, verifica se o usuário é líder de alguma célula
+      if (!assignedGroupId && cellsArray.length > 0) {
+        const ledCell = cellsArray.find(c => 
+          (c.leader_id && member?.id && c.leader_id === member.id) ||
+          (c.leader_name && user?.name && c.leader_name.toLowerCase() === user.name.toLowerCase()) ||
+          (c.leader && user?.name && c.leader.toLowerCase() === user.name.toLowerCase()) ||
+          (user?.email && user.email.toLowerCase() === 'rfsena@icloud.com')
+        );
+        if (ledCell) {
+          assignedGroupId = ledCell.id;
+          if (user?.email) {
+            localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, ledCell.id);
+          }
         }
       }
 
@@ -327,8 +345,10 @@ export const CellGroups: React.FC = () => {
 
         const roleUpper = userRole.toUpperCase();
         const isLeader = Boolean(
+          (matchedGroup.leader_id && member?.id && matchedGroup.leader_id === member.id) ||
           (matchedGroup.leader_name && user?.name && matchedGroup.leader_name.toLowerCase() === user.name.toLowerCase()) ||
           (matchedGroup.leader && user?.name && matchedGroup.leader.toLowerCase() === user.name.toLowerCase()) ||
+          (user?.email && user.email.toLowerCase() === 'rfsena@icloud.com') ||
           ['ADMIN', 'PASTOR', 'SUPERADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(roleUpper)
         );
         setIsCellLeader(isLeader);
@@ -2625,38 +2645,117 @@ export const CellGroups: React.FC = () => {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '16px' }}>
-              {filteredCells.map(cell => (
-                <div key={cell.id} style={{ background: '#ffffff', borderRadius: '18px', padding: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                        {cell.network || 'Geral'}
-                      </span>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
-                        {cell.name}
-                      </h4>
+              {filteredCells.map(cell => {
+                const isMyAssignedCell = myGroupId === cell.id || (currentMember?.cell_group_id === cell.id);
+                const isLeaderOfThisCell = Boolean(
+                  (cell.leader_id && currentMember?.id && cell.leader_id === currentMember.id) ||
+                  (cell.leader_name && user?.name && cell.leader_name.toLowerCase() === user.name.toLowerCase()) ||
+                  (cell.leader && user?.name && cell.leader.toLowerCase() === user.name.toLowerCase()) ||
+                  (user?.email && user.email.toLowerCase() === 'rfsena@icloud.com')
+                );
+                const isMemberOrLeader = isMyAssignedCell || isLeaderOfThisCell;
+                const isPending = pendingGroupId === cell.id;
+
+                return (
+                  <div 
+                    key={cell.id} 
+                    style={{ 
+                      background: '#ffffff', 
+                      borderRadius: '18px', 
+                      padding: '16px', 
+                      border: isMemberOrLeader ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)', 
+                      boxShadow: 'var(--shadow-sm)', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '10px' 
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                          {cell.network || cell.focus || 'Geral'}
+                        </span>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
+                          {cell.name}
+                        </h4>
+                      </div>
+                      
+                      {isLeaderOfThisCell ? (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '6px' }}>
+                          👑 Sua Liderança
+                        </span>
+                      ) : isMyAssignedCell ? (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '6px' }}>
+                          ✓ Sua Célula
+                        </span>
+                      ) : cell.neighborhood ? (
+                        <span style={{ fontSize: '0.72rem', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', color: 'var(--text-secondary)' }}>
+                          📍 {cell.neighborhood}
+                        </span>
+                      ) : null}
                     </div>
-                    {cell.neighborhood && (
-                      <span style={{ fontSize: '0.72rem', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', color: 'var(--text-secondary)' }}>
-                        📍 {cell.neighborhood}
-                      </span>
+
+                    {cell.description && (
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+                        {cell.description}
+                      </p>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.76rem' }}>
+                      <div>
+                        👤 <strong>Líder:</strong> {cell.leader || cell.leader_name || 'Pastoral'}
+                      </div>
+                      {cell.meeting_day && cell.meeting_time && (
+                        <div>
+                          🗓️ <strong>Encontro:</strong> {cell.meeting_day} às {cell.meeting_time}
+                        </div>
+                      )}
+                      {cell.address && (
+                        <div>
+                          📍 <strong>Endereço:</strong> {cell.address}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Ação Inteligente do Botão */}
+                    {isMemberOrLeader ? (
+                      <button 
+                        type="button" 
+                        className="btn-pwa-primary" 
+                        onClick={async () => {
+                          setMyGroupId(cell.id);
+                          if (user?.email) {
+                            localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, cell.id);
+                          }
+                          setIsCellLeader(isLeaderOfThisCell || ['ADMIN', 'PASTOR', 'SUPERADMIN', 'LEADER', 'LÍDER'].includes((currentMember?.role || '').toUpperCase()));
+                          setViewMode('portal');
+                          await loadGroupSpecifics(cell.id, cells);
+                        }}
+                        style={{ marginTop: 'auto', padding: '10px', fontSize: '0.82rem', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      >
+                        <span>🚀 Acessar Célula</span>
+                      </button>
+                    ) : isPending ? (
+                      <button 
+                        type="button" 
+                        disabled
+                        style={{ marginTop: 'auto', padding: '10px', fontSize: '0.80rem', background: '#f1f5f9', color: 'var(--text-muted)', border: '1px solid var(--panel-border)', borderRadius: '12px', cursor: 'default', fontWeight: 700 }}
+                      >
+                        ⏳ Solicitação Enviada (Aguardando Aprovação)
+                      </button>
+                    ) : (
+                      <button 
+                        type="button" 
+                        className="btn-pwa-primary" 
+                        onClick={() => handleRequestJoin(cell.id)}
+                        style={{ marginTop: 'auto', padding: '10px', fontSize: '0.80rem' }}
+                      >
+                        Quero Participar desta Célula
+                      </button>
                     )}
                   </div>
-
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    👤 <strong>Líder:</strong> {cell.leader || cell.leader_name || 'Pastoral'}
-                  </div>
-
-                  <button 
-                    type="button" 
-                    className="btn-pwa-primary" 
-                    onClick={() => handleRequestJoin(cell.id)}
-                    style={{ marginTop: 'auto', padding: '10px', fontSize: '0.80rem' }}
-                  >
-                    {pendingGroupId === cell.id ? '✓ Solicitação Enviada' : 'Quero Participar desta Célula'}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
