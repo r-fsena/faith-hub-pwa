@@ -50,9 +50,11 @@ export interface ChurchBranding {
     featured_reading_book?: string;
     pastoral_note?: string;
   };
+  organization_id?: string;
 }
 
 const DEFAULT_BRANDING: ChurchBranding = {
+  organization_id: 'org_default',
   church_name: 'Faith-Hub',
   tagline: '',
   cnpj: '',

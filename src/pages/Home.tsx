@@ -61,7 +61,9 @@ export const Home: React.FC<HomeProps> = ({
   useEffect(() => {
     loadHomeData();
     loadCampuses();
+  }, [branding.organization_id, branding.pwa_slug, branding.church_name]);
 
+  useEffect(() => {
     const handleCampusChanged = (e: any) => {
       const newCampusId = e.detail?.campusId || getActiveCampusId();
       setActiveCampusIdState(newCampusId);
@@ -84,7 +86,7 @@ export const Home: React.FC<HomeProps> = ({
       document.removeEventListener('visibilitychange', handleResume);
       window.removeEventListener('focus', handleResume);
     };
-  }, []);
+  }, [branding.organization_id, activeCampusIdState]);
 
   const loadCampuses = async () => {
     const list = await fetchCampuses();
