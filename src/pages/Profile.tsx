@@ -49,7 +49,11 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-export const Profile: React.FC = () => {
+export interface ProfileProps {
+  onLoginSuccess?: () => void;
+}
+
+export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
 
@@ -271,6 +275,7 @@ export const Profile: React.FC = () => {
         setAuthMode('new_password_required');
       } else {
         await checkAuth();
+        onLoginSuccess?.();
       }
     } catch (err: any) {
       console.error(err);
@@ -291,6 +296,7 @@ export const Profile: React.FC = () => {
     try {
       await confirmSignIn({ challengeResponse: newPassword });
       await checkAuth();
+      onLoginSuccess?.();
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Erro ao definir nova senha.');

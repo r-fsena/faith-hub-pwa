@@ -31,6 +31,17 @@ const AppContent: React.FC = () => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // Redireciona para a Home automaticamente ao logar
+  const prevAuthRef = useRef(isAuthenticated);
+  useEffect(() => {
+    if (!prevAuthRef.current && isAuthenticated && activeTab === 'profile') {
+      setActiveTab('home');
+      setSubView('none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, activeTab]);
+
   // Redirecionamento da Raiz para o Site Institucional se não houver /nomedaigreja
   useEffect(() => {
     const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
@@ -239,7 +250,15 @@ const AppContent: React.FC = () => {
             )}
 
             {/* Perfil: sempre acessível para permitir login/cadastro/recuperação de senha */}
-            {activeTab === 'profile' && <Profile />}
+            {activeTab === 'profile' && (
+              <Profile
+                onLoginSuccess={() => {
+                  setActiveTab('home');
+                  setSubView('none');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
           </>
         )}
       </main>
