@@ -56,7 +56,7 @@ export const Home: React.FC<HomeProps> = ({
   const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
   const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
-  const [activeCampusId, setActiveCampusIdState] = useState<string>(getActiveCampusId());
+  const [activeCampusId, setSelectedCampusId] = useState<string>(getActiveCampusId());
 
   useEffect(() => {
     loadHomeData();
@@ -66,7 +66,7 @@ export const Home: React.FC<HomeProps> = ({
   useEffect(() => {
     const handleCampusChanged = (e: any) => {
       const newCampusId = e.detail?.campusId || getActiveCampusId();
-      setActiveCampusIdState(newCampusId);
+      setSelectedCampusId(newCampusId);
       loadHomeData(newCampusId);
     };
 
@@ -86,7 +86,7 @@ export const Home: React.FC<HomeProps> = ({
       document.removeEventListener('visibilitychange', handleResume);
       window.removeEventListener('focus', handleResume);
     };
-  }, [branding.organization_id, activeCampusIdState]);
+  }, [branding.organization_id, activeCampusId]);
 
   const loadCampuses = async () => {
     const list = await fetchCampuses();
@@ -94,7 +94,8 @@ export const Home: React.FC<HomeProps> = ({
   };
 
   const loadHomeData = async (campusId?: string) => {
-    const broadcast = await fetchActiveBroadcast(branding.organization_id, campusId || activeCampusIdState);
+    const currentCampusId = campusId || activeCampusId;
+    const broadcast = await fetchActiveBroadcast(branding.organization_id, currentCampusId);
     if (broadcast) {
       setActiveBroadcast(broadcast);
     } else if (branding.youtube_url) {
@@ -107,7 +108,7 @@ export const Home: React.FC<HomeProps> = ({
     const dev = await fetchTodayDevotional();
     if (dev) setTodayDevotional(dev);
 
-    const events = await fetchEvents(branding.organization_id, campusId || activeCampusIdState);
+    const events = await fetchEvents(branding.organization_id, currentCampusId);
     if (events && Array.isArray(events) && events.length > 0) {
       const explicitFeatured = events.find((e: any) => e.is_featured === true || e.is_featured === 1 || e.show_as_popup === true || e.show_as_popup === 1);
       setFeaturedEvent(explicitFeatured || null);
@@ -118,7 +119,7 @@ export const Home: React.FC<HomeProps> = ({
 
   const handleSelectCampus = (cId: string) => {
     setActiveCampusId(cId);
-    setActiveCampusIdState(cId);
+    setSelectedCampusId(cId);
     setIsCampusDrawerOpen(false);
   };
 

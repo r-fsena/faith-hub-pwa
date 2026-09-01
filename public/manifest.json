@@ -1,0 +1,23 @@
+{
+  "name": "Faith-Hub App Oficial",
+  "short_name": "Faith App",
+  "description": "Aplicativo oficial da igreja com devocionais, cultos ao vivo, células e cantina.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f766e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/brand/logo-symbol.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/logo-original.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
