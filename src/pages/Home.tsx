@@ -7,6 +7,7 @@ import { VisitorModal } from '../components/VisitorModal';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsPassCard } from '../components/KidsPassCard';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
+import { HeroCarousel } from '../components/HeroCarousel';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -224,102 +225,19 @@ export const Home: React.FC<HomeProps> = ({
         </button>
       </div>
 
-      {/* Hero Banner Inteligente da Igreja */}
-      <div className="pwa-hero-card">
-        {branding.banner_url ? (
-          <img src={branding.banner_url} alt={branding.church_name} className="pwa-hero-bg" />
-        ) : (
-          <div className="pwa-hero-bg" style={{ background: 'var(--accent-primary-gradient)' }} />
-        )}
-        <div className="pwa-hero-overlay" />
-        <div className="pwa-hero-content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#93c5fd' }}>
-              Aplicativo Oficial
-            </span>
-            {activeBroadcast && (
-              <span style={{ background: '#ef4444', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.64rem', fontWeight: 800, animation: 'pulse 2s infinite' }}>
-                ● AO VIVO
-              </span>
-            )}
-          </div>
-          <h2 style={{ fontSize: 'clamp(1.15rem, 4.5vw, 1.35rem)', fontWeight: 900, marginTop: '2px', lineHeight: 1.2 }}>
-            {branding.church_name || 'Faith-Hub'}
-          </h2>
-          {branding.tagline ? (
-            <p style={{ fontSize: '0.76rem', opacity: 0.9, marginTop: '4px' }}>
-              {branding.tagline}
-            </p>
-          ) : null}
-
-          {/* Botões do Hero com flex-wrap */}
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={onOpenLive}
-              style={{
-                background: '#ffffff',
-                color: '#0f172a',
-                border: 'none',
-                padding: '8px 14px',
-                borderRadius: '12px',
-                fontWeight: 800,
-                fontSize: '0.74rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                minHeight: '36px'
-              }}
-            >
-              <span>▶</span>
-              <span>Assistir Culto</span>
-            </button>
-
-            {/* Botão Sou Visitante SOMENTE QUANDO NÃO LOGADO */}
-            {!user ? (
-              <button
-                type="button"
-                onClick={() => setIsVisitorModalOpen(true)}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '0.74rem',
-                  cursor: 'pointer',
-                  minHeight: '36px'
-                }}
-              >
-                👋 Sou Visitante
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onOpenBible}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '0.74rem',
-                  cursor: 'pointer',
-                  minHeight: '36px'
-                }}
-              >
-                📖 Bíblia Sagrada
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Carrossel Dinâmico de Destaques & Vídeo Inline */}
+      <HeroCarousel
+        branding={branding}
+        activeBroadcast={activeBroadcast}
+        featuredEvent={featuredEvent}
+        todayDevotional={todayDevotional}
+        user={user}
+        currentCampus={currentCampus}
+        onOpenEvents={onOpenEvents}
+        onNavigate={onNavigate}
+        onOpenVisitorModal={() => setIsVisitorModalOpen(true)}
+        onOpenBible={onOpenBible}
+      />
 
       {/* Meus Filhos no Kids / Chamador de Pais em Tempo Real */}
       <KidsPassCard />

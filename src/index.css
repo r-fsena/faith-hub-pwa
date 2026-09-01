@@ -307,7 +307,19 @@ input, select, textarea {
   gap: 18px;
 }
 
-/* HERO BANNER */
+/* HERO CAROUSEL & BANNER */
+.hero-carousel-container {
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.25);
+  background: #0f172a;
+  user-select: none;
+  touch-action: pan-y;
+  transition: transform 0.2s ease;
+}
+
 .pwa-hero-card {
   width: 100%;
   border-radius: 20px;
@@ -315,7 +327,7 @@ input, select, textarea {
   position: relative;
   box-shadow: var(--shadow-md);
   color: #ffffff;
-  min-height: clamp(160px, 22vh, 260px);
+  min-height: clamp(180px, 24vh, 260px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
