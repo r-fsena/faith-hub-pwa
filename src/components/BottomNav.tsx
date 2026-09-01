@@ -1,6 +1,7 @@
 import React from 'react';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useBranding } from '../context/BrandingContext';
+import { useCart } from '../context/CartContext';
 
 // SVG Icons
 const HomeIcon = () => (
@@ -29,6 +30,7 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
   const { isFeatureEnabled } = useFeatureFlags();
   const { branding } = useBranding();
+  const { totalItemsCount } = useCart();
 
   const allTabs: Array<{ id: ActiveTab; label: string; icon: React.ComponentType; flag?: string }> = [
     { id: 'home', label: 'Início', icon: HomeIcon },
@@ -53,8 +55,29 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) 
               className={`nav-tab-item ${isActive ? 'active' : ''}`}
               onClick={() => onChangeTab(tab.id)}
             >
-              <div className="nav-icon-container">
+              <div className="nav-icon-container" style={{ position: 'relative' }}>
                 <Icon />
+                {tab.id === 'store' && totalItemsCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-9px',
+                    background: 'var(--accent-primary, #6366f1)',
+                    color: '#ffffff',
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
+                    minWidth: '16px',
+                    height: '16px',
+                    borderRadius: '999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                  }}>
+                    {totalItemsCount}
+                  </span>
+                )}
               </div>
               <span className="nav-tab-label">{tab.label}</span>
               {isActive && <div className="nav-active-pill" />}

@@ -244,8 +244,8 @@ const AppContent: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Cart Button for Store (Somente para usuários autenticados) */}
-      {isAuthenticated && <CartFloatingButton />}
+      {/* Floating Cart Button: Exibido exclusivamente na aba Loja para evitar sobreposição em outras telas */}
+      {isAuthenticated && activeTab === 'store' && <CartFloatingButton />}
 
       {/* Cart Drawer */}
       {isAuthenticated && <CartDrawer />}
