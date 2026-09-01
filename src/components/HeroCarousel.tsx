@@ -63,7 +63,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   const videoThumbUrl = rawVideoUrl ? getYoutubeThumbnailUrl(rawVideoUrl) : '';
   const videoTitle = activeBroadcast?.title || `Culto de Celebração • ${branding?.church_name || 'Faith-Hub'}`;
 
-  // Montagem dinâmica da lista de slides disponíveis
+  // Montagem dinâmica da lista de slides disponíveis (Destaques controlados via flags no Studio)
   const slides: Array<{
     id: string;
     type: 'video' | 'church' | 'event' | 'devotional';
@@ -74,12 +74,13 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     bgImage?: string;
   }> = [];
 
-  // 1. Slide de Vídeo / Transmissão (se houver link do YouTube configurado)
-  if (rawVideoUrl) {
+  // 1. Slide de Vídeo / Transmissão (Apenas se marcado como Destaque no Studio)
+  const isVideoFeatured = activeBroadcast?.is_featured === 1 || activeBroadcast?.is_featured === true || (activeBroadcast?.is_available && activeBroadcast?.id !== 'default');
+  if (rawVideoUrl && isVideoFeatured) {
     slides.push({
       id: 'slide-video',
       type: 'video',
-      badge: activeBroadcast?.is_available ? '● AO VIVO' : '📺 CULTO EM VÍDEO',
+      badge: activeBroadcast?.is_available ? '● TRANSMISSÃO AO VIVO' : '📺 CULTO EM DESTAQUE',
       badgeBg: activeBroadcast?.is_available ? '#ef4444' : '#0284c7',
       title: videoTitle,
       subtitle: activeBroadcast?.description || 'Toque para assistir à mensagem e celebração da nossa comunidade.',
@@ -87,7 +88,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     });
   }
 
-  // 2. Slide Institucional da Igreja
+  // 2. Slide Institucional da Igreja (Base Oficial)
   slides.push({
     id: 'slide-church',
     type: 'church',
@@ -98,16 +99,17 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     bgImage: branding?.banner_url
   });
 
-  // 3. Slide de Evento em Destaque (se houver)
-  if (featuredEvent) {
-    const eventDateFormatted = featuredEvent.start_time
-      ? new Date(featuredEvent.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  // 3. Slide de Evento em Destaque (Apenas se a flag is_featured estiver ativa no Studio)
+  const isEventFeatured = featuredEvent && (featuredEvent.is_featured === 1 || featuredEvent.is_featured === true);
+  if (isEventFeatured) {
+    const eventDateFormatted = featuredEvent.start_date || featuredEvent.start_time
+      ? new Date(featuredEvent.start_date || featuredEvent.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
       : undefined;
 
     slides.push({
       id: 'slide-event',
       type: 'event',
-      badge: `📅 PRÓXIMO EVENTO ${eventDateFormatted ? `• ${eventDateFormatted.toUpperCase()}` : ''}`,
+      badge: `📅 EVENTO EM DESTAQUE ${eventDateFormatted ? `• ${eventDateFormatted.toUpperCase()}` : ''}`,
       badgeBg: '#ea580c',
       title: featuredEvent.title,
       subtitle: featuredEvent.location ? `${featuredEvent.location} • Inscrições Abertas` : 'Confira os detalhes e participe conosco.',
@@ -115,12 +117,13 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     });
   }
 
-  // 4. Slide de Palavra & Devocional
-  if (todayDevotional) {
+  // 4. Slide de Palavra & Devocional (Apenas se a flag is_featured estiver ativa no Studio)
+  const isDevotionalFeatured = todayDevotional && (todayDevotional.is_featured === 1 || todayDevotional.is_featured === true);
+  if (isDevotionalFeatured) {
     slides.push({
       id: 'slide-devotional',
       type: 'devotional',
-      badge: '📖 PALAVRA DO DIA',
+      badge: '📖 DEVOCIONAL EM DESTAQUE',
       badgeBg: '#0f766e',
       title: todayDevotional.title || 'Devocional Diário',
       subtitle: todayDevotional.verse_reference || 'Edifique a sua fé com a Palavra de Deus para hoje.',

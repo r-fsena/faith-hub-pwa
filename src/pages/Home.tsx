@@ -8,6 +8,7 @@ import { BottomSheet } from '../components/BottomSheet';
 import { KidsPassCard } from '../components/KidsPassCard';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
 import { HeroCarousel } from '../components/HeroCarousel';
+import { HighlightNoticeModal } from '../components/HighlightNoticeModal';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -441,6 +442,15 @@ export const Home: React.FC<HomeProps> = ({
       <KidsVolunteerPanel 
         isOpen={isKidsVolunteerOpen} 
         onClose={() => setIsKidsVolunteerOpen(false)} 
+      />
+
+      {/* Pop-up / Modal de Destaque Automático de Entrada */}
+      <HighlightNoticeModal
+        activeBroadcast={activeBroadcast}
+        featuredEvent={featuredEvent}
+        branding={branding}
+        onOpenLive={onOpenLive}
+        onOpenEvents={onOpenEvents}
       />
 
     </div>
