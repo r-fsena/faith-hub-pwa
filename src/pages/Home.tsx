@@ -68,8 +68,22 @@ export const Home: React.FC<HomeProps> = ({
       loadHomeData(newCampusId);
     };
 
+    const handleResume = () => {
+      if (document.visibilityState === 'visible') {
+        loadHomeData();
+        loadCampuses();
+      }
+    };
+
     window.addEventListener('pwa-campus-changed', handleCampusChanged);
-    return () => window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+    document.addEventListener('visibilitychange', handleResume);
+    window.addEventListener('focus', handleResume);
+
+    return () => {
+      window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+      document.removeEventListener('visibilitychange', handleResume);
+      window.removeEventListener('focus', handleResume);
+    };
   }, []);
 
   const loadCampuses = async () => {
