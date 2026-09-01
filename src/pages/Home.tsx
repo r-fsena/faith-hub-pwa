@@ -93,7 +93,8 @@ export const Home: React.FC<HomeProps> = ({
 
     const events = await fetchEvents(branding.organization_id, campusId || activeCampusIdState);
     if (events && Array.isArray(events) && events.length > 0) {
-      setFeaturedEvent(events[0]);
+      const explicitFeatured = events.find((e: any) => e.is_featured === true || e.is_featured === 1 || e.show_as_popup === true || e.show_as_popup === 1);
+      setFeaturedEvent(explicitFeatured || null);
     } else {
       setFeaturedEvent(null);
     }
