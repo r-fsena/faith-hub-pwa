@@ -21,9 +21,12 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 // ----------------------------------------------------
 // 1. BROADCASTS & CULTOS AO VIVO
 // ----------------------------------------------------
-export async function fetchActiveBroadcast() {
+export async function fetchActiveBroadcast(organizationId?: string, campusId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/broadcasts/active`);
+    const orgParam = organizationId ? `?organization_id=${encodeURIComponent(organizationId)}` : '';
+    const campusParam = campusId && campusId !== 'all' ? `&campus_id=${encodeURIComponent(campusId)}` : '';
+    const query = orgParam || campusParam ? `${orgParam || '?'}${campusParam}` : '';
+    const res = await fetch(`${API_BASE_URL}/broadcasts/active${query}`);
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback active broadcast", e);
