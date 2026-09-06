@@ -68,6 +68,14 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [signupAddress, setSignupAddress] = useState('');
+  const [signupStreet, setSignupStreet] = useState('');
+  const [signupNumber, setSignupNumber] = useState('');
+  const [signupComplement, setSignupComplement] = useState('');
+  const [signupNeighborhood, setSignupNeighborhood] = useState('');
+  const [signupCity, setSignupCity] = useState('');
+  const [signupState, setSignupState] = useState('');
+  const [signupZip, setSignupZip] = useState('');
+  const [loadingCep, setLoadingCep] = useState(false);
   const [acceptLGPD, setAcceptLGPD] = useState(true);
   const [confirmationCode, setConfirmationCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -76,18 +84,70 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   // Perfil e Dados do Membro
   const [avatarUrl, setAvatarUrl] = useState<string>(CURATED_AVATARS[0]);
   const [memberProfile, setMemberProfile] = useState<{
+    id?: string;
     name: string;
     phone: string;
+    birth_date: string;
     address: string;
+    address_street: string;
+    address_number: string;
+    address_complement: string;
+    address_neighborhood: string;
+    address_city: string;
+    address_state: string;
+    address_zip: string;
     role: string;
     campus_name: string;
   }>({
     name: '',
     phone: '',
+    birth_date: '',
     address: '',
+    address_street: '',
+    address_number: '',
+    address_complement: '',
+    address_neighborhood: '',
+    address_city: '',
+    address_state: '',
+    address_zip: '',
     role: 'Membro',
     campus_name: 'Sede Principal'
   });
+
+  // Helper para buscar dados de CEP via ViaCEP
+  const handleFetchCep = async (rawCep: string, target: 'signup' | 'edit') => {
+    const cleanCep = rawCep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      setLoadingCep(true);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.erro) {
+            if (target === 'signup') {
+              setSignupStreet(data.logradouro || '');
+              setSignupNeighborhood(data.bairro || '');
+              setSignupCity(data.localidade || '');
+              setSignupState(data.uf || '');
+            } else {
+              setMemberProfile(prev => ({
+                ...prev,
+                address_zip: cleanCep,
+                address_street: data.logradouro || prev.address_street,
+                address_neighborhood: data.bairro || prev.address_neighborhood,
+                address_city: data.localidade || prev.address_city,
+                address_state: data.uf || prev.address_state
+              }));
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao consultar ViaCEP:', e);
+      } finally {
+        setLoadingCep(false);
+      }
+    }
+  };
 
   // Modais de Edição
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -135,11 +195,21 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           const finalName = found.name || localName;
           const finalPhone = found.phone || localPhone;
           const finalAddress = found.address || localAddress;
+          const finalBirthDate = found.birth_date ? found.birth_date.split('T')[0] : '';
 
           setMemberProfile({
+            id: found.id,
             name: finalName,
             phone: finalPhone,
+            birth_date: finalBirthDate,
             address: finalAddress,
+            address_street: found.address_street || '',
+            address_number: found.address_number || '',
+            address_complement: found.address_complement || '',
+            address_neighborhood: found.address_neighborhood || '',
+            address_city: found.address_city || '',
+            address_state: found.address_state || '',
+            address_zip: found.address_zip || '',
             role: found.role || 'Membro',
             campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local')
           });
@@ -161,7 +231,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
   const savedAvatarExists = () => Boolean(localStorage.getItem('faithhub_user_avatar'));
 
-  // Salvar Edição de Dados Pessoais (Nome, Telefone, Endereço)
+  // Salvar Edição de Dados Pessoais (Nome, Telefone, Nascimento, Endereço Segregado)
   const handleSaveProfileData = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memberProfile.name.trim()) {
@@ -170,9 +240,13 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
     }
     setIsSavingProfile(true);
     try {
+      const fullAddressStr = memberProfile.address_street 
+        ? `${memberProfile.address_street}, ${memberProfile.address_number || 'S/N'}${memberProfile.address_complement ? ` - ${memberProfile.address_complement}` : ''} - ${memberProfile.address_neighborhood}, ${memberProfile.address_city} - ${memberProfile.address_state}`
+        : memberProfile.address;
+
       localStorage.setItem('faithhub_user_name', memberProfile.name.trim());
       localStorage.setItem('faithhub_user_phone', memberProfile.phone.trim());
-      localStorage.setItem('faithhub_user_address', memberProfile.address.trim());
+      localStorage.setItem('faithhub_user_address', fullAddressStr);
 
       try {
         await updateUserAttributes({
@@ -184,33 +258,39 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
         console.log("Cognito attr update notice:", errCognito);
       }
 
+      const payload = {
+        id: user?.userId,
+        email: user?.email,
+        name: memberProfile.name.trim(),
+        phone: memberProfile.phone.trim(),
+        birth_date: memberProfile.birth_date || null,
+        address: fullAddressStr,
+        address_street: memberProfile.address_street,
+        address_number: memberProfile.address_number,
+        address_complement: memberProfile.address_complement,
+        address_neighborhood: memberProfile.address_neighborhood,
+        address_city: memberProfile.address_city,
+        address_state: memberProfile.address_state,
+        address_zip: memberProfile.address_zip,
+        avatar_url: avatarUrl
+      };
+
       // Sincroniza via self-register (MySQL)
       await fetch(`${API_URL}/members/self-register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: user?.userId,
-          email: user?.email,
-          name: memberProfile.name.trim(),
-          phone: memberProfile.phone.trim(),
-          address: memberProfile.address.trim(),
-          avatar_url: avatarUrl
-        })
+        body: JSON.stringify(payload)
       }).catch(() => {});
 
       if (user?.userId) {
         await fetch(`${API_URL}/members/${user.userId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: memberProfile.name.trim(),
-            phone: memberProfile.phone.trim(),
-            address: memberProfile.address.trim(),
-            avatar_url: avatarUrl
-          })
+          body: JSON.stringify(payload)
         }).catch(() => {});
       }
 
+      setMemberProfile(prev => ({ ...prev, address: fullAddressStr }));
       setIsEditProfileOpen(false);
       alert("Perfil atualizado com sucesso!");
       await checkAuth();
@@ -354,7 +434,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
         confirmationCode: confirmationCode.trim()
       });
 
-      const userAddr = signupAddress.trim() || localStorage.getItem('faithhub_user_address') || '';
+      const fullSignupAddr = signupStreet 
+        ? `${signupStreet}, ${signupNumber || 'S/N'}${signupComplement ? ` - ${signupComplement}` : ''} - ${signupNeighborhood}, ${signupCity} - ${signupState}`
+        : (signupAddress.trim() || localStorage.getItem('faithhub_user_address') || '');
       const userPhone = phone.trim() || localStorage.getItem('faithhub_user_phone') || '';
       const userName = name.trim() || localStorage.getItem('faithhub_user_name') || email.split('@')[0];
 
@@ -366,8 +448,15 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           email: email.trim(),
           name: userName,
           phone: userPhone ? (userPhone.startsWith('+') ? userPhone : `+55${userPhone.replace(/\D/g, '')}`) : undefined,
-          address: userAddr || undefined,
-          birthdate: birthDate || undefined
+          birth_date: birthDate || undefined,
+          address: fullSignupAddr || undefined,
+          address_street: signupStreet || undefined,
+          address_number: signupNumber || undefined,
+          address_complement: signupComplement || undefined,
+          address_neighborhood: signupNeighborhood || undefined,
+          address_city: signupCity || undefined,
+          address_state: signupState || undefined,
+          address_zip: signupZip || undefined
         })
       }).catch((e) => console.log('self-register error:', e));
 
@@ -613,12 +702,22 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '1.1rem' }}>👤</span>
                   <div>
                     <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Nome Completo</div>
                     <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.name || 'Não informado'}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🎂</span>
+                  <div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Data de Nascimento / Aniversário</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      {memberProfile.birth_date ? memberProfile.birth_date.split('-').reverse().join('/') : 'Adicionar data de nascimento'}
+                    </div>
                   </div>
                 </div>
 
@@ -633,8 +732,14 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '1.1rem' }}>📍</span>
                   <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Endereço / Bairro</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.address || 'Adicionar endereço'}</div>
+                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Endereço Residencial</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                      {memberProfile.address_street ? (
+                        `${memberProfile.address_street}, ${memberProfile.address_number || 'S/N'}${memberProfile.address_complement ? ` (${memberProfile.address_complement})` : ''} - ${memberProfile.address_neighborhood || ''}, ${memberProfile.address_city || ''} - ${memberProfile.address_state || ''}${memberProfile.address_zip ? ` • CEP: ${memberProfile.address_zip}` : ''}`
+                      ) : (
+                        memberProfile.address || 'Adicionar endereço completo'
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -801,14 +906,70 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               />
             </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Telefone / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.phone}
+                  onChange={e => setMemberProfile({ ...memberProfile, phone: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Data de Nascimento
+                </label>
+                <input
+                  type="date"
+                  value={memberProfile.birth_date}
+                  onChange={e => setMemberProfile({ ...memberProfile, birth_date: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Endereço Segregado com Busca ViaCEP */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
-                Telefone / WhatsApp
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  CEP
+                </label>
+                {loadingCep && <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 700 }}>Buscando CEP...</span>}
+              </div>
               <input
                 type="text"
-                value={memberProfile.phone}
-                onChange={e => setMemberProfile({ ...memberProfile, phone: e.target.value })}
+                value={memberProfile.address_zip}
+                onChange={e => {
+                  const val = e.target.value;
+                  setMemberProfile({ ...memberProfile, address_zip: val });
+                  if (val.replace(/\D/g, '').length === 8) {
+                    handleFetchCep(val, 'edit');
+                  }
+                }}
+                maxLength={9}
+                placeholder="00000-000"
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -819,17 +980,142 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   color: 'var(--text-main)',
                   outline: 'none'
                 }}
-                placeholder="(11) 99999-9999"
               />
             </div>
 
             <div>
-              <AddressAutocomplete
-                label="Endereço Residencial (Rua, Bairro ou CEP)"
-                value={memberProfile.address}
-                onChange={val => setMemberProfile({ ...memberProfile, address: val })}
-                placeholder="Ex: Av. Paulista, 1000 ou seu CEP..."
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Logradouro (Rua, Avenida, etc.)
+              </label>
+              <input
+                type="text"
+                value={memberProfile.address_street}
+                onChange={e => setMemberProfile({ ...memberProfile, address_street: e.target.value })}
+                placeholder="Ex: Rua das Flores"
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--panel-border)',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-main)',
+                  outline: 'none'
+                }}
               />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Número
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.address_number}
+                  onChange={e => setMemberProfile({ ...memberProfile, address_number: e.target.value })}
+                  placeholder="123"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Complemento
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.address_complement}
+                  onChange={e => setMemberProfile({ ...memberProfile, address_complement: e.target.value })}
+                  placeholder="Apto 42, Bloco B"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '8px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Bairro
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.address_neighborhood}
+                  onChange={e => setMemberProfile({ ...memberProfile, address_neighborhood: e.target.value })}
+                  placeholder="Centro"
+                  style={{
+                    width: '100%',
+                    padding: '12px 10px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.address_city}
+                  onChange={e => setMemberProfile({ ...memberProfile, address_city: e.target.value })}
+                  placeholder="São Paulo"
+                  style={{
+                    width: '100%',
+                    padding: '12px 10px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-main)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  UF
+                </label>
+                <input
+                  type="text"
+                  value={memberProfile.address_state}
+                  onChange={e => setMemberProfile({ ...memberProfile, address_state: e.target.value.toUpperCase() })}
+                  maxLength={2}
+                  placeholder="SP"
+                  style={{
+                    width: '100%',
+                    padding: '12px 8px',
+                    borderRadius: '12px',
+                    background: '#f8fafc',
+                    border: '1.5px solid var(--panel-border)',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-main)',
+                    textAlign: 'center',
+                    outline: 'none'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
@@ -1262,14 +1548,108 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Campo de Endereço Residencial com Busca Inteligente e CEP */}
+            {/* Endereço Residencial Segregado com Busca ViaCEP */}
             <div>
-              <AddressAutocomplete
-                label="Endereço Residencial (Rua, Bairro ou CEP)"
-                value={signupAddress}
-                onChange={setSignupAddress}
-                placeholder="Ex: Av. Paulista, 1000 ou seu CEP..."
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  CEP
+                </label>
+                {loadingCep && <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)', fontWeight: 700 }}>Buscando endereço...</span>}
+              </div>
+              <input
+                type="text"
+                value={signupZip}
+                onChange={e => {
+                  const val = e.target.value;
+                  setSignupZip(val);
+                  if (val.replace(/\D/g, '').length === 8) {
+                    handleFetchCep(val, 'signup');
+                  }
+                }}
+                maxLength={9}
+                placeholder="00000-000"
+                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                Rua / Logradouro
+              </label>
+              <input
+                type="text"
+                value={signupStreet}
+                onChange={e => setSignupStreet(e.target.value)}
+                placeholder="Ex: Av. Brasil"
+                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Número
+                </label>
+                <input
+                  type="text"
+                  value={signupNumber}
+                  onChange={e => setSignupNumber(e.target.value)}
+                  placeholder="Ex: 500"
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Complemento
+                </label>
+                <input
+                  type="text"
+                  value={signupComplement}
+                  onChange={e => setSignupComplement(e.target.value)}
+                  placeholder="Ex: Bloco A"
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '8px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Bairro
+                </label>
+                <input
+                  type="text"
+                  value={signupNeighborhood}
+                  onChange={e => setSignupNeighborhood(e.target.value)}
+                  placeholder="Bairro"
+                  style={{ width: '100%', padding: '12px 10px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  value={signupCity}
+                  onChange={e => setSignupCity(e.target.value)}
+                  placeholder="Cidade"
+                  style={{ width: '100%', padding: '12px 10px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                  UF
+                </label>
+                <input
+                  type="text"
+                  value={signupState}
+                  onChange={e => setSignupState(e.target.value.toUpperCase())}
+                  maxLength={2}
+                  placeholder="UF"
+                  style={{ width: '100%', padding: '12px 8px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', textAlign: 'center', outline: 'none' }}
+                />
+              </div>
             </div>
 
             <div>

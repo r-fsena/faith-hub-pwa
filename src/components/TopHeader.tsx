@@ -7,13 +7,15 @@ interface TopHeaderProps {
   onOpenProfile?: () => void;
   title?: string;
   onBack?: () => void;
+  unreadCount?: number;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ 
   onOpenNotifications, 
   onOpenProfile,
   title,
-  onBack
+  onBack,
+  unreadCount = 0
 }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
@@ -102,9 +104,33 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             className="icon-btn-pill" 
             onClick={onOpenNotifications} 
             title="Notificações e Avisos"
+            style={{ position: 'relative' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-            <span className="badge-dot" />
+            {unreadCount > 0 ? (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '-2px',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '0.62rem',
+                fontWeight: 900,
+                minWidth: '16px',
+                height: '16px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 4px',
+                border: '1.5px solid #ffffff',
+                boxShadow: '0 2px 4px rgba(239, 68, 68, 0.4)'
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            ) : (
+              <span className="badge-dot" style={{ display: 'none' }} />
+            )}
           </button>
         </div>
       </div>

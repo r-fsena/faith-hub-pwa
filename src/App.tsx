@@ -30,6 +30,7 @@ const AppContent: React.FC = () => {
   const [subView, setSubView] = useState<SubView>('none');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Redireciona para a Home automaticamente ao logar
   const prevAuthRef = useRef(isAuthenticated);
@@ -149,6 +150,7 @@ const AppContent: React.FC = () => {
         onOpenProfile={() => handleTabChange('profile')}
         title={getSubViewTitle(subView)}
         onBack={subView !== 'none' ? () => setSubView('none') : undefined}
+        unreadCount={unreadNotificationsCount}
       />
 
       {/* Main Content */}
@@ -272,10 +274,19 @@ const AppContent: React.FC = () => {
       {/* Live Stream Player Modal */}
       <LivePlayerModal isOpen={isLiveOpen} onClose={() => setIsLiveOpen(false)} />
 
-      {/* Modal de Notificações & Avisos com Push Integrado */}
+      {/* Modal de Notificações Inteligente & Avisos */}
       <NotificationsModal 
         isOpen={showNotifications} 
-        onClose={() => setShowNotifications(false)} 
+        onClose={() => setShowNotifications(false)}
+        onNavigate={(tab, sub) => {
+          if (sub) {
+            setSubView(sub);
+          } else {
+            handleTabChange(tab);
+          }
+        }}
+        onOpenLive={() => setIsLiveOpen(true)}
+        onUnreadCountChange={(count) => setUnreadNotificationsCount(count)}
       />
 
       {/* Bottom Navigation */}

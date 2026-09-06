@@ -89,6 +89,17 @@ export const Devotionals: React.FC = () => {
     }
   }, [readingDevotional]);
 
+  // Trava a rolagem do body de fundo para eliminar disputa de gestos e travamento no mobile
+  useEffect(() => {
+    if (readingDevotional) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [readingDevotional]);
+
   const getTodayDateString = (): string => {
     const now = new Date();
     const year = now.getFullYear();
@@ -729,50 +740,59 @@ export const Devotionals: React.FC = () => {
             backgroundColor: '#ffffff',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            transform: 'translateZ(0)',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
-          {/* Top Bar Ergonômica do Leitor */}
+          {/* Top Bar Ergonômica do Leitor com Safe Area Inset Top para evitar sobreposição do Notch no PWA */}
           <div style={{
             position: 'sticky',
             top: 0,
             zIndex: 20,
-            background: 'rgba(255, 255, 255, 0.96)',
-            backdropFilter: 'blur(16px)',
+            background: '#ffffff',
             borderBottom: '1px solid var(--panel-border)',
-            padding: '10px 16px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
+            paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+            paddingBottom: '14px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '10px'
+            gap: '12px'
           }}>
             <button
               type="button"
               onClick={() => setReadingDevotional(null)}
               style={{
-                height: '38px',
+                height: '42px',
+                minWidth: '92px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                justifyContent: 'center',
+                gap: '8px',
                 background: '#f1f5f9',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '0 14px',
-                fontSize: '0.82rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '0 16px',
+                fontSize: '0.88rem',
                 fontWeight: 800,
                 color: 'var(--text-main)',
                 cursor: 'pointer',
-                flexShrink: 0
+                flexShrink: 0,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>‹</span>
+              <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>‹</span>
               <span>Voltar</span>
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
               <span style={{
-                fontSize: '0.74rem',
+                fontSize: '0.78rem',
                 fontWeight: 900,
                 color: 'var(--accent-primary)',
                 textTransform: 'uppercase',
@@ -785,9 +805,9 @@ export const Devotionals: React.FC = () => {
                 <span style={{
                   background: '#dcfce7',
                   color: '#15803d',
-                  fontSize: '0.66rem',
+                  fontSize: '0.68rem',
                   fontWeight: 900,
-                  padding: '3px 7px',
+                  padding: '3px 8px',
                   borderRadius: '8px',
                   whiteSpace: 'nowrap'
                 }}>
@@ -800,19 +820,20 @@ export const Devotionals: React.FC = () => {
               type="button"
               onClick={() => handleShare(readingDevotional)}
               style={{
-                height: '38px',
-                background: '#f1f5f9',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '0 12px',
-                fontSize: '0.78rem',
+                height: '42px',
+                background: '#f8fafc',
+                border: '1px solid var(--panel-border)',
+                borderRadius: '14px',
+                padding: '0 14px',
+                fontSize: '0.82rem',
                 fontWeight: 800,
-                color: 'var(--text-secondary)',
+                color: 'var(--text-main)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                flexShrink: 0
+                gap: '6px',
+                flexShrink: 0,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
               }}
             >
               <span>🔗</span>
