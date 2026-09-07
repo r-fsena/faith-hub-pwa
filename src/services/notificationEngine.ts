@@ -88,11 +88,22 @@ export async function fetchAppNotifications(orgId: string = 'org_default'): Prom
         const currentDay = today.getDate();
         const currentMonth = today.getMonth() + 1;
 
+        // Função auxiliar robusta para extrair mês e dia sem distorção de fuso ou falha de split
+        const getMonthDay = (dateStr: string) => {
+          if (!dateStr) return null;
+          const clean = String(dateStr).split('T')[0];
+          const parts = clean.split('-');
+          if (parts.length < 3) return null;
+          const month = parseInt(parts[1], 10);
+          const day = parseInt(parts[2], 10);
+          return (!isNaN(month) && !isNaN(day)) ? { month, day } : null;
+        };
+
         // Aniversariantes de Hoje
         const todayBirthdays = membersList.filter((m: any) => {
-          if (!m.birth_date) return false;
-          const [_, mMonth, mDay] = m.birth_date.split('-').map(Number);
-          return mMonth === currentMonth && mDay === currentDay;
+          const md = getMonthDay(m.birth_date);
+          if (!md) return false;
+          return md.month === currentMonth && md.day === currentDay;
         });
 
         for (const m of todayBirthdays) {
@@ -114,10 +125,10 @@ export async function fetchAppNotifications(orgId: string = 'org_default'): Prom
 
         // Próximos Aniversariantes da semana (até 7 dias à frente)
         const upcomingBirthdays = membersList.filter((m: any) => {
-          if (!m.birth_date) return false;
-          const [_, mMonth, mDay] = m.birth_date.split('-').map(Number);
-          if (mMonth !== currentMonth) return false;
-          const diff = mDay - currentDay;
+          const md = getMonthDay(m.birth_date);
+          if (!md) return false;
+          if (md.month !== currentMonth) return false;
+          const diff = md.day - currentDay;
           return diff > 0 && diff <= 7;
         });
 
@@ -146,19 +157,20 @@ export async function fetchAppNotifications(orgId: string = 'org_default'): Prom
       const dRes = await fetch(`${API_URL}/devotionals?organization_id=${orgId}`);
       if (dRes.ok) {
         const dJson = await dRes.json();
-        const devList = dJson.data || [];
+        const devList = dJson.data || dJson || [];
         const todayDev = devList.find((d: any) => (d.available_date || d.date || '').startsWith(todayDateStr));
 
         if (todayDev) {
+          const isMarkedNotification = Boolean(todayDev.notify_members);
           notifications.push({
             id: `devo_${todayDev.id || todayDateStr}`,
             type: 'devotional',
-            icon: '☀️',
-            category: 'Palavra do Dia',
+            icon: isMarkedNotification ? '🔔' : '☀️',
+            category: isMarkedNotification ? 'Palavra do Dia (Destaque)' : 'Palavra do Dia',
             title: todayDev.title || 'Devocional Diário Disponível',
             description: todayDev.passage ? `Medite hoje em ${todayDev.passage} e alimente seu espírito.` : 'A reflexão bíblica de hoje já está disponível para você.',
             timeAgo: 'Hoje',
-            priority: 'normal',
+            priority: isMarkedNotification ? 'high' : 'normal',
             actionLabel: 'Ler Palavra de Hoje',
             actionTarget: 'devotionals',
             createdAt: todayDateStr
@@ -196,31 +208,63 @@ export async function fetchAppNotifications(orgId: string = 'org_default'): Prom
       console.warn('Erro ao buscar orações para notificações:', e);
     }
 
-    // 5. Novos Estudos / Séries Bíblicas
+    // 5. Livros e Séries de Estudos Bíblicos Notificados
     try {
-      const sRes = await fetch(`${API_URL}/studies?organization_id=${orgId}`);
+      const sRes = await fetch(`${API_URL}/study-books?organization_id=${orgId}`);
       if (sRes.ok) {
         const sJson = await sRes.json();
-        const studies = sJson.data || sJson || [];
-        if (Array.isArray(studies) && studies.length > 0) {
-          const latestStudy = studies[0];
-          notifications.push({
-            id: `study_${latestStudy.id}`,
-            type: 'study',
-            icon: '📖',
-            category: 'Estudo Bíblico',
-            title: latestStudy.title || 'Novo Roteiro de Estudo',
-            description: latestStudy.description || 'Novo estudo e roteiro para células disponível para crescimento espiritual.',
-            timeAgo: 'Recente',
-            priority: 'normal',
-            actionLabel: 'Ver Lições',
-            actionTarget: 'cell_groups',
-            createdAt: latestStudy.created_at || todayDateStr
-          });
+        const books = sJson.data || sJson || [];
+        if (Array.isArray(books) && books.length > 0) {
+          // Prioriza livros com flag notify_members ativada pela liderança
+          const notifiedBook = books.find((b: any) => Boolean(b.notify_members)) || books[0];
+          if (notifiedBook) {
+            notifications.push({
+              id: `study_${notifiedBook.id}`,
+              type: 'study',
+              icon: '📖',
+              category: 'Estudo Bíblico & Células',
+              title: notifiedBook.title || 'Novo Roteiro de Estudo',
+              description: notifiedBook.subtitle || notifiedBook.preface ? `${(notifiedBook.subtitle || notifiedBook.preface).substring(0, 85)}...` : 'Novo roteiro e lições bíblicas disponíveis para as células.',
+              timeAgo: 'Novo',
+              priority: Boolean(notifiedBook.notify_members) ? 'high' : 'normal',
+              actionLabel: 'Ver Lições',
+              actionTarget: 'cell_groups',
+              createdAt: notifiedBook.created_at || todayDateStr
+            });
+          }
         }
       }
     } catch (e) {
       console.warn('Erro ao buscar estudos para notificações:', e);
+    }
+
+    // 6. Eventos e Conferências com Inscrições e Lotes Notificados
+    try {
+      const eRes = await fetch(`${API_URL}/events?organization_id=${orgId}`);
+      if (eRes.ok) {
+        const eJson = await eRes.json();
+        const eventList = eJson.data || [];
+        // Filtra eventos que a liderança marcou para notificar os membros
+        const notifiedEvents = eventList.filter((ev: any) => Boolean(ev.notify_members));
+        for (const ev of notifiedEvents.slice(0, 2)) {
+          notifications.push({
+            id: `event_${ev.id}`,
+            type: 'event',
+            icon: '🎟️',
+            category: 'Evento & Ingressos',
+            title: ev.title || 'Novo Evento na Igreja',
+            description: ev.description ? `${ev.description.substring(0, 85)}...` : 'Inscrições abertas! Garanta seu ingresso no aplicativo.',
+            timeAgo: 'Inscrições Abertas',
+            priority: 'high',
+            actionLabel: 'Ver Ingressos',
+            actionTarget: 'events',
+            actionPayload: { eventId: ev.id },
+            createdAt: ev.created_at || todayDateStr
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar eventos para notificações:', e);
     }
 
   } catch (error) {
