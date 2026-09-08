@@ -19,13 +19,29 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 // ----------------------------------------------------
+// HELPER: MULTI-TENANT ORGANIZAÇÃO ATIVA NO PWA
+// ----------------------------------------------------
+export function getActiveOrganizationId(): string {
+  return localStorage.getItem('faithhub_pwa_active_org_id') || '';
+}
+
+export function setActiveOrganizationId(orgId: string): void {
+  if (orgId) {
+    localStorage.setItem('faithhub_pwa_active_org_id', orgId);
+    window.dispatchEvent(new CustomEvent('pwa-org-changed', { detail: { orgId } }));
+  }
+}
+
+// ----------------------------------------------------
 // 1. BROADCASTS & CULTOS AO VIVO
 // ----------------------------------------------------
 export async function fetchActiveBroadcast(organizationId?: string, campusId?: string) {
   try {
-    const orgParam = organizationId ? `?organization_id=${encodeURIComponent(organizationId)}` : '';
-    const campusParam = campusId && campusId !== 'all' ? `&campus_id=${encodeURIComponent(campusId)}` : '';
-    const query = orgParam || campusParam ? `${orgParam || '?'}${campusParam}` : '';
+    const org = organizationId || getActiveOrganizationId();
+    const queryParams = new URLSearchParams();
+    if (org) queryParams.set('organization_id', org);
+    if (campusId && campusId !== 'all') queryParams.set('campus_id', campusId);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/broadcasts/active${query}`);
     if (res.ok) return await res.json();
   } catch (e) {
@@ -37,9 +53,11 @@ export async function fetchActiveBroadcast(organizationId?: string, campusId?: s
 // ----------------------------------------------------
 // 2. DEVOCIONAIS
 // ----------------------------------------------------
-export async function fetchTodayDevotional() {
+export async function fetchTodayDevotional(organizationId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/devotionals/today`);
+    const org = organizationId || getActiveOrganizationId();
+    const query = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const res = await fetch(`${API_BASE_URL}/devotionals/today${query}`);
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback today devotional", e);
@@ -47,9 +65,11 @@ export async function fetchTodayDevotional() {
   return null;
 }
 
-export async function fetchDevotionals() {
+export async function fetchDevotionals(organizationId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/devotionals`);
+    const org = organizationId || getActiveOrganizationId();
+    const query = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const res = await fetch(`${API_BASE_URL}/devotionals${query}`);
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback devotionals", e);
@@ -74,9 +94,10 @@ export function setActiveCampusId(campusId: string): void {
 // ----------------------------------------------------
 export async function fetchEvents(organizationId?: string, campusId?: string) {
   try {
+    const org = organizationId || getActiveOrganizationId();
     const activeCampus = campusId || getActiveCampusId();
     const queryParams = new URLSearchParams();
-    if (organizationId) queryParams.set('organization_id', organizationId);
+    if (org) queryParams.set('organization_id', org);
     if (activeCampus && activeCampus !== 'all') queryParams.set('campus_id', activeCampus);
 
     const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
@@ -139,11 +160,15 @@ export async function fetchMyTickets() {
 // ----------------------------------------------------
 // 4. PDV / PRODUTOS E PEDIDOS
 // ----------------------------------------------------
-export async function fetchPdvProducts(campusId?: string) {
+export async function fetchPdvProducts(campusId?: string, organizationId?: string) {
   try {
     const headers = await getAuthHeaders();
+    const org = organizationId || getActiveOrganizationId();
     const activeCampus = campusId || getActiveCampusId();
-    const queryParam = activeCampus && activeCampus !== 'all' ? `?campus_id=${activeCampus}` : '';
+    const params = new URLSearchParams();
+    if (org) params.set('organization_id', org);
+    if (activeCampus && activeCampus !== 'all') params.set('campus_id', activeCampus);
+    const queryParam = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/pdv/products${queryParam}`, { headers });
     if (res.ok) {
       const data = await res.json();
@@ -161,13 +186,15 @@ export async function createPdvOrder(payload: {
   delivery_details: string;
   items_json: Array<{ name: string; qty: number; price: number; obs?: string }>;
   total_price: number;
+  organization_id?: string;
 }) {
   try {
     const headers = await getAuthHeaders();
+    const org = payload.organization_id || getActiveOrganizationId();
     const res = await fetch(`${API_BASE_URL}/pdv/orders`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, organization_id: org })
     });
     if (res.ok) return await res.json();
   } catch (e) {
@@ -179,10 +206,12 @@ export async function createPdvOrder(payload: {
   };
 }
 
-export async function fetchPdvOrders() {
+export async function fetchPdvOrders(organizationId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/pdv/orders`, { headers });
+    const org = organizationId || getActiveOrganizationId();
+    const qs = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const res = await fetch(`${API_BASE_URL}/pdv/orders${qs}`, { headers });
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback PDV orders", e);
@@ -193,9 +222,15 @@ export async function fetchPdvOrders() {
 // ----------------------------------------------------
 // 5. CÉLULAS, MURAL, ESTUDOS E LANCHES
 // ----------------------------------------------------
-export async function fetchCellGroups() {
+export async function fetchCellGroups(campusId?: string, organizationId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/cell-groups`);
+    const org = organizationId || getActiveOrganizationId();
+    const activeCampus = campusId || getActiveCampusId();
+    const params = new URLSearchParams();
+    if (org) params.set('organization_id', org);
+    if (activeCampus && activeCampus !== 'all') params.set('campus_id', activeCampus);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/cell-groups${qs}`);
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback cell groups", e);
@@ -219,10 +254,15 @@ export async function requestJoinCell(userId: string, cellGroupId: string, email
   }
 }
 
-export async function fetchCellPosts(groupId?: string) {
+export async function fetchCellPosts(groupId?: string, organizationId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/posts${groupId ? `?group_id=${groupId}` : ''}`, { headers });
+    const org = organizationId || getActiveOrganizationId();
+    const params = new URLSearchParams();
+    if (groupId) params.set('group_id', groupId);
+    if (org) params.set('organization_id', org);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/posts${qs}`, { headers });
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Offline/fallback cell posts", e);
@@ -240,13 +280,15 @@ export async function createCellPost(payload: {
   reply_to_text?: string;
   author_role?: string;
   author_avatar?: string;
+  organization_id?: string;
 }) {
   try {
     const headers = await getAuthHeaders();
+    const org = payload.organization_id || getActiveOrganizationId();
     const res = await fetch(`${API_BASE_URL}/posts`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, organization_id: org })
     });
     if (res.ok) return await res.json();
   } catch (e) {
@@ -270,10 +312,17 @@ export async function reactToCellPost(postId: string, emoji: string, userId?: st
   return null;
 }
 
-export async function fetchStudyBooks(groupId?: string) {
+export async function fetchStudyBooks(groupId?: string, organizationId?: string, campusId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/study-books${groupId ? `?group_id=${groupId}` : ''}`, { headers });
+    const org = organizationId || getActiveOrganizationId();
+    const activeCampus = campusId || getActiveCampusId();
+    const params = new URLSearchParams();
+    if (groupId) params.set('group_id', groupId);
+    if (org) params.set('organization_id', org);
+    if (activeCampus && activeCampus !== 'all') params.set('campus_id', activeCampus);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/study-books${qs}`, { headers });
     if (res.ok) {
       const data = await res.json();
       return Array.isArray(data) ? data : (data.data || []);
@@ -458,9 +507,13 @@ export async function getUploadPresignedUrl(contentType: string, prefix = 'recei
 // ----------------------------------------------------
 // 7. WHITELABEL / CHURCH SETTINGS
 // ----------------------------------------------------
-export async function fetchChurchSettings(slug?: string) {
+export async function fetchChurchSettings(slug?: string, organizationId?: string) {
   try {
-    const queryParam = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+    const params = new URLSearchParams();
+    if (slug) params.set('slug', slug);
+    const org = organizationId || (!slug ? getActiveOrganizationId() : undefined);
+    if (org) params.set('organization_id', org);
+    const queryParam = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/church-settings${queryParam}`);
     if (res.ok) return await res.json();
   } catch (e) {
@@ -474,11 +527,12 @@ export async function fetchChurchSettings(slug?: string) {
 // ----------------------------------------------------
 export async function fetchPrayers(category?: string, userId?: string, orgId?: string, campusId?: string) {
   try {
+    const org = orgId || getActiveOrganizationId();
     let url = `${API_BASE_URL}/prayers`;
     const params = new URLSearchParams();
     if (category && category !== 'ALL') params.append('category', category);
     if (userId) params.append('user_id', userId);
-    if (orgId) params.append('organization_id', orgId);
+    if (org) params.append('organization_id', org);
     if (campusId && campusId !== 'all') params.append('campus_id', campusId);
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
@@ -504,10 +558,11 @@ export async function createPrayerRequest(payload: {
 }) {
   try {
     const headers = await getAuthHeaders();
+    const org = payload.organization_id || getActiveOrganizationId();
     const res = await fetch(`${API_BASE_URL}/prayers`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, organization_id: org })
     });
     if (res.ok) return await res.json();
   } catch (e) {
@@ -537,11 +592,11 @@ export async function submitPrayerTestimony(prayerId: string, testimonyText: str
     const res = await fetch(`${API_BASE_URL}/prayers/${prayerId}/testimony`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ testimony_text: testimonyText })
+      body: JSON.stringify({ testimony: testimonyText })
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.log("Submit testimony fallback", e);
+    console.log("Submit prayer testimony fallback", e);
   }
   return null;
 }
@@ -549,9 +604,11 @@ export async function submitPrayerTestimony(prayerId: string, testimonyText: str
 // ----------------------------------------------------
 // 9. UNIDADES / CAMPI DA IGREJA
 // ----------------------------------------------------
-export async function fetchCampuses() {
+export async function fetchCampuses(organizationId?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/campuses`);
+    const org = organizationId || getActiveOrganizationId();
+    const qs = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const res = await fetch(`${API_BASE_URL}/campuses${qs}`);
     if (res.ok) {
       const json = await res.json();
       return json.data || [];

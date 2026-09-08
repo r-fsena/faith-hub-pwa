@@ -30,7 +30,7 @@ export const Store: React.FC = () => {
   useEffect(() => {
     loadProductsFromBackend();
     loadMyOrders();
-  }, []);
+  }, [branding.organization_id]);
 
   // Recalcula grupos sempre que os produtos ou o branding mudarem
   useEffect(() => {
@@ -75,7 +75,7 @@ export const Store: React.FC = () => {
 
   const loadProductsFromBackend = async () => {
     try {
-      const backendProducts = await fetchPdvProducts();
+      const backendProducts = await fetchPdvProducts(branding.organization_id);
       if (backendProducts && Array.isArray(backendProducts)) {
         const mapped: Product[] = backendProducts.map((p: any) => ({
           id: p.id,
@@ -86,6 +86,8 @@ export const Store: React.FC = () => {
           image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
         }));
         setProducts(mapped);
+      } else {
+        setProducts([]);
       }
     } catch (err) {
       console.error('Erro ao carregar produtos:', err);

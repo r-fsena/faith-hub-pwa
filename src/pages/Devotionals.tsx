@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { fetchDevotionals, fetchTodayDevotional } from '../services/api';
+import { useBranding } from '../context/BrandingContext';
 
 export interface DevotionalItem {
   id: string;
@@ -22,9 +23,12 @@ export interface DevotionalItem {
 }
 
 export const Devotionals: React.FC = () => {
+  const { branding } = useBranding();
+  const currentOrgId = branding.organization_id || 'org_default';
+
   const [allDevotionals, setAllDevotionals] = useState<DevotionalItem[]>(() => {
     try {
-      const saved = localStorage.getItem('faithhub_cached_devotionals_v3');
+      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -33,7 +37,7 @@ export const Devotionals: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem('faithhub_cached_devotionals_v3');
+      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
       return !saved || JSON.parse(saved).length === 0;
     } catch {
       return true;
@@ -77,7 +81,7 @@ export const Devotionals: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentOrgId]);
 
   // Para o player de música se o usuário fechar o leitor do estudo
   useEffect(() => {
@@ -210,7 +214,7 @@ export const Devotionals: React.FC = () => {
       passage: item.source_name || item.verse_reference || item.passage || '',
       verse_text: item.central_text || item.verse_text || '',
       content: item.context_text || item.content || '',
-      author: item.pastoral_author_name || item.author_name || item.author || 'Pr. Rafael Sena',
+      author: item.pastoral_author_name || item.author_name || item.author || (branding.church_name ? `Pastoral • ${branding.church_name}` : 'Pr. Rafael Sena'),
       author_role: item.pastoral_author_role || 'Pastor Titular',
       prayer_indication: item.prayer_indication || '',
       suggested_song_title: item.suggested_song_title || '',
@@ -224,8 +228,8 @@ export const Devotionals: React.FC = () => {
     try {
       const todayStr = getTodayDateString();
       const [todayRes, listRes] = await Promise.all([
-        fetchTodayDevotional(),
-        fetchDevotionals()
+        fetchTodayDevotional(currentOrgId),
+        fetchDevotionals(currentOrgId)
       ]);
 
       const itemsMap = new Map<string, DevotionalItem>();
@@ -250,7 +254,9 @@ export const Devotionals: React.FC = () => {
 
       if (list.length > 0) {
         setAllDevotionals(list);
-        localStorage.setItem('faithhub_cached_devotionals_v3', JSON.stringify(list));
+        localStorage.setItem(`faithhub_cached_devotionals_${currentOrgId}`, JSON.stringify(list));
+      } else {
+        setAllDevotionals([]);
       }
     } catch (e) {
       console.error('Erro ao carregar devocionais:', e);
@@ -323,7 +329,8 @@ export const Devotionals: React.FC = () => {
   };
 
   const handleShare = async (devotional: DevotionalItem) => {
-    const text = `📖 *${devotional.title}*\n"${devotional.verse_text}" (${devotional.passage})\n\nLeia o estudo completo no App da Igreja Viva!`;
+    const churchTitle = branding.church_name || 'Igreja';
+    const text = `📖 *${devotional.title}*\n"${devotional.verse_text}" (${devotional.passage})\n\nLeia o estudo completo no App da ${churchTitle}!`;
     if (navigator.share) {
       try {
         await navigator.share({

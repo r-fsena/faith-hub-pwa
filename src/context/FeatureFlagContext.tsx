@@ -30,7 +30,7 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setIsLoading(true);
       const params = new URLSearchParams();
       // Resolve org identifier
-      const orgParam = branding.pwa_slug || 'org_default';
+      const orgParam = branding.organization_id || branding.pwa_slug || 'org_default';
       params.append('organization_id', orgParam);
       params.append('environment', 'production');
 
@@ -45,7 +45,7 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } finally {
       setIsLoading(false);
     }
-  }, [branding.pwa_slug]);
+  }, [branding.organization_id, branding.pwa_slug]);
 
   useEffect(() => {
     fetchFlags();

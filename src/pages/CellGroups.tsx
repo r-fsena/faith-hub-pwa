@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import { 
   fetchCellGroups, 
   fetchCellPosts, 
@@ -158,6 +159,7 @@ type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
 
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
+  const { branding } = useBranding();
   const [cells, setCells] = useState<CellGroup[]>([]);
   const [currentMember, setCurrentMember] = useState<any>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
@@ -284,13 +286,13 @@ export const CellGroups: React.FC = () => {
       } catch {}
     }
     loadAllData();
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, branding.organization_id]);
 
   const loadAllData = async () => {
     try {
       // Busca grupos e perfil do membro simultaneamente em paralelo
       const [groupList, member] = await Promise.all([
-        fetchCellGroups(),
+        fetchCellGroups(branding.organization_id),
         (user?.email || isAuthenticated) ? fetchCurrentMember() : Promise.resolve(null)
       ]);
 

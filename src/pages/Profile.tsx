@@ -187,7 +187,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
       }));
 
       const activeCampus = getActiveCampusId();
-      const res = await fetch(`${API_URL}/members?organization_id=org_default`);
+      const currentOrgId = branding.organization_id || 'org_default';
+      const res = await fetch(`${API_URL}/members?organization_id=${encodeURIComponent(currentOrgId)}`);
       if (res.ok) {
         const json = await res.json();
         const found = (json.data || []).find((m: any) => m.email?.toLowerCase() === user.email?.toLowerCase() || m.id === user.userId);

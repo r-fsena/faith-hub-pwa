@@ -89,7 +89,7 @@ export const Home: React.FC<HomeProps> = ({
   }, [branding.organization_id, activeCampusId]);
 
   const loadCampuses = async () => {
-    const list = await fetchCampuses();
+    const list = await fetchCampuses(branding.organization_id);
     setCampuses(list);
   };
 
@@ -103,10 +103,12 @@ export const Home: React.FC<HomeProps> = ({
         title: `Culto Oficial • ${branding.church_name}`,
         youtube_url: branding.youtube_url
       });
+    } else {
+      setActiveBroadcast(null);
     }
 
-    const dev = await fetchTodayDevotional();
-    if (dev) setTodayDevotional(dev);
+    const dev = await fetchTodayDevotional(branding.organization_id);
+    setTodayDevotional(dev || null);
 
     const events = await fetchEvents(branding.organization_id, currentCampusId);
     if (events && Array.isArray(events) && events.length > 0) {

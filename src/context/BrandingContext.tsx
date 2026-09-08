@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchChurchSettings } from '../services/api';
+import { fetchChurchSettings, setActiveOrganizationId } from '../services/api';
 
 export interface ChurchBranding {
   church_name: string;
@@ -98,6 +98,25 @@ const BrandingContext = createContext<BrandingContextType>({
 
 export function getChurchSlugFromUrl(): string | null {
   try {
+    // 1. Prioridade: Parâmetros de Query String (?slug=... ou ?org=... ou ?church=... ou ?organization_id=...)
+    const searchParams = new URLSearchParams(window.location.search);
+    const querySlug = searchParams.get('slug') || searchParams.get('org') || searchParams.get('church') || searchParams.get('organization_id');
+    if (querySlug && querySlug.trim()) {
+      return querySlug.trim().toLowerCase();
+    }
+
+    // 2. Subdomínio (ex: igreja-renovada.faithhub.app ou igreja-renovada.localhost)
+    const hostname = window.location.hostname.toLowerCase();
+    const parts = hostname.split('.');
+    if (parts.length >= 2) {
+      const sub = parts[0];
+      const ignoredSubs = ['app', 'www', 'api', 'admin', 'studio', 'faithhub', 'localhost', '127', 'ecossistema-faith-hub'];
+      if (!ignoredSubs.includes(sub) && !hostname.includes('vercel.app')) {
+        return sub;
+      }
+    }
+
+    // 3. Primeiro segmento do pathname (/igreja-renovada)
     const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
     if (!rawPath) return null;
     const decoded = decodeURIComponent(rawPath);
@@ -124,6 +143,9 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (e.detail) {
         setBranding(prev => ({ ...prev, ...e.detail }));
         applyTheme(e.detail);
+        if (e.detail.organization_id) {
+          setActiveOrganizationId(e.detail.organization_id);
+        }
       }
     };
 
@@ -133,15 +155,17 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const loadBranding = async () => {
     const urlSlug = getChurchSlugFromUrl();
-    const activeSlug = urlSlug || localStorage.getItem('faithhub_active_church_slug') || undefined;
+    const previousSavedSlug = localStorage.getItem('faithhub_active_church_slug');
+    const activeSlug = urlSlug || previousSavedSlug || undefined;
 
-    if (urlSlug) {
+    // Se o slug mudou em relação à sessão anterior, atualiza o storage
+    if (urlSlug && urlSlug !== previousSavedSlug) {
       localStorage.setItem('faithhub_active_church_slug', urlSlug);
     }
 
     const cacheKey = `faithhub_church_branding_${activeSlug || 'default'}`;
 
-    // 1. Carrega do localStorage imediato para não piscar
+    // 1. Carrega do localStorage imediato correspondente a este slug específico
     const saved = localStorage.getItem(cacheKey);
     if (saved) {
       try {
@@ -149,19 +173,24 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const merged = { ...DEFAULT_BRANDING, ...parsed };
         setBranding(merged);
         applyTheme(merged);
+        if (merged.organization_id) {
+          setActiveOrganizationId(merged.organization_id);
+        }
       } catch (e) {
         console.error("Erro ao carregar branding PWA do cache", e);
       }
-    } else {
+    } else if (!activeSlug) {
       applyTheme(DEFAULT_BRANDING);
+      setActiveOrganizationId(DEFAULT_BRANDING.organization_id!);
     }
 
     // 2. Busca do backend a versão mais recente em nuvem para este slug específico
     try {
       const backendSettings = await fetchChurchSettings(activeSlug);
       if (backendSettings && backendSettings.church_name) {
+        const resolvedOrgId = backendSettings.organization_id || (activeSlug?.startsWith('org_') ? activeSlug : 'org_default');
         const mapped: Partial<ChurchBranding> = {
-          organization_id: backendSettings.organization_id || 'org_default',
+          organization_id: resolvedOrgId,
           church_name: backendSettings.church_name,
           tagline: backendSettings.slogan !== undefined ? (backendSettings.slogan || '') : (backendSettings.tagline || ''),
           cnpj: backendSettings.cnpj || '',
@@ -193,6 +222,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setBranding(updated);
         localStorage.setItem(cacheKey, JSON.stringify(updated));
         applyTheme(updated);
+        setActiveOrganizationId(resolvedOrgId);
       }
     } catch (err) {
       console.log("Usando branding em cache local offline", err);
@@ -231,7 +261,11 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateBranding = (newBranding: Partial<ChurchBranding>) => {
     const updated = { ...branding, ...newBranding };
     setBranding(updated);
-    localStorage.setItem('faithhub_church_branding', JSON.stringify(updated));
+    const activeSlug = updated.pwa_slug || updated.organization_id || 'default';
+    localStorage.setItem(`faithhub_church_branding_${activeSlug}`, JSON.stringify(updated));
+    if (updated.organization_id) {
+      setActiveOrganizationId(updated.organization_id);
+    }
     applyTheme(updated);
   };
 
