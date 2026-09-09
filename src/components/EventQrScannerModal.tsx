@@ -17,6 +17,7 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
   onValidationSuccess,
   validatorName = 'Portaria'
 }) => {
+  const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
   const [manualCode, setManualCode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -31,25 +32,35 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
   } | null>(null);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerId = "events-pwa-qr-reader";
+  const scannerContainerId = "events-pwa-qr-reader-v2";
 
-  // Inicializa Scanner de Câmera
+  // Inicializa Scanner de Câmera quando estiver aberto e na aba da câmera
   useEffect(() => {
     let mounted = true;
 
-    if (isOpen) {
+    if (isOpen && activeTab === 'camera' && !scanResult) {
       setCameraError(null);
-      setScanResult(null);
       setIsScanning(true);
 
       const timer = setTimeout(async () => {
         try {
+          if (scannerRef.current) {
+            try {
+              await scannerRef.current.stop();
+            } catch (e) {}
+            scannerRef.current = null;
+          }
+
           const html5QrCode = new Html5Qrcode(scannerContainerId);
           scannerRef.current = html5QrCode;
 
           const config = {
             fps: 15,
-            qrbox: { width: 220, height: 220 },
+            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+              const edgeSize = Math.max(220, Math.floor(minEdge * 0.72));
+              return { width: edgeSize, height: edgeSize };
+            },
             aspectRatio: 1.0
           };
 
@@ -66,11 +77,11 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
         } catch (err: any) {
           console.warn("Falha ao iniciar câmera do QR Scanner de Eventos:", err);
           if (mounted) {
-            setCameraError("Câmera não disponível no momento. Você pode digitar o código manual abaixo.");
+            setCameraError("Câmera indisponível ou permissão negada. Use a aba de Código Manual acima.");
             setIsScanning(false);
           }
         }
-      }, 300);
+      }, 250);
 
       return () => {
         mounted = false;
@@ -81,8 +92,14 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
           });
         }
       };
+    } else {
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {}).finally(() => {
+          scannerRef.current = null;
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, activeTab, scanResult]);
 
   const playSuccessSound = () => {
     try {
@@ -91,15 +108,15 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, ctx.currentTime);
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.18);
+      osc.stop(ctx.currentTime + 0.20);
     } catch (e) {}
 
     if (navigator.vibrate) {
-      navigator.vibrate([100, 50, 100]);
+      navigator.vibrate([120, 60, 120]);
     }
   };
 
@@ -109,8 +126,8 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(300, ctx.currentTime);
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
@@ -118,7 +135,7 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
     } catch (e) {}
 
     if (navigator.vibrate) {
-      navigator.vibrate([300, 100, 300]);
+      navigator.vibrate([350, 120, 350]);
     }
   };
 
@@ -182,20 +199,35 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="92vh">
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="96dvh">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
         
-        {/* Header do Scanner da Portaria */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.4rem' }}>📸</span>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
-              Validador de Portaria
-            </h3>
+        {/* Header da Portaria */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '4px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1rem',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+              }}>
+                🎟️
+              </span>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Portaria & Check-in
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+              Operador: <b>{validatorName}</b>
+            </p>
           </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-            Aponte para o QR Code do passaporte ou digite o código de 6 dígitos.
-          </p>
         </div>
 
         {/* ========================================================
@@ -203,176 +235,434 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
             ======================================================== */}
         {scanResult ? (
           <div style={{
-            background: scanResult.status === 'SUCCESS' ? '#ecfdf5' : '#fef2f2',
-            border: `2px solid ${scanResult.status === 'SUCCESS' ? '#10b981' : '#ef4444'}`,
-            borderRadius: '20px',
-            padding: '20px 16px',
+            background: scanResult.status === 'SUCCESS' ? '#f0fdf4' : '#fef2f2',
+            border: `2.5px solid ${scanResult.status === 'SUCCESS' ? '#22c55e' : '#ef4444'}`,
+            borderRadius: '24px',
+            padding: '24px 18px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
+            gap: '14px',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.08)',
+            textAlign: 'center'
           }}>
             <div style={{
-              width: '56px',
-              height: '56px',
+              width: '74px',
+              height: '74px',
               borderRadius: '50%',
-              background: scanResult.status === 'SUCCESS' ? '#10b981' : '#ef4444',
+              background: scanResult.status === 'SUCCESS' ? '#16a34a' : '#dc2626',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.8rem',
-              fontWeight: 900
+              fontSize: '2.4rem',
+              fontWeight: 900,
+              boxShadow: scanResult.status === 'SUCCESS'
+                ? '0 0 0 10px rgba(34, 197, 94, 0.2)'
+                : '0 0 0 10px rgba(239, 68, 68, 0.2)',
+              animation: 'bounceIn 0.3s ease'
             }}>
               {scanResult.status === 'SUCCESS' ? '✓' : '✕'}
             </div>
 
-            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: scanResult.status === 'SUCCESS' ? '#065f46' : '#991b1b' }}>
-              {scanResult.status === 'SUCCESS' ? 'ENTRADA LIBERADA!' : 'ACESSO NEGADO!'}
+            <div>
+              <div style={{
+                fontSize: '1.35rem',
+                fontWeight: 900,
+                color: scanResult.status === 'SUCCESS' ? '#14532d' : '#7f1d1d',
+                letterSpacing: '-0.01em'
+              }}>
+                {scanResult.status === 'SUCCESS' ? 'ENTRADA LIBERADA!' : 'ACESSO NEGADO!'}
+              </div>
+              <p style={{
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                color: scanResult.status === 'SUCCESS' ? '#166534' : '#991b1b',
+                margin: '4px 0 0 0'
+              }}>
+                {scanResult.message}
+              </p>
             </div>
 
-            <p style={{ fontSize: '0.84rem', fontWeight: 700, color: scanResult.status === 'SUCCESS' ? '#047857' : '#b91c1c', margin: 0 }}>
-              {scanResult.message}
-            </p>
-
+            {/* Crachá Detalhado do Participante */}
             {scanResult.attendee_name && (
               <div style={{
                 background: '#ffffff',
-                borderRadius: '12px',
-                padding: '10px 14px',
+                borderRadius: '16px',
+                padding: '16px',
                 width: '100%',
-                fontSize: '0.80rem',
+                boxSizing: 'border-box',
+                border: '1.5px solid var(--panel-border)',
                 textAlign: 'left',
-                border: '1px solid var(--panel-border)',
-                marginTop: '4px'
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
               }}>
-                <div>👤 <strong>Participante:</strong> {scanResult.attendee_name}</div>
-                {scanResult.event && <div>🗓️ <strong>Evento:</strong> {scanResult.event}</div>}
-                {scanResult.lot && <div>🎟️ <strong>Lote:</strong> {scanResult.lot}</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: '#e0f2fe',
+                    color: '#0369a1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '1rem'
+                  }}>
+                    {scanResult.attendee_name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      Participante
+                    </div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      {scanResult.attendee_name}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '8px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #f1f5f9'
+                }}>
+                  {scanResult.event && (
+                    <div>
+                      <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700 }}>EVENTO</div>
+                      <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#334155' }}>{scanResult.event}</div>
+                    </div>
+                  )}
+                  {scanResult.lot && (
+                    <div>
+                      <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700 }}>LOTE / SETOR</div>
+                      <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#0369a1' }}>{scanResult.lot}</div>
+                    </div>
+                  )}
+                  {scanResult.scanned_at && (
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <div style={{ fontSize: '0.66rem', color: '#dc2626', fontWeight: 700 }}>HORÁRIO DO REGISTRO</div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#dc2626' }}>{scanResult.scanned_at}</div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
+            {/* Botão Gigante de Próximo Ingresso */}
             <button
               type="button"
               onClick={handleScanNext}
               style={{
                 width: '100%',
-                background: scanResult.status === 'SUCCESS' ? '#10b981' : '#0f172a',
+                background: scanResult.status === 'SUCCESS' ? '#16a34a' : '#0f172a',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '14px',
-                padding: '13px',
+                borderRadius: '16px',
+                padding: '16px',
                 fontWeight: 900,
-                fontSize: '0.88rem',
+                fontSize: '0.98rem',
                 cursor: 'pointer',
-                marginTop: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                boxShadow: scanResult.status === 'SUCCESS'
+                  ? '0 6px 20px rgba(22, 163, 74, 0.35)'
+                  : '0 6px 20px rgba(15, 23, 42, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginTop: '6px'
               }}
             >
-              🔄 Validar Próximo Ingresso
+              <span>🔄</span>
+              <span>Validar Próximo Ingresso</span>
             </button>
           </div>
         ) : (
           <>
-            {/* Viewfinder da Câmera */}
+            {/* Segmented Control: Câmera vs Código Manual */}
             <div style={{
-              width: '100%',
-              maxWidth: '300px',
-              height: '240px',
-              margin: '0 auto',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              background: '#0f172a',
-              position: 'relative',
-              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.2)',
-              border: '2px solid var(--accent-primary)'
+              display: 'flex',
+              background: '#f1f5f9',
+              padding: '4px',
+              borderRadius: '14px',
+              gap: '4px'
             }}>
-              <div id={scannerContainerId} style={{ width: '100%', height: '100%' }} />
-
-              {/* Mira Laser Animada */}
-              {isScanning && !cameraError && (
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '10%',
-                  right: '10%',
-                  height: '2px',
-                  background: 'linear-gradient(90deg, transparent, #ef4444, transparent)',
-                  boxShadow: '0 0 8px #ef4444',
-                  animation: 'pulse 1.5s infinite',
-                  pointerEvents: 'none'
-                }} />
-              )}
-
-              {validating && (
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'rgba(15, 23, 42, 0.75)',
+              <button
+                type="button"
+                onClick={() => setActiveTab('camera')}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: activeTab === 'camera' ? '#ffffff' : 'transparent',
+                  color: activeTab === 'camera' ? '#0f172a' : '#64748b',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  fontSize: '0.90rem'
-                }}>
-                  ⏳ Validando na base...
-                </div>
-              )}
+                  gap: '6px',
+                  boxShadow: activeTab === 'camera' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>📸</span>
+                <span>Câmera QR</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('manual')}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: activeTab === 'manual' ? '#ffffff' : 'transparent',
+                  color: activeTab === 'manual' ? '#0f172a' : '#64748b',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: activeTab === 'manual' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>⌨️</span>
+                <span>Digitar Código</span>
+              </button>
             </div>
 
-            {cameraError && (
-              <div style={{ fontSize: '0.76rem', color: '#b45309', background: '#fef3c7', padding: '8px 12px', borderRadius: '10px' }}>
-                {cameraError}
+            {/* CONTEÚDO DA ABA 1: CÂMERA QR AMPLA */}
+            {activeTab === 'camera' && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                
+                {/* Viewfinder Amplo com Cantos de Mira Estilizados */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '380px',
+                  height: '320px',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  background: '#090d16',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                  border: '2px solid rgba(59, 130, 246, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {/* Elemento Html5Qrcode */}
+                  <div id={scannerContainerId} style={{ width: '100%', height: '100%' }} />
+
+                  {/* Cantos de Mira da Câmera (Corner Brackets) */}
+                  {!cameraError && isScanning && (
+                    <>
+                      <div style={{
+                        position: 'absolute',
+                        width: '240px',
+                        height: '240px',
+                        pointerEvents: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        boxSizing: 'border-box'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ width: '28px', height: '28px', borderTop: '4px solid #3b82f6', borderLeft: '4px solid #3b82f6', borderRadius: '6px 0 0 0' }} />
+                          <div style={{ width: '28px', height: '28px', borderTop: '4px solid #3b82f6', borderRight: '4px solid #3b82f6', borderRadius: '0 6px 0 0' }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ width: '28px', height: '28px', borderBottom: '4px solid #3b82f6', borderLeft: '4px solid #3b82f6', borderRadius: '0 0 0 6px' }} />
+                          <div style={{ width: '28px', height: '28px', borderBottom: '4px solid #3b82f6', borderRight: '4px solid #3b82f6', borderRadius: '0 0 6px 0' }} />
+                        </div>
+                      </div>
+
+                      {/* Laser de Varredura */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '12%',
+                        right: '12%',
+                        height: '2px',
+                        background: 'linear-gradient(90deg, transparent, #38bdf8, #3b82f6, transparent)',
+                        boxShadow: '0 0 12px #38bdf8',
+                        animation: 'scanLine 2s infinite ease-in-out',
+                        pointerEvents: 'none'
+                      }} />
+                    </>
+                  )}
+
+                  {/* Estado de Validação em Andamento */}
+                  {validating && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      color: '#ffffff',
+                      fontWeight: 900,
+                      fontSize: '0.96rem',
+                      zIndex: 20
+                    }}>
+                      <div style={{ fontSize: '2rem', animation: 'spin 1s infinite linear' }}>⏳</div>
+                      <div>Validando ingresso na base...</div>
+                    </div>
+                  )}
+
+                  {/* Erro de Câmera */}
+                  {cameraError && (
+                    <div style={{
+                      padding: '20px',
+                      textAlign: 'center',
+                      color: '#f87171',
+                      zIndex: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span style={{ fontSize: '2rem' }}>📷⚠️</span>
+                      <div style={{ fontSize: '0.84rem', fontWeight: 800 }}>{cameraError}</div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('manual')}
+                        style={{
+                          background: '#3b82f6',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '8px 16px',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          marginTop: '6px'
+                        }}
+                      >
+                        Digitar Voucher Manualmente
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.76rem',
+                  fontWeight: 700
+                }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#22c55e',
+                    boxShadow: '0 0 6px #22c55e'
+                  }} />
+                  Aponte o visor para o QR Code do ingresso
+                </div>
               </div>
             )}
 
-            {/* Fallback de Digitação Manual */}
-            <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '4px' }}>
-              <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'left', display: 'block' }}>
-                Ou digite o Código / Voucher Manual:
-              </label>
+            {/* CONTEÚDO DA ABA 2: DIGITAÇÃO MANUAL ERGONÔMICA */}
+            {activeTab === 'manual' && (
+              <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', padding: '8px 0' }}>
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid var(--panel-border)',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main)', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>⌨️</span> Digite o Código do Voucher / Ingresso:
+                  </label>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  type="text"
-                  value={manualCode}
-                  onChange={e => setManualCode(e.target.value.toUpperCase())}
-                  placeholder="Ex: FH-882190 ou Token"
-                  style={{
-                    flex: 1,
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: '#f8fafc',
-                    border: '1.5px solid var(--panel-border)',
-                    fontSize: '0.88rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    outline: 'none'
-                  }}
-                />
+                  <input
+                    type="text"
+                    value={manualCode}
+                    onChange={e => setManualCode(e.target.value.toUpperCase())}
+                    placeholder="Ex: FH-9281 ou Token"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '14px',
+                      background: '#ffffff',
+                      border: '2px solid #cbd5e1',
+                      fontSize: '1.25rem',
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      textAlign: 'center',
+                      boxSizing: 'border-box',
+                      outline: 'none'
+                    }}
+                  />
+
+                  <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    O código alfanumérico está impresso no passaporte digital ou comprovante.
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={!manualCode.trim() || validating}
-                  className="btn-pwa-primary"
-                  style={{ padding: '0 18px', fontWeight: 900, fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 900,
+                    fontSize: '0.94rem',
+                    cursor: manualCode.trim() && !validating ? 'pointer' : 'not-allowed',
+                    opacity: manualCode.trim() && !validating ? 1 : 0.6,
+                    boxShadow: '0 6px 16px rgba(59, 130, 246, 0.3)'
+                  }}
                 >
-                  {validating ? '...' : 'Validar'}
+                  {validating ? 'Validando ingresso...' : 'Confirmar Ingresso ✓'}
                 </button>
-              </div>
-            </form>
+              </form>
+            )}
           </>
         )}
 
+        {/* Rodapé de Fechar */}
         <button
           type="button"
-          className="btn-pwa-secondary"
           onClick={onClose}
-          style={{ width: '100%', padding: '11px', fontWeight: 800, fontSize: '0.84rem' }}
+          style={{
+            marginTop: 'auto',
+            width: '100%',
+            padding: '12px',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+            background: '#f8fafc',
+            color: '#64748b',
+            fontWeight: 800,
+            fontSize: '0.84rem',
+            cursor: 'pointer'
+          }}
         >
-          Fechar Validador
+          Fechar Portaria
         </button>
       </div>
     </BottomSheet>

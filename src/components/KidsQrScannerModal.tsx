@@ -19,7 +19,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerId = "kids-pwa-qr-reader";
+  const scannerContainerId = "kids-pwa-qr-reader-v2";
 
   useEffect(() => {
     let mounted = true;
@@ -28,15 +28,25 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
       setCameraError(null);
       setIsScanning(true);
 
-      // Timeout para garantir que o container no DOM esteja pronto
       const timer = setTimeout(async () => {
         try {
+          if (scannerRef.current) {
+            try {
+              await scannerRef.current.stop();
+            } catch (e) {}
+            scannerRef.current = null;
+          }
+
           const html5QrCode = new Html5Qrcode(scannerContainerId);
           scannerRef.current = html5QrCode;
 
           const config = {
             fps: 15,
-            qrbox: { width: 220, height: 220 },
+            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+              const edgeSize = Math.max(220, Math.floor(minEdge * 0.72));
+              return { width: edgeSize, height: edgeSize };
+            },
             aspectRatio: 1.0
           };
 
@@ -70,18 +80,16 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
                 });
               }
             },
-            () => {
-              // Frame ignorado
-            }
+            () => {}
           );
         } catch (err: any) {
-          console.warn("Falha ao iniciar câmera do QR Scanner:", err);
+          console.warn("Falha ao iniciar câmera do QR Scanner Kids:", err);
           if (mounted) {
-            setCameraError("Não foi possível acessar a câmera. Você pode digitar o PIN abaixo.");
+            setCameraError("Câmera indisponível ou permissão negada. Digite o PIN abaixo.");
             setIsScanning(false);
           }
         }
-      }, 300);
+      }, 250);
 
       return () => {
         mounted = false;
@@ -108,31 +116,32 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
 
   const modalContent = (
     <div className="drawer-overlay" onClick={onClose}>
-      <div className="drawer-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '92dvh' }}>
+      <div className="drawer-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '96dvh' }}>
         <div className="drawer-handle" />
 
         {/* Top Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              background: 'var(--accent-primary-light)',
-              color: 'var(--accent-primary)',
+              width: 40,
+              height: 40,
+              borderRadius: 14,
+              background: '#f0fdf4',
+              color: '#16a34a',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.2rem'
+              fontSize: '1.3rem',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.2)'
             }}>
-              📸
+              🛡️
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
-                Realizar Checkout
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Checkout Kids
               </h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                {childName ? `Liberando devolução de ${childName}` : 'Escanear QR Code ou digitar PIN'}
+                {childName ? `Liberando devolução de ${childName}` : 'Escanear QR Code ou digitar PIN do crachá'}
               </p>
             </div>
           </div>
@@ -159,97 +168,111 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
           </button>
         </div>
 
-        {/* Camera Viewfinder Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Camera Viewfinder Area Ampla */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           
           <div style={{
             position: 'relative',
             width: '100%',
-            maxWidth: 280,
-            height: 250,
-            background: '#0f172a',
-            borderRadius: 20,
+            maxWidth: 360,
+            height: 300,
+            background: '#090d16',
+            borderRadius: 24,
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
-            border: '1.5px solid var(--panel-border)'
+            boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+            border: '2px solid rgba(22, 163, 74, 0.4)'
           }}>
-            {/* Elemento onde a biblioteca injeta o vídeo */}
             <div id={scannerContainerId} style={{ width: '100%', height: '100%' }} />
 
-            {/* Mira com animação */}
-            {!cameraError && (
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 170,
-                height: 170,
-                border: '2px solid rgba(255, 255, 255, 0.7)',
-                borderRadius: 16,
-                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.35)',
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            {/* Mira com cantos destacados */}
+            {!cameraError && isScanning && (
+              <>
                 <div style={{
-                  width: '90%',
+                  position: 'absolute',
+                  width: '220px',
+                  height: '220px',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ width: '28px', height: '28px', borderTop: '4px solid #16a34a', borderLeft: '4px solid #16a34a', borderRadius: '6px 0 0 0' }} />
+                    <div style={{ width: '28px', height: '28px', borderTop: '4px solid #16a34a', borderRight: '4px solid #16a34a', borderRadius: '0 6px 0 0' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ width: '28px', height: '28px', borderBottom: '4px solid #16a34a', borderLeft: '4px solid #16a34a', borderRadius: '0 0 0 6px' }} />
+                    <div style={{ width: '28px', height: '28px', borderBottom: '4px solid #16a34a', borderRight: '4px solid #16a34a', borderRadius: '0 0 6px 0' }} />
+                  </div>
+                </div>
+
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '12%',
+                  right: '12%',
                   height: '2px',
-                  background: 'linear-gradient(90deg, transparent, var(--accent-primary, #0f766e), transparent)',
-                  boxShadow: '0 0 8px var(--accent-primary, #0f766e)',
-                  animation: 'scanLine 2s infinite ease-in-out'
+                  background: 'linear-gradient(90deg, transparent, #4ade80, #16a34a, transparent)',
+                  boxShadow: '0 0 10px #4ade80',
+                  animation: 'scanLine 2s infinite ease-in-out',
+                  pointerEvents: 'none'
                 }} />
-              </div>
+              </>
             )}
 
             {cameraError && (
-              <div style={{ padding: 16, textAlign: 'center', color: '#cbd5e1', fontSize: '0.78rem', zIndex: 10 }}>
-                <div style={{ fontSize: '1.8rem', marginBottom: 6 }}>📷❌</div>
+              <div style={{ padding: 20, textAlign: 'center', color: '#cbd5e1', fontSize: '0.80rem', zIndex: 10 }}>
+                <div style={{ fontSize: '2rem', marginBottom: 8 }}>📷❌</div>
                 <div>{cameraError}</div>
               </div>
             )}
           </div>
 
-          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
-            Aponte a câmera para o QR Code no celular do responsável
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center', fontWeight: 700 }}>
+            Aponte a câmera para o QR Code no celular ou crachá do responsável
           </div>
 
-          {/* Divisor "OU DIGITE O PIN" */}
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', margin: '14px 0 10px 0', gap: 10 }}>
+          {/* Divisor */}
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', margin: '4px 0', gap: 10 }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
             <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ou digite o PIN</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
           </div>
 
-          {/* Digitação Manual do PIN */}
+          {/* Digitação do PIN */}
           <form onSubmit={handleManualSubmit} style={{ width: '100%', display: 'flex', gap: 8 }}>
             <input
               type="text"
               className="input-pwa"
-              placeholder="Ex: K-5966 ou 5966"
+              placeholder="Ex: 5966"
               value={manualPin}
-              onChange={e => setManualPin(e.target.value)}
+              onChange={e => setManualPin(e.target.value.toUpperCase())}
               style={{
                 flex: 1,
                 textAlign: 'center',
                 fontWeight: 900,
-                fontSize: '1.1rem',
-                letterSpacing: '0.08em',
-                borderRadius: 14
+                fontSize: '1.2rem',
+                letterSpacing: '0.1em',
+                borderRadius: 14,
+                padding: '12px'
               }}
             />
             <button
               type="submit"
               disabled={!manualPin.trim()}
-              className="btn-pwa-primary"
               style={{
-                width: 'auto',
-                minWidth: 100,
+                background: '#16a34a',
+                color: '#ffffff',
+                border: 'none',
                 borderRadius: 14,
+                padding: '0 20px',
+                fontWeight: 900,
+                fontSize: '0.88rem',
+                cursor: manualPin.trim() ? 'pointer' : 'not-allowed',
                 opacity: manualPin.trim() ? 1 : 0.6
               }}
             >
