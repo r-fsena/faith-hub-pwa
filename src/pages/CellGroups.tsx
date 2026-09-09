@@ -177,7 +177,7 @@ export const CellGroups: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('ALL');
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
-  const [discoverViewMode, setDiscoverViewMode] = useState<'list' | 'map'>('list');
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   // Portal State
   const [posts, setPosts] = useState<CellPost[]>([]);
@@ -2692,85 +2692,58 @@ export const CellGroups: React.FC = () => {
             MODO 2: EXPLORAR / DISCOVER CÉLULAS
             ======================================================== */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Seletor de Modo de Visualização: Lista vs Mapa */}
-          <div style={{
-            display: 'flex',
-            background: '#e2e8f0',
-            padding: '4px',
-            borderRadius: '14px',
-            gap: '6px'
-          }}>
+          {/* Barra de Busca e Ação: Abrir Mapa Interativo */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              className="input-pwa"
+              placeholder="Buscar por bairro, nome ou líder..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ flex: 1 }}
+            />
             <button
               type="button"
-              onClick={() => setDiscoverViewMode('list')}
+              onClick={() => setIsMapModalOpen(true)}
               style={{
-                flex: 1,
-                padding: '9px 12px',
-                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                color: '#ffffff',
                 border: 'none',
-                background: discoverViewMode === 'list' ? '#ffffff' : 'transparent',
-                color: discoverViewMode === 'list' ? 'var(--text-main)' : 'var(--text-secondary)',
-                fontWeight: discoverViewMode === 'list' ? 800 : 600,
+                borderRadius: '14px',
+                padding: '12px 16px',
                 fontSize: '0.84rem',
-                cursor: 'pointer',
-                boxShadow: discoverViewMode === 'list' ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                fontWeight: 900,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
                 gap: '6px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>📋</span>
-              <span>Lista ({filteredCells.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setDiscoverViewMode('map')}
-              style={{
-                flex: 1,
-                padding: '9px 12px',
-                borderRadius: '10px',
-                border: 'none',
-                background: discoverViewMode === 'map' ? '#ffffff' : 'transparent',
-                color: discoverViewMode === 'map' ? 'var(--text-main)' : 'var(--text-secondary)',
-                fontWeight: discoverViewMode === 'map' ? 800 : 600,
-                fontSize: '0.84rem',
                 cursor: 'pointer',
-                boxShadow: discoverViewMode === 'map' ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease'
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
+                transition: 'transform 0.15s ease'
               }}
+              title="Explorar células no mapa interativo"
             >
-              <span>🗺️</span>
-              <span>Ver no Mapa</span>
+              <span style={{ fontSize: '1.05rem' }}>🗺️</span>
+              <span>Ver Mapa</span>
             </button>
           </div>
 
-          <input
-            type="text"
-            className="input-pwa"
-            placeholder="Buscar por bairro, nome ou líder..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+          {/* Modal Fixo de Mapa de Células (Tela Cheia Nativa) */}
+          <CellsMapView
+            isOpen={isMapModalOpen}
+            onClose={() => setIsMapModalOpen(false)}
+            cells={filteredCells}
+            primaryColor={branding?.primary_color || '#0f766e'}
+            secondaryColor={branding?.secondary_color || '#14b8a6'}
+            myGroupId={myGroupId}
+            currentMemberCellId={currentMember?.cell_group_id}
+            onRequestJoin={(cell) => handleRequestJoin(cell.id)}
+            isPendingJoin={(cellId) => pendingGroupId === cellId}
+            onOpenWhatsApp={handleOpenWhatsApp}
+            onEnterCell={handleEnterCell}
           />
 
-          {discoverViewMode === 'map' ? (
-            <CellsMapView
-              cells={filteredCells}
-              primaryColor={branding?.primary_color || '#0f766e'}
-              secondaryColor={branding?.secondary_color || '#14b8a6'}
-              myGroupId={myGroupId}
-              currentMemberCellId={currentMember?.cell_group_id}
-              onRequestJoin={(cell) => handleRequestJoin(cell.id)}
-              isPendingJoin={(cellId) => pendingGroupId === cellId}
-              onOpenWhatsApp={handleOpenWhatsApp}
-              onEnterCell={handleEnterCell}
-            />
-          ) : filteredCells.length === 0 ? (
+          {filteredCells.length === 0 ? (
             <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>👥</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
