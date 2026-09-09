@@ -222,13 +222,25 @@ export async function fetchPdvOrders(organizationId?: string) {
 // ----------------------------------------------------
 // 5. CÉLULAS, MURAL, ESTUDOS E LANCHES
 // ----------------------------------------------------
-export async function fetchCellGroups(campusId?: string, organizationId?: string) {
+export async function fetchCellGroups(organizationId?: string, campusId?: string) {
   try {
-    const org = organizationId || getActiveOrganizationId();
-    const activeCampus = campusId || getActiveCampusId();
+    let effectiveOrg = organizationId;
+    let effectiveCampus = campusId;
+
+    // Suporte resiliente caso os argumentos venham invertidos (ex: campus_sede)
+    if (organizationId?.startsWith('campus_') || organizationId === 'all') {
+      effectiveCampus = organizationId;
+      effectiveOrg = campusId;
+    }
+
+    const org = effectiveOrg || getActiveOrganizationId() || 'org_default';
     const params = new URLSearchParams();
     if (org) params.set('organization_id', org);
-    if (activeCampus && activeCampus !== 'all') params.set('campus_id', activeCampus);
+    
+    // Impede categoricamente que identificadores de organização contaminem o filtro de campus_id
+    if (effectiveCampus && effectiveCampus !== 'all' && !effectiveCampus.startsWith('org_')) {
+      params.set('campus_id', effectiveCampus);
+    }
     const qs = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/cell-groups${qs}`);
     if (res.ok) return await res.json();
