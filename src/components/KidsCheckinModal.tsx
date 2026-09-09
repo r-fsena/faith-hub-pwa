@@ -314,7 +314,6 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                         outline: 'none',
                         boxSizing: 'border-box'
                       }}
-                      autoFocus
                     />
                   </div>
 
