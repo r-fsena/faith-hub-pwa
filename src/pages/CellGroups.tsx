@@ -258,6 +258,44 @@ export const CellGroups: React.FC = () => {
     }
   };
 
+  const formatChapterDateAndSchedule = (ch: Chapter, idx: number) => {
+    let raw = (ch.scheduled_date || '').trim();
+    let validDate: Date | null = null;
+
+    if (raw && !raw.startsWith('0000') && raw !== 'null' && raw !== 'undefined') {
+      const clean = raw.split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const testD = new Date(y, m, d);
+        if (!isNaN(testD.getTime())) {
+          validDate = testD;
+        }
+      }
+    }
+
+    // Se estiver zerado, null ou 00000: projeta datas a partir de hoje (+1 semana por capítulo)
+    if (!validDate) {
+      const today = new Date();
+      validDate = new Date(today);
+      validDate.setDate(today.getDate() + (idx * 7));
+    }
+
+    const day = String(validDate.getDate()).padStart(2, '0');
+    const month = String(validDate.getMonth() + 1).padStart(2, '0');
+    const year = validDate.getFullYear();
+    const dateFormatted = `${day}/${month}/${year}`;
+
+    // Adiciona horário do encontro se configurado na célula
+    const timeInfo = (selectedBook?.target_group_id && myGroup?.meeting_time) 
+      ? ` • ⏰ ${myGroup.meeting_time}` 
+      : '';
+
+    return `🗓️ ${dateFormatted}${timeInfo}`;
+  };
+
   useEffect(() => {
     // 1. Hidratação Instantânea por Cache Local (0ms):
     if (user?.email) {
@@ -1742,11 +1780,9 @@ export const CellGroups: React.FC = () => {
                                 <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.3 }}>
                                   {ch.title}
                                 </div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap', alignItems: 'center' }}>
                                   {ch.verse_reference && <span>📖 {ch.verse_reference}</span>}
-                                  {ch.scheduled_date && (
-                                    <span>🗓️ {ch.scheduled_date.split('-').reverse().slice(0, 2).join('/')}</span>
-                                  )}
+                                  <span>{formatChapterDateAndSchedule(ch, ch.chapter_number ? ch.chapter_number - 1 : 0)}</span>
                                 </div>
                               </div>
                             </div>
