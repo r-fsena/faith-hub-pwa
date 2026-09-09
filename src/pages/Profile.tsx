@@ -4,7 +4,9 @@ import { useBranding } from '../context/BrandingContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
-import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
+import { KidsCheckinModal } from '../components/KidsCheckinModal';
+import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
+import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { checkIsMasterOrAdmin } from '../utils/roles';
@@ -155,10 +157,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
   // Modais de Edição & Operacional
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
-  const [isOperationalMenuOpen, setIsOperationalMenuOpen] = useState(false);
+  // Modais Operacionais Individuais
+  const [isKidsCheckinOpen, setIsKidsCheckinOpen] = useState(false);
+  const [isKidsCheckoutOpen, setIsKidsCheckoutOpen] = useState(false);
+  const [isKidsPagingOpen, setIsKidsPagingOpen] = useState(false);
   const [isEventScannerOpen, setIsEventScannerOpen] = useState(false);
-  const [kidsInitialTab, setKidsInitialTab] = useState<'presence' | 'checkin' | 'calls'>('presence');
+  const [isOperationalMenuOpen, setIsOperationalMenuOpen] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(true);
@@ -920,11 +924,20 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           </button>
         </div>
 
-        {/* Modal / Painel do Educador Kids com initialTab */}
-        <KidsVolunteerPanel 
-          isOpen={isKidsVolunteerOpen} 
-          onClose={() => setIsKidsVolunteerOpen(false)}
-          initialTab={kidsInitialTab}
+        {/* Modais Operacionais Individuais (Desacoplados e Ergonômicos) */}
+        <KidsCheckinModal 
+          isOpen={isKidsCheckinOpen} 
+          onClose={() => setIsKidsCheckinOpen(false)} 
+        />
+
+        <KidsCheckoutModal 
+          isOpen={isKidsCheckoutOpen} 
+          onClose={() => setIsKidsCheckoutOpen(false)} 
+        />
+
+        <KidsPagingModal 
+          isOpen={isKidsPagingOpen} 
+          onClose={() => setIsKidsPagingOpen(false)} 
         />
 
         {/* Modal / Scanner de Ingressos e Portaria de Eventos */}
@@ -1067,9 +1080,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                         <button
                           type="button"
                           onClick={() => {
-                            setKidsInitialTab('checkin');
                             setIsOperationalMenuOpen(false);
-                            setIsKidsVolunteerOpen(true);
+                            setIsKidsCheckinOpen(true);
                           }}
                           style={{
                             background: '#2563eb',
@@ -1130,9 +1142,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                         <button
                           type="button"
                           onClick={() => {
-                            setKidsInitialTab('presence');
                             setIsOperationalMenuOpen(false);
-                            setIsKidsVolunteerOpen(true);
+                            setIsKidsCheckoutOpen(true);
                           }}
                           style={{
                             background: '#16a34a',
@@ -1255,9 +1266,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                         <button
                           type="button"
                           onClick={() => {
-                            setKidsInitialTab('calls');
                             setIsOperationalMenuOpen(false);
-                            setIsKidsVolunteerOpen(true);
+                            setIsKidsPagingOpen(true);
                           }}
                           style={{
                             background: '#d97706',
