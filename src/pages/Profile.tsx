@@ -7,6 +7,7 @@ import { BottomSheet } from '../components/BottomSheet';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
+import { checkIsMasterOrAdmin } from '../utils/roles';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -618,9 +619,15 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               </p>
 
               <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-                  ✓ Membro Ativo
-                </span>
+                {checkIsMasterOrAdmin(user.email, memberProfile.role) ? (
+                  <span style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#92400e', border: '1px solid #fcd34d', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 900 }}>
+                    👑 Administrador Master
+                  </span>
+                ) : (
+                  <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                    ✓ {memberProfile.role || 'Membro Ativo'}
+                  </span>
+                )}
                 <span style={{ background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
                   📍 {memberProfile.campus_name}
                 </span>
@@ -653,14 +660,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
             {/* Card Menu Operacional (Check-in Kids, Checkout, Portaria de Eventos) */}
             {(() => {
-              const userRole = (memberProfile.role || user?.role || '').toUpperCase();
-              const isAdminOrMaster = 
-                userRole.includes('ADMIN') || 
-                userRole.includes('MASTER') || 
-                userRole.includes('SUPER') || 
-                userRole.includes('PASTOR') ||
-                ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'ADMINISTRADOR'].includes(userRole);
-
+              const isAdminOrMaster = checkIsMasterOrAdmin(user?.email, memberProfile.role);
+              const userRole = (memberProfile.role || '').toUpperCase();
               const isLeader = isAdminOrMaster || ['LEADER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'VOLUNTEER', 'OBREIRO', 'STAFF'].includes(userRole);
 
               // Admins e Master Admins SEMPRE possuem acesso total e irrestrito (todas as 4 ferramentas)
@@ -942,14 +943,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           maxHeight="82vh"
         >
           {(() => {
-            const userRole = (memberProfile.role || user?.role || '').toUpperCase();
-            const isAdminOrMaster = 
-              userRole.includes('ADMIN') || 
-              userRole.includes('MASTER') || 
-              userRole.includes('SUPER') || 
-              userRole.includes('PASTOR') ||
-              ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'ADMINISTRADOR'].includes(userRole);
-
+            const isAdminOrMaster = checkIsMasterOrAdmin(user?.email, memberProfile.role);
+            const userRole = (memberProfile.role || '').toUpperCase();
             const isLeader = isAdminOrMaster || ['LEADER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'VOLUNTEER', 'OBREIRO', 'STAFF'].includes(userRole);
 
             // Admins e Master Admins SEMPRE possuem acesso total e irrestrito (todas as 4 ferramentas)
