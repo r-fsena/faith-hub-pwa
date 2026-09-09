@@ -56,6 +56,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
   const [selectedCell, setSelectedCell] = useState<CellGroupMapItem | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
+  const [mapReady, setMapReady] = useState(false);
 
   // Bloqueia o scroll da página enquanto o modal de mapa estiver aberto
   useEffect(() => {
@@ -120,13 +121,15 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
           const markersLayer = L.layerGroup().addTo(map);
           markersLayerRef.current = markersLayer;
           mapInstanceRef.current = map;
+          setMapReady(true);
         }
 
         if (mapInstanceRef.current) {
           mapInstanceRef.current.invalidateSize();
         }
-      }, 150);
+      }, 100);
     } else {
+      setMapReady(false);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -136,6 +139,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
 
     return () => {
       clearTimeout(timer);
+      setMapReady(false);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -236,7 +240,8 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
     }
-  }, [displayedCells, primaryColor, myGroupId, currentMemberCellId, isOpen]);
+    map.invalidateSize();
+  }, [displayedCells, primaryColor, myGroupId, currentMemberCellId, isOpen, mapReady]);
 
   // Geolocalização GPS do Usuário
   const handleLocateMe = () => {
