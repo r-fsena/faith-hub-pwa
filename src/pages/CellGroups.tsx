@@ -21,6 +21,7 @@ import {
   updateCellGroupDetails,
   fetchCurrentMember
 } from '../services/api';
+import { CellsMapView } from '../components/CellsMapView';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -60,8 +61,10 @@ interface CellGroup {
   id: string;
   name: string;
   network?: string;
+  focus?: string;
   leader?: string;
   leader_name?: string;
+  leader_id?: string;
   host?: string;
   neighborhood?: string;
   meeting_day?: string;
@@ -71,6 +74,8 @@ interface CellGroup {
   whatsapp_contact?: string;
   address?: string;
   description?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 interface CellPost {
@@ -172,6 +177,7 @@ export const CellGroups: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('ALL');
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
+  const [discoverViewMode, setDiscoverViewMode] = useState<'list' | 'map'>('list');
 
   // Portal State
   const [posts, setPosts] = useState<CellPost[]>([]);
@@ -677,6 +683,29 @@ export const CellGroups: React.FC = () => {
     const userId = user?.userId || 'me';
     await requestJoinCell(userId, id, user?.email);
     alert('Solicitação enviada com sucesso ao líder da célula!');
+  };
+
+  const handleEnterCell = async (cell: CellGroup) => {
+    setMyGroupId(cell.id);
+    if (user?.email) {
+      localStorage.setItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`, cell.id);
+    }
+    const isLeaderOfThisCell = Boolean(
+      (cell.leader_id && currentMember?.id && cell.leader_id === currentMember.id) ||
+      (cell.leader_name && user?.name && cell.leader_name.toLowerCase() === user.name.toLowerCase()) ||
+      (cell.leader && user?.name && cell.leader.toLowerCase() === user.name.toLowerCase()) ||
+      (user?.email && user.email.toLowerCase() === 'rfsena@icloud.com')
+    );
+    setIsCellLeader(isLeaderOfThisCell || ['ADMIN', 'PASTOR', 'SUPERADMIN', 'LEADER', 'LÍDER'].includes((currentMember?.role || '').toUpperCase()));
+    setViewMode('portal');
+    await loadGroupSpecifics(cell.id, cells);
+  };
+
+  const handleOpenWhatsApp = (cell: CellGroup) => {
+    const phone = (cell.whatsapp || cell.whatsapp_contact || '').replace(/\D/g, '');
+    if (!phone) return;
+    const cleanNumber = phone.startsWith('55') ? phone : `55${phone}`;
+    window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(`Olá, gostaria de informações sobre a célula ${cell.name}!`)}`, '_blank');
   };
 
   const handleAddPost = async (e: React.FormEvent) => {
@@ -2663,6 +2692,64 @@ export const CellGroups: React.FC = () => {
             MODO 2: EXPLORAR / DISCOVER CÉLULAS
             ======================================================== */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Seletor de Modo de Visualização: Lista vs Mapa */}
+          <div style={{
+            display: 'flex',
+            background: '#e2e8f0',
+            padding: '4px',
+            borderRadius: '14px',
+            gap: '6px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setDiscoverViewMode('list')}
+              style={{
+                flex: 1,
+                padding: '9px 12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: discoverViewMode === 'list' ? '#ffffff' : 'transparent',
+                color: discoverViewMode === 'list' ? 'var(--text-main)' : 'var(--text-secondary)',
+                fontWeight: discoverViewMode === 'list' ? 800 : 600,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                boxShadow: discoverViewMode === 'list' ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>📋</span>
+              <span>Lista ({filteredCells.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDiscoverViewMode('map')}
+              style={{
+                flex: 1,
+                padding: '9px 12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: discoverViewMode === 'map' ? '#ffffff' : 'transparent',
+                color: discoverViewMode === 'map' ? 'var(--text-main)' : 'var(--text-secondary)',
+                fontWeight: discoverViewMode === 'map' ? 800 : 600,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                boxShadow: discoverViewMode === 'map' ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>🗺️</span>
+              <span>Ver no Mapa</span>
+            </button>
+          </div>
+
           <input
             type="text"
             className="input-pwa"
@@ -2671,7 +2758,19 @@ export const CellGroups: React.FC = () => {
             onChange={e => setSearchTerm(e.target.value)}
           />
 
-          {filteredCells.length === 0 ? (
+          {discoverViewMode === 'map' ? (
+            <CellsMapView
+              cells={filteredCells}
+              primaryColor={branding?.primary_color || '#0f766e'}
+              secondaryColor={branding?.secondary_color || '#14b8a6'}
+              myGroupId={myGroupId}
+              currentMemberCellId={currentMember?.cell_group_id}
+              onRequestJoin={(cell) => handleRequestJoin(cell.id)}
+              isPendingJoin={(cellId) => pendingGroupId === cellId}
+              onOpenWhatsApp={handleOpenWhatsApp}
+              onEnterCell={handleEnterCell}
+            />
+          ) : filteredCells.length === 0 ? (
             <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>👥</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
