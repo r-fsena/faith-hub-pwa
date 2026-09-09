@@ -7,7 +7,6 @@ import { VisitorModal } from '../components/VisitorModal';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsPassCard } from '../components/KidsPassCard';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
-import { checkIsMasterOrAdmin } from '../utils/roles';
 import { HeroCarousel } from '../components/HeroCarousel';
 import { HighlightNoticeModal } from '../components/HighlightNoticeModal';
 import { 
@@ -263,67 +262,6 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* Meus Filhos no Kids / Chamador de Pais em Tempo Real */}
       <KidsPassCard />
-
-      {/* Banner de Acesso Rápido ao Menu Operacional para Administradores e Voluntários */}
-      {checkIsMasterOrAdmin(user?.email) && (
-        <div 
-          onClick={() => onNavigate('profile')}
-          style={{
-            background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #115e59 100%)',
-            borderRadius: '20px',
-            padding: '16px 20px',
-            color: '#ffffff',
-            boxShadow: '0 8px 20px rgba(15, 118, 110, 0.28)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.4rem'
-            }}>
-              ⚡
-            </div>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.66rem', fontWeight: 900, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.05em' }}>
-                <span>👑</span> Ferramentas de Campo
-              </div>
-              <div style={{ fontSize: '0.98rem', fontWeight: 900, marginTop: '2px' }}>
-                Menu Operacional (Master)
-              </div>
-              <div style={{ fontSize: '0.72rem', color: '#ccfbf1', marginTop: '1px' }}>
-                Check-in Kids, Checkout & Portaria de Eventos
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            style={{
-              background: '#ffffff',
-              color: '#0f766e',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 14px',
-              fontSize: '0.78rem',
-              fontWeight: 900,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}
-          >
-            Abrir →
-          </button>
-        </div>
-      )}
 
       {/* Grid de 8 Serviços Ministeriais em 4 Colunas */}
       <div>
