@@ -19,6 +19,7 @@ export interface CellGroupMapItem {
   description?: string;
   latitude?: string | number | null;
   longitude?: string | number | null;
+  distanceKm?: number;
 }
 
 interface CellsMapViewProps {
@@ -33,6 +34,19 @@ interface CellsMapViewProps {
   isPendingJoin?: (cellId: string) => boolean;
   onOpenWhatsApp?: (cell: CellGroupMapItem) => void;
   onEnterCell?: (cell: CellGroupMapItem) => void;
+}
+
+// Cálculo da distância em Km entre dois pontos geográficos (Fórmula de Haversine)
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Raio da Terra em km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
 }
 
 export const CellsMapView: React.FC<CellsMapViewProps> = ({
@@ -51,12 +65,14 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const userMarkerRef = useRef<L.CircleMarker | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   const [selectedCell, setSelectedCell] = useState<CellGroupMapItem | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
   const [mapReady, setMapReady] = useState(false);
+  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
+  const [locationInfo, setLocationInfo] = useState<string | null>(null);
 
   // Bloqueia o scroll da página enquanto o modal de mapa estiver aberto
   useEffect(() => {
@@ -66,6 +82,8 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
       document.body.style.overflow = '';
       setSelectedCell(null);
       setMapSearch('');
+      setLocationInfo(null);
+      setUserCoords(null);
     }
     return () => {
       document.body.style.overflow = '';
@@ -79,18 +97,32 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
     return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
   });
 
-  // Filtro de busca dentro do próprio mapa (por bairro ou nome)
-  const displayedCells = validCells.filter(c => {
-    if (!mapSearch.trim()) return true;
-    const query = mapSearch.toLowerCase();
-    return (
-      c.name?.toLowerCase().includes(query) ||
-      c.neighborhood?.toLowerCase().includes(query) ||
-      c.network?.toLowerCase().includes(query) ||
-      c.leader?.toLowerCase().includes(query) ||
-      c.leader_name?.toLowerCase().includes(query)
-    );
-  });
+  // Filtro de busca e ordenação por distância caso o GPS esteja ativo
+  const displayedCells = validCells
+    .filter(c => {
+      if (!mapSearch.trim()) return true;
+      const query = mapSearch.toLowerCase();
+      return (
+        c.name?.toLowerCase().includes(query) ||
+        c.neighborhood?.toLowerCase().includes(query) ||
+        c.network?.toLowerCase().includes(query) ||
+        c.leader?.toLowerCase().includes(query) ||
+        c.leader_name?.toLowerCase().includes(query)
+      );
+    })
+    .map(c => {
+      if (userCoords) {
+        const dist = getDistanceFromLatLonInKm(userCoords[0], userCoords[1], Number(c.latitude), Number(c.longitude));
+        return { ...c, distanceKm: dist };
+      }
+      return c;
+    })
+    .sort((a, b) => {
+      if (userCoords && a.distanceKm !== undefined && b.distanceKm !== undefined) {
+        return a.distanceKm - b.distanceKm;
+      }
+      return 0;
+    });
 
   // Inicializa o mapa Leaflet quando o modal abrir
   useEffect(() => {
@@ -134,6 +166,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markersLayerRef.current = null;
+        userMarkerRef.current = null;
       }
     }
 
@@ -144,6 +177,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markersLayerRef.current = null;
+        userMarkerRef.current = null;
       }
     };
   }, [isOpen]);
@@ -152,13 +186,18 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
   useEffect(() => {
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
-    if (!map || !markersLayer || !isOpen) return;
+    if (!map || !markersLayer || !isOpen || !mapReady) return;
 
     markersLayer.clearLayers();
 
     if (displayedCells.length === 0) return;
 
     const bounds = L.latLngBounds([]);
+
+    // Se o usuário tiver localização ativa, inclui o ponto dele nos limites do mapa
+    if (userCoords) {
+      bounds.extend(userCoords);
+    }
 
     displayedCells.forEach(cell => {
       const lat = Number(cell.latitude);
@@ -241,9 +280,9 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
     }
     map.invalidateSize();
-  }, [displayedCells, primaryColor, myGroupId, currentMemberCellId, isOpen, mapReady]);
+  }, [displayedCells, primaryColor, myGroupId, currentMemberCellId, isOpen, mapReady, userCoords]);
 
-  // Geolocalização GPS do Usuário
+  // Geolocalização GPS do Usuário com suporte a grandes distâncias e enquadramento conjunto
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -254,34 +293,107 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
     }
 
     setIsLocating(true);
+    setLocationInfo(null);
 
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        setIsLocating(false);
-        const userLatLng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+    const onLocationSuccess = (pos: GeolocationPosition) => {
+      setIsLocating(false);
+      const userLatLng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+      setUserCoords(userLatLng);
 
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLatLng(userLatLng);
-        } else {
-          userMarkerRef.current = L.circleMarker(userLatLng, {
-            radius: 10,
-            fillColor: '#3b82f6',
-            color: '#ffffff',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 0.9
-          }).addTo(map);
+      // Marcador de Ponto Azul com Radar Pulsante
+      const userIcon = L.divIcon({
+        className: 'custom-user-location-pin',
+        html: `
+          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+            <div style="
+              position: absolute;
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              background: rgba(37, 99, 235, 0.35);
+              animation: pulseRadar 2s infinite ease-out;
+            "></div>
+            <div style="
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background: #2563eb;
+              border: 3.5px solid #ffffff;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+              position: relative;
+              z-index: 2;
+            "></div>
+          </div>
+        `,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22]
+      });
+
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng(userLatLng);
+      } else {
+        userMarkerRef.current = L.marker(userLatLng, { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+      }
+
+      userMarkerRef.current.bindTooltip('📍 Você está aqui', {
+        permanent: true,
+        direction: 'top',
+        className: 'user-location-tooltip',
+        offset: [0, -22]
+      }).openTooltip();
+
+      // Encontra a célula mais próxima para informar a distância
+      let closest: { cell: CellGroupMapItem; dist: number } | null = null;
+      validCells.forEach(c => {
+        const cLat = Number(c.latitude);
+        const cLng = Number(c.longitude);
+        if (!isNaN(cLat) && !isNaN(cLng)) {
+          const d = getDistanceFromLatLonInKm(userLatLng[0], userLatLng[1], cLat, cLng);
+          if (!closest || d < closest.dist) {
+            closest = { cell: c, dist: d };
+          }
         }
+      });
 
+      if (closest) {
+        setLocationInfo(`Você está a ${closest.dist} km da célula mais próxima (${closest.cell.name})`);
+      }
+
+      // IMPORTANTE: Enquadra TANTO o usuário QUANTO as células no mapa
+      const bounds = L.latLngBounds([userLatLng]);
+      validCells.forEach(c => {
+        const cLat = Number(c.latitude);
+        const cLng = Number(c.longitude);
+        if (!isNaN(cLat) && !isNaN(cLng)) {
+          bounds.extend([cLat, cLng]);
+        }
+      });
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [80, 80], maxZoom: 14 });
+      } else {
         map.flyTo(userLatLng, 14, { animate: true, duration: 0.8 });
-      },
-      err => {
-        setIsLocating(false);
-        console.warn('Erro ao obter geolocalização:', err);
-        alert('Não foi possível obter sua localização. Verifique as permissões de GPS.');
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+      }
+      map.invalidateSize();
+    };
+
+    const onLocationError = (err: any) => {
+      console.warn('GPS com alta precisão falhou, tentando modo de rede celular/wifi...', err);
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        err2 => {
+          setIsLocating(false);
+          console.warn('Erro definitivo de localização:', err2);
+          alert('Não foi possível obter sua localização. Verifique as permissões de GPS no seu navegador.');
+        },
+        { enableHighAccuracy: false, timeout: 12000 }
+      );
+    };
+
+    navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, {
+      enableHighAccuracy: true,
+      timeout: 8000
+    });
   };
 
   const openInNavigationApp = (cell: CellGroupMapItem) => {
@@ -315,6 +427,23 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
         @keyframes slideUpCard {
           from { transform: translateY(100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulseRadar {
+          0% { transform: scale(0.6); opacity: 0.95; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        .user-location-tooltip {
+          background: #1e293b !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255,255,255,0.2) !important;
+          border-radius: 8px !important;
+          font-size: 0.72rem !important;
+          font-weight: 800 !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+          padding: 4px 8px !important;
+        }
+        .user-location-tooltip::before {
+          border-top-color: #1e293b !important;
         }
         .cells-horizontal-slider::-webkit-scrollbar {
           display: none;
@@ -396,10 +525,10 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             disabled={isLocating}
             style={{
               pointerEvents: 'auto',
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: userCoords ? '#2563eb' : 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(10px)',
               color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: userCoords ? '1.5px solid #60a5fa' : '1px solid rgba(255,255,255,0.15)',
               borderRadius: '16px',
               padding: '10px 14px',
               fontSize: '0.82rem',
@@ -408,11 +537,12 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               alignItems: 'center',
               gap: '6px',
               cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.25)'
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              transition: 'all 0.2s ease'
             }}
           >
             <span>{isLocating ? '⏳' : '📍'}</span>
-            <span>{isLocating ? '...' : 'GPS'}</span>
+            <span>{isLocating ? 'Localizando...' : userCoords ? 'Meu GPS ✓' : 'GPS'}</span>
           </button>
         </div>
 
@@ -439,6 +569,38 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             }}
           />
         </div>
+
+        {/* Banner Informativo de Distância após o GPS */}
+        {locationInfo && (
+          <div style={{
+            pointerEvents: 'auto',
+            background: 'rgba(30, 41, 59, 0.92)',
+            backdropFilter: 'blur(12px)',
+            color: '#f8fafc',
+            border: '1px solid rgba(96, 165, 250, 0.4)',
+            borderRadius: '14px',
+            padding: '8px 14px',
+            fontSize: '0.74rem',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.95rem' }}>📍</span>
+              <span>{locationInfo}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLocationInfo(null)}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ========================================================
@@ -480,6 +642,19 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                 {selectedCell.neighborhood && (
                   <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b' }}>
                     📍 {selectedCell.neighborhood}
+                  </span>
+                )}
+                {selectedCell.distanceKm !== undefined && (
+                  <span style={{
+                    fontSize: '0.66rem',
+                    fontWeight: 900,
+                    color: '#2563eb',
+                    background: '#eff6ff',
+                    padding: '3px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid #bfdbfe'
+                  }}>
+                    🚗 {selectedCell.distanceKm} km de você
                   </span>
                 )}
               </div>
@@ -683,9 +858,16 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   maxWidth: '210px'
                 }}
               >
-                <span style={{ fontSize: '0.64rem', fontWeight: 900, color: primaryColor, textTransform: 'uppercase' }}>
-                  {cell.network || cell.focus || 'Célula'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                  <span style={{ fontSize: '0.64rem', fontWeight: 900, color: primaryColor, textTransform: 'uppercase' }}>
+                    {cell.network || cell.focus || 'Célula'}
+                  </span>
+                  {cell.distanceKm !== undefined && (
+                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: '#2563eb', background: '#eff6ff', padding: '1px 5px', borderRadius: '6px' }}>
+                      {cell.distanceKm} km
+                    </span>
+                  )}
+                </div>
                 <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {cell.name}
                 </span>
