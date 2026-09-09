@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { BottomSheet } from './BottomSheet';
 import { KidsBadgeModal } from './KidsBadgeModal';
 import { KidsQrScannerModal } from './KidsQrScannerModal';
+import { getAuthHeaders } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -119,7 +120,10 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
 
   const loadFamilies = async (query = '') => {
     try {
-      const res = await fetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`, {
+        headers
+      });
       if (res.ok) {
         const json = await res.json();
         setFamilies(json.data || []);
