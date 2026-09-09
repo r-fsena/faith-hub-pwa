@@ -654,13 +654,24 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             {/* Card Menu Operacional (Check-in Kids, Checkout, Portaria de Eventos) */}
             {(() => {
               const userRole = (memberProfile.role || user?.role || '').toUpperCase();
-              const isLeader = ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(userRole);
-              const permissions = (memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
-                ? memberProfile.operational_permissions
-                : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []);
+              const isAdminOrMaster = 
+                userRole.includes('ADMIN') || 
+                userRole.includes('MASTER') || 
+                userRole.includes('SUPER') || 
+                userRole.includes('PASTOR') ||
+                ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'ADMINISTRADOR'].includes(userRole);
+
+              const isLeader = isAdminOrMaster || ['LEADER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'VOLUNTEER', 'OBREIRO', 'STAFF'].includes(userRole);
+
+              // Admins e Master Admins SEMPRE possuem acesso total e irrestrito (todas as 4 ferramentas)
+              const permissions = isAdminOrMaster 
+                ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls']
+                : ((memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
+                    ? memberProfile.operational_permissions
+                    : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []));
 
               const hasAny = permissions.length > 0;
-              if (!hasAny && !isLeader) return null;
+              if (!hasAny && !isAdminOrMaster && !isLeader) return null;
 
               return (
                 <div 
@@ -691,7 +702,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                       Menu Operacional
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#ccfbf1', marginTop: '2px' }}>
-                      {permissions.length} {permissions.length === 1 ? 'ferramenta liberada' : 'ferramentas liberadas'} para seu perfil
+                      {isAdminOrMaster 
+                        ? '👑 Acesso Master Completo (Todas as ferramentas)'
+                        : `${permissions.length} ${permissions.length === 1 ? 'ferramenta liberada' : 'ferramentas liberadas'} para seu perfil`}
                     </div>
                   </div>
 
@@ -930,10 +943,21 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
         >
           {(() => {
             const userRole = (memberProfile.role || user?.role || '').toUpperCase();
-            const isLeader = ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(userRole);
-            const permissions = (memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
-              ? memberProfile.operational_permissions
-              : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []);
+            const isAdminOrMaster = 
+              userRole.includes('ADMIN') || 
+              userRole.includes('MASTER') || 
+              userRole.includes('SUPER') || 
+              userRole.includes('PASTOR') ||
+              ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'ADMINISTRADOR'].includes(userRole);
+
+            const isLeader = isAdminOrMaster || ['LEADER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'VOLUNTEER', 'OBREIRO', 'STAFF'].includes(userRole);
+
+            // Admins e Master Admins SEMPRE possuem acesso total e irrestrito (todas as 4 ferramentas)
+            const permissions = isAdminOrMaster 
+              ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls']
+              : ((memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
+                  ? memberProfile.operational_permissions
+                  : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []));
 
             const canKidsCheckin = permissions.includes('kids_checkin');
             const canKidsCheckout = permissions.includes('kids_checkout');
@@ -960,11 +984,32 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   }}>
                     ⚡
                   </div>
+
+                  {isAdminOrMaster && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                      color: '#92400e',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '0.72rem',
+                      fontWeight: 900,
+                      marginBottom: '6px',
+                      border: '1px solid #fcd34d'
+                    }}>
+                      <span>👑</span> Acesso Total (Administrador Master)
+                    </div>
+                  )}
+
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
                     Menu Operacional
                   </h3>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
-                    Ferramentas de campo ativas para sua escala ministerial
+                    {isAdminOrMaster 
+                      ? 'Acesso irrestrito a todas as ferramentas e operações ministeriais'
+                      : 'Ferramentas de campo ativas para sua escala ministerial'}
                   </p>
                 </div>
 
