@@ -53,10 +53,14 @@ export async function fetchActiveBroadcast(organizationId?: string, campusId?: s
 // ----------------------------------------------------
 // 2. DEVOCIONAIS
 // ----------------------------------------------------
-export async function fetchTodayDevotional(organizationId?: string) {
+export async function fetchTodayDevotional(organizationId?: string, campusId?: string) {
   try {
     const org = organizationId || getActiveOrganizationId();
-    const query = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const campus = campusId || getActiveCampusId();
+    const params = new URLSearchParams();
+    if (org) params.append('organization_id', org);
+    if (campus) params.append('campus_id', campus);
+    const query = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/devotionals/today${query}`);
     if (res.ok) return await res.json();
   } catch (e) {
@@ -65,10 +69,14 @@ export async function fetchTodayDevotional(organizationId?: string) {
   return null;
 }
 
-export async function fetchDevotionals(organizationId?: string) {
+export async function fetchDevotionals(organizationId?: string, campusId?: string) {
   try {
     const org = organizationId || getActiveOrganizationId();
-    const query = org ? `?organization_id=${encodeURIComponent(org)}` : '';
+    const campus = campusId || getActiveCampusId();
+    const params = new URLSearchParams();
+    if (org) params.append('organization_id', org);
+    if (campus) params.append('campus_id', campus);
+    const query = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/devotionals${query}`);
     if (res.ok) return await res.json();
   } catch (e) {

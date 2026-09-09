@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { fetchDevotionals, fetchTodayDevotional } from '../services/api';
+import { fetchDevotionals, fetchTodayDevotional, getActiveCampusId } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
 
 export interface DevotionalItem {
@@ -25,10 +25,13 @@ export interface DevotionalItem {
 export const Devotionals: React.FC = () => {
   const { branding } = useBranding();
   const currentOrgId = branding.organization_id || 'org_default';
+  const [currentCampusId, setCurrentCampusId] = useState<string>(() => getActiveCampusId());
 
   const [allDevotionals, setAllDevotionals] = useState<DevotionalItem[]>(() => {
     try {
-      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
+      const campus = getActiveCampusId();
+      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}_${campus || 'all'}`) ||
+                    localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -37,7 +40,9 @@ export const Devotionals: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
+      const campus = getActiveCampusId();
+      const saved = localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}_${campus || 'all'}`) ||
+                    localStorage.getItem(`faithhub_cached_devotionals_${currentOrgId}`);
       return !saved || JSON.parse(saved).length === 0;
     } catch {
       return true;
@@ -80,8 +85,17 @@ export const Devotionals: React.FC = () => {
   const [showVideoEmbed, setShowVideoEmbed] = useState<boolean>(false);
 
   useEffect(() => {
+    const handleCampusChange = (e: any) => {
+      const newCampus = e.detail?.campusId || getActiveCampusId();
+      setCurrentCampusId(newCampus);
+    };
+    window.addEventListener('pwa-campus-changed', handleCampusChange);
+    return () => window.removeEventListener('pwa-campus-changed', handleCampusChange);
+  }, []);
+
+  useEffect(() => {
     loadData();
-  }, [currentOrgId]);
+  }, [currentOrgId, currentCampusId]);
 
   // Para o player de música se o usuário fechar o leitor do estudo
   useEffect(() => {
@@ -228,8 +242,8 @@ export const Devotionals: React.FC = () => {
     try {
       const todayStr = getTodayDateString();
       const [todayRes, listRes] = await Promise.all([
-        fetchTodayDevotional(currentOrgId),
-        fetchDevotionals(currentOrgId)
+        fetchTodayDevotional(currentOrgId, currentCampusId),
+        fetchDevotionals(currentOrgId, currentCampusId)
       ]);
 
       const itemsMap = new Map<string, DevotionalItem>();
@@ -252,9 +266,10 @@ export const Devotionals: React.FC = () => {
         return (a.raw_date || '').localeCompare(b.raw_date || '');
       });
 
+      const cacheKey = `faithhub_cached_devotionals_${currentOrgId}_${currentCampusId || 'all'}`;
       if (list.length > 0) {
         setAllDevotionals(list);
-        localStorage.setItem(`faithhub_cached_devotionals_${currentOrgId}`, JSON.stringify(list));
+        localStorage.setItem(cacheKey, JSON.stringify(list));
       } else {
         setAllDevotionals([]);
       }
