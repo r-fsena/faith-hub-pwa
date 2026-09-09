@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { fetchPdvProducts } from '../services/api';
+import { BottomSheet } from '../components/BottomSheet';
 
 interface Product {
   id: string;
@@ -234,33 +235,85 @@ export const Store: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="product-grid">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {filteredProducts.map((prod) => (
-              <div 
-                key={prod.id} 
-                className="product-card" 
-                onClick={() => handleOpenProductModal(prod)}
-                style={{ cursor: 'pointer' }}
-              >
-                {prod.image_urls && prod.image_urls[0] ? (
-                  <img src={prod.image_urls[0]} alt={prod.name} className="product-image" />
-                ) : (
-                  <div className="product-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    Sem Foto
+                <div
+                  key={prod.id}
+                  onClick={() => handleOpenProductModal(prod)}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '10px 14px',
+                    border: '1px solid var(--panel-border)',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {/* Miniatura ou Ícone à esquerda */}
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    border: '1px solid #f1f5f9'
+                  }}>
+                    {prod.image_urls && prod.image_urls[0] ? (
+                      <img
+                        src={prod.image_urls[0]}
+                        alt={prod.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: '1.2rem' }}>🛍️</span>
+                    )}
                   </div>
-                )}
 
-                <div className="product-info">
-                  <span style={{ fontSize: '0.64rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                    {prod.category}
-                  </span>
-                  <h4 className="product-title">{prod.name}</h4>
-                  
-                  <div className="product-price">
-                    <span>R$ {prod.price.toFixed(2).replace('.', ',')}</span>
-                    <button 
-                      type="button" 
-                      className="add-cart-mini-btn" 
+                  {/* Informações do Produto */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '0.66rem',
+                      fontWeight: 800,
+                      color: 'var(--accent-primary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}>
+                      {prod.category}
+                    </div>
+                    <div style={{
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      color: 'var(--text-main)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      lineHeight: 1.3
+                    }}>
+                      {prod.name}
+                    </div>
+                    <div style={{
+                      fontSize: '0.84rem',
+                      fontWeight: 900,
+                      color: '#059669',
+                      marginTop: '2px'
+                    }}>
+                      R$ {prod.price.toFixed(2).replace('.', ',')}
+                    </div>
+                  </div>
+
+                  {/* Ações e Seta à direita */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         addItem({
@@ -272,14 +325,42 @@ export const Store: React.FC = () => {
                         });
                       }}
                       title="Adicionar Imediatamente"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '10px',
+                        background: 'var(--accent-primary-light)',
+                        color: 'var(--accent-primary)',
+                        border: 'none',
+                        fontSize: '1.1rem',
+                        fontWeight: 900,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
                     >
                       +
                     </button>
+
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: '#f8fafc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.92rem',
+                      fontWeight: 700
+                    }}>
+                      ›
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )}
         </>
       ) : (
@@ -346,30 +427,73 @@ export const Store: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Detalhes do Produto com Observação */}
+      {/* Modal de Detalhes do Produto com Observação (BottomSheet Padrão Devocionais) */}
       {selectedProductModal && (
-        <div className="drawer-overlay" onClick={() => setSelectedProductModal(null)}>
-          <div className="drawer-container" onClick={e => e.stopPropagation()}>
-            <div className="drawer-handle" />
+        <BottomSheet
+          isOpen={Boolean(selectedProductModal)}
+          onClose={() => setSelectedProductModal(null)}
+          maxHeight="92dvh"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+              <div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  color: 'var(--accent-primary)',
+                  background: 'var(--accent-primary-light)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  textTransform: 'uppercase'
+                }}>
+                  {selectedProductModal.category}
+                </span>
+                <h2 style={{ fontSize: '1.20rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+                  {selectedProductModal.name}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedProductModal(null)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.90rem',
+                  flexShrink: 0
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
             {selectedProductModal.image_urls && selectedProductModal.image_urls[0] && (
-              <img 
-                src={selectedProductModal.image_urls[0]} 
-                alt={selectedProductModal.name} 
-                style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '16px' }}
+              <img
+                src={selectedProductModal.image_urls[0]}
+                alt={selectedProductModal.name}
+                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: '1px solid #e2e8f0' }}
               />
             )}
 
-            <div>
-              <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                {selectedProductModal.category}
-              </span>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', marginTop: '2px' }}>
-                {selectedProductModal.name}
-              </h2>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
-                {selectedProductModal.description || 'Item fresco preparado com carinho.'}
-              </p>
+            <div style={{
+              background: '#f8fafc',
+              padding: '14px',
+              borderRadius: '14px',
+              border: '1px solid #e2e8f0',
+              fontSize: '0.86rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.5
+            }}>
+              {selectedProductModal.description || 'Item selecionado com carinho no catálogo da comunidade.'}
             </div>
 
             {/* Campo de Observação por Item */}
@@ -377,34 +501,35 @@ export const Store: React.FC = () => {
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
                 Observação para a Cozinha / Balcão (Opcional)
               </label>
-              <input 
-                type="text" 
-                className="input-pwa" 
+              <input
+                type="text"
+                className="input-pwa"
                 placeholder="Ex: Sem cebola, embalar para presente, bem passado..."
                 value={itemObs}
                 onChange={e => setItemObs(e.target.value)}
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--panel-border)', paddingTop: '14px' }}>
+            {/* Rodapé com Preço e Botão */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--panel-border)', paddingTop: '14px', marginTop: '4px' }}>
               <div>
                 <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', display: 'block' }}>Preço Unitário</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#059669' }}>
+                <span style={{ fontSize: '1.30rem', fontWeight: 900, color: '#059669' }}>
                   R$ {selectedProductModal.price.toFixed(2).replace('.', ',')}
                 </span>
               </div>
 
-              <button 
-                type="button" 
-                className="btn-pwa-primary" 
-                style={{ width: 'auto', padding: '12px 24px' }}
+              <button
+                type="button"
+                className="btn-pwa-primary"
+                style={{ width: 'auto', padding: '14px 22px', fontSize: '0.88rem', fontWeight: 800 }}
                 onClick={handleConfirmAddToCart}
               >
                 + Adicionar ao Pedido
               </button>
             </div>
           </div>
-        </div>
+        </BottomSheet>
       )}
 
     </div>

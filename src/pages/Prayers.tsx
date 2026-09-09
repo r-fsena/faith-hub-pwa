@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchPrayers, createPrayerRequest, prayForRequest, submitPrayerTestimony } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
+import { BottomSheet } from '../components/BottomSheet';
 
 interface PrayerRequest {
   id: string;
@@ -34,6 +35,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<'wall' | 'my_prayers' | 'testimonies'>('wall');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
+  const [selectedPrayerModal, setSelectedPrayerModal] = useState<PrayerRequest | null>(null);
 
   // Modal Novo Pedido
   const [showModal, setShowModal] = useState(false);
@@ -386,140 +388,135 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {displayedPrayers.map(item => {
             const isMyPrayer = user && item.user_id === user.userId;
 
             return (
               <div
                 key={item.id}
+                onClick={() => setSelectedPrayerModal(item)}
                 style={{
                   background: '#ffffff',
-                  borderRadius: '18px',
-                  padding: '16px',
+                  borderRadius: '16px',
+                  padding: '12px 14px',
                   border: item.privacy === 'CONFIDENTIAL' ? '1.5px solid #fecdd3' : '1px solid var(--panel-border)',
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  position: 'relative'
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                {/* Header do Card */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)', color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.90rem' }}>
-                      {item.privacy === 'CONFIDENTIAL' ? '🔒' : (categoryIcons[item.category] || '🙏')}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>{item.author}</span>
-                        {isMyPrayer && (
-                          <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: '4px' }}>
-                            Você
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                        {item.time_ago}
-                      </div>
-                    </div>
-                  </div>
+                {/* Ícone / Avatar à esquerda */}
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
+                  color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1.05rem',
+                  flexShrink: 0
+                }}>
+                  {item.privacy === 'CONFIDENTIAL' ? '🔒' : (categoryIcons[item.category] || '🙏')}
+                </div>
 
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    {item.privacy === 'CONFIDENTIAL' && (
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#e11d48', background: '#ffe4e6', padding: '3px 8px', borderRadius: '6px' }}>
-                        🔒 Pastoral
+                {/* Conteúdo resumido no centro */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.author}
+                    </span>
+                    {isMyPrayer && (
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#eff6ff', color: '#2563eb', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>
+                        Você
                       </span>
                     )}
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-primary)', background: 'var(--accent-primary-light)', padding: '3px 8px', borderRadius: '6px' }}>
-                      {item.category}
+                    <span style={{
+                      fontSize: '0.66rem',
+                      fontWeight: 700,
+                      color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
+                      background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      flexShrink: 0
+                    }}>
+                      {item.privacy === 'CONFIDENTIAL' ? '🔒 Pastoral' : item.category}
                     </span>
+                  </div>
+
+                  {/* Resumo do pedido */}
+                  <div style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.3
+                  }}>
+                    {item.content}
+                  </div>
+
+                  {/* Metadados: orando, tempo e badges de resposta/testemunho */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px', flexWrap: 'wrap' }}>
+                    <span>👥 {item.praying_count} {item.praying_count === 1 ? 'orando' : 'orando'}</span>
+                    <span>• {item.time_ago}</span>
+                    {item.pastoral_response && (
+                      <span style={{ color: '#6d28d9', fontWeight: 700 }}>💬 Com resposta pastoral</span>
+                    )}
+                    {item.testimony_text && (
+                      <span style={{ color: '#059669', fontWeight: 700 }}>✨ Testemunho</span>
+                    )}
                   </div>
                 </div>
 
-                {/* Conteúdo do Pedido */}
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-main)', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
-                  "{item.content}"
-                </p>
+                {/* Ações e Seta à direita */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  {item.privacy !== 'CONFIDENTIAL' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePraying(item.id);
+                      }}
+                      style={{
+                        background: item.is_praying ? '#ecfdf5' : '#f8fafc',
+                        color: item.is_praying ? '#059669' : 'var(--text-secondary)',
+                        border: item.is_praying ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                        padding: '6px 10px',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>{item.is_praying ? '✓' : '🙏'}</span>
+                      <span>{item.is_praying ? 'Orando' : 'Orar'}</span>
+                    </button>
+                  )}
 
-                {/* RESPOSTA PASTORAL (SE HOUVER) */}
-                {item.pastoral_response && (
-                  <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', borderRadius: '12px', padding: '12px', border: '1px solid #ddd6fe', marginTop: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#6d28d9' }}>
-                        💬 Resposta Pastoral ({item.pastoral_responded_by || 'Corpo Pastoral'}):
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '0.80rem', color: '#4c1d95', margin: 0, lineHeight: 1.4 }}>
-                      {item.pastoral_response}
-                    </p>
-                  </div>
-                )}
-
-                {/* TESTEMUNHO DE VITÓRIA (SE HOUVER) */}
-                {item.testimony_text && (
-                  <div style={{ background: '#ecfdf5', borderRadius: '12px', padding: '12px', border: '1px solid #a7f3d0', marginTop: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669' }}>
-                        ✨ Testemunho de Vitória / Oração Respondida:
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '0.80rem', color: '#065f46', margin: 0, lineHeight: 1.4 }}>
-                      {item.testimony_text}
-                    </p>
-                  </div>
-                )}
-
-                {/* Rodapé e Ações */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border)', paddingTop: '10px', marginTop: '2px', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                    👥 <strong>{item.praying_count}</strong> {item.praying_count === 1 ? 'irmão orando' : 'irmãos intercedendo'}
-                  </span>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {/* Botão de Testemunho para o próprio autor */}
-                    {isMyPrayer && !item.testimony_text && (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenTestimonyModal(item)}
-                        style={{
-                          background: '#ecfdf5',
-                          color: '#059669',
-                          border: '1px solid #a7f3d0',
-                          padding: '5px 10px',
-                          borderRadius: '8px',
-                          fontWeight: 800,
-                          fontSize: '0.72rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        ✨ Vitória!
-                      </button>
-                    )}
-
-                    {/* Botão Estou Orando */}
-                    {item.privacy !== 'CONFIDENTIAL' && (
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePraying(item.id)}
-                        style={{
-                          background: item.is_praying ? '#ecfdf5' : '#f1f5f9',
-                          color: item.is_praying ? '#059669' : 'var(--text-secondary)',
-                          border: item.is_praying ? '1px solid #a7f3d0' : 'none',
-                          padding: '6px 12px',
-                          borderRadius: '10px',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        {item.is_praying ? '✓ Estou orando' : '🙏 Orar'}
-                      </button>
-                    )}
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.92rem',
+                    fontWeight: 700
+                  }}>
+                    ›
                   </div>
                 </div>
               </div>
@@ -734,6 +731,231 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* ========================================================
+          MODAL DETALHES DO PEDIDO DE ORAÇÃO (PADRÃO DEVOCIONAIS)
+          ======================================================== */}
+      {selectedPrayerModal && (
+        <BottomSheet
+          isOpen={Boolean(selectedPrayerModal)}
+          onClose={() => setSelectedPrayerModal(null)}
+          maxHeight="92dvh"
+        >
+          {(() => {
+            const item = selectedPrayerModal;
+            const isMyPrayer = Boolean(user && item.user_id === user.userId);
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
+                {/* Header do Pedido */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
+                      color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      fontWeight: 800,
+                      flexShrink: 0
+                    }}>
+                      {item.privacy === 'CONFIDENTIAL' ? '🔒' : (categoryIcons[item.category] || '🙏')}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.96rem', color: 'var(--text-main)' }}>
+                          {item.author}
+                        </span>
+                        {isMyPrayer && (
+                          <span style={{ fontSize: '0.64rem', fontWeight: 800, background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: '4px' }}>
+                            Seu Pedido
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: '0.66rem',
+                          fontWeight: 800,
+                          color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
+                          background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
+                          padding: '2px 8px',
+                          borderRadius: '6px'
+                        }}>
+                          {item.privacy === 'CONFIDENTIAL' ? '🔒 Confidencial Pastoral' : item.category}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Publicado {item.time_ago} • 👥 <strong>{item.praying_count}</strong> {item.praying_count === 1 ? 'irmão orando' : 'irmãos intercedendo'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPrayerModal(null)}
+                    style={{
+                      background: '#f1f5f9',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.90rem',
+                      flexShrink: 0
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Conteúdo Completo do Pedido */}
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  padding: '16px 18px',
+                  position: 'relative'
+                }}>
+                  <div style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.04em' }}>
+                    Motivo de Oração & Intercessão
+                  </div>
+                  <p style={{
+                    fontSize: '0.96rem',
+                    color: 'var(--text-main)',
+                    lineHeight: 1.6,
+                    margin: 0,
+                    whiteSpace: 'pre-line',
+                    fontStyle: 'italic'
+                  }}>
+                    "{item.content}"
+                  </p>
+                </div>
+
+                {/* RESPOSTA PASTORAL (SE HOUVER) */}
+                {item.pastoral_response && (
+                  <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', borderRadius: '16px', padding: '16px', border: '1px solid #ddd6fe' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#6d28d9' }}>
+                        💬 Resposta Pastoral ({item.pastoral_responded_by || 'Corpo Pastoral'}):
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.86rem', color: '#4c1d95', margin: 0, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+                      {item.pastoral_response}
+                    </p>
+                  </div>
+                )}
+
+                {/* TESTEMUNHO DE VITÓRIA (SE HOUVER) */}
+                {item.testimony_text && (
+                  <div style={{ background: '#ecfdf5', borderRadius: '16px', padding: '16px', border: '1px solid #a7f3d0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#059669' }}>
+                        ✨ Testemunho de Vitória / Oração Respondida:
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.86rem', color: '#065f46', margin: 0, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+                      {item.testimony_text}
+                    </p>
+                  </div>
+                )}
+
+                {/* AÇÕES NO MODAL */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                  {item.privacy !== 'CONFIDENTIAL' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleTogglePraying(item.id);
+                        setSelectedPrayerModal(prev => {
+                          if (!prev) return null;
+                          const isNow = !prev.is_praying;
+                          return {
+                            ...prev,
+                            is_praying: isNow,
+                            praying_count: isNow ? prev.praying_count + 1 : Math.max(0, prev.praying_count - 1)
+                          };
+                        });
+                      }}
+                      style={{
+                        width: '100%',
+                        background: item.is_praying ? '#ecfdf5' : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                        color: item.is_praying ? '#059669' : '#ffffff',
+                        border: item.is_praying ? '1.5px solid #a7f3d0' : 'none',
+                        borderRadius: '14px',
+                        padding: '14px',
+                        fontWeight: 900,
+                        fontSize: '0.90rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: item.is_praying ? 'none' : '0 4px 14px rgba(124, 58, 237, 0.25)'
+                      }}
+                    >
+                      <span>{item.is_praying ? '✓' : '🙏'}</span>
+                      <span>{item.is_praying ? 'Estou Orando por Você' : 'Orar por este Pedido'}</span>
+                    </button>
+                  )}
+
+                  {isMyPrayer && !item.testimony_text && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPrayerModal(null);
+                        handleOpenTestimonyModal(item);
+                      }}
+                      style={{
+                        width: '100%',
+                        background: '#ecfdf5',
+                        color: '#059669',
+                        border: '1.5px solid #a7f3d0',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>✨</span>
+                      <span>Compartilhar Testemunho de Vitória!</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPrayerModal(null)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '14px',
+                      border: '1px solid #e2e8f0',
+                      background: '#ffffff',
+                      color: '#64748b',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Voltar ao Mural
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </BottomSheet>
       )}
 
     </div>
