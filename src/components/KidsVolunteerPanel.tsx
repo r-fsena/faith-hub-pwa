@@ -10,15 +10,22 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.
 interface KidsVolunteerPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'presence' | 'checkin' | 'calls';
 }
 
-export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, onClose }) => {
+export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, onClose, initialTab }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
   const orgId = branding.organization_id || branding.id || 'org_default';
 
   // Subtabs no painel do voluntário
   const [subTab, setSubTab] = useState<'presence' | 'checkin' | 'calls'>('presence');
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setSubTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
   
   // Data
   const [rooms, setRooms] = useState<any[]>([]);

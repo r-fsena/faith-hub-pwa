@@ -5,6 +5,7 @@ import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, con
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
+import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
@@ -98,6 +99,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
     address_zip: string;
     role: string;
     campus_name: string;
+    operational_permissions?: string[];
   }>({
     name: '',
     phone: '',
@@ -111,7 +113,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
     address_state: '',
     address_zip: '',
     role: 'Membro',
-    campus_name: 'Sede Principal'
+    campus_name: 'Sede Principal',
+    operational_permissions: []
   });
 
   // Helper para buscar dados de CEP via ViaCEP
@@ -149,9 +152,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Modais de Edição
+  // Modais de Edição & Operacional
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
+  const [isOperationalMenuOpen, setIsOperationalMenuOpen] = useState(false);
+  const [isEventScannerOpen, setIsEventScannerOpen] = useState(false);
+  const [kidsInitialTab, setKidsInitialTab] = useState<'presence' | 'checkin' | 'calls'>('presence');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(true);
@@ -198,6 +204,17 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           const finalAddress = found.address || localAddress;
           const finalBirthDate = found.birth_date ? found.birth_date.split('T')[0] : '';
 
+          let perms: string[] = [];
+          if (Array.isArray(found.operational_permissions)) {
+            perms = found.operational_permissions;
+          } else if (typeof found.operational_permissions === 'string') {
+            try {
+              perms = JSON.parse(found.operational_permissions);
+            } catch {
+              perms = [];
+            }
+          }
+
           setMemberProfile({
             id: found.id,
             name: finalName,
@@ -212,7 +229,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             address_state: found.address_state || '',
             address_zip: found.address_zip || '',
             role: found.role || 'Membro',
-            campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local')
+            campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local'),
+            operational_permissions: perms
           });
 
           if (finalName) localStorage.setItem('faithhub_user_name', finalName);
@@ -633,50 +651,79 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Card Área do Educador / Voluntário Kids (Exibido apenas para Liderança, Pastores, Educadores e Voluntários) */}
-            {['ADMIN', 'PASTOR', 'LEADER', 'VOLUNTEER', 'LÍDER', 'EDUCADOR', 'VOLUNTÁRIO', 'ADMINISTRADOR', 'MINISTÉRIO INFANTIL', 'OBREIRO', 'STAFF'].includes((memberProfile.role || '').toUpperCase()) && (
-              <div style={{
-                background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)',
-                borderRadius: '20px',
-                padding: '18px',
-                color: '#ffffff',
-                boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.05em' }}>
-                    Operações Ministeriais
-                  </div>
-                  <div style={{ fontSize: '1.02rem', fontWeight: 900, marginTop: '2px' }}>
-                    🚸 Sala Kids & Educadores
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#ccfbf1', marginTop: '2px' }}>
-                    Check-in, chamador de pais e PIN no celular
-                  </div>
-                </div>
+            {/* Card Menu Operacional (Check-in Kids, Checkout, Portaria de Eventos) */}
+            {(() => {
+              const userRole = (memberProfile.role || user?.role || '').toUpperCase();
+              const isLeader = ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(userRole);
+              const permissions = (memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
+                ? memberProfile.operational_permissions
+                : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []);
 
-                <button
-                  type="button"
-                  onClick={() => setIsKidsVolunteerOpen(true)}
+              const hasAny = permissions.length > 0;
+              if (!hasAny && !isLeader) return null;
+
+              return (
+                <div 
+                  onClick={() => setIsOperationalMenuOpen(true)}
                   style={{
-                    background: '#ffffff',
-                    color: '#0f766e',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '8px 14px',
-                    fontWeight: 900,
-                    fontSize: '0.78rem',
+                    background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #115e59 100%)',
+                    borderRadius: '20px',
+                    padding: '18px 20px',
+                    color: '#ffffff',
+                    boxShadow: '0 8px 24px rgba(15, 118, 110, 0.28)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    whiteSpace: 'nowrap'
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
-                  Abrir Painel
-                </button>
-              </div>
-            )}
+                  <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '4.5rem', opacity: 0.12, pointerEvents: 'none' }}>
+                    ⚡
+                  </div>
+                  <div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '20px' }}>
+                      <span>⚡</span> Ferramentas de Campo
+                    </div>
+                    <div style={{ fontSize: '1.08rem', fontWeight: 900, marginTop: '6px', letterSpacing: '-0.02em' }}>
+                      Menu Operacional
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#ccfbf1', marginTop: '2px' }}>
+                      {permissions.length} {permissions.length === 1 ? 'ferramenta liberada' : 'ferramentas liberadas'} para seu perfil
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsOperationalMenuOpen(true);
+                    }}
+                    style={{
+                      background: '#ffffff',
+                      color: '#0f766e',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '10px 16px',
+                      fontWeight: 900,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      zIndex: 1
+                    }}
+                  >
+                    <span>Abrir</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Coluna 2: Dados Pessoais, Contatos e Privacidade */}
@@ -859,11 +906,342 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           </button>
         </div>
 
-        {/* Modal / Painel do Educador Kids */}
+        {/* Modal / Painel do Educador Kids com initialTab */}
         <KidsVolunteerPanel 
           isOpen={isKidsVolunteerOpen} 
-          onClose={() => setIsKidsVolunteerOpen(false)} 
+          onClose={() => setIsKidsVolunteerOpen(false)}
+          initialTab={kidsInitialTab}
         />
+
+        {/* Modal / Scanner de Ingressos e Portaria de Eventos */}
+        <EventQrScannerModal
+          isOpen={isEventScannerOpen}
+          onClose={() => setIsEventScannerOpen(false)}
+          validatorName={memberProfile.name || user?.name || 'Portaria'}
+        />
+
+        {/* ========================================================
+            BOTTOM SHEET: MENU OPERACIONAL & FERRAMENTAS DE CAMPO
+            ======================================================== */}
+        <BottomSheet
+          isOpen={isOperationalMenuOpen}
+          onClose={() => setIsOperationalMenuOpen(false)}
+          maxHeight="82vh"
+        >
+          {(() => {
+            const userRole = (memberProfile.role || user?.role || '').toUpperCase();
+            const isLeader = ['ADMIN', 'PASTOR', 'SUPERADMIN', 'MASTER_ADMIN', 'LEADER', 'LÍDER', 'ADMINISTRADOR'].includes(userRole);
+            const permissions = (memberProfile.operational_permissions && memberProfile.operational_permissions.length > 0)
+              ? memberProfile.operational_permissions
+              : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []);
+
+            const canKidsCheckin = permissions.includes('kids_checkin');
+            const canKidsCheckout = permissions.includes('kids_checkout');
+            const canEventsCheckin = permissions.includes('events_checkin');
+            const canKidsCalls = permissions.includes('kids_calls');
+
+            const hasAny = canKidsCheckin || canKidsCheckout || canEventsCheckin || canKidsCalls;
+
+            return (
+              <div>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    margin: '0 auto 8px auto',
+                    boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)'
+                  }}>
+                    ⚡
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                    Menu Operacional
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Ferramentas de campo ativas para sua escala ministerial
+                  </p>
+                </div>
+
+                {!hasAny ? (
+                  <div style={{
+                    background: '#f8fafc',
+                    borderRadius: '16px',
+                    padding: '28px 20px',
+                    textAlign: 'center',
+                    border: '1.5px dashed #cbd5e1'
+                  }}>
+                    <span style={{ fontSize: '2rem' }}>🔒</span>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#334155', margin: '8px 0 4px 0' }}>
+                      Nenhuma ferramenta atribuída
+                    </h4>
+                    <p style={{ fontSize: '0.76rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                      Seu cadastro ainda não possui ferramentas operacionais liberadas. Converse com o líder do seu ministério ou com a secretaria da igreja para liberar seu acesso às escalas.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* 1. Check-in de Crianças */}
+                    {canKidsCheckin && (
+                      <div style={{
+                        background: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        border: '1.5px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#eff6ff',
+                            color: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.3rem',
+                            flexShrink: 0
+                          }}>
+                            🚸
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                              Check-in Kids (Crianças)
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              Totem e registro de entrada nas salas infantis
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKidsInitialTab('checkin');
+                            setIsOperationalMenuOpen(false);
+                            setIsKidsVolunteerOpen(true);
+                          }}
+                          style={{
+                            background: '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 14px',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 6px rgba(37,99,235,0.25)'
+                          }}
+                        >
+                          Check-in →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 2. Checkout & Devolução Kids */}
+                    {canKidsCheckout && (
+                      <div style={{
+                        background: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        border: '1.5px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#f0fdf4',
+                            color: '#16a34a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.3rem',
+                            flexShrink: 0
+                          }}>
+                            🛡️
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                              Checkout & Devolução Kids
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              Validação de PIN e entrega segura aos pais
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKidsInitialTab('presence');
+                            setIsOperationalMenuOpen(false);
+                            setIsKidsVolunteerOpen(true);
+                          }}
+                          style={{
+                            background: '#16a34a',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 14px',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 6px rgba(22,163,74,0.25)'
+                          }}
+                        >
+                          Checkout →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 3. Portaria de Eventos (Scanner QR) */}
+                    {canEventsCheckin && (
+                      <div style={{
+                        background: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        border: '1.5px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#faf5ff',
+                            color: '#9333ea',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.3rem',
+                            flexShrink: 0
+                          }}>
+                            🎫
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                              Portaria & Validação de Ingressos
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              Leitor de QR Code para ingressos de eventos
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsOperationalMenuOpen(false);
+                            setIsEventScannerOpen(true);
+                          }}
+                          style={{
+                            background: '#9333ea',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 14px',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 6px rgba(147,51,234,0.25)'
+                          }}
+                        >
+                          Escanear →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 4. Chamador de Pais Kids */}
+                    {canKidsCalls && (
+                      <div style={{
+                        background: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        border: '1.5px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#fffbeb',
+                            color: '#d97706',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.3rem',
+                            flexShrink: 0
+                          }}>
+                            📢
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                              Chamador de Pais no Culto
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              Alerta de crianças no telão da igreja
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKidsInitialTab('calls');
+                            setIsOperationalMenuOpen(false);
+                            setIsKidsVolunteerOpen(true);
+                          }}
+                          style={{
+                            background: '#d97706',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 14px',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 6px rgba(217,119,6,0.25)'
+                          }}
+                        >
+                          Chamador →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </BottomSheet>
 
         {/* ========================================================
             BOTTOM SHEET: EDITAR DADOS PESSOAIS DO USUÁRIO
