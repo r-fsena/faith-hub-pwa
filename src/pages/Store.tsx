@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
-import { fetchPdvProducts } from '../services/api';
+import { fetchPdvProducts, getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 
 interface Product {
@@ -19,6 +19,8 @@ export const Store: React.FC = () => {
   const { user } = useAuth();
   const { branding } = useBranding();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [activeCampusId, setActiveCampusId] = useState<string>(getActiveCampusId());
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'catalog' | 'my_orders'>('catalog');
@@ -28,9 +30,48 @@ export const Store: React.FC = () => {
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
   const [itemObs, setItemObs] = useState<string>('');
 
+  const loadProductsFromBackend = async (campusId?: string) => {
+    try {
+      setLoading(true);
+      const targetCampus = campusId !== undefined ? campusId : activeCampusId;
+      const orgId = branding.organization_id || 'org_default';
+      const backendProducts = await fetchPdvProducts(orgId, targetCampus);
+      if (backendProducts && Array.isArray(backendProducts)) {
+        const mapped: Product[] = backendProducts.map((p: any) => ({
+          id: p.id,
+          name: p.name || p.title,
+          category: (p.category || 'Geral').trim(),
+          description: p.description || '',
+          price: Number(p.price) || 0,
+          image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
+        }));
+        setProducts(mapped);
+      } else {
+        setProducts([]);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar produtos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    loadProductsFromBackend();
+    loadProductsFromBackend(activeCampusId);
     loadMyOrders();
+  }, [branding.organization_id]);
+
+  useEffect(() => {
+    const handleCampusChanged = (e: any) => {
+      const newCampus = e.detail?.campusId || getActiveCampusId();
+      setActiveCampusId(newCampus);
+      loadProductsFromBackend(newCampus);
+    };
+
+    window.addEventListener('pwa-campus-changed', handleCampusChanged);
+    return () => {
+      window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+    };
   }, [branding.organization_id]);
 
   // Recalcula grupos sempre que os produtos ou o branding mudarem
@@ -71,27 +112,6 @@ export const Store: React.FC = () => {
       if (selectedGroup !== 'ALL' && !existingCategories.includes(selectedGroup)) {
         setSelectedGroup('ALL');
       }
-    }
-  };
-
-  const loadProductsFromBackend = async () => {
-    try {
-      const backendProducts = await fetchPdvProducts(branding.organization_id);
-      if (backendProducts && Array.isArray(backendProducts)) {
-        const mapped: Product[] = backendProducts.map((p: any) => ({
-          id: p.id,
-          name: p.name || p.title,
-          category: (p.category || 'Geral').trim(),
-          description: p.description || '',
-          price: Number(p.price) || 0,
-          image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
-        }));
-        setProducts(mapped);
-      } else {
-        setProducts([]);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar produtos:', err);
     }
   };
 
@@ -224,7 +244,14 @@ export const Store: React.FC = () => {
           )}
 
           {/* Grid de Produtos */}
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '10px' }} className="animate-spin">🔄</div>
+              <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>
+                Carregando catálogo de produtos...
+              </p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🛍️</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>

@@ -168,19 +168,43 @@ export async function fetchMyTickets() {
 // ----------------------------------------------------
 // 4. PDV / PRODUTOS E PEDIDOS
 // ----------------------------------------------------
-export async function fetchPdvProducts(campusId?: string, organizationId?: string) {
+export async function fetchPdvProducts(organizationId?: string, campusId?: string) {
   try {
     const headers = await getAuthHeaders();
-    const org = organizationId || getActiveOrganizationId();
-    const activeCampus = campusId || getActiveCampusId();
+    
+    // Tratamento defensivo caso venham argumentos invertidos por código legado
+    let org = organizationId || getActiveOrganizationId();
+    let campus = campusId || getActiveCampusId();
+
+    if (org && (org.startsWith('campus_') || org === 'all')) {
+      campus = org;
+      org = campusId || getActiveOrganizationId();
+    }
+
+    if (!org) org = 'org_default';
+
     const params = new URLSearchParams();
-    if (org) params.set('organization_id', org);
-    if (activeCampus && activeCampus !== 'all') params.set('campus_id', activeCampus);
-    const queryParam = params.toString() ? `?${params.toString()}` : '';
+    params.set('organization_id', org);
+    if (campus && campus !== 'all') {
+      params.set('campus_id', campus);
+    }
+    const queryParam = `?${params.toString()}`;
     const res = await fetch(`${API_BASE_URL}/pdv/products${queryParam}`, { headers });
     if (res.ok) {
       const data = await res.json();
-      return Array.isArray(data) ? data : (data.data || []);
+      const list = Array.isArray(data) ? data : (data.data || []);
+      
+      // Se não houver produtos específicos vinculados a este campus e o campus não for 'all',
+      // busca os produtos da organização como fallback para a loja nunca ficar vazia
+      if (list.length === 0 && campus && campus !== 'all') {
+        const fallbackRes = await fetch(`${API_BASE_URL}/pdv/products?organization_id=${org}`, { headers });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          return Array.isArray(fallbackData) ? fallbackData : (fallbackData.data || []);
+        }
+      }
+
+      return list;
     }
   } catch (e) {
     console.log("Offline/fallback PDV products", e);
