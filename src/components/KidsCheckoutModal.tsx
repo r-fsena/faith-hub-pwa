@@ -58,22 +58,37 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
     }
   }, [isOpen, orgId]);
 
+  const stopScannerSafely = async () => {
+    if (!scannerRef.current) return;
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    try {
+      const isScanning = (scanner as any).isScanning || 
+        (typeof scanner.getState === 'function' && scanner.getState() === 2);
+      if (isScanning) {
+        await scanner.stop();
+      }
+    } catch (e) {
+      console.warn("Silent stop scanner warning in KidsCheckoutModal:", e);
+    }
+    try {
+      scanner.clear();
+    } catch (e) {}
+  };
+
   // Inicializa a câmera se a aba ativa for 'camera'
   useEffect(() => {
     let mounted = true;
+    let timer: any = null;
 
     if (isOpen && activeTab === 'camera' && !successResult) {
       setCameraError(null);
       setIsScanning(true);
 
-      const timer = setTimeout(async () => {
+      timer = setTimeout(async () => {
         try {
-          if (scannerRef.current) {
-            try {
-              await scannerRef.current.stop();
-            } catch (e) {}
-            scannerRef.current = null;
-          }
+          await stopScannerSafely();
+          if (!mounted) return;
 
           const html5QrCode = new Html5Qrcode(scannerContainerId);
           scannerRef.current = html5QrCode;
@@ -106,23 +121,15 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
           }
         }
       }, 250);
-
-      return () => {
-        mounted = false;
-        clearTimeout(timer);
-        if (scannerRef.current) {
-          scannerRef.current.stop().catch(() => {}).finally(() => {
-            scannerRef.current = null;
-          });
-        }
-      };
     } else {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {}).finally(() => {
-          scannerRef.current = null;
-        });
-      }
+      stopScannerSafely();
     }
+
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+      stopScannerSafely();
+    };
   }, [isOpen, activeTab, successResult, submitting]);
 
   const loadRooms = async () => {
@@ -262,8 +269,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
   });
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="96dvh">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', height: '100%' }}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="92vh">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '100%', width: '100%' }}>
         
         {/* Header Principal */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '2px' }}>
@@ -771,10 +778,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             )}
 
             {/* ========================================================
-                ABA 2: CÂMERA QR AMPLA INTEGRADA
+                ABA 2: CÂMERA QR AMPLA INTEGRADA (Mantida no DOM para estabilidade do Html5Qrcode)
                 ======================================================== */}
-            {activeTab === 'camera' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: activeTab === 'camera' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   position: 'relative',
                   width: '100%',
@@ -899,8 +905,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   }} />
                   Aponte para o QR Code do crachá do responsável
                 </div>
-              </div>
-            )}
+            </div>
 
             {/* ========================================================
                 ABA 3: TECLADO NUMÉRICO DE PIN (DIGITAÇÃO RÁPIDA)
@@ -911,6 +916,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                 {/* Display do PIN */}
                 <div style={{
                   width: '100%',
+                  maxWidth: '320px',
                   background: '#f8fafc',
                   border: '2px solid #cbd5e1',
                   borderRadius: '20px',
@@ -921,18 +927,30 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
                     PIN de Segurança do Comprovante
                   </div>
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 900,
-                    letterSpacing: '0.3em',
-                    color: pinInput ? '#0f172a' : '#94a3b8',
-                    height: '42px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    {pinInput || '••••'}
-                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={pinInput}
+                    onChange={e => {
+                      setPinInput(e.target.value.toUpperCase());
+                      setErrorMessage('');
+                    }}
+                    placeholder="••••"
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '2rem',
+                      fontWeight: 900,
+                      letterSpacing: '0.3em',
+                      color: pinInput ? '#0f172a' : '#94a3b8',
+                      textAlign: 'center',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
 
                 {errorMessage && (

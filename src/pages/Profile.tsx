@@ -927,23 +927,35 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
         {/* Modais Operacionais Individuais (Desacoplados e Ergonômicos) */}
         <KidsCheckinModal 
           isOpen={isKidsCheckinOpen} 
-          onClose={() => setIsKidsCheckinOpen(false)} 
+          onClose={() => {
+            setIsKidsCheckinOpen(false);
+            setIsOperationalMenuOpen(true);
+          }} 
         />
 
         <KidsCheckoutModal 
           isOpen={isKidsCheckoutOpen} 
-          onClose={() => setIsKidsCheckoutOpen(false)} 
+          onClose={() => {
+            setIsKidsCheckoutOpen(false);
+            setIsOperationalMenuOpen(true);
+          }} 
         />
 
         <KidsPagingModal 
           isOpen={isKidsPagingOpen} 
-          onClose={() => setIsKidsPagingOpen(false)} 
+          onClose={() => {
+            setIsKidsPagingOpen(false);
+            setIsOperationalMenuOpen(true);
+          }} 
         />
 
         {/* Modal / Scanner de Ingressos e Portaria de Eventos */}
         <EventQrScannerModal
           isOpen={isEventScannerOpen}
-          onClose={() => setIsEventScannerOpen(false)}
+          onClose={() => {
+            setIsEventScannerOpen(false);
+            setIsOperationalMenuOpen(true);
+          }}
           validatorName={memberProfile.name || user?.name || 'Portaria'}
         />
 
@@ -976,49 +988,31 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
             return (
               <div>
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px', paddingRight: '32px' }}>
                   <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '16px',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '14px',
                     background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.5rem',
-                    margin: '0 auto 8px auto',
-                    boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)'
+                    fontSize: '1.4rem',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(15, 118, 110, 0.25)'
                   }}>
                     ⚡
                   </div>
 
-                  {isAdminOrMaster && (
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                      color: '#92400e',
-                      padding: '3px 10px',
-                      borderRadius: '20px',
-                      fontSize: '0.72rem',
-                      fontWeight: 900,
-                      marginBottom: '6px',
-                      border: '1px solid #fcd34d'
-                    }}>
-                      <span>👑</span> Acesso Total (Administrador Master)
-                    </div>
-                  )}
-
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                    Menu Operacional
-                  </h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
-                    {isAdminOrMaster 
-                      ? 'Acesso irrestrito a todas as ferramentas e operações ministeriais'
-                      : 'Ferramentas de campo ativas para sua escala ministerial'}
-                  </p>
+                  <div>
+                    <h3 style={{ fontSize: '1.22rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                      Menu Operacional
+                    </h3>
+                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                      Ferramentas de campo ativas para sua escala ministerial
+                    </p>
+                  </div>
                 </div>
 
                 {!hasAny ? (
