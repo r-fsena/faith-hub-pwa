@@ -246,18 +246,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
     handlePerformCheckout(found.id, clean, found.child_name, found.parent_name, found.room_name);
   };
 
-  // Clique nos botões numéricos virtuais (0 a 9)
-  const handleKeypadPress = (digit: string) => {
-    if (pinInput.length < 6) {
-      setPinInput(prev => prev + digit);
-      setErrorMessage('');
-    }
-  };
 
-  const handleKeypadBackspace = () => {
-    setPinInput(prev => prev.slice(0, -1));
-    setErrorMessage('');
-  };
 
   const filteredCheckins = activeCheckins.filter(c => {
     const matchRoom = selectedRoomId === 'all' || c.room_id === selectedRoomId;
@@ -469,8 +458,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   cursor: 'pointer'
                 }}
               >
-                <span>🔢</span>
-                <span>Digitar PIN</span>
+                <span>⌨️</span>
+                <span>Digitar Código / PIN</span>
               </button>
             </div>
 
@@ -558,14 +547,20 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                       textAlign: 'center'
                     }}>
                       <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                        Confirme o PIN do Comprovante:
+                        Confirme o PIN / Código do Comprovante:
                       </label>
                       <input
                         type="text"
-                        maxLength={6}
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        maxLength={10}
                         value={pinInput}
-                        onChange={e => setPinInput(e.target.value.toUpperCase())}
-                        placeholder="Ex: 1234"
+                        onChange={e => {
+                          setPinInput(e.target.value.toUpperCase());
+                          setErrorMessage('');
+                        }}
+                        placeholder="Ex: K9B2 ou PIN"
                         style={{
                           width: '100%',
                           padding: '12px',
@@ -573,9 +568,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                           border: '2px solid #cbd5e1',
                           fontSize: '1.3rem',
                           fontWeight: 900,
-                          letterSpacing: '0.2em',
+                          letterSpacing: '0.15em',
                           textAlign: 'center',
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
+                          textTransform: 'uppercase'
                         }}
                       />
                     </div>
@@ -908,150 +904,81 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             </div>
 
             {/* ========================================================
-                ABA 3: TECLADO NUMÉRICO DE PIN (DIGITAÇÃO RÁPIDA)
+                ABA 3: DIGITAÇÃO ALFANUMÉRICA (TECLADO DO DISPOSITIVO)
                 ======================================================== */}
             {activeTab === 'pin' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-                
-                {/* Display do PIN */}
+              <form onSubmit={handleDirectPinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', padding: '8px 0' }}>
                 <div style={{
-                  width: '100%',
-                  maxWidth: '320px',
                   background: '#f8fafc',
-                  border: '2px solid #cbd5e1',
-                  borderRadius: '20px',
+                  border: '1.5px solid var(--panel-border)',
+                  borderRadius: '18px',
                   padding: '16px',
-                  textAlign: 'center',
-                  boxSizing: 'border-box'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
                 }}>
-                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    PIN de Segurança do Comprovante
-                  </div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main)', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>⌨️</span> Digite o Código do Comprovante / PIN:
+                  </label>
+
                   <input
                     type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={pinInput}
                     onChange={e => {
                       setPinInput(e.target.value.toUpperCase());
                       setErrorMessage('');
                     }}
-                    placeholder="••••"
+                    placeholder="Ex: K9B2 ou Código"
                     style={{
                       width: '100%',
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: '2rem',
+                      padding: '16px',
+                      borderRadius: '14px',
+                      background: '#ffffff',
+                      border: '2px solid #cbd5e1',
+                      fontSize: '1.25rem',
                       fontWeight: 900,
-                      letterSpacing: '0.3em',
-                      color: pinInput ? '#0f172a' : '#94a3b8',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
                       textAlign: 'center',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      color: '#0f172a'
                     }}
                   />
+
+                  <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    O código alfanumérico está impresso na etiqueta da criança ou crachá do responsável.
+                  </div>
                 </div>
 
                 {errorMessage && (
-                  <div style={{ color: '#dc2626', fontSize: '0.80rem', fontWeight: 800, textAlign: 'center' }}>
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    color: '#dc2626',
+                    fontSize: '0.80rem',
+                    fontWeight: 800,
+                    textAlign: 'center'
+                  }}>
                     {errorMessage}
                   </div>
                 )}
 
-                {/* Keypad Numérico Virtual */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '10px',
-                  width: '100%',
-                  maxWidth: '320px'
-                }}>
-                  {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => handleKeypadPress(num)}
-                      style={{
-                        height: '56px',
-                        borderRadius: '16px',
-                        border: '1.5px solid #e2e8f0',
-                        background: '#ffffff',
-                        fontSize: '1.4rem',
-                        fontWeight: 900,
-                        color: '#0f172a',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {num}
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => setPinInput('')}
-                    style={{
-                      height: '56px',
-                      borderRadius: '16px',
-                      border: '1.5px solid #e2e8f0',
-                      background: '#f1f5f9',
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      color: '#64748b',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    LIMPAR
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleKeypadPress('0')}
-                    style={{
-                      height: '56px',
-                      borderRadius: '16px',
-                      border: '1.5px solid #e2e8f0',
-                      background: '#ffffff',
-                      fontSize: '1.4rem',
-                      fontWeight: 900,
-                      color: '#0f172a',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    0
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleKeypadBackspace}
-                    style={{
-                      height: '56px',
-                      borderRadius: '16px',
-                      border: '1.5px solid #e2e8f0',
-                      background: '#f1f5f9',
-                      fontSize: '1.2rem',
-                      fontWeight: 900,
-                      color: '#64748b',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ⌫
-                  </button>
-                </div>
-
                 <button
-                  type="button"
+                  type="submit"
                   disabled={!pinInput.trim() || submitting}
-                  onClick={() => handleDirectPinSubmit()}
                   style={{
                     width: '100%',
-                    maxWidth: '320px',
                     padding: '16px',
                     borderRadius: '16px',
-                    border: 'none',
-                    background: '#16a34a',
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                     color: '#ffffff',
+                    border: 'none',
                     fontWeight: 900,
                     fontSize: '0.94rem',
                     cursor: pinInput.trim() && !submitting ? 'pointer' : 'not-allowed',
@@ -1059,9 +986,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                     boxShadow: '0 6px 16px rgba(22, 163, 74, 0.3)'
                   }}
                 >
-                  {submitting ? 'Localizando e Devolvendo...' : 'Validar PIN e Liberar ✓'}
+                  {submitting ? 'Localizando e Devolvendo...' : 'Validar Código e Liberar ✓'}
                 </button>
-              </div>
+              </form>
             )}
           </>
         )}
