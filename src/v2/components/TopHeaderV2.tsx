@@ -140,27 +140,33 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
         margin: '0 auto',
         width: '100%'
       }}>
-        {/* Lado Esquerdo: Identidade, Saudação & Seletor de Campus */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-          <div 
-            onClick={handleProfileClick} 
-            className="v2-pressable"
-            title="Ir para o Perfil"
-            style={{ 
-              width: '42px',
-              height: '42px',
-              borderRadius: '14px',
-              background: 'var(--accent-primary-light, #f1f5f9)',
-              border: '2px solid rgba(255,255,255,0.95)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              cursor: 'pointer'
-            }}
-          >
+        {/* Lado Esquerdo: Identidade da Congregação / Saudação do Membro com Respiro Amplo */}
+        <div 
+          onClick={handleProfileClick} 
+          className="v2-pressable"
+          title="Ir para o Perfil"
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px', 
+            minWidth: 0, 
+            flex: 1, 
+            cursor: 'pointer' 
+          }}
+        >
+          <div style={{ 
+            width: '42px',
+            height: '42px',
+            borderRadius: '14px',
+            background: 'var(--accent-primary-light, rgba(255, 255, 255, 0.08))',
+            border: '1.5px solid var(--panel-border, rgba(255, 255, 255, 0.20))',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
             <img 
               src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
               alt={branding.church_name || 'Faith-Hub'} 
@@ -175,97 +181,114 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            {/* Linha 1: Saudação Personalizada + Badge V2 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ 
-                fontWeight: 900, 
-                fontSize: '0.94rem', 
-                color: 'var(--text-main, #0f172a)', 
-                lineHeight: 1.2,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}>
-                {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.church_name || 'Faith-Hub')}
-              </span>
-              <span style={{
-                fontSize: '0.58rem',
-                fontWeight: 900,
-                color: '#ffffff',
-                background: 'var(--accent-primary, #0f766e)',
-                padding: '1px 6px',
-                borderRadius: '6px',
-                letterSpacing: '0.04em',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                flexShrink: 0
-              }}>
-                V2
-              </span>
-            </div>
-
-            {/* Linha 2: Seletor de Campus / Unidade Integrado com Alto Contraste */}
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                if (onOpenCampusSelect) onOpenCampusSelect();
-              }}
-              className="v2-pressable v2-campus-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: 'var(--v2-campus-pill-bg, rgba(15, 118, 110, 0.08))',
-                border: '1px solid var(--v2-campus-pill-border, rgba(15, 118, 110, 0.20))',
-                borderRadius: '999px',
-                padding: '3px 8px 3px 7px',
-                cursor: 'pointer',
-                marginTop: '3px',
-                width: 'fit-content',
-                outline: 'none'
-              }}
-            >
-              <MapPinIcon size={12} color="var(--v2-campus-pill-icon, var(--accent-primary, #0f766e))" />
-              <span style={{ 
-                fontSize: '0.68rem', 
-                fontWeight: 800, 
-                color: 'var(--v2-campus-pill-color, var(--accent-primary, #0f766e))',
-                maxWidth: '130px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                lineHeight: 1.2
-              }}>
-                {campusName || 'Sede'}
-              </span>
-              <ChevronDownIcon size={11} color="var(--v2-campus-pill-icon, var(--accent-primary, #0f766e))" />
-            </button>
+            <span style={{ 
+              fontWeight: 900, 
+              fontSize: '0.96rem', 
+              color: 'var(--text-main, #0f172a)', 
+              lineHeight: 1.2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              letterSpacing: '-0.01em'
+            }}>
+              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.church_name || 'Faith-Hub')}
+            </span>
+            <span style={{
+              fontSize: '0.70rem',
+              fontWeight: 700,
+              color: 'var(--text-muted, #94a3b8)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.2,
+              marginTop: '1px'
+            }}>
+              {user?.name ? (branding.church_name || 'Membro Oficial') : (branding.tagline || 'Aplicativo Oficial')}
+            </span>
           </div>
         </div>
 
-        {/* Lado Direito: Notificações com sino e indicador */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Lado Direito: Ações Rápidas Ergonômicas (Seletor de Unidade + Sino de Notificações com Alto Contraste) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {/* Seletor de Campus / Unidade no Lado Direito (Toque confortável com polegar) */}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              if (onOpenCampusSelect) onOpenCampusSelect();
+            }}
+            className="v2-pressable v2-campus-pill"
+            title="Alterar Unidade / Campus"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              height: '38px',
+              background: 'var(--v2-campus-pill-bg, rgba(255, 255, 255, 0.10))',
+              border: '1px solid var(--v2-campus-pill-border, rgba(255, 255, 255, 0.18))',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              borderRadius: '999px',
+              padding: '0 12px 0 10px',
+              cursor: 'pointer',
+              outline: 'none',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+            }}
+          >
+            <MapPinIcon size={14} color="var(--v2-campus-pill-icon, #2dd4bf)" />
+            <span style={{ 
+              fontSize: '0.74rem', 
+              fontWeight: 800, 
+              color: 'var(--v2-campus-pill-color, var(--text-main, #ffffff))',
+              maxWidth: '105px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1
+            }}>
+              {campusName || 'Sede'}
+            </span>
+            <ChevronDownIcon size={12} color="var(--v2-campus-pill-icon, #2dd4bf)" />
+          </button>
+
+          {/* Botão de Notificações com Sino Luminoso e Alto Contraste */}
           <button
             type="button"
             onClick={handleNotifClick}
             title="Notificações e Avisos"
             className="v2-pressable"
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '14px',
-              background: 'var(--bg-card-subtle, rgba(241, 245, 249, 0.9))',
-              border: '1px solid var(--panel-border, rgba(226, 232, 240, 0.7))',
+              width: '38px',
+              height: '38px',
+              borderRadius: '12px',
+              background: 'var(--bg-card-subtle, rgba(255, 255, 255, 0.10))',
+              border: '1px solid var(--panel-border, rgba(255, 255, 255, 0.18))',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: unreadCount > 0 ? 'var(--accent-primary, #0f766e)' : 'var(--text-secondary, #64748b)',
+              color: unreadCount > 0 ? '#f59e0b' : 'var(--text-main, #ffffff)',
               cursor: 'pointer',
               position: 'relative',
-              outline: 'none'
+              outline: 'none',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.3" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{
+                filter: unreadCount > 0 ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))' : 'none'
+              }}
+            >
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
@@ -273,15 +296,25 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             {unreadCount > 0 && (
               <span style={{
                 position: 'absolute',
-                top: '5px',
-                right: '5px',
-                width: '9px',
-                height: '9px',
-                borderRadius: '50%',
+                top: '-2px',
+                right: '-2px',
                 background: '#ef4444',
-                boxShadow: '0 0 0 2px #ffffff',
+                color: '#ffffff',
+                fontSize: '0.60rem',
+                fontWeight: 900,
+                minWidth: '17px',
+                height: '17px',
+                borderRadius: '999px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 4px',
+                border: '2px solid var(--bg-main, #090d16)',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.8)',
                 animation: 'pulse 2s infinite'
-              }} />
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
           </button>
         </div>
