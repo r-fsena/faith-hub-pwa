@@ -929,10 +929,23 @@ body[data-theme="dark"] {
   --text-secondary: #cbd5e1 !important;
   --text-muted: #94a3b8 !important;
 
+  --accent-primary-light: rgba(255, 255, 255, 0.12) !important;
+  --accent-contrast: var(--accent-bright, #2dd4bf) !important;
+
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
   --shadow-lg: 0 14px 30px rgba(0, 0, 0, 0.55) !important;
   --shadow-nav: 0 -4px 20px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Garante destaque de alto contraste para campos/botões selecionados no modo escuro */
+body.dark button[style*="var(--accent-primary-light)"],
+body.dark-theme button[style*="var(--accent-primary-light)"],
+body[data-theme="dark"] button[style*="var(--accent-primary-light)"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--accent-bright, #2dd4bf) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.25) !important;
 }
 
 body.dark,

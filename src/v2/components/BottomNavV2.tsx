@@ -86,18 +86,19 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
               key={tab.id}
               type="button"
               onClick={() => handleTabClick(tab.id)}
+              className={`v2-nav-item ${isActive ? 'active' : ''}`}
               style={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: isActive ? 'var(--accent-primary-light, rgba(99, 102, 241, 0.12))' : 'transparent',
+                background: isActive ? 'var(--v2-nav-active-bg, var(--accent-primary-light, rgba(99, 102, 241, 0.12)))' : 'transparent',
                 border: 'none',
                 borderRadius: '24px',
                 padding: '6px 4px',
                 cursor: 'pointer',
-                color: isActive ? 'var(--accent-primary, #6366f1)' : '#64748b',
+                color: isActive ? 'var(--v2-nav-active-color, var(--accent-primary, #6366f1))' : 'var(--v2-nav-inactive-color, #64748b)',
                 transition: 'all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 transform: isActive ? 'scale(1.03)' : 'scale(1)',
                 position: 'relative',
@@ -151,8 +152,8 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
                   width: '14px',
                   height: '3px',
                   borderRadius: '999px',
-                  background: 'var(--accent-primary, #6366f1)',
-                  boxShadow: '0 0 8px var(--accent-primary, #6366f1)'
+                  background: 'var(--v2-nav-indicator, var(--accent-primary, #6366f1))',
+                  boxShadow: '0 0 10px var(--v2-nav-indicator, var(--accent-primary, #6366f1))'
                 }} />
               )}
             </button>

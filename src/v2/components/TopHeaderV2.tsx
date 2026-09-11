@@ -79,8 +79,8 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             onClick={handleBackClick}
             className="v2-pressable"
             style={{
-              background: 'rgba(241, 245, 249, 0.9)',
-              border: '1px solid rgba(226, 232, 240, 0.8)',
+              background: 'var(--bg-card-subtle, rgba(241, 245, 249, 0.9))',
+              border: '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
               borderRadius: '14px',
               color: 'var(--text-main, #0f172a)',
               fontSize: '0.84rem',
@@ -203,20 +203,20 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               </span>
             </div>
 
-            {/* Linha 2: Seletor de Campus / Unidade Integrado */}
+            {/* Linha 2: Seletor de Campus / Unidade Integrado com Alto Contraste */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('light');
                 if (onOpenCampusSelect) onOpenCampusSelect();
               }}
-              className="v2-pressable"
+              className="v2-pressable v2-campus-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: 'rgba(15, 118, 110, 0.08)',
-                border: '1px solid rgba(15, 118, 110, 0.20)',
+                background: 'var(--v2-campus-pill-bg, rgba(15, 118, 110, 0.08))',
+                border: '1px solid var(--v2-campus-pill-border, rgba(15, 118, 110, 0.20))',
                 borderRadius: '999px',
                 padding: '3px 8px 3px 7px',
                 cursor: 'pointer',
@@ -225,11 +225,11 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
                 outline: 'none'
               }}
             >
-              <MapPinIcon size={12} color="var(--accent-primary, #0f766e)" />
+              <MapPinIcon size={12} color="var(--v2-campus-pill-icon, var(--accent-primary, #0f766e))" />
               <span style={{ 
                 fontSize: '0.68rem', 
                 fontWeight: 800, 
-                color: 'var(--accent-primary, #0f766e)',
+                color: 'var(--v2-campus-pill-color, var(--accent-primary, #0f766e))',
                 maxWidth: '130px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -238,7 +238,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               }}>
                 {campusName || 'Sede'}
               </span>
-              <ChevronDownIcon size={11} color="var(--accent-primary, #0f766e)" />
+              <ChevronDownIcon size={11} color="var(--v2-campus-pill-icon, var(--accent-primary, #0f766e))" />
             </button>
           </div>
         </div>

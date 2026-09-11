@@ -16,6 +16,25 @@
   --v2-shadow-glow: 0 0 20px rgba(15, 118, 110, 0.2);
   --v2-spring-timing: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* Tokens de Navegação & Seleção (Modo Claro Padrão) */
+  --v2-campus-pill-bg: var(--accent-primary-light, rgba(15, 118, 110, 0.08));
+  --v2-campus-pill-border: rgba(15, 118, 110, 0.20);
+  --v2-campus-pill-color: var(--accent-primary, #0f766e);
+  --v2-campus-pill-icon: var(--accent-primary, #0f766e);
+
+  --v2-nav-active-bg: var(--accent-primary-light, rgba(15, 118, 110, 0.12));
+  --v2-nav-active-color: var(--accent-primary, #0f766e);
+  --v2-nav-inactive-color: #64748b;
+  --v2-nav-indicator: var(--accent-primary, #0f766e);
+
+  --v2-segment-active-bg: #ffffff;
+  --v2-segment-active-color: var(--accent-primary, #0f766e);
+  --v2-segment-active-border: rgba(0, 0, 0, 0.06);
+  --v2-segment-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --v2-item-selected-bg: var(--accent-primary-light, rgba(15, 118, 110, 0.12));
+  --v2-item-selected-border: var(--accent-primary, #0f766e);
+ 
   width: 100%;
   min-height: 100dvh;
   background-color: var(--v2-bg);
@@ -154,9 +173,127 @@ body[data-theme="dark"] .v2-shell {
   --text-secondary: #cbd5e1 !important;
   --text-muted: #94a3b8 !important;
 
+  /* Alto contraste no Seletor de Unidade / Campus */
+  --v2-campus-pill-bg: rgba(255, 255, 255, 0.10) !important;
+  --v2-campus-pill-border: rgba(255, 255, 255, 0.18) !important;
+  --v2-campus-pill-color: #f8fafc !important;
+  --v2-campus-pill-icon: var(--accent-bright, #2dd4bf) !important;
+
+  /* Alto contraste no Menu Dock Suspenso */
+  --v2-nav-active-bg: rgba(255, 255, 255, 0.14) !important;
+  --v2-nav-active-color: #ffffff !important;
+  --v2-nav-inactive-color: #94a3b8 !important;
+  --v2-nav-indicator: var(--accent-bright, #2dd4bf) !important;
+
+  /* Alto contraste no Seletor de Tema Segmentado */
+  --v2-segment-active-bg: rgba(255, 255, 255, 0.16) !important;
+  --v2-segment-active-color: #ffffff !important;
+  --v2-segment-active-border: rgba(255, 255, 255, 0.22) !important;
+  --v2-segment-active-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+
+  /* Itens e opções selecionadas */
+  --v2-item-selected-bg: rgba(255, 255, 255, 0.12) !important;
+  --v2-item-selected-border: var(--accent-bright, #2dd4bf) !important;
+
   --v2-shadow-ambient: 0 10px 30px -6px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.4) !important;
   background-color: #090d16 !important;
   color: #f8fafc !important;
+}
+
+/* Regras de Alta Visibilidade para o Dock Flutuante no Modo Escuro */
+body.dark .v2-nav-item.active,
+body.dark-theme .v2-nav-item.active,
+body[data-theme="dark"] .v2-nav-item.active,
+.v2-shell.dark .v2-nav-item.active {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark .v2-nav-item.active svg,
+body.dark-theme .v2-nav-item.active svg,
+body[data-theme="dark"] .v2-nav-item.active svg,
+.v2-shell.dark .v2-nav-item.active svg {
+  stroke: #ffffff !important;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+}
+
+body.dark .v2-nav-item:not(.active),
+body.dark-theme .v2-nav-item:not(.active),
+body[data-theme="dark"] .v2-nav-item:not(.active),
+.v2-shell.dark .v2-nav-item:not(.active) {
+  color: #94a3b8 !important;
+}
+
+/* Regras para o Seletor de Unidade no Topo no Modo Escuro */
+body.dark .v2-campus-pill,
+body.dark-theme .v2-campus-pill,
+body[data-theme="dark"] .v2-campus-pill,
+.v2-shell.dark .v2-campus-pill {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.dark .v2-campus-pill span,
+body.dark-theme .v2-campus-pill span,
+body[data-theme="dark"] .v2-campus-pill span,
+.v2-shell.dark .v2-campus-pill span {
+  color: #f8fafc !important;
+}
+
+body.dark .v2-campus-pill svg,
+body.dark-theme .v2-campus-pill svg,
+body[data-theme="dark"] .v2-campus-pill svg,
+.v2-shell.dark .v2-campus-pill svg {
+  color: var(--accent-bright, #2dd4bf) !important;
+  stroke: var(--accent-bright, #2dd4bf) !important;
+}
+
+/* Regras para o Botão Seletor Segmentado (Claro, Escuro, Sistema) no Modo Escuro */
+body.dark .v2-segment-btn.active,
+body.dark-theme .v2-segment-btn.active,
+body[data-theme="dark"] .v2-segment-btn.active,
+.v2-shell.dark .v2-segment-btn.active {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark .v2-segment-btn:not(.active),
+body.dark-theme .v2-segment-btn:not(.active),
+body[data-theme="dark"] .v2-segment-btn:not(.active),
+.v2-shell.dark .v2-segment-btn:not(.active) {
+  color: #94a3b8 !important;
+}
+
+/* Regras para Itens de Seleção (Campus Drawer) no Modo Escuro */
+body.dark .v2-campus-option.active,
+body.dark-theme .v2-campus-option.active,
+body[data-theme="dark"] .v2-campus-option.active,
+.v2-shell.dark .v2-campus-option.active {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: var(--accent-bright, #2dd4bf) !important;
+  box-shadow: 0 0 16px rgba(45, 212, 191, 0.20) !important;
+}
+
+body.dark .v2-campus-option.active > div:last-child,
+body.dark-theme .v2-campus-option.active > div:last-child,
+body[data-theme="dark"] .v2-campus-option.active > div:last-child,
+.v2-shell.dark .v2-campus-option.active > div:last-child {
+  border-color: var(--accent-bright, #2dd4bf) !important;
+  background: #111827 !important;
+}
+
+/* Garante que qualquer botão de seleção/chip em modais e telas com estado ativo fique com destaque nítido */
+body.dark button[style*="var(--accent-primary-light)"],
+body.dark-theme button[style*="var(--accent-primary-light)"],
+body[data-theme="dark"] button[style*="var(--accent-primary-light)"],
+.v2-shell.dark button[style*="var(--accent-primary-light)"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--accent-bright, #2dd4bf) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.25) !important;
 }
 
 /* Ajuste no fundo da tela em desktop para Dark Mode */

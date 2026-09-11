@@ -930,7 +930,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           </button>
         </div>
 
-        {/* Seletor de Tema: Claro / Escuro / Sistema */}
+        {/* Seletor de Tema: Claro / Escuro / Sistema com Alto Contraste */}
         <div style={{
           marginTop: '20px',
           padding: '16px',
@@ -946,7 +946,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
               Aparência do Aplicativo
             </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 800 }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--accent-bright, var(--accent-primary))', fontWeight: 800 }}>
               {themePreference === 'light' ? 'Modo Claro' : themePreference === 'dark' ? 'Modo Escuro' : 'Conforme Sistema'}
             </span>
           </div>
@@ -956,92 +956,79 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '8px',
             background: 'var(--bg-card-subtle, #f1f5f9)',
-            padding: '4px',
-            borderRadius: '14px'
+            padding: '5px',
+            borderRadius: '16px'
           }}>
-            <button
-              type="button"
-              onClick={() => setThemePreference('light')}
-              style={{
-                background: themePreference === 'light' ? 'var(--bg-card, #ffffff)' : 'transparent',
-                color: themePreference === 'light' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '8px 4px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: themePreference === 'light' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4"/>
-                <path d="M12 2v2"/><path d="M12 20v2"/>
-                <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
-                <path d="M2 12h2"/><path d="M20 12h2"/>
-                <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-              </svg>
-              <span>Claro</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setThemePreference('dark')}
-              style={{
-                background: themePreference === 'dark' ? 'var(--bg-card, #ffffff)' : 'transparent',
-                color: themePreference === 'dark' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '8px 4px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: themePreference === 'dark' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-              </svg>
-              <span>Escuro</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setThemePreference('system')}
-              style={{
-                background: themePreference === 'system' ? 'var(--bg-card, #ffffff)' : 'transparent',
-                color: themePreference === 'system' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '8px 4px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: themePreference === 'system' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="20" height="14" x="2" y="3" rx="2"/>
-                <line x1="8" x2="16" y1="21" y2="21"/>
-                <line x1="12" x2="12" y1="17" y2="21"/>
-              </svg>
-              <span>Sistema</span>
-            </button>
+            {[
+              {
+                id: 'light',
+                label: 'Claro',
+                icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2"/><path d="M12 20v2"/>
+                    <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+                    <path d="M2 12h2"/><path d="M20 12h2"/>
+                    <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+                  </svg>
+                )
+              },
+              {
+                id: 'dark',
+                label: 'Escuro',
+                icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                  </svg>
+                )
+              },
+              {
+                id: 'system',
+                label: 'Sistema',
+                icon: (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="14" x="2" y="3" rx="2"/>
+                    <line x1="8" x2="16" y1="21" y2="21"/>
+                    <line x1="12" x2="12" y1="17" y2="21"/>
+                  </svg>
+                )
+              }
+            ].map(opt => {
+              const isSelected = themePreference === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setThemePreference(opt.id as any)}
+                  className={`v2-pressable v2-segment-btn ${isSelected ? 'active' : ''}`}
+                  style={{
+                    background: isSelected 
+                      ? 'var(--v2-segment-active-bg, var(--bg-card, #ffffff))' 
+                      : 'transparent',
+                    color: isSelected 
+                      ? 'var(--v2-segment-active-color, var(--accent-primary))' 
+                      : 'var(--text-muted, #94a3b8)',
+                    border: isSelected 
+                      ? '1px solid var(--v2-segment-active-border, rgba(0,0,0,0.06))' 
+                      : '1px solid transparent',
+                    borderRadius: '12px',
+                    padding: '10px 4px',
+                    fontSize: '0.75rem',
+                    fontWeight: isSelected ? 900 : 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: isSelected ? 'var(--v2-segment-active-shadow, 0 2px 8px rgba(0,0,0,0.06))' : 'none',
+                    transition: 'all 0.18s ease'
+                  }}
+                >
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

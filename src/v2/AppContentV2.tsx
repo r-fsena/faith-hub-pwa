@@ -394,16 +394,16 @@ export const AppContentV2: React.FC = () => {
               <div
                 key={c.id}
                 onClick={() => handleSelectCampus(c.id)}
-                className="v2-pressable"
+                className={`v2-pressable v2-campus-option ${isSelected ? 'active' : ''}`}
                 style={{
-                  background: isSelected ? 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))' : 'var(--bg-card, #ffffff)',
-                  border: isSelected ? '2px solid var(--accent-primary, #0f766e)' : '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
+                  background: isSelected ? 'var(--v2-item-selected-bg, var(--accent-primary-light, rgba(15, 118, 110, 0.12)))' : 'var(--bg-card, #ffffff)',
+                  border: isSelected ? '2px solid var(--v2-item-selected-border, var(--accent-primary, #0f766e))' : '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
                   borderRadius: '18px',
                   padding: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  boxShadow: 'var(--v2-shadow-ambient)'
+                  boxShadow: isSelected ? '0 4px 16px rgba(0,0,0,0.12)' : 'var(--v2-shadow-ambient)'
                 }}
               >
                 <div>
@@ -428,7 +428,7 @@ export const AppContentV2: React.FC = () => {
                     {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
                   </p>
                   {c.pastor_name && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 700, margin: '2px 0 0 0' }}>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--accent-bright, var(--accent-primary, #0f766e))', fontWeight: 700, margin: '2px 0 0 0' }}>
                       Pastor Local: {c.pastor_name}
                     </p>
                   )}
@@ -438,7 +438,7 @@ export const AppContentV2: React.FC = () => {
                   width: '22px',
                   height: '22px',
                   borderRadius: '50%',
-                  border: isSelected ? '6px solid var(--accent-primary, #0f766e)' : '2px solid var(--panel-border, #cbd5e1)',
+                  border: isSelected ? '6px solid var(--v2-item-selected-border, var(--accent-primary, #0f766e))' : '2px solid var(--panel-border, #cbd5e1)',
                   background: 'var(--bg-card, #ffffff)'
                 }} />
               </div>
