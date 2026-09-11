@@ -1760,10 +1760,10 @@ export const CellGroups: React.FC = () => {
                           key={chapterId}
                           onClick={() => setReadingChapter(ch)}
                           style={{
-                            background: '#ffffff',
+                            background: 'var(--bg-card, #ffffff)',
                             borderRadius: '16px',
                             border: isCompleted ? '1.5px solid #a7f3d0' : '1px solid var(--panel-border)',
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                            boxShadow: 'var(--shadow-sm)',
                             padding: '12px 14px',
                             display: 'flex',
                             alignItems: 'center',
@@ -2860,272 +2860,273 @@ export const CellGroups: React.FC = () => {
             </BottomSheet>
           )}
 
-          {/* Modal de Detalhes e Leitura do Estudo / Lição */}
-          {readingChapter && (
-            <BottomSheet isOpen={Boolean(readingChapter)} onClose={() => setReadingChapter(null)} maxHeight="94dvh">
-              {(() => {
-                const chapterId = readingChapter.id || String(readingChapter.chapter_number);
-                const isCompleted = completedChapterIds.includes(chapterId);
+        </div>
+      )}
 
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
-                    {/* Header do Estudo */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                          <span style={{
-                            fontSize: '0.70rem',
-                            fontWeight: 900,
-                            color: 'var(--accent-primary)',
-                            background: 'var(--accent-primary-light)',
-                            padding: '3px 10px',
-                            borderRadius: '10px',
-                            textTransform: 'uppercase'
-                          }}>
-                            {selectedBook?.title || 'Estudo Bíblico'} • Lição {readingChapter.chapter_number}
-                          </span>
-                          {isCompleted && (
-                            <span style={{
-                              fontSize: '0.70rem',
-                              fontWeight: 800,
-                              color: '#059669',
-                              background: '#dcfce7',
-                              padding: '3px 9px',
-                              borderRadius: '10px'
-                            }}>
-                              ✓ Concluído
-                            </span>
-                          )}
-                        </div>
-                        <h2 style={{ fontSize: '1.24rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, lineHeight: 1.3 }}>
-                          {readingChapter.title}
-                        </h2>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setReadingChapter(null)}
-                        style={{
-                          background: '#f1f5f9',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '34px',
-                          height: '34px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#64748b',
-                          cursor: 'pointer',
-                          fontWeight: 700,
-                          fontSize: '0.90rem',
-                          flexShrink: 0
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
+      {/* Modal de Detalhes e Leitura do Estudo / Lição (Disponível Globalmente tanto na Minha Célula quanto no Descobrir) */}
+      {readingChapter && (
+        <BottomSheet isOpen={Boolean(readingChapter)} onClose={() => setReadingChapter(null)} maxHeight="94dvh">
+          {(() => {
+            const chapterId = readingChapter.id || String(readingChapter.chapter_number);
+            const isCompleted = completedChapterIds.includes(chapterId);
 
-                    {/* Texto Bíblico Base */}
-                    {readingChapter.verse_reference && (
-                      <div style={{
-                        background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
-                        borderLeft: '4px solid var(--accent-primary)',
-                        borderRadius: '14px',
-                        padding: '12px 16px',
-                        fontSize: '0.88rem',
-                        color: '#1e40af',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px'
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
+                {/* Header do Estudo */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                      <span style={{
+                        fontSize: '0.70rem',
+                        fontWeight: 900,
+                        color: 'var(--accent-primary)',
+                        background: 'var(--accent-primary-light)',
+                        padding: '3px 10px',
+                        borderRadius: '10px',
+                        textTransform: 'uppercase'
                       }}>
-                        <span style={{ fontSize: '1.2rem' }}>📖</span>
-                        <div>
-                          <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8 }}>Texto Bíblico Base</div>
-                          <div>{readingChapter.verse_reference}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 1. DINÂMICA / QUEBRA-GELO */}
-                    {readingChapter.icebreaker && (
-                      <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '14px 16px', border: '1px solid #e2e8f0' }}>
-                        <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>🧊</span>
-                          <span>Quebra-Gelo / Dinâmica de Abertura</span>
-                        </div>
-                        <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                          {readingChapter.icebreaker}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 2. MINISTRAÇÃO & CONTEÚDO PRINCIPAL */}
-                    {readingChapter.content_body && (
-                      <div>
-                        <div style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                          💡 Ministração & Palavra da Célula
-                        </div>
-                        <div style={{
-                          fontSize: '0.90rem',
-                          color: 'var(--text-main)',
-                          lineHeight: 1.68,
-                          whiteSpace: 'pre-line',
-                          background: '#ffffff',
-                          padding: '16px',
-                          borderRadius: '16px',
-                          border: '1px solid #f1f5f9',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                        {selectedBook?.title || 'Estudo Bíblico'} • Lição {readingChapter.chapter_number}
+                      </span>
+                      {isCompleted && (
+                        <span style={{
+                          fontSize: '0.70rem',
+                          fontWeight: 800,
+                          color: '#059669',
+                          background: '#dcfce7',
+                          padding: '3px 9px',
+                          borderRadius: '10px'
                         }}>
-                          {readingChapter.content_body}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3. PERGUNTAS PARA COMPARTILHAMENTO */}
-                    {Array.isArray(readingChapter.questions) && readingChapter.questions.length > 0 && (
-                      <div style={{ background: '#fdf4ff', borderRadius: '16px', padding: '16px', border: '1px solid #f5d0fe' }}>
-                        <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', marginBottom: '10px' }}>
-                          💬 Perguntas para Edificação & Partilha
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {readingChapter.questions.map((q, qIdx) => (
-                            <div key={qIdx} style={{ display: 'flex', gap: '10px', fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.45 }}>
-                              <span style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '50%',
-                                background: '#c084fc',
-                                color: '#ffffff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.72rem',
-                                fontWeight: 800,
-                                flexShrink: 0
-                              }}>
-                                {qIdx + 1}
-                              </span>
-                              <span style={{ flex: 1 }}>{q}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 4. DESAFIO PRÁTICO DA SEMANA */}
-                    {readingChapter.practical_challenge && (
-                      <div style={{ background: '#fffbeb', borderRadius: '16px', padding: '14px 16px', border: '1px solid #fde68a' }}>
-                        <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#d97706', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>🎯</span>
-                          <span>Desafio Prático da Semana</span>
-                        </div>
-                        <div style={{ fontSize: '0.84rem', color: '#92400e', lineHeight: 1.55 }}>
-                          {readingChapter.practical_challenge}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 5. MÍDIA DE APOIO (VÍDEO / PDF) */}
-                    {readingChapter.media_url && (
-                      <a
-                        href={readingChapter.media_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          padding: '12px 16px',
-                          background: '#f8fafc',
-                          borderRadius: '14px',
-                          border: '1px solid #e2e8f0',
-                          color: 'var(--accent-primary)',
-                          textDecoration: 'none',
-                          fontWeight: 800,
-                          fontSize: '0.84rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px'
-                        }}
-                      >
-                        <span>{readingChapter.media_type === 'VIDEO' ? '🎥 Assistir Vídeo Complementar' : '📕 Abrir Arquivo PDF do Estudo'}</span>
-                      </a>
-                    )}
-
-                    {/* BOTÕES DE AÇÃO INFERIORES */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                      {isCompleted ? (
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleCompletion(chapterId, e)}
-                          style={{
-                            width: '100%',
-                            background: '#ecfdf5',
-                            color: '#059669',
-                            border: '1.5px solid #a7f3d0',
-                            borderRadius: '16px',
-                            padding: '14px',
-                            fontWeight: 800,
-                            fontSize: '0.88rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(5,150,105,0.15)'
-                          }}
-                        >
-                          <span>✓</span>
-                          <span>Estudo Concluído (Toque para reabrir)</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleCompletion(chapterId, e)}
-                          style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #10b981, #059669)',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '16px',
-                            padding: '14px',
-                            fontWeight: 900,
-                            fontSize: '0.88rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
-                          }}
-                        >
-                          <span>✅</span>
-                          <span>Marcar este Estudo como Concluído</span>
-                        </button>
+                          ✓ Concluído
+                        </span>
                       )}
+                    </div>
+                    <h2 style={{ fontSize: '1.24rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, lineHeight: 1.3 }}>
+                      {readingChapter.title}
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReadingChapter(null)}
+                    style={{
+                      background: 'var(--bg-card-subtle, #f1f5f9)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '34px',
+                      height: '34px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary, #64748b)',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.90rem',
+                      flexShrink: 0
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setReadingChapter(null)}
-                        style={{
-                          width: '100%',
-                          padding: '12px',
-                          borderRadius: '14px',
-                          border: '1px solid #e2e8f0',
-                          background: '#ffffff',
-                          color: '#64748b',
-                          fontWeight: 800,
-                          fontSize: '0.82rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Fechar
-                      </button>
+                {/* Texto Bíblico Base */}
+                {readingChapter.verse_reference && (
+                  <div style={{
+                    background: 'var(--bg-card-subtle, #eff6ff)',
+                    borderLeft: '4px solid var(--accent-primary)',
+                    borderRadius: '14px',
+                    padding: '12px 16px',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-main, #1e40af)',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>📖</span>
+                    <div>
+                      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8 }}>Texto Bíblico Base</div>
+                      <div>{readingChapter.verse_reference}</div>
                     </div>
                   </div>
-                );
-              })()}
-            </BottomSheet>
-          )}
-        </div>
+                )}
+
+                {/* 1. DINÂMICA / QUEBRA-GELO */}
+                {readingChapter.icebreaker && (
+                  <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', borderRadius: '16px', padding: '14px 16px', border: '1px solid var(--panel-border, #e2e8f0)' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🧊</span>
+                      <span>Quebra-Gelo / Dinâmica de Abertura</span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                      {readingChapter.icebreaker}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. MINISTRAÇÃO & CONTEÚDO PRINCIPAL */}
+                {readingChapter.content_body && (
+                  <div>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.03em' }}>
+                      💡 Ministração & Palavra da Célula
+                    </div>
+                    <div style={{
+                      fontSize: '0.90rem',
+                      color: 'var(--text-main)',
+                      lineHeight: 1.68,
+                      whiteSpace: 'pre-line',
+                      background: 'var(--bg-card, #ffffff)',
+                      padding: '16px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--panel-border, #f1f5f9)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      {readingChapter.content_body}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. PERGUNTAS PARA COMPARTILHAMENTO */}
+                {Array.isArray(readingChapter.questions) && readingChapter.questions.length > 0 && (
+                  <div style={{ background: 'var(--bg-card-subtle, #fdf4ff)', borderRadius: '16px', padding: '16px', border: '1px solid var(--panel-border, #f5d0fe)' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      💬 Perguntas para Edificação & Partilha
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {readingChapter.questions.map((q, qIdx) => (
+                        <div key={qIdx} style={{ display: 'flex', gap: '10px', fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.45 }}>
+                          <span style={{
+                            width: '22px',
+                            height: '22px',
+                            borderRadius: '50%',
+                            background: '#c084fc',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            flexShrink: 0
+                          }}>
+                            {qIdx + 1}
+                          </span>
+                          <span style={{ flex: 1 }}>{q}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. DESAFIO PRÁTICO DA SEMANA */}
+                {readingChapter.practical_challenge && (
+                  <div style={{ background: 'var(--bg-card-subtle, #fffbeb)', borderRadius: '16px', padding: '14px 16px', border: '1px solid var(--panel-border, #fde68a)' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#d97706', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🎯</span>
+                      <span>Desafio Prático da Semana</span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary, #92400e)', lineHeight: 1.55 }}>
+                      {readingChapter.practical_challenge}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. MÍDIA DE APOIO (VÍDEO / PDF) */}
+                {readingChapter.media_url && (
+                  <a
+                    href={readingChapter.media_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '12px 16px',
+                      background: 'var(--bg-card-subtle, #f8fafc)',
+                      borderRadius: '14px',
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      color: 'var(--accent-primary)',
+                      textDecoration: 'none',
+                      fontWeight: 800,
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span>{readingChapter.media_type === 'VIDEO' ? '🎥 Assistir Vídeo Complementar' : '📕 Abrir Arquivo PDF do Estudo'}</span>
+                  </a>
+                )}
+
+                {/* BOTÕES DE AÇÃO INFERIORES */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                  {isCompleted ? (
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleCompletion(chapterId, e)}
+                      style={{
+                        width: '100%',
+                        background: '#ecfdf5',
+                        color: '#059669',
+                        border: '1.5px solid #a7f3d0',
+                        borderRadius: '16px',
+                        padding: '14px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(5,150,105,0.15)'
+                      }}
+                    >
+                      <span>✓</span>
+                      <span>Estudo Concluído (Toque para reabrir)</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleCompletion(chapterId, e)}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '16px',
+                        padding: '14px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                      }}
+                    >
+                      <span>✅</span>
+                      <span>Marcar este Estudo como Concluído</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setReadingChapter(null)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '14px',
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      background: 'var(--bg-card, #ffffff)',
+                      color: 'var(--text-secondary, #64748b)',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </BottomSheet>
       )}
 
       {/* ========================================================
