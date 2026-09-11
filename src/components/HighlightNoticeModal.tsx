@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 interface HighlightNoticeModalProps {
   activeBroadcast?: any;
@@ -15,6 +16,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
   onOpenLive,
   onOpenEvents
 }) => {
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [noticeData, setNoticeData] = useState<{
     type: 'broadcast' | 'event' | 'church';
@@ -28,6 +30,12 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
   } | null>(null);
 
   useEffect(() => {
+    // REQUISITO MANDATÓRIO: Pop-up de destaque só deve ser exibido na área logada (membros autenticados)
+    if (!isAuthenticated) {
+      setIsOpen(false);
+      return;
+    }
+
     // Verifica se já foi dispensado nesta sessão do navegador
     const isDismissed = sessionStorage.getItem('faithhub_popup_notice_dismissed');
     if (isDismissed) return;
@@ -90,14 +98,14 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       setIsOpen(true);
       return;
     }
-  }, [activeBroadcast, featuredEvent, branding]);
+  }, [isAuthenticated, activeBroadcast, featuredEvent, branding]);
 
   const handleClose = () => {
     sessionStorage.setItem('faithhub_popup_notice_dismissed', 'true');
     setIsOpen(false);
   };
 
-  if (!isOpen || !noticeData) return null;
+  if (!isAuthenticated || !isOpen || !noticeData) return null;
 
   return (
     <div
@@ -105,8 +113,9 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
         position: 'fixed',
         inset: 0,
         zIndex: 99999,
-        background: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(8px)',
+        background: 'rgba(0, 0, 0, 0.78)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -117,13 +126,13 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
     >
       <div
         style={{
-          background: 'var(--bg-card, #ffffff)',
+          background: 'var(--bg-card, #111827)',
           borderRadius: '24px',
           maxWidth: '400px',
           width: '100%',
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
-          border: '1px solid var(--panel-border)',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.6)',
+          border: '1px solid var(--panel-border, rgba(255, 255, 255, 0.15))',
           position: 'relative',
           animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
@@ -131,13 +140,13 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       >
         {/* Imagem de Capa do Pop-up (se houver) */}
         {noticeData.imageUrl ? (
-          <div style={{ position: 'relative', width: '100%', height: '160px', overflow: 'hidden', background: '#0f172a' }}>
+          <div style={{ position: 'relative', width: '100%', height: '160px', overflow: 'hidden', background: '#090d16' }}>
             <img
               src={noticeData.imageUrl}
               alt={noticeData.title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(9, 13, 22, 0.85) 100%)' }} />
             
             {/* Botão Fechar no Topo */}
             <button
@@ -150,15 +159,16 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                background: 'rgba(0,0,0,0.5)',
+                background: 'rgba(0,0,0,0.55)',
                 color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.3)',
+                border: '1px solid rgba(255,255,255,0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 fontSize: '1.1rem',
-                backdropFilter: 'blur(6px)'
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)'
               }}
             >
               ✕
@@ -175,9 +185,9 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              background: '#f1f5f9',
-              color: '#64748b',
-              border: 'none',
+              background: 'var(--bg-card-subtle, rgba(255, 255, 255, 0.10))',
+              color: 'var(--text-main, #ffffff)',
+              border: '1px solid var(--panel-border, rgba(255, 255, 255, 0.15))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

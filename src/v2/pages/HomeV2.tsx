@@ -49,7 +49,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
   onOpenGiving
 }) => {
   const { branding } = useBranding();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { isFeatureEnabled } = useFeatureFlags();
 
   const [activeBroadcast, setActiveBroadcast] = useState<any>(null);
@@ -536,14 +536,16 @@ export const HomeV2: React.FC<HomeV2Props> = ({
         onClose={() => setIsKidsVolunteerOpen(false)} 
       />
 
-      {/* Pop-up / Modal de Destaque Automático de Entrada */}
-      <HighlightNoticeModal
-        activeBroadcast={activeBroadcast}
-        featuredEvent={featuredEvent}
-        branding={branding}
-        onOpenLive={onOpenLive}
-        onOpenEvents={onOpenEvents}
-      />
+      {/* Pop-up / Modal de Destaque Automático de Entrada (Exclusivo para Membros em Área Logada) */}
+      {isAuthenticated && (
+        <HighlightNoticeModal
+          activeBroadcast={activeBroadcast}
+          featuredEvent={featuredEvent}
+          branding={branding}
+          onOpenLive={onOpenLive}
+          onOpenEvents={onOpenEvents}
+        />
+      )}
 
     </div>
   );
