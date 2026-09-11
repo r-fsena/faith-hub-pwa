@@ -10,6 +10,7 @@ import { HeroCarousel } from '../../components/HeroCarousel';
 import { HighlightNoticeModal } from '../../components/HighlightNoticeModal';
 import { triggerHaptic } from '../utils/haptics';
 import { swrFetch } from '../services/swrCache';
+import { ChevronRightIcon } from '../components/Icons';
 import { 
   fetchActiveBroadcast, 
   fetchEvents, 
@@ -431,11 +432,9 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             alignItems: 'center',
             justifyContent: 'center',
             color: '#0284c7',
-            fontWeight: 800,
-            fontSize: '1rem',
             flexShrink: 0
           }}>
-            ›
+            <ChevronRightIcon size={18} color="#0284c7" />
           </div>
         </div>
 
@@ -517,11 +516,9 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             alignItems: 'center',
             justifyContent: 'center',
             color: '#ea580c',
-            fontWeight: 800,
-            fontSize: '1rem',
             flexShrink: 0
           }}>
-            ›
+            <ChevronRightIcon size={18} color="#ea580c" />
           </div>
         </div>
 

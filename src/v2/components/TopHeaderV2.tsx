@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../context/BrandingContext';
 import { useAuth } from '../../context/AuthContext';
 import { triggerHaptic } from '../utils/haptics';
+import { MapPinIcon, ChevronDownIcon, ChevronLeftIcon } from './Icons';
 
 interface TopHeaderV2Props {
   onOpenNotifications?: () => void;
@@ -86,14 +87,14 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               fontWeight: 800,
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
               cursor: 'pointer',
-              padding: '6px 12px 6px 8px',
+              padding: '6px 12px 6px 10px',
               minHeight: '36px',
               outline: 'none'
             }}
           >
-            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>‹</span>
+            <ChevronLeftIcon size={16} color="var(--text-main, #0f172a)" />
             <span>Voltar</span>
           </button>
 
@@ -185,7 +186,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap'
               }}>
-                {user?.name ? `Olá, ${user.name.split(' ')[0]} 👋` : (branding.church_name || 'Faith-Hub')}
+                {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.church_name || 'Faith-Hub')}
               </span>
               <span style={{
                 fontSize: '0.58rem',
@@ -213,18 +214,18 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 background: 'rgba(15, 118, 110, 0.08)',
                 border: '1px solid rgba(15, 118, 110, 0.20)',
                 borderRadius: '999px',
-                padding: '2px 8px 2px 6px',
+                padding: '3px 8px 3px 7px',
                 cursor: 'pointer',
                 marginTop: '3px',
                 width: 'fit-content',
                 outline: 'none'
               }}
             >
-              <span style={{ fontSize: '0.68rem', lineHeight: 1 }}>📍</span>
+              <MapPinIcon size={12} color="var(--accent-primary, #0f766e)" />
               <span style={{ 
                 fontSize: '0.68rem', 
                 fontWeight: 800, 
@@ -237,7 +238,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               }}>
                 {campusName || 'Sede'}
               </span>
-              <span style={{ fontSize: '0.60rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 900, lineHeight: 1 }}>▾</span>
+              <ChevronDownIcon size={11} color="var(--accent-primary, #0f766e)" />
             </button>
           </div>
         </div>

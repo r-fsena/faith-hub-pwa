@@ -16,6 +16,7 @@ import { prefetchV2Data, swrFetch } from './services/swrCache';
 import { getActiveCampusId, fetchCampuses, setActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { triggerHaptic } from './utils/haptics';
+import { ChurchIcon, CrossIcon } from './components/Icons';
 
 // Telas do App
 import { HomeV2 } from './pages/HomeV2';
@@ -143,10 +144,9 @@ export const AppContentV2: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.8rem',
             margin: '0 auto 16px auto'
           }}>
-            ✝️
+            <CrossIcon size={32} color="#ef4444" />
           </div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 8px 0' }}>
             {branding.church_name}
@@ -364,7 +364,19 @@ export const AppContentV2: React.FC = () => {
         maxHeight="65vh"
       >
         <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <span style={{ fontSize: '1.5rem' }}>🏛️</span>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
+            color: 'var(--accent-primary, #0f766e)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 8px auto'
+          }}>
+            <ChurchIcon size={26} color="var(--accent-primary, #0f766e)" />
+          </div>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: '4px 0 0 0' }}>
             Escolha sua Congregação
           </h3>
