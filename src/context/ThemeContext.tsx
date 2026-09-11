@@ -63,6 +63,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.classList.add('dark', 'dark-theme');
         body.classList.add('dark', 'dark-theme');
         root.setAttribute('data-theme', 'dark');
+        body.setAttribute('data-theme', 'dark');
 
         // Atualiza a barra de status do celular para escuro
         const metaTheme = document.querySelector('meta[name="theme-color"]');
@@ -73,6 +74,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.classList.remove('dark', 'dark-theme');
         body.classList.remove('dark', 'dark-theme');
         root.setAttribute('data-theme', 'light');
+        body.setAttribute('data-theme', 'light');
 
         // Restaura a cor primária da igreja na barra de status
         const metaTheme = document.querySelector('meta[name="theme-color"]');

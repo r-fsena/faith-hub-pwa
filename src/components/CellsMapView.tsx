@@ -613,11 +613,11 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
           left: '12px',
           right: '12px',
           zIndex: 10001,
-          background: '#ffffff',
+          background: 'var(--bg-card, #ffffff)',
           borderRadius: '24px',
           padding: '16px 18px',
           boxShadow: '0 12px 36px rgba(0,0,0,0.28)',
-          border: '1px solid rgba(0,0,0,0.08)',
+          border: '1px solid var(--panel-border)',
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
@@ -632,15 +632,15 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   fontWeight: 900,
                   color: primaryColor,
                   textTransform: 'uppercase',
-                  background: '#f0fdfa',
+                  background: 'var(--accent-primary-light, #f0fdfa)',
                   padding: '3px 8px',
                   borderRadius: '8px',
-                  border: '1px solid #ccfbf1'
+                  border: '1px solid var(--panel-border, #ccfbf1)'
                 }}>
                   {selectedCell.network || selectedCell.focus || 'Geral'}
                 </span>
                 {selectedCell.neighborhood && (
-                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b' }}>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>
                     📍 {selectedCell.neighborhood}
                   </span>
                 )}
@@ -649,16 +649,16 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                     fontSize: '0.66rem',
                     fontWeight: 900,
                     color: '#2563eb',
-                    background: '#eff6ff',
+                    background: 'rgba(37, 99, 235, 0.12)',
                     padding: '3px 8px',
                     borderRadius: '8px',
-                    border: '1px solid #bfdbfe'
+                    border: '1px solid rgba(37, 99, 235, 0.25)'
                   }}>
                     🚗 {selectedCell.distanceKm} km de você
                   </span>
                 )}
               </div>
-              <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: '4px 0 0 0', lineHeight: 1.2 }}>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0', lineHeight: 1.2 }}>
                 {selectedCell.name}
               </h4>
             </div>
@@ -667,8 +667,8 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               type="button"
               onClick={() => setSelectedCell(null)}
               style={{
-                background: '#f1f5f9',
-                border: 'none',
+                background: 'var(--bg-card-subtle, #f1f5f9)',
+                border: '1px solid var(--panel-border)',
                 borderRadius: '50%',
                 width: '30px',
                 height: '30px',
@@ -676,7 +676,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#64748b',
+                color: 'var(--text-muted)',
                 fontSize: '0.85rem',
                 fontWeight: 900
               }}
@@ -691,13 +691,14 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             flexWrap: 'wrap',
             gap: '8px 14px',
             fontSize: '0.76rem',
-            color: '#475569',
-            background: '#f8fafc',
+            color: 'var(--text-secondary)',
+            background: 'var(--bg-card-subtle, #f8fafc)',
+            border: '1px solid var(--panel-border)',
             padding: '10px 12px',
             borderRadius: '12px'
           }}>
             {selectedCell.meeting_day && selectedCell.meeting_time && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, color: 'var(--text-main)' }}>
                 <span>🗓️</span>
                 <span>{selectedCell.meeting_day} às {selectedCell.meeting_time}</span>
               </div>
@@ -720,13 +721,13 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               type="button"
               onClick={() => openInNavigationApp(selectedCell)}
               style={{
-                background: '#f1f5f9',
-                border: '1.5px solid #e2e8f0',
+                background: 'var(--bg-card-subtle, #f1f5f9)',
+                border: '1.5px solid var(--panel-border)',
                 borderRadius: '14px',
                 padding: '12px',
                 fontSize: '0.82rem',
                 fontWeight: 800,
-                color: '#0f172a',
+                color: 'var(--text-main)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -793,8 +794,8 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                 onClick={() => onRequestJoin(selectedCell)}
                 disabled={isPendingJoin ? isPendingJoin(selectedCell.id) : false}
                 style={{
-                  background: (isPendingJoin && isPendingJoin(selectedCell.id)) ? '#f1f5f9' : 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
-                  color: (isPendingJoin && isPendingJoin(selectedCell.id)) ? '#94a3b8' : '#ffffff',
+                  background: (isPendingJoin && isPendingJoin(selectedCell.id)) ? 'var(--bg-card-subtle)' : 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                  color: (isPendingJoin && isPendingJoin(selectedCell.id)) ? 'var(--text-muted)' : '#ffffff',
                   border: 'none',
                   borderRadius: '14px',
                   padding: '12px',
@@ -845,9 +846,9 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                 }}
                 style={{
                   flexShrink: 0,
-                  background: 'rgba(255, 255, 255, 0.95)',
+                  background: 'var(--bg-card, rgba(255, 255, 255, 0.95))',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,0,0,0.08)',
+                  border: '1px solid var(--panel-border)',
                   borderRadius: '16px',
                   padding: '10px 14px',
                   boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
@@ -863,16 +864,16 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                     {cell.network || cell.focus || 'Célula'}
                   </span>
                   {cell.distanceKm !== undefined && (
-                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: '#2563eb', background: '#eff6ff', padding: '1px 5px', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 900, color: '#2563eb', background: 'rgba(37, 99, 235, 0.12)', padding: '1px 5px', borderRadius: '6px' }}>
                       {cell.distanceKm} km
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '0.84rem', fontWeight: 900, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {cell.name}
                 </span>
                 {cell.neighborhood && (
-                  <span style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 700 }}>
                     📍 {cell.neighborhood}
                   </span>
                 )}

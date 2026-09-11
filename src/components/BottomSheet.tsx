@@ -91,7 +91,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           maxHeight,
           transform: `translateY(${dragY}px)`,
           transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-          position: 'relative'
+          position: 'relative',
+          backgroundColor: 'var(--bg-card, #ffffff)',
+          color: 'var(--text-main, #0f172a)',
+          borderTop: '1px solid var(--panel-border, rgba(0,0,0,0.08))'
         }}
       >
         {/* Barra superior de arrasto (Touch Target ampliado para puxar) */}
@@ -110,8 +113,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             touchAction: 'none'
           }}
         >
-          <div className="drawer-handle" style={{ width: '48px', height: '6px', background: '#cbd5e1' }} />
-          <span style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 700, marginTop: '2px', letterSpacing: '0.02em' }}>
+          <div className="drawer-handle" style={{ width: '48px', height: '6px', background: 'var(--panel-border, #cbd5e1)', borderRadius: '3px' }} />
+          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted, #94a3b8)', fontWeight: 700, marginTop: '2px', letterSpacing: '0.02em' }}>
             Deslize para baixo para fechar
           </span>
         </div>
@@ -125,8 +128,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               position: 'absolute',
               top: '12px',
               right: '14px',
-              background: '#f1f5f9',
-              border: 'none',
+              background: 'var(--bg-card-subtle, #f1f5f9)',
+              border: '1px solid var(--panel-border, transparent)',
               borderRadius: '50%',
               width: '28px',
               height: '28px',
@@ -134,7 +137,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '0.85rem',
-              color: 'var(--text-muted)',
+              color: 'var(--text-muted, #64748b)',
               cursor: 'pointer',
               zIndex: 10
             }}

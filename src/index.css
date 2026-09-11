@@ -1003,9 +1003,22 @@ body[data-theme="dark"] input::placeholder {
 body.dark [style*="background: #ffffff"],
 body.dark [style*="background: rgb(255, 255, 255)"],
 body.dark [style*="background:#ffffff"],
+body.dark [style*="background-color: #ffffff"],
+body.dark [style*="background-color: rgb(255, 255, 255)"],
+body.dark [style*="background-color:#ffffff"],
+body.dark [style*="linear-gradient(135deg, #ffffff"],
+body.dark [style*="linear-gradient(135deg, rgb(255, 255, 255)"],
 body[data-theme="dark"] [style*="background: #ffffff"],
 body[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
-body[data-theme="dark"] [style*="background:#ffffff"] {
+body[data-theme="dark"] [style*="background:#ffffff"],
+body[data-theme="dark"] [style*="background-color: #ffffff"],
+body[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
+body[data-theme="dark"] [style*="background-color:#ffffff"],
+body[data-theme="dark"] [style*="linear-gradient(135deg, #ffffff"],
+body[data-theme="dark"] [style*="linear-gradient(135deg, rgb(255, 255, 255)"],
+:root[data-theme="dark"] [style*="background: #ffffff"],
+:root[data-theme="dark"] [style*="background-color: #ffffff"],
+:root[data-theme="dark"] [style*="linear-gradient(135deg, #ffffff"] {
   background: var(--bg-card) !important;
   color: var(--text-main) !important;
 }
@@ -1013,6 +1026,7 @@ body[data-theme="dark"] [style*="background:#ffffff"] {
 /* Exempt QR code containers so cameras can read QR codes */
 body.dark [data-qr="true"],
 body[data-theme="dark"] [data-qr="true"],
+:root[data-theme="dark"] [data-qr="true"],
 body.dark img[alt*="QR"],
 body[data-theme="dark"] img[alt*="QR"],
 body.dark [style*="padding: 16px; border-radius: 20px"][style*="200px"] {
@@ -1025,12 +1039,15 @@ body.dark [style*="background:#f8fafc"],
 body.dark [style*="background: #f1f5f9"],
 body.dark [style*="background: rgb(241, 245, 249)"],
 body.dark [style*="background:#f1f5f9"],
+body.dark [style*="linear-gradient(135deg, #f8fafc"],
 body[data-theme="dark"] [style*="background: #f8fafc"],
 body[data-theme="dark"] [style*="background: rgb(248, 250, 252)"],
 body[data-theme="dark"] [style*="background:#f8fafc"],
 body[data-theme="dark"] [style*="background: #f1f5f9"],
 body[data-theme="dark"] [style*="background: rgb(241, 245, 249)"],
-body[data-theme="dark"] [style*="background:#f1f5f9"] {
+body[data-theme="dark"] [style*="background:#f1f5f9"],
+body[data-theme="dark"] [style*="linear-gradient(135deg, #f8fafc"],
+body[data-theme="dark"] [style*="background: #fffbeb"] {
   background: var(--bg-card-subtle) !important;
 }
 

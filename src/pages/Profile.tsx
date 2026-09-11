@@ -751,81 +751,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             })()}
           </div>
 
-          {/* Coluna 2: Dados Pessoais, Contatos e Privacidade */}
+          {/* Coluna 2: Minha Comunidade, Preferências e Privacidade */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Card Meus Dados Cadastrais */}
-            <div style={{
-              background: 'var(--bg-card, #ffffff)',
-              borderRadius: '20px',
-              padding: '18px',
-              border: '1px solid var(--panel-border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Meus Dados Pessoais
-                </span>
-                <span 
-                  onClick={() => setIsEditProfileOpen(true)}
-                  style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Editar
-                </span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>👤</span>
-                  <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Nome Completo</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.name || 'Não informado'}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>🎂</span>
-                  <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Data de Nascimento / Aniversário</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                      {memberProfile.birth_date ? memberProfile.birth_date.split('-').reverse().join('/') : 'Adicionar data de nascimento'}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>📱</span>
-                  <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Telefone / WhatsApp</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>{memberProfile.phone || 'Adicionar telefone'}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>📍</span>
-                  <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>Endereço Residencial</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.3 }}>
-                      {memberProfile.address_street ? (
-                        `${memberProfile.address_street}, ${memberProfile.address_number || 'S/N'}${memberProfile.address_complement ? ` (${memberProfile.address_complement})` : ''} - ${memberProfile.address_neighborhood || ''}, ${memberProfile.address_city || ''} - ${memberProfile.address_state || ''}${memberProfile.address_zip ? ` • CEP: ${memberProfile.address_zip}` : ''}`
-                      ) : (
-                        memberProfile.address || 'Adicionar endereço completo'
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.1rem' }}>🔒</span>
-                  <div>
-                    <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>E-mail de Login (Único)</div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-muted)' }}>{user.email}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Card Informações da Igreja & Contatos */}
             <div style={{
               background: 'var(--bg-card, #ffffff)',
@@ -1187,22 +1114,22 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     {/* 1. Check-in de Crianças */}
                     {canKidsCheckin && (
                       <div style={{
-                        background: '#ffffff',
+                        background: 'var(--bg-card-subtle, #ffffff)',
                         borderRadius: '16px',
                         padding: '14px 16px',
-                        border: '1.5px solid #e2e8f0',
+                        border: '1.5px solid var(--panel-border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                        boxShadow: 'var(--shadow-sm)'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{
                             width: '42px',
                             height: '42px',
                             borderRadius: '12px',
-                            background: '#eff6ff',
+                            background: 'rgba(37, 99, 235, 0.12)',
                             color: '#2563eb',
                             display: 'flex',
                             alignItems: 'center',
@@ -1213,10 +1140,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                             🚸
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
                               Check-in Kids (Crianças)
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                               Totem e registro de entrada nas salas infantis
                             </div>
                           </div>
@@ -1249,22 +1176,22 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     {/* 2. Checkout & Devolução Kids */}
                     {canKidsCheckout && (
                       <div style={{
-                        background: '#ffffff',
+                        background: 'var(--bg-card-subtle, #ffffff)',
                         borderRadius: '16px',
                         padding: '14px 16px',
-                        border: '1.5px solid #e2e8f0',
+                        border: '1.5px solid var(--panel-border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                        boxShadow: 'var(--shadow-sm)'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{
                             width: '42px',
                             height: '42px',
                             borderRadius: '12px',
-                            background: '#f0fdf4',
+                            background: 'rgba(22, 163, 74, 0.12)',
                             color: '#16a34a',
                             display: 'flex',
                             alignItems: 'center',
@@ -1275,10 +1202,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                             🛡️
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
                               Checkout & Devolução Kids
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                               Validação de PIN e entrega segura aos pais
                             </div>
                           </div>
@@ -1311,22 +1238,22 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     {/* 3. Portaria de Eventos (Scanner QR) */}
                     {canEventsCheckin && (
                       <div style={{
-                        background: '#ffffff',
+                        background: 'var(--bg-card-subtle, #ffffff)',
                         borderRadius: '16px',
                         padding: '14px 16px',
-                        border: '1.5px solid #e2e8f0',
+                        border: '1.5px solid var(--panel-border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                        boxShadow: 'var(--shadow-sm)'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{
                             width: '42px',
                             height: '42px',
                             borderRadius: '12px',
-                            background: '#faf5ff',
+                            background: 'rgba(147, 51, 234, 0.12)',
                             color: '#9333ea',
                             display: 'flex',
                             alignItems: 'center',
@@ -1337,10 +1264,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                             🎫
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
                               Portaria & Validação de Ingressos
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                               Leitor de QR Code para ingressos de eventos
                             </div>
                           </div>
@@ -1373,22 +1300,22 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     {/* 4. Chamador de Pais Kids */}
                     {canKidsCalls && (
                       <div style={{
-                        background: '#ffffff',
+                        background: 'var(--bg-card-subtle, #ffffff)',
                         borderRadius: '16px',
                         padding: '14px 16px',
-                        border: '1.5px solid #e2e8f0',
+                        border: '1.5px solid var(--panel-border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                        boxShadow: 'var(--shadow-sm)'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{
                             width: '42px',
                             height: '42px',
                             borderRadius: '12px',
-                            background: '#fffbeb',
+                            background: 'rgba(217, 119, 6, 0.12)',
                             color: '#d97706',
                             display: 'flex',
                             alignItems: 'center',
@@ -1399,10 +1326,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                             📢
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
                               Chamador de Pais no Culto
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                               Alerta de crianças no telão da igreja
                             </div>
                           </div>
@@ -1470,7 +1397,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   width: '100%',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
                   color: 'var(--text-main)',
@@ -1493,7 +1420,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 14px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
                     color: 'var(--text-main)',
@@ -1514,7 +1441,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 14px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
                     color: 'var(--text-main)',
@@ -1548,7 +1475,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   width: '100%',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
                   color: 'var(--text-main)',
@@ -1570,7 +1497,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   width: '100%',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
                   color: 'var(--text-main)',
@@ -1593,7 +1520,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 14px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
                     color: 'var(--text-main)',
@@ -1614,7 +1541,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 14px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
                     color: 'var(--text-main)',
@@ -1638,7 +1565,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 10px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
                     color: 'var(--text-main)',
@@ -1659,7 +1586,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 10px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
                     color: 'var(--text-main)',
@@ -1681,7 +1608,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                     width: '100%',
                     padding: '12px 8px',
                     borderRadius: '12px',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
                     color: 'var(--text-main)',
@@ -1704,10 +1631,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   width: '100%',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#e2e8f0',
-                  border: '1px solid #cbd5e1',
+                  background: 'var(--bg-card, #e2e8f0)',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
                   fontSize: '0.84rem',
-                  color: '#64748b',
+                  color: 'var(--text-muted, #64748b)',
                   cursor: 'not-allowed'
                 }}
               />
@@ -1752,7 +1679,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               type="button"
               onClick={() => cameraInputRef.current?.click()}
               style={{
-                background: '#ffffff',
+                background: 'var(--bg-card-subtle, #ffffff)',
                 border: '1.5px solid var(--panel-border)',
                 borderRadius: '16px',
                 padding: '14px 10px',
@@ -1773,7 +1700,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               type="button"
               onClick={() => galleryInputRef.current?.click()}
               style={{
-                background: '#ffffff',
+                background: 'var(--bg-card-subtle, #ffffff)',
                 border: '1.5px solid var(--panel-border)',
                 borderRadius: '16px',
                 padding: '14px 10px',

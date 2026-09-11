@@ -2696,7 +2696,7 @@ export const CellGroups: React.FC = () => {
 
                 {/* Bloco de Encontro */}
                 <div style={{
-                  background: '#f8fafc',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
                   borderRadius: '16px',
                   padding: '14px',
                   border: '1px solid var(--panel-border)',
@@ -2734,13 +2734,13 @@ export const CellGroups: React.FC = () => {
                       window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
                     }}
                     style={{
-                      background: '#f1f5f9',
-                      border: '1.5px solid #e2e8f0',
+                      background: 'var(--bg-card-subtle, #f1f5f9)',
+                      border: '1.5px solid var(--panel-border)',
                       borderRadius: '14px',
                       padding: '12px',
                       fontSize: '0.82rem',
                       fontWeight: 800,
-                      color: '#0f172a',
+                      color: 'var(--text-main)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
