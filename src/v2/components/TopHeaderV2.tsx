@@ -123,11 +123,11 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
       position: 'sticky',
       top: 0,
       zIndex: 90,
-      background: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.85)',
+      background: 'var(--v2-glass-surface, rgba(255, 255, 255, 0.85))',
       backdropFilter: 'blur(24px) saturate(180%)',
       WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-      borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.85)' : '1px solid transparent',
-      boxShadow: isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none',
+      borderBottom: isScrolled ? '1px solid var(--v2-glass-border, rgba(226, 232, 240, 0.85))' : '1px solid transparent',
+      boxShadow: isScrolled ? 'var(--v2-shadow-ambient)' : 'none',
       transition: 'all 0.25s ease',
       padding: 'env(safe-area-inset-top, 0px) 16px 0 16px'
     }}>

@@ -3,6 +3,7 @@ import { BrandingProvider } from './context/BrandingContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { SplashScreen } from './components/SplashScreen';
 
 // Code-splitting: Carrega V1 ou V2 dinamicamente sob demanda
@@ -48,13 +49,15 @@ const AppShell: React.FC = () => {
 export function App() {
   return (
     <BrandingProvider>
-      <FeatureFlagProvider>
-        <AuthProvider>
-          <CartProvider>
-            <AppShell />
-          </CartProvider>
-        </AuthProvider>
-      </FeatureFlagProvider>
+      <ThemeProvider>
+        <FeatureFlagProvider>
+          <AuthProvider>
+            <CartProvider>
+              <AppShell />
+            </CartProvider>
+          </AuthProvider>
+        </FeatureFlagProvider>
+      </ThemeProvider>
     </BrandingProvider>
   );
 }

@@ -128,3 +128,71 @@
   animation: v2Shimmer 1.6s infinite linear;
   border-radius: var(--v2-radius-md);
 }
+
+/* =========================================================
+   DARK THEME SYSTEM (MODO ESCURO NATIVO)
+   ========================================================= */
+
+:root.dark,
+:root.dark-theme,
+body.dark,
+body.dark-theme,
+[data-theme="dark"],
+.v2-shell.dark {
+  --bg-app: #090d16;
+  --bg-card: #111827;
+  --bg-card-subtle: #1e293b;
+  --panel-border: rgba(255, 255, 255, 0.09);
+  
+  --text-main: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --v2-bg: #090d16;
+  --v2-card-bg: #111827;
+  --v2-glass-surface: rgba(17, 24, 39, 0.85);
+  --v2-glass-border: rgba(255, 255, 255, 0.10);
+  --v2-subtle-border: rgba(255, 255, 255, 0.08);
+  --v2-shadow-ambient: 0 10px 30px -6px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajuste no fundo da tela em desktop para Dark Mode */
+@media (min-width: 601px) {
+  body.dark:has(.v2-shell),
+  body.dark-theme:has(.v2-shell),
+  body[data-theme="dark"]:has(.v2-shell) {
+    background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
+  }
+
+  body.dark .v2-shell,
+  body.dark-theme .v2-shell,
+  body[data-theme="dark"] .v2-shell {
+    box-shadow: 
+      0 25px 60px -15px rgba(0, 0, 0, 0.7), 
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 0 0 10px rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* Adaptação de componentes em modo escuro */
+body.dark .v2-glass-card,
+body.dark-theme .v2-glass-card,
+[data-theme="dark"] .v2-glass-card {
+  background: rgba(17, 24, 39, 0.85);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+body.dark .v2-card,
+body.dark-theme .v2-card,
+[data-theme="dark"] .v2-card {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .v2-skeleton,
+body.dark-theme .v2-skeleton,
+[data-theme="dark"] .v2-skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+

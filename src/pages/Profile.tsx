@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { useTheme } from '../context/ThemeContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
@@ -62,6 +63,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
+  const { themePreference, setThemePreference } = useTheme();
   const isV2Flag = isFeatureEnabled('pwa.v2_experience', false);
   const isV2Active = localStorage.getItem('faithhub_force_v2') === 'true' || (isV2Flag && localStorage.getItem('faithhub_force_v2') !== 'false');
 
@@ -928,11 +930,126 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           </button>
         </div>
 
+        {/* Seletor de Tema: Claro / Escuro / Sistema */}
+        <div style={{
+          marginTop: '20px',
+          padding: '16px',
+          background: 'var(--bg-card, #ffffff)',
+          borderRadius: '20px',
+          border: '1px solid var(--panel-border)',
+          maxWidth: '380px',
+          width: '100%',
+          margin: '20px auto 0 auto',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Aparência do Aplicativo
+            </span>
+            <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 800 }}>
+              {themePreference === 'light' ? 'Modo Claro' : themePreference === 'dark' ? 'Modo Escuro' : 'Conforme Sistema'}
+            </span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '8px',
+            background: 'var(--bg-card-subtle, #f1f5f9)',
+            padding: '4px',
+            borderRadius: '14px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setThemePreference('light')}
+              style={{
+                background: themePreference === 'light' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                color: themePreference === 'light' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 4px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: themePreference === 'light' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2"/><path d="M12 20v2"/>
+                <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+                <path d="M2 12h2"/><path d="M20 12h2"/>
+                <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+              </svg>
+              <span>Claro</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setThemePreference('dark')}
+              style={{
+                background: themePreference === 'dark' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                color: themePreference === 'dark' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 4px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: themePreference === 'dark' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+              <span>Escuro</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setThemePreference('system')}
+              style={{
+                background: themePreference === 'system' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                color: themePreference === 'system' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 4px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: themePreference === 'system' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="14" x="2" y="3" rx="2"/>
+                <line x1="8" x2="16" y1="21" y2="21"/>
+                <line x1="12" x2="12" y1="17" y2="21"/>
+              </svg>
+              <span>Sistema</span>
+            </button>
+          </div>
+        </div>
+
         {/* Indicador de Versão do App e Alternância de Experiência (V1 vs V2) */}
         <div style={{
           marginTop: '16px',
           padding: '14px 16px',
-          background: '#f8fafc',
+          background: 'var(--bg-card-subtle, #f8fafc)',
           borderRadius: '16px',
           border: '1px solid var(--panel-border)',
           maxWidth: '380px',

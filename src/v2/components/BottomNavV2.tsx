@@ -66,7 +66,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
         pointerEvents: 'auto',
         maxWidth: '460px',
         width: '100%',
-        background: 'rgba(255, 255, 255, 0.88)',
+        background: 'var(--v2-glass-surface, rgba(255, 255, 255, 0.88))',
         backdropFilter: 'blur(24px) saturate(190%)',
         WebkitBackdropFilter: 'blur(24px) saturate(190%)',
         borderRadius: '32px',
@@ -74,8 +74,8 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
-        border: '1px solid rgba(226, 232, 240, 0.75)'
+        boxShadow: 'var(--v2-shadow-ambient)',
+        border: '1px solid var(--v2-glass-border, rgba(226, 232, 240, 0.75))'
       }}>
         {visibleTabs.map((tab) => {
           const isActive = activeTab === tab.id;
