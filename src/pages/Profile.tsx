@@ -12,6 +12,7 @@ import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { checkIsMasterOrAdmin } from '../utils/roles';
+import { WelcomeLoginScreen } from '../v2/components/WelcomeLoginScreen';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -1822,8 +1823,19 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   }
 
   // =========================================================================
-  // SE NÃO ESTÁ AUTENTICADO: RENDERIZA A TELA DE LOGIN (ESTILO WEB STUDIO)
+  // SE NÃO ESTÁ AUTENTICADO: TELA DE BOAS-VINDAS IMERSIVA (OU FALLBACK)
   // =========================================================================
+  if (branding.welcome_screen_config?.enabled !== false) {
+    return (
+      <WelcomeLoginScreen 
+        onLoginSuccess={onLoginSuccess}
+        onContinueAsGuest={() => {
+          if (onLoginSuccess) onLoginSuccess();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="pwa-content animate-fade-in" style={{ justifyContent: 'center', minHeight: '80vh', alignItems: 'center' }}>
       

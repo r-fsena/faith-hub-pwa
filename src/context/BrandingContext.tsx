@@ -50,8 +50,45 @@ export interface ChurchBranding {
     featured_reading_book?: string;
     pastoral_note?: string;
   };
+  welcome_screen_config?: {
+    enabled: boolean;
+    hero_image_url?: string;
+    headline?: string;
+    subtitle?: string;
+    allow_guest_browse?: boolean;
+    slides?: Array<{
+      badge: string;
+      title: string;
+      description: string;
+    }>;
+  };
   organization_id?: string;
 }
+
+export const DEFAULT_WELCOME_SCREEN_CONFIG = {
+  enabled: true,
+  hero_image_url: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80',
+  headline: 'Viva o propósito da sua vida em comunidade',
+  subtitle: 'Acompanhe devocionais, conecte-se à sua célula e participe de encontros que transformam vidas.',
+  allow_guest_browse: true,
+  slides: [
+    {
+      badge: 'CÉLULAS',
+      title: 'Conecte-se em um Grupo',
+      description: 'Amizades reais e comunhão nos lares da nossa congregação.'
+    },
+    {
+      badge: 'PALAVRA',
+      title: 'Devocionais Diários',
+      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.'
+    },
+    {
+      badge: 'EVENTOS',
+      title: 'Eventos & Ministério Kids',
+      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.'
+    }
+  ]
+};
 
 const DEFAULT_BRANDING: ChurchBranding = {
   organization_id: 'org_default',
@@ -83,7 +120,8 @@ const DEFAULT_BRANDING: ChurchBranding = {
   store_title: 'Loja Oficial',
   store_subtitle: 'Livros, vestuário, devocionais e itens com retirada expressa',
   store_tab_title: 'Loja',
-  store_counter_label: 'Balcão da Loja da Igreja'
+  store_counter_label: 'Balcão da Loja da Igreja',
+  welcome_screen_config: DEFAULT_WELCOME_SCREEN_CONFIG
 };
 
 interface BrandingContextType {
@@ -216,7 +254,8 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           store_title: backendSettings.store_config?.store_title || backendSettings.store_title || DEFAULT_BRANDING.store_title,
           store_subtitle: backendSettings.store_config?.store_subtitle || backendSettings.store_subtitle || DEFAULT_BRANDING.store_subtitle,
           store_tab_title: backendSettings.store_config?.store_tab_title || backendSettings.store_tab_title || DEFAULT_BRANDING.store_tab_title,
-          store_counter_label: backendSettings.store_config?.store_counter_label || backendSettings.store_counter_label || DEFAULT_BRANDING.store_counter_label
+          store_counter_label: backendSettings.store_config?.store_counter_label || backendSettings.store_counter_label || DEFAULT_BRANDING.store_counter_label,
+          welcome_screen_config: backendSettings.welcome_screen_config || DEFAULT_WELCOME_SCREEN_CONFIG
         };
         const updated = { ...DEFAULT_BRANDING, ...mapped };
         setBranding(updated);
