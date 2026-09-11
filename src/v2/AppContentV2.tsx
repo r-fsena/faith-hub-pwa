@@ -12,8 +12,10 @@ import { SplashScreen } from '../components/SplashScreen';
 
 // Estilos e Tokens Nativos da V2
 import './styles/v2-theme.css';
-import { prefetchV2Data } from './services/swrCache';
-import { getActiveCampusId } from '../services/api';
+import { prefetchV2Data, swrFetch } from './services/swrCache';
+import { getActiveCampusId, fetchCampuses, setActiveCampusId } from '../services/api';
+import { BottomSheet } from '../components/BottomSheet';
+import { triggerHaptic } from './utils/haptics';
 
 // Telas do App
 import { HomeV2 } from './pages/HomeV2';
@@ -41,6 +43,11 @@ export const AppContentV2: React.FC = () => {
   // Fast-Tab State Retention: Guarda quais abas já foram visitadas para carregamento instantâneo em 0ms
   const [visitedTabs, setVisitedTabs] = useState<Set<ActiveTab>>(new Set(['home']));
 
+  // Estado Global de Campus / Unidade no Shell V2
+  const [campuses, setCampuses] = useState<any[]>([]);
+  const [activeCampusId, setSelectedCampusId] = useState<string>(() => getActiveCampusId());
+  const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
+
   useEffect(() => {
     setVisitedTabs(prev => {
       if (!prev.has(activeTab)) {
@@ -62,12 +69,34 @@ export const AppContentV2: React.FC = () => {
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, activeTab]);
 
-  // Prefetch de dados da V2 em momento ocioso para troca de abas instantânea em 0ms
+  // Prefetch de dados da V2 e carregamento de filiais/campuses
   useEffect(() => {
     if (branding.organization_id) {
       prefetchV2Data(branding.organization_id, getActiveCampusId());
+      swrFetch(`campuses_${branding.organization_id}`, () => fetchCampuses(branding.organization_id), { persistLocal: true })
+        .then(({ data }) => {
+          if (data && Array.isArray(data)) setCampuses(data);
+        });
     }
   }, [branding.organization_id]);
+
+  useEffect(() => {
+    const handleCampusChanged = (e: any) => {
+      const newCampusId = e.detail?.campusId || getActiveCampusId();
+      setSelectedCampusId(newCampusId);
+    };
+    window.addEventListener('pwa-campus-changed', handleCampusChanged);
+    return () => window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+  }, []);
+
+  const handleSelectCampus = (cId: string) => {
+    triggerHaptic('selection');
+    setActiveCampusId(cId);
+    setSelectedCampusId(cId);
+    setIsCampusDrawerOpen(false);
+  };
+
+  const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -147,7 +176,7 @@ export const AppContentV2: React.FC = () => {
       {/* Splash Screen */}
       <SplashScreen />
 
-      {/* Top Header V2 com Liquid Glass e Blur */}
+      {/* Top Header V2 com Saudação, Logo, V2 e Seletor de Campus Unificados */}
       <TopHeaderV2 
         onOpenNotifications={() => {
           if (!isAuthenticated) {
@@ -160,6 +189,8 @@ export const AppContentV2: React.FC = () => {
         title={getSubViewTitle(subView)}
         onBack={subView !== 'none' ? () => setSubView('none') : undefined}
         unreadCount={unreadNotificationsCount}
+        campusName={currentCampus?.name || 'Sede'}
+        onOpenCampusSelect={() => setIsCampusDrawerOpen(true)}
       />
 
       {/* Main Content */}
@@ -325,6 +356,82 @@ export const AppContentV2: React.FC = () => {
 
       {/* Bottom Navigation V2 (Dock Flutuante com Feedback Háptico) */}
       <BottomNavV2 activeTab={activeTab} onChangeTab={handleTabChange} />
+
+      {/* Drawer Global de Seleção de Unidade / Campus */}
+      <BottomSheet 
+        isOpen={isCampusDrawerOpen} 
+        onClose={() => setIsCampusDrawerOpen(false)}
+        maxHeight="65vh"
+      >
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <span style={{ fontSize: '1.5rem' }}>🏛️</span>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: '4px 0 0 0' }}>
+            Escolha sua Congregação
+          </h3>
+          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
+            Selecione o campus onde você congrega ou está visitando hoje.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '48vh', overflowY: 'auto' }}>
+          {campuses.map(c => {
+            const isSelected = c.id === activeCampusId;
+            return (
+              <div
+                key={c.id}
+                onClick={() => handleSelectCampus(c.id)}
+                className="v2-pressable"
+                style={{
+                  background: isSelected ? 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))' : '#ffffff',
+                  border: isSelected ? '2px solid var(--accent-primary, #0f766e)' : '1px solid rgba(226, 232, 240, 0.8)',
+                  borderRadius: '18px',
+                  padding: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.04)'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                      {c.name}
+                    </span>
+                    {Boolean(c.is_headquarters) && (
+                      <span style={{ 
+                        fontSize: '0.62rem', 
+                        background: '#fef3c7', 
+                        color: '#92400e', 
+                        padding: '2px 6px', 
+                        borderRadius: '6px', 
+                        fontWeight: 900 
+                      }}>
+                        SEDE
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
+                    {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
+                  </p>
+                  {c.pastor_name && (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 700, margin: '2px 0 0 0' }}>
+                      Pastor Local: {c.pastor_name}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  border: isSelected ? '6px solid var(--accent-primary, #0f766e)' : '2px solid #cbd5e1',
+                  background: '#ffffff'
+                }} />
+              </div>
+            );
+          })}
+        </div>
+      </BottomSheet>
     </div>
   );
 };

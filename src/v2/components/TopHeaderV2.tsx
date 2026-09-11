@@ -9,6 +9,8 @@ interface TopHeaderV2Props {
   title?: string;
   onBack?: () => void;
   unreadCount?: number;
+  campusName?: string;
+  onOpenCampusSelect?: () => void;
 }
 
 export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({ 
@@ -16,7 +18,9 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
   onOpenProfile,
   title,
   onBack,
-  unreadCount = 0
+  unreadCount = 0,
+  campusName,
+  onOpenCampusSelect
 }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
@@ -135,32 +139,27 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
         margin: '0 auto',
         width: '100%'
       }}>
-        {/* Lado Esquerdo: Perfil & Identidade da Igreja */}
-        <div 
-          onClick={handleProfileClick} 
-          className="v2-pressable"
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '10px', 
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '14px',
-            background: 'var(--accent-primary-light, #f1f5f9)',
-            border: '2px solid rgba(255,255,255,0.95)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            position: 'relative'
-          }}>
+        {/* Lado Esquerdo: Identidade, Saudação & Seletor de Campus */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+          <div 
+            onClick={handleProfileClick} 
+            className="v2-pressable"
+            title="Ir para o Perfil"
+            style={{ 
+              width: '42px',
+              height: '42px',
+              borderRadius: '14px',
+              background: 'var(--accent-primary-light, #f1f5f9)',
+              border: '2px solid rgba(255,255,255,0.95)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              cursor: 'pointer'
+            }}
+          >
             <img 
               src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
               alt={branding.church_name || 'Faith-Hub'} 
@@ -174,15 +173,19 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            {/* Linha 1: Saudação Personalizada + Badge V2 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ 
                 fontWeight: 900, 
-                fontSize: '0.92rem', 
+                fontSize: '0.94rem', 
                 color: 'var(--text-main, #0f172a)', 
-                lineHeight: 1.2 
+                lineHeight: 1.2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>
-                {branding.church_name || 'Faith-Hub'}
+                {user?.name ? `Olá, ${user.name.split(' ')[0]} 👋` : (branding.church_name || 'Faith-Hub')}
               </span>
               <span style={{
                 fontSize: '0.58rem',
@@ -192,20 +195,50 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
                 padding: '1px 6px',
                 borderRadius: '6px',
                 letterSpacing: '0.04em',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                flexShrink: 0
               }}>
                 V2
               </span>
             </div>
 
-            <span style={{ 
-              fontSize: '0.72rem', 
-              color: 'var(--text-muted, #64748b)', 
-              fontWeight: 700,
-              marginTop: '1px' 
-            }}>
-              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.tagline || 'Comunidade da Fé')}
-            </span>
+            {/* Linha 2: Seletor de Campus / Unidade Integrado */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                if (onOpenCampusSelect) onOpenCampusSelect();
+              }}
+              className="v2-pressable"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'rgba(15, 118, 110, 0.08)',
+                border: '1px solid rgba(15, 118, 110, 0.20)',
+                borderRadius: '999px',
+                padding: '2px 8px 2px 6px',
+                cursor: 'pointer',
+                marginTop: '3px',
+                width: 'fit-content',
+                outline: 'none'
+              }}
+            >
+              <span style={{ fontSize: '0.68rem', lineHeight: 1 }}>📍</span>
+              <span style={{ 
+                fontSize: '0.68rem', 
+                fontWeight: 800, 
+                color: 'var(--accent-primary, #0f766e)',
+                maxWidth: '130px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.2
+              }}>
+                {campusName || 'Sede'}
+              </span>
+              <span style={{ fontSize: '0.60rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 900, lineHeight: 1 }}>▾</span>
+            </button>
           </div>
         </div>
 

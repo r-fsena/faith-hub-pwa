@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useFeatureFlags } from '../../context/FeatureFlagContext';
 import { InstallPwaBanner } from '../../components/InstallPwaBanner';
 import { VisitorModal } from '../../components/VisitorModal';
-import { BottomSheet } from '../../components/BottomSheet';
 import { KidsPassCard } from '../../components/KidsPassCard';
 import { KidsVolunteerPanel } from '../../components/KidsVolunteerPanel';
 import { HeroCarousel } from '../../components/HeroCarousel';
@@ -56,7 +55,6 @@ export const HomeV2: React.FC<HomeV2Props> = ({
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [todayDevotional, setTodayDevotional] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
-  const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
   const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
   const [activeCampusId, setSelectedCampusId] = useState<string>(getActiveCampusId());
@@ -132,13 +130,6 @@ export const HomeV2: React.FC<HomeV2Props> = ({
           setFeaturedEvent(null);
         }
       });
-  };
-
-  const handleSelectCampus = (cId: string) => {
-    triggerHaptic('selection');
-    setActiveCampusId(cId);
-    setSelectedCampusId(cId);
-    setIsCampusDrawerOpen(false);
   };
 
   const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
@@ -221,89 +212,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
 
-      {/* 1. Saudação do Usuário & Seletor de Campus em Estilo Island */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        background: 'rgba(255, 255, 255, 0.75)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.9)',
-        borderRadius: '22px',
-        padding: '12px 16px',
-        boxShadow: '0 8px 24px -6px rgba(15, 23, 42, 0.05)'
-      }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.25rem' }}>{user ? '👋' : '✨'}</span>
-            <h2 style={{ 
-              fontSize: '1.05rem', 
-              fontWeight: 900, 
-              color: 'var(--text-main, #0f172a)', 
-              letterSpacing: '-0.02em', 
-              margin: 0, 
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
-              whiteSpace: 'nowrap' 
-            }}>
-              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a)'}!
-            </h2>
-          </div>
-          <p style={{ 
-            fontSize: '0.72rem', 
-            color: 'var(--text-muted, #64748b)', 
-            fontWeight: 700, 
-            marginTop: '3px',
-            margin: 0 
-          }}>
-            {user ? 'Membro Ativo' : 'Comunidade da Fé'} • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
-          </p>
-        </div>
-
-        {/* Seletor de Congregação / Unidade */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            setIsCampusDrawerOpen(true);
-          }}
-          className="v2-pressable"
-          style={{
-            background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.10))',
-            border: '1px solid rgba(15, 118, 110, 0.20)',
-            padding: '6px 12px',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            outline: 'none',
-            flexShrink: 0
-          }}
-        >
-          <span style={{ fontSize: '0.85rem' }}>📍</span>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.58rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 900, textTransform: 'uppercase', lineHeight: 1 }}>
-              Unidade
-            </div>
-            <div style={{ 
-              fontSize: '0.76rem', 
-              fontWeight: 800, 
-              color: 'var(--text-main, #0f172a)', 
-              maxWidth: '96px', 
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
-              whiteSpace: 'nowrap', 
-              lineHeight: 1.2 
-            }}>
-              {currentCampus?.name || 'Sede'}
-            </div>
-          </div>
-          <span style={{ fontSize: '0.65rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 900 }}>▾</span>
-        </button>
-      </div>
-
-      {/* 2. Carrossel Dinâmico de Destaques */}
+      {/* 1. Carrossel Dinâmico de Destaques */}
       <HeroCarousel
         branding={branding}
         activeBroadcast={activeBroadcast}
@@ -623,82 +532,6 @@ export const HomeV2: React.FC<HomeV2Props> = ({
         isOpen={isVisitorModalOpen} 
         onClose={() => setIsVisitorModalOpen(false)} 
       />
-
-      {/* Drawer de Seleção de Unidade / Campus */}
-      <BottomSheet 
-        isOpen={isCampusDrawerOpen} 
-        onClose={() => setIsCampusDrawerOpen(false)}
-        maxHeight="65vh"
-      >
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <span style={{ fontSize: '1.5rem' }}>🏛️</span>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: '4px 0 0 0' }}>
-            Escolha sua Congregação
-          </h3>
-          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
-            Selecione o campus onde você congrega ou está visitando hoje.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '48vh', overflowY: 'auto' }}>
-          {campuses.map(c => {
-            const isSelected = c.id === activeCampusId;
-            return (
-              <div
-                key={c.id}
-                onClick={() => handleSelectCampus(c.id)}
-                className="v2-pressable"
-                style={{
-                  background: isSelected ? 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))' : '#ffffff',
-                  border: isSelected ? '2px solid var(--accent-primary, #0f766e)' : '1px solid rgba(226, 232, 240, 0.8)',
-                  borderRadius: '18px',
-                  padding: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.04)'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                      {c.name}
-                    </span>
-                    {Boolean(c.is_headquarters) && (
-                      <span style={{ 
-                        fontSize: '0.62rem', 
-                        background: '#fef3c7', 
-                        color: '#92400e', 
-                        padding: '2px 6px', 
-                        borderRadius: '6px', 
-                        fontWeight: 900 
-                      }}>
-                        SEDE
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
-                    {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
-                  </p>
-                  {c.pastor_name && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 700, margin: '2px 0 0 0' }}>
-                      Pastor Local: {c.pastor_name}
-                    </p>
-                  )}
-                </div>
-
-                <div style={{
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  border: isSelected ? '6px solid var(--accent-primary, #0f766e)' : '2px solid #cbd5e1',
-                  background: '#ffffff'
-                }} />
-              </div>
-            );
-          })}
-        </div>
-      </BottomSheet>
 
       {/* Painel do Educador / Voluntário Kids Mobile */}
       <KidsVolunteerPanel 
