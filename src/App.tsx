@@ -36,11 +36,11 @@ const AppShell: React.FC = () => {
   }, [isFeatureEnabled]);
 
   if (isLoading) {
-    return <SplashScreen />;
+    return <SplashScreen minDurationMs={0} />;
   }
 
   return (
-    <Suspense fallback={<SplashScreen />}>
+    <Suspense fallback={<SplashScreen minDurationMs={0} />}>
       {isV2 ? <AppContentV2 /> : <AppContentV1 />}
     </Suspense>
   );

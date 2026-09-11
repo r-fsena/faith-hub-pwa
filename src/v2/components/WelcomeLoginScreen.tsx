@@ -23,36 +23,48 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
   const { resolvedTheme } = useTheme();
 
   const welcomeConfig = branding.welcome_screen_config;
-  const heroImage = welcomeConfig?.hero_image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80';
-  const churchTitle = branding.church_name || 'Comunidade';
-  const headline = welcomeConfig?.headline || `Viva o propósito da sua fé na ${churchTitle}`;
-  const subtitle = welcomeConfig?.subtitle || 'Acompanhe devocionais, conecte-se à sua célula, participe de eventos e cresça em comunidade.';
+  const churchTitle = (branding.church_name || 'Comunidade').trim();
+  const isLargeChurchName = churchTitle.length > 24;
+  const isVeryLargeChurchName = churchTitle.length > 34;
+
+  const heroImage = welcomeConfig?.hero_image_url || branding.banner_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80';
+  const headline = welcomeConfig?.headline || (isLargeChurchName ? 'Bem-vindo à sua família de fé' : `Viva o propósito da sua fé na ${churchTitle}`);
+  const subtitle = welcomeConfig?.subtitle || (isLargeChurchName 
+    ? `${churchTitle} • Conectando corações, transformando vidas e vivendo o propósito do Evangelho.`
+    : 'Acompanhe devocionais, conecte-se à sua célula, participe de eventos e cresça em comunidade.');
 
   const defaultSlides = [
     {
-      badge: churchTitle.toUpperCase(),
+      badge: isLargeChurchName ? 'BOAS-VINDAS' : churchTitle.toUpperCase(),
       title: headline,
-      description: subtitle
+      description: subtitle,
+      image_url: heroImage
     },
     {
       badge: 'CÉLULAS & GRUPOS',
       title: 'Conecte-se em um Grupo',
-      description: 'Amizades reais e comunhão nos lares da nossa congregação.'
+      description: 'Amizades reais e comunhão nos lares da nossa congregação.',
+      image_url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80'
     },
     {
       badge: 'PALAVRA DO DIA',
       title: 'Devocionais Diários',
-      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.'
+      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.',
+      image_url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80'
     },
     {
-      badge: 'EVENTOS & MINISTÉRIO',
+      badge: 'EVENTOS & FAMÍLIA',
       title: 'Eventos & Ministério Kids',
-      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.'
+      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.',
+      image_url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80'
     }
   ];
 
   const allSlides = welcomeConfig?.slides && welcomeConfig.slides.length > 0 
-    ? welcomeConfig.slides 
+    ? welcomeConfig.slides.map((s, idx) => ({
+        ...s,
+        image_url: (s as any).image_url || defaultSlides[idx % defaultSlides.length]?.image_url || heroImage
+      }))
     : defaultSlides;
 
   // Estado do Carrossel de Slides com Arraste (Swipe)
@@ -322,23 +334,32 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
       background: '#090d16',
       zIndex: 100
     }}>
-      {/* Imagem de Fundo em Tela Cheia (Hero) */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: `url(${heroImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          transform: 'scale(1.03)',
-          filter: 'brightness(0.92)',
-          transition: 'transform 10s ease',
-          zIndex: 1
-        }}
-      />
+      {/* Camadas Dinâmicas de Fundo por Slide com Transição Cross-Fade Fluida */}
+      {allSlides.map((slide, idx) => {
+        const isCurrent = currentSlide === idx;
+        const slideImg = (slide as any).image_url || heroImage;
+        return (
+          <div 
+            key={idx}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `url(${slideImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              transform: isCurrent ? 'scale(1.04)' : 'scale(1.0)',
+              filter: 'brightness(0.90)',
+              opacity: isCurrent ? 1 : 0,
+              transition: 'opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1), transform 9s cubic-bezier(0.25, 1, 0.5, 1)',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }}
+          />
+        );
+      })}
 
       {/* Gradiente de Fusão Escuro (Scrim Superior e Inferior para Contraste Total) */}
       <div style={{
@@ -347,38 +368,40 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'linear-gradient(180deg, rgba(9, 13, 22, 0.70) 0%, rgba(9, 13, 22, 0.15) 30%, rgba(9, 13, 22, 0.40) 55%, rgba(9, 13, 22, 0.95) 85%, #090d16 100%)',
+        background: 'linear-gradient(180deg, rgba(9, 13, 22, 0.75) 0%, rgba(9, 13, 22, 0.20) 28%, rgba(9, 13, 22, 0.45) 55%, rgba(9, 13, 22, 0.96) 84%, #090d16 100%)',
         zIndex: 2,
         pointerEvents: 'none'
       }} />
 
-      {/* Topo: Logo da Igreja com Destaque Maior & Botão Explorar */}
+      {/* Topo: Logo da Igreja com Destaque Maior, Ergonomia para Nomes Grandes & Botão Explorar */}
       <header style={{
         position: 'relative',
         zIndex: 10,
-        padding: 'calc(env(safe-area-inset-top, 16px) + 8px) 20px 0 20px',
+        padding: 'calc(env(safe-area-inset-top, 16px) + 8px) 18px 0 18px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '12px'
+        gap: '10px'
       }}>
-        {/* Identidade Flutuante da Igreja em Vidro Líquido Proeminente */}
+        {/* Identidade Flutuante da Igreja em Vidro Líquido Proeminente com Adaptação Ergonômica */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          background: 'rgba(9, 13, 22, 0.65)',
+          gap: isLargeChurchName ? '9px' : '12px',
+          background: 'rgba(9, 13, 22, 0.72)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           border: '1.5px solid rgba(255, 255, 255, 0.18)',
           borderRadius: '999px',
-          padding: '6px 18px 6px 8px',
+          padding: isLargeChurchName ? '5px 14px 5px 6px' : '6px 18px 6px 8px',
           boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45)',
-          maxWidth: 'calc(100% - 105px)'
+          maxWidth: 'calc(100% - 95px)',
+          flex: 1,
+          minWidth: 0
         }}>
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: isLargeChurchName ? '38px' : '40px',
+            height: isLargeChurchName ? '38px' : '40px',
             borderRadius: '50%',
             overflow: 'hidden',
             background: 'var(--accent-primary, #0f766e)',
@@ -403,20 +426,22 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, justifyContent: 'center' }}>
             <span style={{ 
-              fontSize: '0.98rem', 
+              fontSize: isLargeChurchName ? 'clamp(0.76rem, 2.5vw, 0.88rem)' : '0.98rem', 
               fontWeight: 900, 
               color: '#ffffff', 
               letterSpacing: '-0.02em',
               lineHeight: 1.15,
               textShadow: '0 2px 8px rgba(0,0,0,0.6)',
-              whiteSpace: 'nowrap',
+              display: '-webkit-box',
+              WebkitLineClamp: isLargeChurchName ? 2 : 1,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              wordBreak: 'break-word'
             }}>
               {branding.church_name || 'Faith-Hub'}
             </span>
             <span style={{
-              fontSize: '0.62rem',
+              fontSize: '0.60rem',
               fontWeight: 800,
               color: 'var(--accent-secondary, #2dd4bf)',
               letterSpacing: '0.04em',
@@ -447,7 +472,7 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
               WebkitBackdropFilter: 'blur(16px)',
               border: '1px solid rgba(255, 255, 255, 0.20)',
               borderRadius: '999px',
-              padding: '8px 16px',
+              padding: '8px 15px',
               color: '#ffffff',
               fontSize: '0.76rem',
               fontWeight: 800,
@@ -530,27 +555,40 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
                   </span>
                 </div>
 
-                {/* Título de Impacto (Headline) */}
+                {/* Título de Impacto (Headline) Auto-escalável e Ergonômico */}
                 <h1 style={{
-                  fontSize: 'clamp(1.48rem, 5.1vw, 2.05rem)',
+                  fontSize: isVeryLargeChurchName 
+                    ? 'clamp(1.18rem, 3.8vw, 1.65rem)' 
+                    : isLargeChurchName 
+                      ? 'clamp(1.28rem, 4.3vw, 1.82rem)' 
+                      : 'clamp(1.48rem, 5.1vw, 2.05rem)',
                   fontWeight: 900,
                   color: '#ffffff',
                   lineHeight: 1.15,
                   letterSpacing: '-0.03em',
                   margin: 0,
-                  textShadow: '0 4px 20px rgba(0, 0, 0, 0.6)'
+                  textShadow: '0 4px 20px rgba(0, 0, 0, 0.6)',
+                  wordBreak: 'break-word',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
                 }}>
                   {slide.title}
                 </h1>
 
                 {/* Subtítulo / Dizeres da Igreja */}
                 <p style={{
-                  fontSize: 'clamp(0.80rem, 2.4vw, 0.88rem)',
+                  fontSize: isLargeChurchName ? 'clamp(0.76rem, 2.2vw, 0.84rem)' : 'clamp(0.80rem, 2.4vw, 0.88rem)',
                   color: '#cbd5e1',
-                  lineHeight: 1.42,
+                  lineHeight: 1.40,
                   margin: 0,
-                  maxWidth: '420px',
-                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
+                  maxWidth: '440px',
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
                 }}>
                   {slide.description}
                 </p>

@@ -9,7 +9,6 @@ import { CartFloatingButton, CartDrawer } from '../components/CartDrawer';
 import { LivePlayerModal } from '../components/LivePlayerModal';
 import { NotificationsModal } from '../components/NotificationsModal';
 import { AuthGate } from '../components/AuthGate';
-import { SplashScreen } from '../components/SplashScreen';
 
 // Estilos e Tokens Nativos da V2
 import './styles/v2-theme.css';
@@ -177,9 +176,6 @@ export const AppContentV2: React.FC = () => {
 
   return (
     <div className={`v2-shell ${resolvedTheme === 'dark' ? 'dark' : ''}`}>
-      {/* Splash Screen */}
-      <SplashScreen />
-
       {/* Top Header V2 com Saudação, Logo, V2 e Seletor de Campus Unificados */}
       {!isAuthScreen && (
         <TopHeaderV2 

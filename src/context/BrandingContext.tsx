@@ -60,6 +60,7 @@ export interface ChurchBranding {
       badge: string;
       title: string;
       description: string;
+      image_url?: string;
     }>;
   };
   organization_id?: string;
@@ -75,17 +76,20 @@ export const DEFAULT_WELCOME_SCREEN_CONFIG = {
     {
       badge: 'CÉLULAS',
       title: 'Conecte-se em um Grupo',
-      description: 'Amizades reais e comunhão nos lares da nossa congregação.'
+      description: 'Amizades reais e comunhão nos lares da nossa congregação.',
+      image_url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80'
     },
     {
       badge: 'PALAVRA',
       title: 'Devocionais Diários',
-      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.'
+      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.',
+      image_url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80'
     },
     {
       badge: 'EVENTOS',
       title: 'Eventos & Ministério Kids',
-      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.'
+      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.',
+      image_url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80'
     }
   ]
 };

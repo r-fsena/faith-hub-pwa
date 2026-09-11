@@ -11,7 +11,7 @@ const FAITHHUB_DEFAULT_LOGO = '/brand/logo-transparent.png';
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onFinish,
-  minDurationMs = 1800
+  minDurationMs = 400
 }) => {
   const { branding } = useBranding();
   const [isVisible, setIsVisible] = useState(true);
@@ -21,20 +21,20 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     // Remove o placeholder splash estático do HTML inicial se ele ainda existir
     const initialSplash = document.getElementById('initial-splash');
     if (initialSplash) {
-      initialSplash.style.transition = 'opacity 0.25s ease';
+      initialSplash.style.transition = 'opacity 0.20s ease';
       initialSplash.style.opacity = '0';
       setTimeout(() => {
         initialSplash.remove();
-      }, 250);
+      }, 200);
     }
 
-    // Exibe o splash pelo tempo mínimo agradável para fixar a marca
+    // Tempo de transição suave e ágil
     const timer = setTimeout(() => {
       setIsFadingOut(true);
       const removeTimer = setTimeout(() => {
         setIsVisible(false);
         if (onFinish) onFinish();
-      }, 450); // tempo de fade-out
+      }, 300); // tempo de fade-out
 
       return () => clearTimeout(removeTimer);
     }, minDurationMs);
@@ -67,8 +67,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         height: '100dvh',
         minHeight: '100vh',
         zIndex: 999999,
-        backgroundColor: '#0f172a',
-        background: `radial-gradient(circle at 50% 35%, #1e293b 0%, #0f172a 60%, #020617 100%)`,
+        backgroundColor: '#090d16',
+        background: `radial-gradient(circle at 50% 35%, rgba(15, 23, 42, 0.85) 0%, #090d16 80%)`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -76,8 +76,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         padding: 'calc(env(safe-area-inset-top, 24px) + 36px) 24px calc(env(safe-area-inset-bottom, 24px) + 28px) 24px',
         boxSizing: 'border-box',
         opacity: isFadingOut ? 0 : 1,
-        transform: isFadingOut ? 'scale(1.03)' : 'scale(1)',
-        transition: 'opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: isFadingOut ? 'scale(1.02)' : 'scale(1)',
+        transition: 'opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: isFadingOut ? 'none' : 'auto',
         overflow: 'hidden',
         userSelect: 'none'
@@ -87,14 +87,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       <div
         style={{
           position: 'absolute',
-          top: '32%',
+          top: '36%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '340px',
-          height: '340px',
+          width: '320px',
+          height: '320px',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${primaryColor}45 0%, ${secondaryColor}20 45%, transparent 75%)`,
-          filter: 'blur(45px)',
+          background: `radial-gradient(circle, ${primaryColor}40 0%, ${secondaryColor}15 45%, transparent 75%)`,
+          filter: 'blur(50px)',
           pointerEvents: 'none',
           animation: 'splash-aura 3s ease-in-out infinite alternate'
         }}
@@ -114,25 +114,25 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           zIndex: 2,
           maxWidth: '340px',
           width: '100%',
-          animation: 'splash-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          animation: 'splash-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}
       >
         {/* Card do Logo com Reflexo e Sombra Suave */}
         <div
           style={{
             position: 'relative',
-            width: '110px',
-            height: '110px',
-            borderRadius: '28px',
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: `1.5px solid rgba(255, 255, 255, 0.20)`,
-            boxShadow: `0 20px 45px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryColor}55`,
+            width: '96px',
+            height: '96px',
+            borderRadius: '26px',
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1.5px solid rgba(255, 255, 255, 0.16)`,
+            boxShadow: `0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px ${primaryColor}40`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '22px',
+            marginBottom: '20px',
             padding: '12px',
             boxSizing: 'border-box'
           }}
@@ -144,7 +144,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.35))'
+              filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.4))'
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -158,13 +158,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* Nome da Igreja */}
         <h1
           style={{
-            fontSize: '1.65rem',
+            fontSize: '1.45rem',
             fontWeight: 900,
             color: '#ffffff',
             margin: '0 0 6px 0',
-            letterSpacing: '-0.5px',
+            letterSpacing: '-0.02em',
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-            textShadow: '0 2px 14px rgba(0,0,0,0.5)',
+            textShadow: '0 2px 14px rgba(0,0,0,0.6)',
             lineHeight: 1.25
           }}
         >
@@ -174,9 +174,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* Tagline / Slogan */}
         <p
           style={{
-            fontSize: '0.84rem',
-            color: 'rgba(255, 255, 255, 0.72)',
-            margin: '0 0 26px 0',
+            fontSize: '0.82rem',
+            color: 'rgba(255, 255, 255, 0.68)',
+            margin: '0 0 20px 0',
             lineHeight: 1.4,
             fontWeight: 500,
             letterSpacing: '0.01em'
@@ -185,30 +185,17 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           {tagline}
         </p>
 
-        {/* Barra de Progresso / Loading Shimmer */}
+        {/* Spinner Fluido Minimalista */}
         <div
           style={{
-            width: '130px',
-            height: '4px',
-            borderRadius: '999px',
-            background: 'rgba(255, 255, 255, 0.12)',
-            position: 'relative',
-            overflow: 'hidden'
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            border: '2px solid rgba(255, 255, 255, 0.12)',
+            borderTopColor: secondaryColor,
+            animation: 'splash-spin 0.8s linear infinite'
           }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '100%',
-              width: '45%',
-              borderRadius: '999px',
-              background: `linear-gradient(90deg, transparent 0%, ${secondaryColor} 50%, #ffffff 100%)`,
-              animation: 'splash-loading-bar 1.2s infinite ease-in-out'
-            }}
-          />
-        </div>
+        />
       </div>
 
       {/* Rodapé Oficial: Powered by Faith-Hub */}
@@ -217,30 +204,25 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '4px',
+          gap: '3px',
           zIndex: 2,
-          opacity: 0.85
+          opacity: 0.75
         }}
       >
         <span
           style={{
-            fontSize: '0.65rem',
+            fontSize: '0.62rem',
             fontWeight: 700,
-            color: 'rgba(255, 255, 255, 0.45)',
+            color: 'rgba(255, 255, 255, 0.40)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase'
           }}
         >
           Aplicativo Oficial
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '0.74rem', color: '#ffffff', fontWeight: 800, letterSpacing: '0.02em' }}>
-            Faith-Hub Ecosystem
-          </span>
-          <span style={{ fontSize: '0.60rem', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
-            v2.4
-          </span>
-        </div>
+        <span style={{ fontSize: '0.72rem', color: '#ffffff', fontWeight: 800, letterSpacing: '0.02em' }}>
+          Faith-Hub Ecosystem
+        </span>
       </div>
 
       {/* Keyframes CSS embutidos */}
