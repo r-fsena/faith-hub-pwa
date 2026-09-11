@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useBranding } from './BrandingContext';
+import { getActiveCampusId } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -9,6 +10,7 @@ export interface FeatureFlagContextType {
   isLoading: boolean;
   isFeatureEnabled: (featureKey: string, defaultValue?: boolean) => boolean;
   getFeatureConfig: <T = any>(featureKey: string, defaultValue?: T) => T;
+  refreshFlags: () => Promise<void>;
 }
 
 const FeatureFlagContext = createContext<FeatureFlagContextType>({
@@ -16,7 +18,8 @@ const FeatureFlagContext = createContext<FeatureFlagContextType>({
   configs: {},
   isLoading: true,
   isFeatureEnabled: () => true,
-  getFeatureConfig: () => null as any
+  getFeatureConfig: () => null as any,
+  refreshFlags: async () => {}
 });
 
 export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -25,7 +28,7 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchFlags = useCallback(async () => {
+  const fetchFlags = useCallback(async (campusOverride?: string) => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -33,6 +36,11 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const orgParam = branding.organization_id || branding.pwa_slug || 'org_default';
       params.append('organization_id', orgParam);
       params.append('environment', 'production');
+
+      const activeCampus = campusOverride || getActiveCampusId();
+      if (activeCampus && activeCampus !== 'all') {
+        params.append('campus_id', activeCampus);
+      }
 
       const res = await fetch(`${API_URL}/feature-flags?${params.toString()}`);
       if (res.ok) {
@@ -49,6 +57,18 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     fetchFlags();
+  }, [fetchFlags]);
+
+  useEffect(() => {
+    const handleCampusChanged = (e: any) => {
+      const newCampus = e.detail?.campusId || getActiveCampusId();
+      fetchFlags(newCampus);
+    };
+
+    window.addEventListener('pwa-campus-changed', handleCampusChanged);
+    return () => {
+      window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+    };
   }, [fetchFlags]);
 
   const isFeatureEnabled = useCallback(
@@ -78,7 +98,8 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
         configs,
         isLoading,
         isFeatureEnabled,
-        getFeatureConfig
+        getFeatureConfig,
+        refreshFlags: fetchFlags
       }}
     >
       {children}

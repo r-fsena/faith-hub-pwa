@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { fetchPdvProducts, getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 
@@ -18,6 +19,30 @@ export const Store: React.FC = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const { branding } = useBranding();
+  const { getFeatureConfig } = useFeatureFlags();
+
+  // Configuração via Feature Flag (Hierarquia Tenant -> Campus)
+  const layoutConfig = getFeatureConfig<{ layout?: 'list' | 'grid'; allow_user_toggle?: boolean }>(
+    'pdv.catalog_layout',
+    { layout: 'list', allow_user_toggle: true }
+  );
+
+  const [userLayoutOverride, setUserLayoutOverride] = useState<'list' | 'grid' | null>(() => {
+    return (localStorage.getItem('faithhub_pwa_catalog_layout_pref') as 'list' | 'grid') || null;
+  });
+
+  const activeLayout: 'list' | 'grid' = useMemo(() => {
+    if (layoutConfig?.allow_user_toggle !== false && userLayoutOverride) {
+      return userLayoutOverride;
+    }
+    return layoutConfig?.layout === 'grid' ? 'grid' : 'list';
+  }, [layoutConfig, userLayoutOverride]);
+
+  const handleToggleLayout = (mode: 'list' | 'grid') => {
+    setUserLayoutOverride(mode);
+    localStorage.setItem('faithhub_pwa_catalog_layout_pref', mode);
+  };
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCampusId, setActiveCampusId] = useState<string>(getActiveCampusId());
@@ -155,7 +180,7 @@ export const Store: React.FC = () => {
     <div className="pwa-content animate-fade-in">
       
       {/* Header com Switch entre Catálogo e Meus Pedidos */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <div>
           <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
             {viewMode === 'catalog' ? (branding.store_title || 'Loja Oficial') : 'Meus Pedidos'}
@@ -165,29 +190,89 @@ export const Store: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (viewMode === 'catalog') {
-              loadMyOrders();
-              setViewMode('my_orders');
-            } else {
-              setViewMode('catalog');
-            }
-          }}
-          style={{
-            background: 'var(--accent-primary-light)',
-            color: 'var(--accent-primary)',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '10px',
-            fontWeight: 800,
-            fontSize: '0.74rem',
-            cursor: 'pointer'
-          }}
-        >
-          {viewMode === 'catalog' ? '📋 Meus Pedidos' : '🛍️ Ver Catálogo'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Seletor Rápido de Layout Lista/Grade se permitido pela igreja */}
+          {viewMode === 'catalog' && layoutConfig?.allow_user_toggle !== false && (
+            <div style={{
+              display: 'flex',
+              background: '#f1f5f9',
+              padding: '3px',
+              borderRadius: '10px',
+              gap: '2px',
+              border: '1px solid var(--panel-border)'
+            }}>
+              <button
+                type="button"
+                onClick={() => handleToggleLayout('list')}
+                title="Exibir em Lista"
+                style={{
+                  border: 'none',
+                  padding: '5px 8px',
+                  borderRadius: '7px',
+                  background: activeLayout === 'list' ? '#ffffff' : 'transparent',
+                  color: activeLayout === 'list' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  boxShadow: activeLayout === 'list' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>☰</span>
+                <span style={{ fontSize: '0.66rem' }}>Lista</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleLayout('grid')}
+                title="Exibir em Grade"
+                style={{
+                  border: 'none',
+                  padding: '5px 8px',
+                  borderRadius: '7px',
+                  background: activeLayout === 'grid' ? '#ffffff' : 'transparent',
+                  color: activeLayout === 'grid' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  boxShadow: activeLayout === 'grid' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>⊞</span>
+                <span style={{ fontSize: '0.66rem' }}>Grade</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              if (viewMode === 'catalog') {
+                loadMyOrders();
+                setViewMode('my_orders');
+              } else {
+                setViewMode('catalog');
+              }
+            }}
+            style={{
+              background: 'var(--accent-primary-light)',
+              color: 'var(--accent-primary)',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '0.74rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {viewMode === 'catalog' ? '📋 Pedidos' : '🛍️ Catálogo'}
+          </button>
+        </div>
       </div>
 
       {/* ========================================================
@@ -261,7 +346,144 @@ export const Store: React.FC = () => {
                 Os itens de livraria, vestuário e produtos cadastrados no Portal Web aparecerão aqui automaticamente.
               </p>
             </div>
+          ) : activeLayout === 'grid' ? (
+            /* ========================================================
+               MODO GRADE (GRID 2 COLUNAS RESPONSIVO)
+               ======================================================== */
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: '12px'
+            }}>
+              {filteredProducts.map((prod) => (
+                <div
+                  key={prod.id}
+                  onClick={() => handleOpenProductModal(prod)}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '10px',
+                    border: '1px solid var(--panel-border)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div>
+                    {/* Imagem em destaque */}
+                    <div style={{
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                      borderRadius: '14px',
+                      overflow: 'hidden',
+                      background: '#f8fafc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '8px',
+                      border: '1px solid #f1f5f9',
+                      position: 'relative'
+                    }}>
+                      {prod.image_urls && prod.image_urls[0] ? (
+                        <img
+                          src={prod.image_urls[0]}
+                          alt={prod.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: '2rem' }}>🛍️</span>
+                      )}
+                      <span style={{
+                        position: 'absolute',
+                        top: '6px',
+                        left: '6px',
+                        background: 'rgba(255,255,255,0.92)',
+                        backdropFilter: 'blur(4px)',
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        fontSize: '0.60rem',
+                        fontWeight: 800,
+                        color: 'var(--accent-primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.03em'
+                      }}>
+                        {prod.category}
+                      </span>
+                    </div>
+
+                    {/* Nome do Produto */}
+                    <div style={{
+                      fontWeight: 800,
+                      fontSize: '0.84rem',
+                      color: 'var(--text-main)',
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '2.2em'
+                    }}>
+                      {prod.name}
+                    </div>
+                  </div>
+
+                  {/* Preço e Botão Rápido */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: '10px',
+                    paddingTop: '6px',
+                    borderTop: '1px solid #f8fafc'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', display: 'block' }}>Preço</span>
+                      <span style={{ fontSize: '0.90rem', fontWeight: 900, color: '#059669' }}>
+                        R$ {prod.price.toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addItem({
+                          id: prod.id,
+                          name: prod.name,
+                          price: prod.price,
+                          image_url: prod.image_urls[0],
+                          category: prod.category
+                        });
+                      }}
+                      title="Adicionar ao Pedido"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '10px',
+                        background: 'var(--accent-primary-light)',
+                        color: 'var(--accent-primary)',
+                        border: 'none',
+                        fontSize: '1.15rem',
+                        fontWeight: 900,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
+            /* ========================================================
+               MODO LISTA (CARDS HORIZONTAIS COMPACTOS)
+               ======================================================== */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {filteredProducts.map((prod) => (
                 <div
