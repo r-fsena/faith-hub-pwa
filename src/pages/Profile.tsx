@@ -915,17 +915,158 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 <span className="slider-round" />
               </label>
             </div>
+
+            {/* Seletor de Aparência do Aplicativo - Minimalista e Compacto */}
+            <div style={{
+              background: 'var(--bg-card, #ffffff)',
+              borderRadius: '20px',
+              padding: '12px 16px',
+              border: '1px solid var(--panel-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1rem' }}>🎨</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>
+                    Aparência
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    {themePreference === 'light' ? 'Modo Claro' : themePreference === 'dark' ? 'Modo Escuro' : 'Automático'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Segmented Control Compacto */}
+              <div style={{
+                display: 'inline-flex',
+                background: 'var(--bg-card-subtle, #f1f5f9)',
+                padding: '3px',
+                borderRadius: '12px',
+                border: '1px solid var(--panel-border)',
+                gap: '2px'
+              }}>
+                {[
+                  {
+                    id: 'light',
+                    label: 'Claro',
+                    icon: (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2"/><path d="M12 20v2"/>
+                        <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+                        <path d="M2 12h2"/><path d="M20 12h2"/>
+                        <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+                      </svg>
+                    )
+                  },
+                  {
+                    id: 'dark',
+                    label: 'Escuro',
+                    icon: (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                      </svg>
+                    )
+                  },
+                  {
+                    id: 'system',
+                    label: 'Auto',
+                    icon: (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="14" x="2" y="3" rx="2"/>
+                        <line x1="8" x2="16" y1="21" y2="21"/>
+                        <line x1="12" x2="12" y1="17" y2="21"/>
+                      </svg>
+                    )
+                  }
+                ].map(opt => {
+                  const isSelected = themePreference === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setThemePreference(opt.id as any)}
+                      style={{
+                        background: isSelected ? 'var(--bg-card, #ffffff)' : 'transparent',
+                        color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted, #94a3b8)',
+                        border: isSelected ? '1px solid var(--panel-border)' : '1px solid transparent',
+                        borderRadius: '9px',
+                        padding: '5px 9px',
+                        fontSize: '0.70rem',
+                        fontWeight: isSelected ? 800 : 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {opt.icon}
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Botão de Sair da Conta (Logout) no Final da Página */}
+        {/* Alternância Discreta para Versão Clássica / v2 */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: '8px',
+          marginBottom: '2px',
+          width: '100%'
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isV2Active;
+              localStorage.setItem('faithhub_force_v2', next ? 'true' : 'false');
+              window.location.reload();
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              opacity: 0.75,
+              transition: 'opacity 0.2s ease'
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+              <path d="M16 21h5v-5"/>
+            </svg>
+            <span>{isV2Active ? 'Voltar para versão clássica' : 'Experimentar versão 2.0'}</span>
+          </button>
+        </div>
+
+        {/* Botão de Sair da Conta (Logout) - SEMPRE POR ÚLTIMO NA PARTE INFERIOR DA TELA */}
         <div style={{
           marginTop: '8px',
           paddingTop: '16px',
           borderTop: '1px solid var(--panel-border)',
           display: 'flex',
-          justifyContent: 'center',
-          width: '100%'
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '100%',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 85px)'
         }}>
           <button 
             type="button" 
@@ -949,152 +1090,17 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               transition: 'all 0.2s ease'
             }}
           >
-            <span style={{ fontSize: '1.1rem' }}>🚪</span> Sair da Conta (Logout)
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Sair da Conta (Logout)</span>
           </button>
-        </div>
 
-        {/* Seletor de Tema: Claro / Escuro / Sistema com Alto Contraste */}
-        <div style={{
-          marginTop: '20px',
-          padding: '16px',
-          background: 'var(--bg-card, #ffffff)',
-          borderRadius: '20px',
-          border: '1px solid var(--panel-border)',
-          maxWidth: '380px',
-          width: '100%',
-          margin: '20px auto 0 auto',
-          boxShadow: 'var(--shadow-sm)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Aparência do Aplicativo
-            </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--accent-bright, var(--accent-primary))', fontWeight: 800 }}>
-              {themePreference === 'light' ? 'Modo Claro' : themePreference === 'dark' ? 'Modo Escuro' : 'Conforme Sistema'}
-            </span>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '8px',
-            background: 'var(--bg-card-subtle, #f1f5f9)',
-            padding: '5px',
-            borderRadius: '16px'
-          }}>
-            {[
-              {
-                id: 'light',
-                label: 'Claro',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="4"/>
-                    <path d="M12 2v2"/><path d="M12 20v2"/>
-                    <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
-                    <path d="M2 12h2"/><path d="M20 12h2"/>
-                    <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-                  </svg>
-                )
-              },
-              {
-                id: 'dark',
-                label: 'Escuro',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-                  </svg>
-                )
-              },
-              {
-                id: 'system',
-                label: 'Sistema',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="20" height="14" x="2" y="3" rx="2"/>
-                    <line x1="8" x2="16" y1="21" y2="21"/>
-                    <line x1="12" x2="12" y1="17" y2="21"/>
-                  </svg>
-                )
-              }
-            ].map(opt => {
-              const isSelected = themePreference === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setThemePreference(opt.id as any)}
-                  className={`v2-pressable v2-segment-btn ${isSelected ? 'active' : ''}`}
-                  style={{
-                    background: isSelected 
-                      ? 'var(--v2-segment-active-bg, var(--bg-card, #ffffff))' 
-                      : 'transparent',
-                    color: isSelected 
-                      ? 'var(--v2-segment-active-color, var(--accent-primary))' 
-                      : 'var(--text-muted, #94a3b8)',
-                    border: isSelected 
-                      ? '1px solid var(--v2-segment-active-border, rgba(0,0,0,0.06))' 
-                      : '1px solid transparent',
-                    borderRadius: '12px',
-                    padding: '10px 4px',
-                    fontSize: '0.75rem',
-                    fontWeight: isSelected ? 900 : 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: isSelected ? 'var(--v2-segment-active-shadow, 0 2px 8px rgba(0,0,0,0.06))' : 'none',
-                    transition: 'all 0.18s ease'
-                  }}
-                >
-                  {opt.icon}
-                  <span>{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Indicador de Versão do App e Alternância de Experiência (V1 vs V2) */}
-        <div style={{
-          marginTop: '16px',
-          padding: '14px 16px',
-          background: 'var(--bg-card-subtle, #f8fafc)',
-          borderRadius: '16px',
-          border: '1px solid var(--panel-border)',
-          maxWidth: '380px',
-          width: '100%',
-          margin: '16px auto 0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-            Faith-Hub Mobile • {isV2Active ? 'Versão 2.0 (App Nativo Fluido)' : 'Versão 1.0 (Clássico)'}
-          </div>
-          
-          <button
-            type="button"
-            onClick={() => {
-              const next = !isV2Active;
-              localStorage.setItem('faithhub_force_v2', next ? 'true' : 'false');
-              window.location.reload();
-            }}
-            style={{
-              background: isV2Active ? 'var(--bg-card, #f1f5f9)' : 'var(--accent-primary-light)',
-              color: isV2Active ? 'var(--text-secondary)' : 'var(--accent-primary)',
-              border: '1px solid var(--panel-border)',
-              borderRadius: '10px',
-              padding: '7px 14px',
-              fontSize: '0.76rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            {isV2Active ? '← Voltar para Versão Clássica (v1)' : '✨ Experimentar Versão 2.0 (Fluida)'}
-          </button>
+          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '8px', opacity: 0.7 }}>
+            Faith-Hub Mobile • {branding.church_name || 'Ecosystem'}
+          </span>
         </div>
 
         {/* Modais Operacionais Individuais (Desacoplados e Ergonômicos) */}
