@@ -249,12 +249,22 @@ body[data-theme="dark"] .v2-campus-pill svg,
   stroke: var(--accent-bright, #2dd4bf) !important;
 }
 
-/* Regras para o Botão Seletor Segmentado (Claro, Escuro, Sistema) no Modo Escuro */
+/* Regras para o Botão Seletor Segmentado (Claro, Escuro, Sistema) */
+.v2-segment-btn.active,
+.v2-segment-btn.active span {
+  color: #ffffff !important;
+}
+
+.v2-segment-btn.active svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
 body.dark .v2-segment-btn.active,
 body.dark-theme .v2-segment-btn.active,
 body[data-theme="dark"] .v2-segment-btn.active,
 .v2-shell.dark .v2-segment-btn.active {
-  background: rgba(255, 255, 255, 0.16) !important;
+  background: var(--accent-primary-gradient, linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.22) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;

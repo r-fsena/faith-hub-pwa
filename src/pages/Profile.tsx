@@ -933,27 +933,27 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>
                     Aparência
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--accent-contrast, var(--accent-bright, var(--accent-primary, #0f766e)))', fontWeight: 700 }}>
                     {themePreference === 'light' ? 'Modo Claro' : themePreference === 'dark' ? 'Modo Escuro' : 'Automático'}
                   </div>
                 </div>
               </div>
 
-              {/* Segmented Control Compacto */}
+              {/* Segmented Control Compacto com Alto Contraste */}
               <div style={{
                 display: 'inline-flex',
                 background: 'var(--bg-card-subtle, #f1f5f9)',
                 padding: '3px',
                 borderRadius: '12px',
                 border: '1px solid var(--panel-border)',
-                gap: '2px'
+                gap: '3px'
               }}>
                 {[
                   {
                     id: 'light',
                     label: 'Claro',
-                    icon: (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    icon: (color: string) => (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="4"/>
                         <path d="M12 2v2"/><path d="M12 20v2"/>
                         <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
@@ -965,8 +965,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   {
                     id: 'dark',
                     label: 'Escuro',
-                    icon: (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    icon: (color: string) => (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
                       </svg>
                     )
@@ -974,8 +974,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   {
                     id: 'system',
                     label: 'Auto',
-                    icon: (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    icon: (color: string) => (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                         <rect width="20" height="14" x="2" y="3" rx="2"/>
                         <line x1="8" x2="16" y1="21" y2="21"/>
                         <line x1="12" x2="12" y1="17" y2="21"/>
@@ -984,29 +984,35 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   }
                 ].map(opt => {
                   const isSelected = themePreference === opt.id;
+                  const itemColor = isSelected ? '#ffffff' : 'var(--text-muted, #94a3b8)';
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setThemePreference(opt.id as any)}
+                      className={`v2-pressable v2-segment-btn ${isSelected ? 'active' : ''}`}
                       style={{
-                        background: isSelected ? 'var(--bg-card, #ffffff)' : 'transparent',
-                        color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted, #94a3b8)',
-                        border: isSelected ? '1px solid var(--panel-border)' : '1px solid transparent',
+                        background: isSelected 
+                          ? 'var(--accent-primary-gradient, linear-gradient(135deg, #0f766e 0%, #14b8a6 100%))' 
+                          : 'transparent',
+                        color: itemColor,
+                        border: isSelected ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent',
                         borderRadius: '9px',
-                        padding: '5px 9px',
+                        padding: '5px 10px',
                         fontSize: '0.70rem',
-                        fontWeight: isSelected ? 800 : 600,
+                        fontWeight: isSelected ? 900 : 700,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                        transition: 'all 0.15s ease'
+                        gap: '5px',
+                        boxShadow: isSelected ? '0 2px 8px rgba(15, 118, 110, 0.35)' : 'none',
+                        transition: 'all 0.18s ease'
                       }}
                     >
-                      {opt.icon}
-                      <span>{opt.label}</span>
+                      {opt.icon(itemColor)}
+                      <span style={{ color: itemColor, fontWeight: isSelected ? 900 : 700 }}>
+                        {opt.label}
+                      </span>
                     </button>
                   );
                 })}
