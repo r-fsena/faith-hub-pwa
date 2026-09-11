@@ -21,26 +21,9 @@
     <title>Faith-Hub • Aplicativo Oficial</title>
   </head>
   <body style="margin: 0; background: #090d16; overflow-x: hidden;">
-    <!-- Splash Screen Inicial Estático (Prevenção de tela branca ou vazamento no boot) -->
-    <div id="initial-splash" style="position: fixed; inset: 0; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100dvh; min-height: 100vh; background: #090d16; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none;">
-      <div style="width: 88px; height: 88px; border-radius: 24px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12); padding: 12px; box-sizing: border-box;">
-        <img src="/brand/logo-symbol.png" alt="Faith-Hub" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-      </div>
-    </div>
-
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Fallback de segurança para garantir que o splash estático nunca trave na tela
-      setTimeout(function() {
-        var s = document.getElementById('initial-splash');
-        if (s) {
-          s.style.transition = 'opacity 0.2s ease';
-          s.style.opacity = '0';
-          setTimeout(function() { if (s && s.parentNode) s.parentNode.removeChild(s); }, 200);
-        }
-      }, 800);
-
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';

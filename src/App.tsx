@@ -10,6 +10,10 @@ import { SplashScreen } from './components/SplashScreen';
 const AppContentV1 = React.lazy(() => import('./v1/AppContentV1'));
 const AppContentV2 = React.lazy(() => import('./v2/AppContentV2'));
 
+const FastBootFallback = () => (
+  <div style={{ position: 'fixed', inset: 0, background: '#090d16', zIndex: 999999 }} />
+);
+
 const AppShell: React.FC = () => {
   const { isFeatureEnabled, isLoading } = useFeatureFlags();
 
@@ -36,11 +40,11 @@ const AppShell: React.FC = () => {
   }, [isFeatureEnabled]);
 
   if (isLoading) {
-    return <SplashScreen minDurationMs={0} />;
+    return <FastBootFallback />;
   }
 
   return (
-    <Suspense fallback={<SplashScreen minDurationMs={0} />}>
+    <Suspense fallback={<FastBootFallback />}>
       {isV2 ? <AppContentV2 /> : <AppContentV1 />}
     </Suspense>
   );

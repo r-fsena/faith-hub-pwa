@@ -36,14 +36,25 @@ export const AppContentV2: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { resolvedTheme } = useTheme();
   
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  // Se deslogado, vai direto para a tela nova de acolhimento/boas-vindas ('profile')
+  // Se o visitante já optou por explorar nesta sessão, ou se o usuário já estiver autenticado, vai para a 'home'
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true') {
+      return 'home';
+    }
+    return isAuthenticated ? 'home' : 'profile';
+  });
   const [subView, setSubView] = useState<SubView>('none');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Fast-Tab State Retention: Guarda quais abas já foram visitadas para carregamento instantâneo em 0ms
-  const [visitedTabs, setVisitedTabs] = useState<Set<ActiveTab>>(new Set(['home']));
+  const [visitedTabs, setVisitedTabs] = useState<Set<ActiveTab>>(() => {
+    const isGuestExplored = typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true';
+    const initialTab: ActiveTab = (isAuthenticated || isGuestExplored) ? 'home' : 'profile';
+    return new Set([initialTab]);
+  });
 
   // Estado Global de Campus / Unidade no Shell V2
   const [campuses, setCampuses] = useState<any[]>([]);
@@ -321,10 +332,12 @@ export const AppContentV2: React.FC = () => {
               <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
                 <Profile
                   onLoginSuccess={() => {
+                    sessionStorage.removeItem('faithhub_guest_explored');
                     setActiveTab('home');
                     setSubView('none');
                   }}
                   onContinueAsGuest={() => {
+                    sessionStorage.setItem('faithhub_guest_explored', 'true');
                     setActiveTab('home');
                     setSubView('none');
                   }}

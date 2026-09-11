@@ -24,7 +24,12 @@ type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 export const AppContentV1: React.FC = () => {
   const { branding } = useBranding();
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true') {
+      return 'home';
+    }
+    return isAuthenticated ? 'home' : 'profile';
+  });
   const [subView, setSubView] = useState<SubView>('none');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -254,11 +259,13 @@ export const AppContentV1: React.FC = () => {
             {activeTab === 'profile' && (
               <Profile
                 onLoginSuccess={() => {
+                  sessionStorage.removeItem('faithhub_guest_explored');
                   setActiveTab('home');
                   setSubView('none');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onContinueAsGuest={() => {
+                  sessionStorage.setItem('faithhub_guest_explored', 'true');
                   setActiveTab('home');
                   setSubView('none');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
