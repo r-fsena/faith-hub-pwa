@@ -24,28 +24,43 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
 
   const welcomeConfig = branding.welcome_screen_config;
   const heroImage = welcomeConfig?.hero_image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80';
-  const headline = welcomeConfig?.headline || `Viva o propósito da sua fé na ${branding.church_name || 'Comunidade'}`;
+  const churchTitle = branding.church_name || 'Comunidade';
+  const headline = welcomeConfig?.headline || `Viva o propósito da sua fé na ${churchTitle}`;
   const subtitle = welcomeConfig?.subtitle || 'Acompanhe devocionais, conecte-se à sua célula, participe de eventos e cresça em comunidade.';
-  const slides = welcomeConfig?.slides || [
+
+  const defaultSlides = [
     {
-      badge: 'CÉLULAS',
+      badge: churchTitle.toUpperCase(),
+      title: headline,
+      description: subtitle
+    },
+    {
+      badge: 'CÉLULAS & GRUPOS',
       title: 'Conecte-se em um Grupo',
       description: 'Amizades reais e comunhão nos lares da nossa congregação.'
     },
     {
-      badge: 'PALAVRA',
+      badge: 'PALAVRA DO DIA',
       title: 'Devocionais Diários',
       description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.'
     },
     {
-      badge: 'EVENTOS',
+      badge: 'EVENTOS & MINISTÉRIO',
       title: 'Eventos & Ministério Kids',
       description: 'Inscrições com QR Code express e check-in seguro para seus filhos.'
     }
   ];
 
-  // Estado do Carrossel de Slides
+  const allSlides = welcomeConfig?.slides && welcomeConfig.slides.length > 0 
+    ? welcomeConfig.slides 
+    : defaultSlides;
+
+  // Estado do Carrossel de Slides com Arraste (Swipe)
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartX = useRef<number | null>(null);
+  const dragDeltaX = useRef<number>(0);
 
   // Estado da Gaveta de Login / Cadastro
   const [isAuthDrawerOpen, setIsAuthDrawerOpen] = useState(false);
@@ -72,14 +87,50 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Auto avanço de slides a cada 6 segundos
+  // Auto avanço de slides a cada 7 segundos se o usuário não estiver interagindo
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (allSlides.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
-    }, 6000);
+      if (!isDragging) {
+        setCurrentSlide(prev => (prev + 1) % allSlides.length);
+      }
+    }, 7000);
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, [allSlides.length, isDragging]);
+
+  const handleDragStart = (clientX: number) => {
+    dragStartX.current = clientX;
+    dragDeltaX.current = 0;
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (clientX: number) => {
+    if (dragStartX.current === null) return;
+    const delta = clientX - dragStartX.current;
+    dragDeltaX.current = delta;
+    setDragOffset(delta);
+  };
+
+  const handleDragEnd = () => {
+    if (dragStartX.current === null) return;
+    const delta = dragDeltaX.current;
+    const threshold = 40;
+
+    if (delta < -threshold) {
+      // Arrastou da direita para a esquerda -> Próximo slide
+      triggerHaptic('selection');
+      setCurrentSlide(prev => (prev + 1) % allSlides.length);
+    } else if (delta > threshold) {
+      // Arrastou da esquerda para a direita -> Slide anterior
+      triggerHaptic('selection');
+      setCurrentSlide(prev => (prev - 1 + allSlides.length) % allSlides.length);
+    }
+
+    dragStartX.current = null;
+    dragDeltaX.current = 0;
+    setDragOffset(0);
+    setIsDragging(false);
+  };
 
   // Handler de CEP
   const handleFetchCep = async (rawCep: string) => {
@@ -301,37 +352,41 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
         pointerEvents: 'none'
       }} />
 
-      {/* Topo: Logo da Igreja & Botão de Visitante */}
+      {/* Topo: Logo da Igreja com Destaque Maior & Botão Explorar */}
       <header style={{
         position: 'relative',
         zIndex: 10,
         padding: 'calc(env(safe-area-inset-top, 16px) + 8px) 20px 0 20px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: '12px'
       }}>
-        {/* Identidade Flutuante em Vidro Líquido */}
+        {/* Identidade Flutuante da Igreja em Vidro Líquido Proeminente */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          background: 'rgba(9, 13, 22, 0.55)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          gap: '12px',
+          background: 'rgba(9, 13, 22, 0.65)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1.5px solid rgba(255, 255, 255, 0.18)',
           borderRadius: '999px',
-          padding: '5px 14px 5px 6px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
+          padding: '6px 18px 6px 8px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45)',
+          maxWidth: 'calc(100% - 105px)'
         }}>
           <div style={{
-            width: '32px',
-            height: '32px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             overflow: 'hidden',
             background: 'var(--accent-primary, #0f766e)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            boxShadow: '0 0 14px rgba(15, 118, 110, 0.45)',
+            flexShrink: 0
           }}>
             <img 
               src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
@@ -342,12 +397,39 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
                   target.src = '/brand/logo-symbol.png';
                 }
               }}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '3px' }}
             />
           </div>
-          <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.01em' }}>
-            {branding.church_name || 'Faith-Hub'}
-          </span>
+
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, justifyContent: 'center' }}>
+            <span style={{ 
+              fontSize: '0.98rem', 
+              fontWeight: 900, 
+              color: '#ffffff', 
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {branding.church_name || 'Faith-Hub'}
+            </span>
+            <span style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              color: 'var(--accent-secondary, #2dd4bf)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              marginTop: '1px'
+            }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+              Aplicativo Oficial
+            </span>
+          </div>
         </div>
 
         {/* Botão Explorar como Visitante */}
@@ -365,15 +447,16 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
               WebkitBackdropFilter: 'blur(16px)',
               border: '1px solid rgba(255, 255, 255, 0.20)',
               borderRadius: '999px',
-              padding: '7px 14px',
+              padding: '8px 16px',
               color: '#ffffff',
-              fontSize: '0.74rem',
+              fontSize: '0.76rem',
               fontWeight: 800,
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
               cursor: 'pointer',
-              outline: 'none'
+              outline: 'none',
+              flexShrink: 0
             }}
           >
             <span>Explorar</span>
@@ -385,88 +468,203 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
       {/* Espaço central flexível */}
       <div style={{ flex: 1, zIndex: 5 }} />
 
-      {/* Base Imersiva: Dizeres Inspiradores, Pagination Dots & Botão Único Entrar */}
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        padding: '0 24px calc(env(safe-area-inset-bottom, 20px) + 16px) 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'clamp(8px, 1.8vh, 16px)'
-      }}>
-        {/* Badge do Slide Ativo */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, var(--accent-secondary, #14b8a6) 100%)',
-            color: '#ffffff',
-            fontSize: '0.62rem',
-            fontWeight: 900,
-            letterSpacing: '0.08em',
-            padding: '3px 10px',
-            borderRadius: '999px',
-            boxShadow: '0 4px 12px rgba(15, 118, 110, 0.35)',
-            textTransform: 'uppercase'
+      {/* Base Imersiva: Carrossel Interativo com Arraste (Swipe), Navegação e Botão Entrar */}
+      <div 
+        onTouchStart={e => handleDragStart(e.touches[0].clientX)}
+        onTouchMove={e => handleDragMove(e.touches[0].clientX)}
+        onTouchEnd={handleDragEnd}
+        onMouseDown={e => handleDragStart(e.clientX)}
+        onMouseMove={e => { if (isDragging) handleDragMove(e.clientX); }}
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          padding: '0 24px calc(env(safe-area-inset-bottom, 20px) + 16px) 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'clamp(8px, 1.8vh, 16px)',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          touchAction: 'pan-y'
+        }}
+      >
+        {/* Trilho Horizontal de Slides com Animação Física */}
+        <div style={{ overflow: 'hidden', width: '100%' }}>
+          <div style={{
+            display: 'flex',
+            width: '100%',
+            transform: isDragging 
+              ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
+              : `translateX(-${currentSlide * 100}%)`,
+            transition: isDragging ? 'none' : 'transform 0.38s cubic-bezier(0.25, 1, 0.5, 1)',
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}>
-            {slides[currentSlide]?.badge || 'FAITH-HUB'}
-          </span>
+            {allSlides.map((slide, idx) => (
+              <div 
+                key={idx} 
+                style={{ 
+                  minWidth: '100%', 
+                  width: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: 'clamp(6px, 1.4vh, 12px)',
+                  boxSizing: 'border-box',
+                  paddingRight: '6px'
+                }}
+              >
+                {/* Badge do Slide Ativo */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, var(--accent-secondary, #14b8a6) 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
+                    letterSpacing: '0.08em',
+                    padding: '3px 10px',
+                    borderRadius: '999px',
+                    boxShadow: '0 4px 12px rgba(15, 118, 110, 0.35)',
+                    textTransform: 'uppercase'
+                  }}>
+                    {slide.badge}
+                  </span>
+                </div>
+
+                {/* Título de Impacto (Headline) */}
+                <h1 style={{
+                  fontSize: 'clamp(1.48rem, 5.1vw, 2.05rem)',
+                  fontWeight: 900,
+                  color: '#ffffff',
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.03em',
+                  margin: 0,
+                  textShadow: '0 4px 20px rgba(0, 0, 0, 0.6)'
+                }}>
+                  {slide.title}
+                </h1>
+
+                {/* Subtítulo / Dizeres da Igreja */}
+                <p style={{
+                  fontSize: 'clamp(0.80rem, 2.4vw, 0.88rem)',
+                  color: '#cbd5e1',
+                  lineHeight: 1.42,
+                  margin: 0,
+                  maxWidth: '420px',
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
+                }}>
+                  {slide.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Título de Impacto (Headline) */}
-        <h1 style={{
-          fontSize: 'clamp(1.55rem, 5.2vw, 2.1rem)',
-          fontWeight: 900,
-          color: '#ffffff',
-          lineHeight: 1.15,
-          letterSpacing: '-0.03em',
-          margin: 0,
-          textShadow: '0 4px 20px rgba(0, 0, 0, 0.6)'
-        }}>
-          {currentSlide === 0 ? headline : (slides[currentSlide]?.title || headline)}
-        </h1>
-
-        {/* Subtítulo / Dizeres da Igreja */}
-        <p style={{
-          fontSize: 'clamp(0.80rem, 2.4vw, 0.88rem)',
-          color: '#cbd5e1',
-          lineHeight: 1.42,
-          margin: 0,
-          maxWidth: '420px',
-          textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
-        }}>
-          {currentSlide === 0 ? subtitle : (slides[currentSlide]?.description || subtitle)}
-        </p>
-
-        {/* Barra de Rodapé: Dots na Esquerda + Apenas o Botão "Entrar" na Direita */}
+        {/* Barra de Rodapé: Navegação por Toque/Clique + Dots + Dica de Arrastar + Botão Entrar */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: '8px',
-          paddingTop: '6px'
+          marginTop: '6px',
+          paddingTop: '6px',
+          gap: '12px'
         }}>
-          {/* Pagination Dots (Indicadores de Slide) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {slides.map((_, idx) => {
-              const isActive = currentSlide === idx;
-              return (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setCurrentSlide(idx);
-                  }}
-                  style={{
-                    width: isActive ? '24px' : '8px',
-                    height: '8px',
-                    borderRadius: '999px',
-                    background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.35)',
-                    boxShadow: isActive ? '0 0 10px rgba(255, 255, 255, 0.8)' : 'none',
-                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    cursor: 'pointer'
-                  }}
-                />
-              );
-            })}
+          {/* Controles de Slides com Chevrons, Dots e Dica */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Seta Anterior */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setCurrentSlide(prev => (prev - 1 + allSlides.length) % allSlides.length);
+                }}
+                className="v2-pressable"
+                aria-label="Slide anterior"
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.20)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.90rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  lineHeight: 1
+                }}
+              >
+                ‹
+              </button>
+
+              {/* Dots Indicadores */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 4px' }}>
+                {allSlides.map((_, idx) => {
+                  const isActive = currentSlide === idx;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setCurrentSlide(idx);
+                      }}
+                      style={{
+                        width: isActive ? '20px' : '7px',
+                        height: '7px',
+                        borderRadius: '999px',
+                        background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.35)',
+                        boxShadow: isActive ? '0 0 10px rgba(255, 255, 255, 0.8)' : 'none',
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Seta Próximo */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setCurrentSlide(prev => (prev + 1) % allSlides.length);
+                }}
+                className="v2-pressable"
+                aria-label="Próximo slide"
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.20)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.90rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  lineHeight: 1
+                }}
+              >
+                ›
+              </button>
+            </div>
+
+            {/* Dica visual de arrastar */}
+            <span style={{
+              fontSize: '0.66rem',
+              color: 'rgba(255, 255, 255, 0.55)',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              paddingLeft: '2px'
+            }}>
+              <span>⇄</span> Deslize para explorar
+            </span>
           </div>
 
           {/* Botão Único "Entrar" */}
@@ -478,14 +676,15 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
               background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
               color: '#090d16',
               fontWeight: 900,
-              fontSize: '0.92rem',
+              fontSize: '0.94rem',
               borderRadius: '999px',
-              padding: '13px 28px',
+              padding: '13px 30px',
               cursor: 'pointer',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(255, 255, 255, 0.2)',
               border: 'none',
               outline: 'none',
-              letterSpacing: '0.01em'
+              letterSpacing: '0.01em',
+              flexShrink: 0
             }}
           >
             Entrar
