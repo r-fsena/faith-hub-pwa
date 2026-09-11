@@ -188,9 +188,9 @@ export const HomeV2: React.FC<HomeV2Props> = ({
     },
     { 
       label: 'Bíblia Sagrada', 
-      icon: <BibleScriptureIcon size={24} color="#334155" />, 
-      gradient: 'linear-gradient(135deg, rgba(51, 65, 85, 0.16) 0%, rgba(100, 116, 139, 0.08) 100%)',
-      border: 'rgba(51, 65, 85, 0.28)', 
+      icon: <BibleScriptureIcon size={24} color="#f59e0b" />, 
+      gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(251, 191, 36, 0.08) 100%)',
+      border: 'rgba(245, 158, 11, 0.32)', 
       action: () => { triggerHaptic('selection'); onOpenBible(); },
       isBible: true,
       flag: 'bible.module_enabled'
@@ -289,13 +289,13 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                     position: 'absolute',
                     top: '-4px',
                     right: '-4px',
-                    background: 'var(--accent-primary, #0f766e)',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                     color: '#ffffff',
                     fontSize: '0.55rem',
                     fontWeight: 900,
                     padding: '1px 5px',
                     borderRadius: '6px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    boxShadow: '0 2px 6px rgba(245, 158, 11, 0.4)'
                   }}>
                     LIVRE
                   </span>
@@ -335,7 +335,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 <span style={{
                   fontSize: '0.70rem',
                   fontWeight: 800,
-                  color: isBiblePulse ? 'var(--accent-primary, #0f766e)' : 'var(--text-main, #0f172a)',
+                  color: 'var(--text-main, #ffffff)',
                   textAlign: 'center',
                   lineHeight: 1.2,
                   display: '-webkit-box',

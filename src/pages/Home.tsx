@@ -179,9 +179,9 @@ export const Home: React.FC<HomeProps> = ({
     },
     { 
       label: 'Bíblia Sagrada', 
-      icon: <BibleScriptureIcon size={22} color="#475569" />, 
-      bg: 'rgba(71, 85, 105, 0.12)', 
-      border: 'rgba(71, 85, 105, 0.25)', 
+      icon: <BibleScriptureIcon size={22} color="#f59e0b" />, 
+      bg: 'rgba(245, 158, 11, 0.14)', 
+      border: 'rgba(245, 158, 11, 0.30)', 
       action: onOpenBible,
       isBible: true,
       flag: 'bible.module_enabled'
@@ -297,7 +297,7 @@ export const Home: React.FC<HomeProps> = ({
                 >
                   {action.icon}
                 </div>
-                <span className="quick-action-label" style={{ color: isBiblePulse ? 'var(--accent-primary)' : 'var(--text-main)', fontWeight: isBiblePulse ? 900 : 800 }}>
+                <span className="quick-action-label" style={{ color: 'var(--text-main)', fontWeight: 800 }}>
                   {action.label}
                 </span>
               </button>
