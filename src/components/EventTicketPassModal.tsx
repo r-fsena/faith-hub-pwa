@@ -37,10 +37,10 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
   isOpen,
   onClose
 }) => {
-  if (!ticket) return null;
-
   const [showCalendarOptions, setShowCalendarOptions] = useState(false);
   const [downloadingImage, setDownloadingImage] = useState(false);
+
+  if (!ticket) return null;
 
   const qrData = ticket.qrcode_token || ticket.qr_code_data || ticket.ticket_id || ticket.id || '';
   const shortCode = ticket.short_code || (ticket.ticket_id?.startsWith('FH-') ? ticket.ticket_id : `FH-${(ticket.ticket_id || '').slice(-6).toUpperCase()}`);

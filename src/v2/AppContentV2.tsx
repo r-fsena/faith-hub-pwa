@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
