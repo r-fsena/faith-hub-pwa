@@ -719,9 +719,9 @@ input, select, textarea {
 .btn-pwa-secondary {
   width: 100%;
   min-height: 44px;
-  background: #f1f5f9;
-  color: var(--text-main);
-  border: 1px solid var(--panel-border);
+  background: var(--bg-card-subtle, #f1f5f9);
+  color: var(--text-main, #0f172a);
+  border: 1px solid var(--panel-border, #cbd5e1);
   border-radius: 16px;
   padding: 12px 14px;
   font-size: 0.88rem;
@@ -732,6 +732,14 @@ input, select, textarea {
   justify-content: center;
   gap: 8px;
   transition: transform 0.15s ease;
+}
+
+:root.dark .btn-pwa-secondary,
+body.dark .btn-pwa-secondary,
+body[data-theme="dark"] .btn-pwa-secondary {
+  background: var(--bg-card-subtle, #1e293b) !important;
+  color: var(--text-main, #f8fafc) !important;
+  border: 1px solid var(--panel-border, #334155) !important;
 }
 
 .btn-pwa-secondary:active {

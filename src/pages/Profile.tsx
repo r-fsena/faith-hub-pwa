@@ -4,7 +4,7 @@ import { useBranding } from '../context/BrandingContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useTheme } from '../context/ThemeContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
-import { getActiveCampusId } from '../services/api';
+import { getActiveCampusId, getAuthHeaders } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsCheckinModal } from '../components/KidsCheckinModal';
 import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
@@ -194,64 +194,122 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
     try {
       const localName = localStorage.getItem('faithhub_user_name') || user.name || user.email.split('@')[0];
       const localPhone = localStorage.getItem('faithhub_user_phone') || user.phone || user.attributes?.phone_number || '';
+      const localBirthDate = localStorage.getItem('faithhub_user_birth_date') || (user.attributes?.birthdate ? user.attributes.birthdate.split('T')[0] : '');
       const localAddress = localStorage.getItem('faithhub_user_address') || '';
+      const localStreet = localStorage.getItem('faithhub_user_street') || '';
+      const localNumber = localStorage.getItem('faithhub_user_number') || '';
+      const localComplement = localStorage.getItem('faithhub_user_complement') || '';
+      const localNeighborhood = localStorage.getItem('faithhub_user_neighborhood') || '';
+      const localCity = localStorage.getItem('faithhub_user_city') || '';
+      const localState = localStorage.getItem('faithhub_user_state') || '';
+      const localZip = localStorage.getItem('faithhub_user_zip') || '';
+
+      const activeCampus = getActiveCampusId();
 
       setMemberProfile(prev => ({
         ...prev,
         name: localName,
         phone: localPhone,
-        address: localAddress
+        birth_date: localBirthDate,
+        address: localAddress,
+        address_street: localStreet,
+        address_number: localNumber,
+        address_complement: localComplement,
+        address_neighborhood: localNeighborhood,
+        address_city: localCity,
+        address_state: localState,
+        address_zip: localZip,
+        campus_name: activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local'
       }));
 
-      const activeCampus = getActiveCampusId();
-      const currentOrgId = branding.organization_id || 'org_default';
-      const res = await fetch(`${API_URL}/members?organization_id=${encodeURIComponent(currentOrgId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        const found = (json.data || []).find((m: any) => m.email?.toLowerCase() === user.email?.toLowerCase() || m.id === user.userId);
-        if (found) {
-          const finalName = found.name || localName;
-          const finalPhone = found.phone || localPhone;
-          const finalAddress = found.address || localAddress;
-          const finalBirthDate = found.birth_date ? found.birth_date.split('T')[0] : '';
+      const headers = await getAuthHeaders();
+      let found: any = null;
 
-          let perms: string[] = [];
-          if (Array.isArray(found.operational_permissions)) {
-            perms = found.operational_permissions;
-          } else if (typeof found.operational_permissions === 'string') {
-            try {
-              perms = JSON.parse(found.operational_permissions);
-            } catch {
-              perms = [];
-            }
+      // 1. Tenta buscar dados do próprio usuário autenticado (/members/me)
+      try {
+        const meRes = await fetch(`${API_URL}/members/me`, { headers });
+        if (meRes.ok) {
+          const meJson = await meRes.json();
+          found = meJson.data || meJson;
+        }
+      } catch (errMe) {
+        console.warn("Falha ao buscar /members/me:", errMe);
+      }
+
+      // 2. Fallback: Se não encontrou por /me, busca na listagem da organização
+      if (!found) {
+        try {
+          const currentOrgId = branding.organization_id || 'org_default';
+          const res = await fetch(`${API_URL}/members?organization_id=${encodeURIComponent(currentOrgId)}`, { headers });
+          if (res.ok) {
+            const json = await res.json();
+            found = (json.data || []).find((m: any) => 
+              m.email?.toLowerCase() === user.email?.toLowerCase() || 
+              m.id === user.userId
+            );
           }
+        } catch (errList) {
+          console.warn("Falha ao listar membros:", errList);
+        }
+      }
 
-          setMemberProfile({
-            id: found.id,
-            name: finalName,
-            phone: finalPhone,
-            birth_date: finalBirthDate,
-            address: finalAddress,
-            address_street: found.address_street || '',
-            address_number: found.address_number || '',
-            address_complement: found.address_complement || '',
-            address_neighborhood: found.address_neighborhood || '',
-            address_city: found.address_city || '',
-            address_state: found.address_state || '',
-            address_zip: found.address_zip || '',
-            role: found.role || 'Membro',
-            campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local'),
-            operational_permissions: perms
-          });
+      if (found) {
+        const finalName = found.name || localName;
+        const finalPhone = found.phone || localPhone;
+        const finalAddress = found.address || localAddress;
+        const finalBirthDate = found.birth_date ? found.birth_date.split('T')[0] : localBirthDate;
+        const finalStreet = found.address_street || localStreet;
+        const finalNumber = found.address_number || localNumber;
+        const finalComplement = found.address_complement || localComplement;
+        const finalNeighborhood = found.address_neighborhood || localNeighborhood;
+        const finalCity = found.address_city || localCity;
+        const finalState = found.address_state || localState;
+        const finalZip = found.address_zip || localZip;
 
-          if (finalName) localStorage.setItem('faithhub_user_name', finalName);
-          if (finalPhone) localStorage.setItem('faithhub_user_phone', finalPhone);
-          if (finalAddress) localStorage.setItem('faithhub_user_address', finalAddress);
-
-          if (found.avatar_url && !savedAvatarExists()) {
-            setAvatarUrl(found.avatar_url);
-            localStorage.setItem('faithhub_user_avatar', found.avatar_url);
+        let perms: string[] = [];
+        if (Array.isArray(found.operational_permissions)) {
+          perms = found.operational_permissions;
+        } else if (typeof found.operational_permissions === 'string') {
+          try {
+            perms = JSON.parse(found.operational_permissions);
+          } catch {
+            perms = [];
           }
+        }
+
+        setMemberProfile({
+          id: found.id || user.userId,
+          name: finalName,
+          phone: finalPhone,
+          birth_date: finalBirthDate,
+          address: finalAddress,
+          address_street: finalStreet,
+          address_number: finalNumber,
+          address_complement: finalComplement,
+          address_neighborhood: finalNeighborhood,
+          address_city: finalCity,
+          address_state: finalState,
+          address_zip: finalZip,
+          role: found.role || 'Membro',
+          campus_name: found.campus_name || (activeCampus === 'campus_sede' ? 'Sede Principal' : 'Congregação Local'),
+          operational_permissions: perms
+        });
+
+        localStorage.setItem('faithhub_user_name', finalName);
+        if (finalPhone) localStorage.setItem('faithhub_user_phone', finalPhone);
+        if (finalBirthDate) localStorage.setItem('faithhub_user_birth_date', finalBirthDate);
+        if (finalAddress) localStorage.setItem('faithhub_user_address', finalAddress);
+        if (finalStreet) localStorage.setItem('faithhub_user_street', finalStreet);
+        if (finalNumber) localStorage.setItem('faithhub_user_number', finalNumber);
+        if (finalComplement) localStorage.setItem('faithhub_user_complement', finalComplement);
+        if (finalNeighborhood) localStorage.setItem('faithhub_user_neighborhood', finalNeighborhood);
+        if (finalCity) localStorage.setItem('faithhub_user_city', finalCity);
+        if (finalState) localStorage.setItem('faithhub_user_state', finalState);
+        if (finalZip) localStorage.setItem('faithhub_user_zip', finalZip);
+
+        if (found.avatar_url && !savedAvatarExists()) {
+          setAvatarUrl(found.avatar_url);
+          localStorage.setItem('faithhub_user_avatar', found.avatar_url);
         }
       }
     } catch (e) {
@@ -274,53 +332,91 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         ? `${memberProfile.address_street}, ${memberProfile.address_number || 'S/N'}${memberProfile.address_complement ? ` - ${memberProfile.address_complement}` : ''} - ${memberProfile.address_neighborhood}, ${memberProfile.address_city} - ${memberProfile.address_state}`
         : memberProfile.address;
 
+      const cleanBirth = memberProfile.birth_date ? memberProfile.birth_date.split('T')[0] : '';
+
       localStorage.setItem('faithhub_user_name', memberProfile.name.trim());
       localStorage.setItem('faithhub_user_phone', memberProfile.phone.trim());
+      localStorage.setItem('faithhub_user_birth_date', cleanBirth);
       localStorage.setItem('faithhub_user_address', fullAddressStr);
+      localStorage.setItem('faithhub_user_street', memberProfile.address_street || '');
+      localStorage.setItem('faithhub_user_number', memberProfile.address_number || '');
+      localStorage.setItem('faithhub_user_complement', memberProfile.address_complement || '');
+      localStorage.setItem('faithhub_user_neighborhood', memberProfile.address_neighborhood || '');
+      localStorage.setItem('faithhub_user_city', memberProfile.address_city || '');
+      localStorage.setItem('faithhub_user_state', memberProfile.address_state || '');
+      localStorage.setItem('faithhub_user_zip', memberProfile.address_zip || '');
 
       try {
+        const userAttrs: Record<string, string> = {
+          name: memberProfile.name.trim()
+        };
+        if (cleanBirth) userAttrs.birthdate = cleanBirth;
+        if (memberProfile.phone.trim()) {
+          const rawPhone = memberProfile.phone.replace(/\D/g, '');
+          userAttrs.phone_number = memberProfile.phone.startsWith('+') ? memberProfile.phone : `+55${rawPhone}`;
+        }
         await updateUserAttributes({
-          userAttributes: {
-            name: memberProfile.name.trim()
-          }
+          userAttributes: userAttrs
         });
       } catch (errCognito) {
         console.log("Cognito attr update notice:", errCognito);
       }
+
+      const headers = await getAuthHeaders();
+      const currentOrgId = branding.organization_id || 'org_default';
+      const currentCampus = getActiveCampusId() || 'campus_sede';
 
       const payload = {
         id: user?.userId,
         email: user?.email,
         name: memberProfile.name.trim(),
         phone: memberProfile.phone.trim(),
-        birth_date: memberProfile.birth_date || null,
+        birth_date: cleanBirth || null,
         address: fullAddressStr,
-        address_street: memberProfile.address_street,
-        address_number: memberProfile.address_number,
-        address_complement: memberProfile.address_complement,
-        address_neighborhood: memberProfile.address_neighborhood,
-        address_city: memberProfile.address_city,
-        address_state: memberProfile.address_state,
-        address_zip: memberProfile.address_zip,
-        avatar_url: avatarUrl
+        address_street: memberProfile.address_street || '',
+        address_number: memberProfile.address_number || '',
+        address_complement: memberProfile.address_complement || '',
+        address_neighborhood: memberProfile.address_neighborhood || '',
+        address_city: memberProfile.address_city || '',
+        address_state: memberProfile.address_state || '',
+        address_zip: memberProfile.address_zip || '',
+        avatar_url: avatarUrl,
+        organization_id: currentOrgId,
+        campus_id: currentCampus
       };
 
-      // Sincroniza via self-register (MySQL)
-      await fetch(`${API_URL}/members/self-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-
-      if (user?.userId) {
-        await fetch(`${API_URL}/members/${user.userId}`, {
+      // 1. Sincroniza via PUT /members/me com token de autenticação
+      let updatedOk = false;
+      try {
+        const putRes = await fetch(`${API_URL}/members/me`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
-        }).catch(() => {});
+        });
+        if (putRes.ok) updatedOk = true;
+      } catch (errPut) {
+        console.warn("Falha no PUT /members/me:", errPut);
       }
 
-      setMemberProfile(prev => ({ ...prev, address: fullAddressStr }));
+      // 2. Se falhou ou membro novo, sincroniza via self-register
+      if (!updatedOk) {
+        try {
+          await fetch(`${API_URL}/members/self-register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          updatedOk = true;
+        } catch (errSelf) {
+          console.warn("Falha no self-register:", errSelf);
+        }
+      }
+
+      setMemberProfile(prev => ({ 
+        ...prev, 
+        address: fullAddressStr,
+        birth_date: cleanBirth
+      }));
       setIsEditProfileOpen(false);
       alert("Perfil atualizado com sucesso!");
       await checkAuth();
@@ -1644,7 +1740,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 type="button"
                 className="btn-pwa-secondary"
                 onClick={() => setIsEditProfileOpen(false)}
-                style={{ flex: 1 }}
+                style={{ 
+                  flex: 1,
+                  background: 'var(--bg-card-subtle)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--panel-border)'
+                }}
               >
                 Cancelar
               </button>
