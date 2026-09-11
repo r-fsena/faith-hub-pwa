@@ -10,8 +10,13 @@ import { NotificationsModal } from '../components/NotificationsModal';
 import { AuthGate } from '../components/AuthGate';
 import { SplashScreen } from '../components/SplashScreen';
 
+// Estilos e Tokens Nativos da V2
+import './styles/v2-theme.css';
+import { prefetchV2Data } from './services/swrCache';
+import { getActiveCampusId } from '../services/api';
+
 // Telas do App
-import { Home } from '../pages/Home';
+import { HomeV2 } from './pages/HomeV2';
 import { Devotionals } from '../pages/Devotionals';
 import { CellGroups } from '../pages/CellGroups';
 import { Store } from '../pages/Store';
@@ -56,6 +61,13 @@ export const AppContentV2: React.FC = () => {
     }
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, activeTab]);
+
+  // Prefetch de dados da V2 em momento ocioso para troca de abas instantânea em 0ms
+  useEffect(() => {
+    if (branding.organization_id) {
+      prefetchV2Data(branding.organization_id, getActiveCampusId());
+    }
+  }, [branding.organization_id]);
 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -131,7 +143,7 @@ export const AppContentV2: React.FC = () => {
   }
 
   return (
-    <div className="pwa-app-shell" style={{ minHeight: '100dvh', paddingBottom: '90px' }}>
+    <div className="v2-shell">
       {/* Splash Screen */}
       <SplashScreen />
 
@@ -208,9 +220,9 @@ export const AppContentV2: React.FC = () => {
              ======================================================== */
           <div style={{ flex: 1, position: 'relative' }}>
             
-            {/* 1. HOME */}
+            {/* 1. HOME V2 */}
             <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
-              <Home 
+              <HomeV2 
                 onNavigate={handleTabChange}
                 onOpenLive={() => setIsLiveOpen(true)}
                 onOpenPrayers={() => setSubView('prayers')}

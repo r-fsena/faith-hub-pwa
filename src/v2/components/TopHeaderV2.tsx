@@ -65,17 +65,18 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          maxWidth: '680px',
+          maxWidth: '460px',
           margin: '0 auto',
           width: '100%'
         }}>
           <button 
             type="button" 
             onClick={handleBackClick}
+            className="v2-pressable"
             style={{
-              background: 'rgba(241, 245, 249, 0.8)',
-              border: 'none',
-              borderRadius: '12px',
+              background: 'rgba(241, 245, 249, 0.9)',
+              border: '1px solid rgba(226, 232, 240, 0.8)',
+              borderRadius: '14px',
               color: 'var(--text-main, #0f172a)',
               fontSize: '0.84rem',
               fontWeight: 800,
@@ -85,7 +86,6 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               cursor: 'pointer',
               padding: '6px 12px 6px 8px',
               minHeight: '36px',
-              transition: 'transform 0.1s ease',
               outline: 'none'
             }}
           >
@@ -94,7 +94,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
           </button>
 
           <span style={{ 
-            fontSize: '0.96rem', 
+            fontSize: '0.94rem', 
             fontWeight: 900, 
             color: 'var(--text-main, #0f172a)',
             overflow: 'hidden',
@@ -118,26 +118,27 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
       position: 'sticky',
       top: 0,
       zIndex: 90,
-      background: isScrolled ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.82)',
-      backdropFilter: 'blur(20px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.9)' : '1px solid transparent',
-      boxShadow: isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.04)' : 'none',
+      background: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.85)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+      borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.85)' : '1px solid transparent',
+      boxShadow: isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none',
       transition: 'all 0.25s ease',
       padding: 'env(safe-area-inset-top, 0px) 16px 0 16px'
     }}>
       <div style={{
-        height: '58px',
+        height: '60px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        maxWidth: '680px',
+        maxWidth: '460px',
         margin: '0 auto',
         width: '100%'
       }}>
         {/* Lado Esquerdo: Perfil & Identidade da Igreja */}
         <div 
           onClick={handleProfileClick} 
+          className="v2-pressable"
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -147,17 +148,18 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
           }}
         >
           <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '13px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '14px',
             background: 'var(--accent-primary-light, #f1f5f9)',
-            border: '1.5px solid rgba(255,255,255,0.9)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            border: '2px solid rgba(255,255,255,0.95)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            position: 'relative'
           }}>
             <img 
               src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
@@ -176,7 +178,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ 
                 fontWeight: 900, 
-                fontSize: '0.90rem', 
+                fontSize: '0.92rem', 
                 color: 'var(--text-main, #0f172a)', 
                 lineHeight: 1.2 
               }}>
@@ -185,20 +187,21 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
               <span style={{
                 fontSize: '0.58rem',
                 fontWeight: 900,
-                color: 'var(--accent-primary, #6366f1)',
-                background: 'var(--accent-primary-light, rgba(99,102,241,0.12))',
-                padding: '1px 5px',
+                color: '#ffffff',
+                background: 'var(--accent-primary, #0f766e)',
+                padding: '1px 6px',
                 borderRadius: '6px',
-                letterSpacing: '0.02em'
+                letterSpacing: '0.04em',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                v2
+                V2
               </span>
             </div>
 
             <span style={{ 
               fontSize: '0.72rem', 
               color: 'var(--text-muted, #64748b)', 
-              fontWeight: 600,
+              fontWeight: 700,
               marginTop: '1px' 
             }}>
               {user?.name ? `Olá, ${user.name.split(' ')[0]}` : (branding.tagline || 'Comunidade da Fé')}
@@ -212,20 +215,20 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             type="button"
             onClick={handleNotifClick}
             title="Notificações e Avisos"
+            className="v2-pressable"
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '13px',
-              background: 'rgba(241, 245, 249, 0.85)',
-              border: 'none',
+              width: '40px',
+              height: '40px',
+              borderRadius: '14px',
+              background: 'rgba(241, 245, 249, 0.9)',
+              border: '1px solid rgba(226, 232, 240, 0.7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: unreadCount > 0 ? 'var(--accent-primary, #6366f1)' : '#64748b',
+              color: unreadCount > 0 ? 'var(--accent-primary, #0f766e)' : '#64748b',
               cursor: 'pointer',
               position: 'relative',
-              outline: 'none',
-              transition: 'transform 0.12s ease'
+              outline: 'none'
             }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
