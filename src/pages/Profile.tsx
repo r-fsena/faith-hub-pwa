@@ -649,7 +649,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
                   type="button"
                   onClick={() => setIsEditProfileOpen(true)}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--bg-card, #ffffff)',
                     border: '1px solid var(--panel-border)',
                     borderRadius: '12px',
                     padding: '8px 18px',
@@ -754,7 +754,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Card Meus Dados Cadastrais */}
             <div style={{
-              background: '#ffffff',
+              background: 'var(--bg-card, #ffffff)',
               borderRadius: '20px',
               padding: '18px',
               border: '1px solid var(--panel-border)',
@@ -827,7 +827,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
             {/* Card Informações da Igreja & Contatos */}
             <div style={{
-              background: '#ffffff',
+              background: 'var(--bg-card, #ffffff)',
               borderRadius: '20px',
               padding: '18px',
               border: '1px solid var(--panel-border)',
@@ -866,7 +866,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
 
             {/* Configuração de Privacidade & LGPD */}
             <div style={{
-              background: '#ffffff',
+              background: 'var(--bg-card, #ffffff)',
               borderRadius: '20px',
               padding: '16px',
               border: '1px solid var(--panel-border)',
@@ -1072,9 +1072,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
               window.location.reload();
             }}
             style={{
-              background: isV2Active ? '#f1f5f9' : 'var(--accent-primary-light)',
+              background: isV2Active ? 'var(--bg-card, #f1f5f9)' : 'var(--accent-primary-light)',
               color: isV2Active ? 'var(--text-secondary)' : 'var(--accent-primary)',
-              border: 'none',
+              border: '1px solid var(--panel-border)',
               borderRadius: '10px',
               padding: '7px 14px',
               fontSize: '0.76rem',

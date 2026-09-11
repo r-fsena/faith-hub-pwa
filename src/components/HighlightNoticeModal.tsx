@@ -117,7 +117,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
     >
       <div
         style={{
-          background: '#ffffff',
+          background: 'var(--bg-card, #ffffff)',
           borderRadius: '24px',
           maxWidth: '400px',
           width: '100%',

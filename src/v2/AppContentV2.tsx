@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 import { TopHeaderV2 } from './components/TopHeaderV2';
 import { BottomNavV2, type ActiveTab } from './components/BottomNavV2';
@@ -34,6 +34,7 @@ type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 export const AppContentV2: React.FC = () => {
   const { branding } = useBranding();
   const { isAuthenticated } = useAuth();
+  const { resolvedTheme } = useTheme();
   
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [subView, setSubView] = useState<SubView>('none');
@@ -172,7 +173,7 @@ export const AppContentV2: React.FC = () => {
   }
 
   return (
-    <div className="v2-shell">
+    <div className={`v2-shell ${resolvedTheme === 'dark' ? 'dark' : ''}`}>
       {/* Splash Screen */}
       <SplashScreen />
 
@@ -394,14 +395,14 @@ export const AppContentV2: React.FC = () => {
                 onClick={() => handleSelectCampus(c.id)}
                 className="v2-pressable"
                 style={{
-                  background: isSelected ? 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))' : '#ffffff',
-                  border: isSelected ? '2px solid var(--accent-primary, #0f766e)' : '1px solid rgba(226, 232, 240, 0.8)',
+                  background: isSelected ? 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))' : 'var(--bg-card, #ffffff)',
+                  border: isSelected ? '2px solid var(--accent-primary, #0f766e)' : '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
                   borderRadius: '18px',
                   padding: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.04)'
+                  boxShadow: 'var(--v2-shadow-ambient)'
                 }}
               >
                 <div>
@@ -436,8 +437,8 @@ export const AppContentV2: React.FC = () => {
                   width: '22px',
                   height: '22px',
                   borderRadius: '50%',
-                  border: isSelected ? '6px solid var(--accent-primary, #0f766e)' : '2px solid #cbd5e1',
-                  background: '#ffffff'
+                  border: isSelected ? '6px solid var(--accent-primary, #0f766e)' : '2px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card, #ffffff)'
                 }} />
               </div>
             );

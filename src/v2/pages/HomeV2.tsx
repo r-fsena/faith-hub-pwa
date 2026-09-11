@@ -269,17 +269,17 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 onClick={action.action}
                 className={`v2-pressable ${action.isLive ? 'v2-live-pulse' : ''}`}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.85)',
+                  background: 'var(--v2-glass-surface, rgba(255, 255, 255, 0.85))',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.8)',
+                  border: '1px solid var(--v2-glass-border, rgba(255, 255, 255, 0.8))',
                   borderRadius: '20px',
                   padding: '12px 6px 10px 6px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 6px 16px -4px rgba(15, 23, 42, 0.05)',
+                  boxShadow: 'var(--v2-shadow-ambient)',
                   outline: 'none',
                   position: 'relative'
                 }}
@@ -360,14 +360,14 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             triggerHaptic('light');
             onNavigate('devotionals');
           }}
-          className="v2-pressable"
+          className="v2-card v2-pressable"
           style={{
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+            background: 'var(--v2-card-bg, #ffffff)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(2, 132, 199, 0.2)',
+            border: '1px solid var(--v2-subtle-border, rgba(2, 132, 199, 0.2))',
             borderRadius: '22px',
             padding: '16px',
-            boxShadow: '0 8px 20px -6px rgba(2, 132, 199, 0.08)',
+            boxShadow: 'var(--v2-shadow-ambient)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -444,14 +444,14 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             triggerHaptic('light');
             onOpenEvents();
           }}
-          className="v2-pressable"
+          className="v2-card v2-pressable"
           style={{
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+            background: 'var(--v2-card-bg, #ffffff)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(234, 88, 12, 0.2)',
+            border: '1px solid var(--v2-subtle-border, rgba(234, 88, 12, 0.2))',
             borderRadius: '22px',
             padding: '16px',
-            boxShadow: '0 8px 20px -6px rgba(234, 88, 12, 0.08)',
+            boxShadow: 'var(--v2-shadow-ambient)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

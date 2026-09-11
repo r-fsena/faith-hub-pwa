@@ -59,7 +59,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
       display: 'flex',
       justifyContent: 'center',
       padding: '0 14px 8px 14px',
-      zIndex: 100,
+      zIndex: 90,
       pointerEvents: 'none'
     }}>
       <nav style={{

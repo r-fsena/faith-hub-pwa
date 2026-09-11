@@ -605,7 +605,7 @@ input, select, textarea {
 /* FLOATING CART BUTTON */
 .floating-cart-btn {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 14px);
+  bottom: calc(82px + var(--safe-bottom) + 10px);
   right: clamp(16px, 4vw, 32px);
   background: var(--accent-primary-gradient);
   color: #ffffff;
@@ -619,7 +619,7 @@ input, select, textarea {
   font-size: 0.85rem;
   border: none;
   cursor: pointer;
-  z-index: 45;
+  z-index: 92;
   animation: bounceIn 0.3s ease;
 }
 
@@ -640,10 +640,10 @@ input, select, textarea {
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 60;
+  background: rgba(15, 23, 42, 0.70);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999 !important;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -909,4 +909,132 @@ input, select, textarea {
   border-radius: 999px;
   animation: indeterminateProgress 1.4s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
 }
+
+/* =========================================================
+   DARK THEME GLOBAL OVERRIDES (MODO ESCURO NATIVO)
+   ========================================================= */
+
+:root.dark,
+:root.dark-theme,
+:root[data-theme="dark"],
+body.dark,
+body.dark-theme,
+body[data-theme="dark"] {
+  --bg-app: #090d16 !important;
+  --bg-card: #111827 !important;
+  --bg-card-subtle: #1e293b !important;
+  --panel-border: rgba(255, 255, 255, 0.10) !important;
+  
+  --text-main: #f8fafc !important;
+  --text-secondary: #cbd5e1 !important;
+  --text-muted: #94a3b8 !important;
+
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  --shadow-lg: 0 14px 30px rgba(0, 0, 0, 0.55) !important;
+  --shadow-nav: 0 -4px 20px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.dark,
+body[data-theme="dark"] {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+body.dark .pwa-app-shell,
+body[data-theme="dark"] .pwa-app-shell {
+  background-color: #090d16 !important;
+}
+
+body.dark .pwa-topbar,
+body[data-theme="dark"] .pwa-topbar {
+  background: rgba(9, 13, 22, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark .pwa-bottom-nav,
+body[data-theme="dark"] .pwa-bottom-nav {
+  background: rgba(9, 13, 22, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark .drawer-container,
+body[data-theme="dark"] .drawer-container {
+  background: #111827 !important;
+  color: #f8fafc !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark .drawer-handle,
+body[data-theme="dark"] .drawer-handle {
+  background: #334155 !important;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea,
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+body.dark input::placeholder,
+body[data-theme="dark"] input::placeholder {
+  color: #64748b !important;
+}
+
+/* Smart Adaptive Fallbacks for Legacy Inline White Styles */
+body.dark [style*="background: #ffffff"],
+body.dark [style*="background: rgb(255, 255, 255)"],
+body.dark [style*="background:#ffffff"],
+body[data-theme="dark"] [style*="background: #ffffff"],
+body[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
+body[data-theme="dark"] [style*="background:#ffffff"] {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+
+/* Exempt QR code containers so cameras can read QR codes */
+body.dark [data-qr="true"],
+body[data-theme="dark"] [data-qr="true"],
+body.dark img[alt*="QR"],
+body[data-theme="dark"] img[alt*="QR"],
+body.dark [style*="padding: 16px; border-radius: 20px"][style*="200px"] {
+  background: #ffffff !important;
+}
+
+body.dark [style*="background: #f8fafc"],
+body.dark [style*="background: rgb(248, 250, 252)"],
+body.dark [style*="background:#f8fafc"],
+body.dark [style*="background: #f1f5f9"],
+body.dark [style*="background: rgb(241, 245, 249)"],
+body.dark [style*="background:#f1f5f9"],
+body[data-theme="dark"] [style*="background: #f8fafc"],
+body[data-theme="dark"] [style*="background: rgb(248, 250, 252)"],
+body[data-theme="dark"] [style*="background:#f8fafc"],
+body[data-theme="dark"] [style*="background: #f1f5f9"],
+body[data-theme="dark"] [style*="background: rgb(241, 245, 249)"],
+body[data-theme="dark"] [style*="background:#f1f5f9"] {
+  background: var(--bg-card-subtle) !important;
+}
+
+body.dark [style*="color: #0f172a"],
+body.dark [style*="color: #1e293b"],
+body.dark [style*="color: #334155"],
+body[data-theme="dark"] [style*="color: #0f172a"],
+body[data-theme="dark"] [style*="color: #1e293b"],
+body[data-theme="dark"] [style*="color: #334155"] {
+  color: var(--text-main) !important;
+}
+
+body.dark [style*="color: #64748b"],
+body.dark [style*="color: #475569"],
+body[data-theme="dark"] [style*="color: #64748b"],
+body[data-theme="dark"] [style*="color: #475569"] {
+  color: var(--text-secondary) !important;
+}
+
 
