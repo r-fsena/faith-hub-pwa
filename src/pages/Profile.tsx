@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
 import { getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
@@ -60,6 +61,9 @@ export interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const isV2Flag = isFeatureEnabled('pwa.v2_experience', false);
+  const isV2Active = localStorage.getItem('faithhub_force_v2') === 'true' || (isV2Flag && localStorage.getItem('faithhub_force_v2') !== 'false');
 
   // Auth States
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'confirm' | 'forgot' | 'forgot_confirm' | 'new_password_required'>('login');
@@ -921,6 +925,48 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
             }}
           >
             <span style={{ fontSize: '1.1rem' }}>🚪</span> Sair da Conta (Logout)
+          </button>
+        </div>
+
+        {/* Indicador de Versão do App e Alternância de Experiência (V1 vs V2) */}
+        <div style={{
+          marginTop: '16px',
+          padding: '14px 16px',
+          background: '#f8fafc',
+          borderRadius: '16px',
+          border: '1px solid var(--panel-border)',
+          maxWidth: '380px',
+          width: '100%',
+          margin: '16px auto 0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 700 }}>
+            Faith-Hub Mobile • {isV2Active ? 'Versão 2.0 (App Nativo Fluido)' : 'Versão 1.0 (Clássico)'}
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isV2Active;
+              localStorage.setItem('faithhub_force_v2', next ? 'true' : 'false');
+              window.location.reload();
+            }}
+            style={{
+              background: isV2Active ? '#f1f5f9' : 'var(--accent-primary-light)',
+              color: isV2Active ? 'var(--text-secondary)' : 'var(--accent-primary)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '7px 14px',
+              fontSize: '0.76rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {isV2Active ? '← Voltar para Versão Clássica (v1)' : '✨ Experimentar Versão 2.0 (Fluida)'}
           </button>
         </div>
 
