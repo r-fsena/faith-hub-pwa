@@ -256,14 +256,20 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
 
   return (
     <div style={{
-      position: 'relative',
-      width: '100%',
-      minHeight: '100dvh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100vw',
+      height: '100dvh',
+      maxHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
       overflow: 'hidden',
-      background: '#090d16'
+      background: '#090d16',
+      zIndex: 100
     }}>
       {/* Imagem de Fundo em Tela Cheia (Hero) */}
       <div 
@@ -299,7 +305,7 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
       <header style={{
         position: 'relative',
         zIndex: 10,
-        padding: 'calc(env(safe-area-inset-top, 16px) + 12px) 20px 0 20px',
+        padding: 'calc(env(safe-area-inset-top, 16px) + 8px) 20px 0 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -379,14 +385,14 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
       {/* Espaço central flexível */}
       <div style={{ flex: 1, zIndex: 5 }} />
 
-      {/* Base Imersiva: Dizeres Inspiradores, Pagination Dots & Botão com Recorte Orgânico */}
+      {/* Base Imersiva: Dizeres Inspiradores, Pagination Dots & Botão Único Entrar */}
       <div style={{
         position: 'relative',
         zIndex: 10,
-        padding: '0 24px calc(env(safe-area-inset-bottom, 24px) + 20px) 24px',
+        padding: '0 24px calc(env(safe-area-inset-bottom, 20px) + 16px) 24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px'
+        gap: 'clamp(8px, 1.8vh, 16px)'
       }}>
         {/* Badge do Slide Ativo */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -407,7 +413,7 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
 
         {/* Título de Impacto (Headline) */}
         <h1 style={{
-          fontSize: '2.1rem',
+          fontSize: 'clamp(1.55rem, 5.2vw, 2.1rem)',
           fontWeight: 900,
           color: '#ffffff',
           lineHeight: 1.15,
@@ -420,9 +426,9 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
 
         {/* Subtítulo / Dizeres da Igreja */}
         <p style={{
-          fontSize: '0.90rem',
+          fontSize: 'clamp(0.80rem, 2.4vw, 0.88rem)',
           color: '#cbd5e1',
-          lineHeight: 1.45,
+          lineHeight: 1.42,
           margin: 0,
           maxWidth: '420px',
           textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
@@ -430,12 +436,12 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
           {currentSlide === 0 ? subtitle : (slides[currentSlide]?.description || subtitle)}
         </p>
 
-        {/* Barra de Rodapé com Estilo Orgânico: Dots na Esquerda + Botão Curvo com Seta na Direita */}
+        {/* Barra de Rodapé: Dots na Esquerda + Apenas o Botão "Entrar" na Direita */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: '12px',
+          marginTop: '8px',
           paddingTop: '6px'
         }}>
           {/* Pagination Dots (Indicadores de Slide) */}
@@ -463,56 +469,27 @@ export const WelcomeLoginScreen: React.FC<WelcomeLoginScreenProps> = ({
             })}
           </div>
 
-          {/* Grupo de Ação: Botão Primário "Entrar" + Botão Circular com Seta Orgânica */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Botão Pílula "Entrar" */}
-            <button
-              type="button"
-              onClick={() => handleOpenAuth('login')}
-              className="v2-pressable"
-              style={{
-                background: 'rgba(255, 255, 255, 0.16)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                color: '#ffffff',
-                fontWeight: 900,
-                fontSize: '0.88rem',
-                borderRadius: '999px',
-                padding: '14px 22px',
-                cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
-                outline: 'none'
-              }}
-            >
-              Entrar
-            </button>
-
-            {/* Botão Circular Flutuante com Seta (Estilo Referência Anexada) */}
-            <button
-              type="button"
-              onClick={() => handleOpenAuth('login')}
-              title="Acessar aplicativo"
-              className="v2-pressable"
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                background: '#ffffff',
-                color: '#090d16',
-                border: '3px solid rgba(255, 255, 255, 0.40)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.3)',
-                outline: 'none',
-                position: 'relative'
-              }}
-            >
-              <ChevronRightIcon size={22} color="#090d16" />
-            </button>
-          </div>
+          {/* Botão Único "Entrar" */}
+          <button
+            type="button"
+            onClick={() => handleOpenAuth('login')}
+            className="v2-pressable"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              color: '#090d16',
+              fontWeight: 900,
+              fontSize: '0.92rem',
+              borderRadius: '999px',
+              padding: '13px 28px',
+              cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              outline: 'none',
+              letterSpacing: '0.01em'
+            }}
+          >
+            Entrar
+          </button>
         </div>
       </div>
 

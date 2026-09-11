@@ -10,7 +10,6 @@ import { KidsCheckinModal } from '../components/KidsCheckinModal';
 import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
 import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
-import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { checkIsMasterOrAdmin } from '../utils/roles';
 import { WelcomeLoginScreen } from '../v2/components/WelcomeLoginScreen';
 
@@ -58,9 +57,10 @@ const EyeOffIcon = () => (
 
 export interface ProfileProps {
   onLoginSuccess?: () => void;
+  onContinueAsGuest?: () => void;
 }
 
-export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
+export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -78,7 +78,6 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [signupAddress, setSignupAddress] = useState('');
   const [signupStreet, setSignupStreet] = useState('');
   const [signupNumber, setSignupNumber] = useState('');
   const [signupComplement, setSignupComplement] = useState('');
@@ -1756,9 +1755,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess }) => {
     return (
       <WelcomeLoginScreen 
         onLoginSuccess={onLoginSuccess}
-        onContinueAsGuest={() => {
-          if (onLoginSuccess) onLoginSuccess();
-        }}
+        onContinueAsGuest={onContinueAsGuest || onLoginSuccess}
       />
     );
   }

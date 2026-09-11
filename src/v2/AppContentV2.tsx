@@ -173,27 +173,31 @@ export const AppContentV2: React.FC = () => {
     );
   }
 
+  const isAuthScreen = !isAuthenticated && activeTab === 'profile' && subView === 'none';
+
   return (
     <div className={`v2-shell ${resolvedTheme === 'dark' ? 'dark' : ''}`}>
       {/* Splash Screen */}
       <SplashScreen />
 
       {/* Top Header V2 com Saudação, Logo, V2 e Seletor de Campus Unificados */}
-      <TopHeaderV2 
-        onOpenNotifications={() => {
-          if (!isAuthenticated) {
-            handleTabChange('profile');
-          } else {
-            setShowNotifications(true);
-          }
-        }}
-        onOpenProfile={() => handleTabChange('profile')}
-        title={getSubViewTitle(subView)}
-        onBack={subView !== 'none' ? () => setSubView('none') : undefined}
-        unreadCount={unreadNotificationsCount}
-        campusName={currentCampus?.name || 'Sede'}
-        onOpenCampusSelect={() => setIsCampusDrawerOpen(true)}
-      />
+      {!isAuthScreen && (
+        <TopHeaderV2 
+          onOpenNotifications={() => {
+            if (!isAuthenticated) {
+              handleTabChange('profile');
+            } else {
+              setShowNotifications(true);
+            }
+          }}
+          onOpenProfile={() => handleTabChange('profile')}
+          title={getSubViewTitle(subView)}
+          onBack={subView !== 'none' ? () => setSubView('none') : undefined}
+          unreadCount={unreadNotificationsCount}
+          campusName={currentCampus?.name || 'Sede'}
+          onOpenCampusSelect={() => setIsCampusDrawerOpen(true)}
+        />
+      )}
 
       {/* Main Content */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -324,6 +328,10 @@ export const AppContentV2: React.FC = () => {
                     setActiveTab('home');
                     setSubView('none');
                   }}
+                  onContinueAsGuest={() => {
+                    setActiveTab('home');
+                    setSubView('none');
+                  }}
                 />
               </div>
             )}
@@ -357,7 +365,9 @@ export const AppContentV2: React.FC = () => {
       />
 
       {/* Bottom Navigation V2 (Dock Flutuante com Feedback Háptico) */}
-      <BottomNavV2 activeTab={activeTab} onChangeTab={handleTabChange} />
+      {!isAuthScreen && (
+        <BottomNavV2 activeTab={activeTab} onChangeTab={handleTabChange} />
+      )}
 
       {/* Drawer Global de Seleção de Unidade / Campus */}
       <BottomSheet 

@@ -132,25 +132,29 @@ export const AppContentV1: React.FC = () => {
     );
   }
 
+  const isAuthScreen = !isAuthenticated && activeTab === 'profile' && subView === 'none';
+
   return (
     <div className="pwa-app-shell">
       {/* Splash Screen Dinâmico com Identidade Visual da Igreja */}
       <SplashScreen />
 
       {/* Top Header com suporte a navegação e botão Voltar */}
-      <TopHeader 
-        onOpenNotifications={() => {
-          if (!isAuthenticated) {
-            handleTabChange('profile');
-          } else {
-            setShowNotifications(true);
-          }
-        }}
-        onOpenProfile={() => handleTabChange('profile')}
-        title={getSubViewTitle(subView)}
-        onBack={subView !== 'none' ? () => setSubView('none') : undefined}
-        unreadCount={unreadNotificationsCount}
-      />
+      {!isAuthScreen && (
+        <TopHeader 
+          onOpenNotifications={() => {
+            if (!isAuthenticated) {
+              handleTabChange('profile');
+            } else {
+              setShowNotifications(true);
+            }
+          }}
+          onOpenProfile={() => handleTabChange('profile')}
+          title={getSubViewTitle(subView)}
+          onBack={subView !== 'none' ? () => setSubView('none') : undefined}
+          unreadCount={unreadNotificationsCount}
+        />
+      )}
 
       {/* Main Content */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -258,6 +262,11 @@ export const AppContentV1: React.FC = () => {
                   setSubView('none');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
+                onContinueAsGuest={() => {
+                  setActiveTab('home');
+                  setSubView('none');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               />
             )}
           </>
@@ -289,7 +298,9 @@ export const AppContentV1: React.FC = () => {
       />
 
       {/* Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onChangeTab={handleTabChange} />
+      {!isAuthScreen && (
+        <BottomNav activeTab={activeTab} onChangeTab={handleTabChange} />
+      )}
     </div>
   );
 };
