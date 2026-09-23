@@ -185,6 +185,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
   // Gestos de Touch / Arraste
   const handleDragStart = (clientX: number) => {
+    if (isAuthDrawerOpen) return;
     dragStartX.current = clientX;
     dragDeltaX.current = 0;
     setIsDragging(true);
@@ -416,48 +417,77 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100vw',
-      height: '100dvh',
-      maxHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      overflow: 'hidden',
-      background: '#090d16',
-      zIndex: 100
-    }}>
-      {/* Camadas Dinâmicas de Fundo por Slide */}
-      {allSlides.map((slide, idx) => {
-        const isCurrent = currentSlide === idx;
-        const slideImg = (slide as any).image_url || heroImage;
-        return (
-          <div 
-            key={idx}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: `url(${slideImg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              transform: isCurrent ? 'scale(1.03)' : 'scale(1.0)',
-              filter: 'brightness(0.92)',
-              opacity: isCurrent ? 1 : 0,
-              transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 8s ease-out',
-              zIndex: 1,
-              pointerEvents: 'none'
-            }}
-          />
-        );
-      })}
+    <div 
+      onTouchStart={e => handleDragStart(e.touches[0].clientX)}
+      onTouchMove={e => handleDragMove(e.touches[0].clientX)}
+      onTouchEnd={handleDragEnd}
+      onMouseDown={e => handleDragStart(e.clientX)}
+      onMouseMove={e => { if (isDragging) handleDragMove(e.clientX); }}
+      onMouseUp={handleDragEnd}
+      onMouseLeave={handleDragEnd}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100dvh',
+        maxHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+        background: '#090d16',
+        zIndex: 100,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'pan-y',
+        cursor: isDragging ? 'grabbing' : 'default'
+      }}
+    >
+      {/* Trilho Físico de Fotos com Resposta Visual ao Arraste */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        zIndex: 1,
+        pointerEvents: 'none'
+      }}>
+        <div style={{
+          display: 'flex',
+          width: '100%',
+          height: '100%',
+          transform: isDragging 
+            ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
+            : `translateX(-${currentSlide * 100}%)`,
+          transition: isDragging ? 'none' : 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform'
+        }}>
+          {allSlides.map((slide, idx) => {
+            const slideImg = (slide as any).image_url || heroImage;
+            return (
+              <div 
+                key={idx}
+                style={{
+                  minWidth: '100%',
+                  width: '100%',
+                  height: '100%',
+                  backgroundImage: `url(${slideImg})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'brightness(0.92)'
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
 
       {/* Scrim Gradiente Suave & Profundo para Alto Contraste */}
       <div style={{
