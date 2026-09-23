@@ -135,12 +135,23 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
       }))
     : defaultSlides;
 
-  // Carrossel
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // Array estendido com clones para Loop Infinito 360° fluido (sem rebobinamento ou salto brusco)
+  const extendedSlides = allSlides.length > 1
+    ? [allSlides[allSlides.length - 1], ...allSlides, allSlides[0]]
+    : allSlides;
+
+  // Índice virtual do carrossel (inicia em 1, que é o primeiro slide real)
+  const [virtualSlide, setVirtualSlide] = useState(allSlides.length > 1 ? 1 : 0);
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
   const [dragOffset, setDragOffset] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartX = useRef<number | null>(null);
   const dragDeltaX = useRef<number>(0);
+
+  // Índice do slide ativo real para os indicadores de dots (0 a allSlides.length - 1)
+  const activeSlideIndex = allSlides.length > 1
+    ? (virtualSlide - 1 + allSlides.length) % allSlides.length
+    : 0;
 
   // Drawer & Fluxo de Auth
   const [isAuthDrawerOpen, setIsAuthDrawerOpen] = useState(false);
@@ -172,16 +183,52 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Auto avanço de slides
+  // Auto-avanço contínuo de slides a cada 7 segundos (sempre para frente em loop infinito)
   useEffect(() => {
     if (allSlides.length <= 1) return;
     const interval = setInterval(() => {
       if (!isDragging) {
-        setCurrentSlide(prev => (prev + 1) % allSlides.length);
+        setIsTransitionEnabled(true);
+        setVirtualSlide(prev => prev + 1);
       }
     }, 7000);
     return () => clearInterval(interval);
   }, [allSlides.length, isDragging]);
+
+  // Teletransporte silencioso nos limites do array estendido (após completar a animação fluida)
+  useEffect(() => {
+    if (allSlides.length <= 1 || !isTransitionEnabled) return;
+
+    // Se chegou no clone do primeiro slide (após o último)
+    if (virtualSlide === extendedSlides.length - 1) {
+      const timer = setTimeout(() => {
+        setIsTransitionEnabled(false);
+        setVirtualSlide(1); // Volta silenciosamente para o primeiro slide real
+      }, 420);
+      return () => clearTimeout(timer);
+    }
+
+    // Se chegou no clone do último slide (antes do primeiro)
+    if (virtualSlide === 0) {
+      const timer = setTimeout(() => {
+        setIsTransitionEnabled(false);
+        setVirtualSlide(allSlides.length); // Vai silenciosamente para o último slide real
+      }, 420);
+      return () => clearTimeout(timer);
+    }
+  }, [virtualSlide, extendedSlides.length, allSlides.length, isTransitionEnabled]);
+
+  // Reabilita a transição suave no próximo frame após um teletransporte silencioso
+  useEffect(() => {
+    if (!isTransitionEnabled) {
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitionEnabled(true);
+        });
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [isTransitionEnabled]);
 
   // Gestos de Touch / Arraste
   const handleDragStart = (clientX: number) => {
@@ -205,10 +252,12 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
     if (delta < -threshold) {
       triggerHaptic('selection');
-      setCurrentSlide(prev => (prev + 1) % allSlides.length);
+      setIsTransitionEnabled(true);
+      setVirtualSlide(prev => prev + 1);
     } else if (delta > threshold) {
       triggerHaptic('selection');
-      setCurrentSlide(prev => (prev - 1 + allSlides.length) % allSlides.length);
+      setIsTransitionEnabled(true);
+      setVirtualSlide(prev => prev - 1);
     }
 
     dragStartX.current = null;
@@ -464,12 +513,12 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           width: '100%',
           height: '100%',
           transform: isDragging 
-            ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
-            : `translateX(-${currentSlide * 100}%)`,
-          transition: isDragging ? 'none' : 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)',
+            ? `translateX(calc(-${virtualSlide * 100}% + ${dragOffset}px))`
+            : `translateX(-${virtualSlide * 100}%)`,
+          transition: isDragging || !isTransitionEnabled ? 'none' : 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'transform'
         }}>
-          {allSlides.map((slide, idx) => {
+          {extendedSlides.map((slide, idx) => {
             const slideImg = (slide as any).image_url || heroImage;
             return (
               <div 
@@ -641,12 +690,12 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             display: 'flex',
             width: '100%',
             transform: isDragging 
-              ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
-              : `translateX(-${currentSlide * 100}%)`,
-            transition: isDragging ? 'none' : 'transform 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
+              ? `translateX(calc(-${virtualSlide * 100}% + ${dragOffset}px))`
+              : `translateX(-${virtualSlide * 100}%)`,
+            transition: isDragging || !isTransitionEnabled ? 'none' : 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)',
             cursor: isDragging ? 'grabbing' : 'grab'
           }}>
-            {allSlides.map((slide, idx) => (
+            {extendedSlides.map((slide, idx) => (
               <div 
                 key={idx} 
                 style={{ 
@@ -715,13 +764,14 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           {/* Indicadores Minimalistas em Pill */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             {allSlides.map((_, idx) => {
-              const isActive = currentSlide === idx;
+              const isActive = activeSlideIndex === idx;
               return (
                 <div
                   key={idx}
                   onClick={() => {
                     triggerHaptic('light');
-                    setCurrentSlide(idx);
+                    setIsTransitionEnabled(true);
+                    setVirtualSlide(idx + 1);
                   }}
                   style={{
                     width: isActive ? '22px' : '6px',
