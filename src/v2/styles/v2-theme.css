@@ -46,6 +46,15 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Quando em modo de tela cheia de Boas-Vindas / Auth: remove padding inferior de navegação e trava overflow */
+.v2-shell.v2-auth-shell {
+  padding-bottom: 0 !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
 /* Em telas maiores (Desktop / Tablets / Telas > 600px):
    Apresenta o aplicativo centralizado como um dispositivo nativo elegante (iPhone / Android Canvas) */
 @media (min-width: 601px) {

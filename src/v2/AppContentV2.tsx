@@ -186,7 +186,7 @@ export const AppContentV2: React.FC = () => {
   const isAuthScreen = !isAuthenticated && activeTab === 'profile' && subView === 'none';
 
   return (
-    <div className={`v2-shell ${resolvedTheme === 'dark' ? 'dark' : ''}`}>
+    <div className={`v2-shell ${isAuthScreen ? 'v2-auth-shell' : ''} ${resolvedTheme === 'dark' ? 'dark' : ''}`}>
       {/* Top Header V2 com Saudação, Logo, V2 e Seletor de Campus Unificados */}
       {!isAuthScreen && (
         <TopHeaderV2 

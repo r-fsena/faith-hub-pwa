@@ -230,6 +230,21 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
     }
   }, [isTransitionEnabled]);
 
+  // Sincronização impecável de Viewport na inicialização para evitar gap/salto no mobile Safari/Chrome
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, []);
+
   // Gestos de Touch / Arraste
   const handleDragStart = (clientX: number) => {
     if (isAuthDrawerOpen) return;
@@ -480,9 +495,9 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        width: '100vw',
-        height: '100dvh',
-        maxHeight: '100dvh',
+        width: '100%',
+        height: '100%',
+        minHeight: '-webkit-fill-available',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -491,7 +506,8 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         zIndex: 100,
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        touchAction: 'pan-y',
+        touchAction: 'none',
+        overscrollBehavior: 'none',
         cursor: isDragging ? 'grabbing' : 'default'
       }}
     >
@@ -675,13 +691,13 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '0 24px calc(env(safe-area-inset-bottom, 20px) + 18px) 24px',
+          padding: '0 24px calc(max(env(safe-area-inset-bottom, 0px), 16px) + 14px) 24px',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          touchAction: 'pan-y'
+          touchAction: 'pan-x'
         }}
       >
         {/* Trilho de Slides com Animação Física Suave */}
