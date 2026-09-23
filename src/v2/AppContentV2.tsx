@@ -22,8 +22,8 @@ import { ChurchIcon, CrossIcon } from './components/Icons';
 import { HomeV2 } from './pages/HomeV2';
 import { Devotionals } from '../pages/Devotionals';
 import { CellGroups } from '../pages/CellGroups';
-import { Store } from '../pages/Store';
 import { Profile } from '../pages/Profile';
+import { WelcomeLoginScreenV2 } from './components/WelcomeLoginScreenV2';
 import { Prayers } from '../pages/Prayers';
 import { Events } from '../pages/Events';
 import { Bible } from '../pages/Bible';
@@ -327,21 +327,36 @@ export const AppContentV2: React.FC = () => {
               </div>
             )}
 
-            {/* 5. PERFIL (Renderizado sob demanda e preservado) */}
+            {/* 5. PERFIL & BOAS-VINDAS V2 (Renderizado sob demanda e preservado) */}
             {visitedTabs.has('profile') && (
               <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
-                <Profile
-                  onLoginSuccess={() => {
-                    sessionStorage.removeItem('faithhub_guest_explored');
-                    setActiveTab('home');
-                    setSubView('none');
-                  }}
-                  onContinueAsGuest={() => {
-                    sessionStorage.setItem('faithhub_guest_explored', 'true');
-                    setActiveTab('home');
-                    setSubView('none');
-                  }}
-                />
+                {!isAuthenticated ? (
+                  <WelcomeLoginScreenV2
+                    onLoginSuccess={() => {
+                      sessionStorage.removeItem('faithhub_guest_explored');
+                      setActiveTab('home');
+                      setSubView('none');
+                    }}
+                    onContinueAsGuest={() => {
+                      sessionStorage.setItem('faithhub_guest_explored', 'true');
+                      setActiveTab('home');
+                      setSubView('none');
+                    }}
+                  />
+                ) : (
+                  <Profile
+                    onLoginSuccess={() => {
+                      sessionStorage.removeItem('faithhub_guest_explored');
+                      setActiveTab('home');
+                      setSubView('none');
+                    }}
+                    onContinueAsGuest={() => {
+                      sessionStorage.setItem('faithhub_guest_explored', 'true');
+                      setActiveTab('home');
+                      setSubView('none');
+                    }}
+                  />
+                )}
               </div>
             )}
 

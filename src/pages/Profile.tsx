@@ -10,8 +10,7 @@ import { KidsCheckinModal } from '../components/KidsCheckinModal';
 import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
 import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
-import { checkIsMasterOrAdmin } from '../utils/roles';
-import { WelcomeLoginScreen } from '../v2/components/WelcomeLoginScreen';
+import { WelcomeLoginScreenV1 as WelcomeLoginScreen } from '../v1/components/WelcomeLoginScreenV1';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
