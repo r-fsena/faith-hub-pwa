@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { triggerHaptic } from '../utils/haptics';
 import { ChevronRightIcon } from './Icons';
 import { BottomSheet } from '../../components/BottomSheet';
-import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, signInWithRedirect } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import { useAuth } from '../../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
@@ -77,14 +77,6 @@ const SpinnerIcon = () => (
   </svg>
 );
 
-const GoogleOfficialIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24">
-    <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.4 8.9 5 12 5z"/>
-    <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
-    <path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7 0-1.1.2-1.9.4-2.7L1.6 6.4C.6 8.3 0 10.5 0 12s.6 3.7 1.6 5.6l3.7-2.9z"/>
-    <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.4-6.7-5.3L1.6 16c1.9 3.8 5.8 7 10.4 7z"/>
-  </svg>
-);
 
 interface WelcomeLoginScreenV2Props {
   onLoginSuccess?: () => void;
@@ -420,14 +412,6 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
       setErrorMsg(err.message || 'Código ou senha inválidos.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithRedirect({ provider: 'Google' });
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -816,7 +800,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               FORMULÁRIO DE LOGIN
               ======================================================== */}
           {authMode === 'login' && (
-            <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', boxSizing: 'border-box' }}>
               <div className="v2-field-group">
                 <label className="v2-field-label">E-mail</label>
                 <div className="v2-input-wrapper">
@@ -837,7 +821,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                   <span>Senha</span>
                   <span
                     onClick={() => { triggerHaptic('light'); setAuthMode('forgot'); setErrorMsg(''); }}
-                    style={{ color: 'var(--accent-primary, #0f766e)', fontWeight: 600, cursor: 'pointer', fontSize: '0.72rem' }}
+                    style={{ color: 'var(--accent-primary, #0f766e)', fontWeight: 600, cursor: 'pointer', fontSize: '0.74rem' }}
                   >
                     Esqueceu a senha?
                   </span>
@@ -867,25 +851,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                 type="submit"
                 disabled={loading}
                 className="v2-btn-monolith"
-                style={{ marginTop: '6px' }}
+                style={{ marginTop: '8px' }}
               >
                 {loading ? <SpinnerIcon /> : null}
                 <span>{loading ? 'Acessando...' : 'Entrar no Aplicativo'}</span>
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '6px 0' }}>
-                <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-                <span style={{ fontSize: '0.70rem', color: '#94a3b8', fontWeight: 600 }}>OU</span>
-                <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="v2-btn-social"
-              >
-                <GoogleOfficialIcon />
-                <span>Continuar com Google</span>
               </button>
             </form>
           )}
@@ -894,7 +863,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               FORMULÁRIO DE CADASTRO EM 2 ETAPAS FLUIDAS
               ======================================================== */}
           {authMode === 'signup' && (
-            <div>
+            <div style={{ width: '100%', boxSizing: 'border-box' }}>
               {/* Barra de Progresso das Etapas */}
               <div className="v2-stepper-track">
                 <div className={`v2-stepper-bar ${signupStep >= 1 ? 'active' : ''}`} />
@@ -903,7 +872,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
               {/* ETAPA 1: Acesso & Contato */}
               {signupStep === 1 && (
-                <form onSubmit={handleAdvanceSignupStep} style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
+                <form onSubmit={handleAdvanceSignupStep} style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '100%', boxSizing: 'border-box' }}>
                   <div className="v2-field-group">
                     <label className="v2-field-label">Nome Completo *</label>
                     <div className="v2-input-wrapper">
@@ -934,8 +903,8 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <div className="v2-field-group">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                    <div className="v2-field-group" style={{ minWidth: 0 }}>
                       <label className="v2-field-label">WhatsApp *</label>
                       <div className="v2-input-wrapper">
                         <span className="v2-input-icon"><PhoneIcon /></span>
@@ -950,7 +919,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                       </div>
                     </div>
 
-                    <div className="v2-field-group">
+                    <div className="v2-field-group" style={{ minWidth: 0 }}>
                       <label className="v2-field-label">Senha *</label>
                       <div className="v2-input-wrapper">
                         <span className="v2-input-icon"><LockIcon /></span>
@@ -987,7 +956,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
               {/* ETAPA 2: Endereço & Finalização (Com CEP Ergonômico sem Cortes) */}
               {signupStep === 2 && (
-                <form onSubmit={handleSignUpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
+                <form onSubmit={handleSignUpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '100%', boxSizing: 'border-box' }}>
                   <div className="v2-field-group">
                     <label className="v2-field-label">Data de Nascimento</label>
                     <div className="v2-input-wrapper">
@@ -1002,8 +971,8 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                   </div>
 
                   {/* Grid de CEP & Logradouro com Largura Segura para 00000-000 */}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <div className="v2-field-group" style={{ width: '135px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                    <div className="v2-field-group" style={{ width: '140px', flexShrink: 0 }}>
                       <label className="v2-field-label">
                         <span>CEP</span>
                         {loadingCep && <SpinnerIcon />}
@@ -1022,7 +991,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                       </div>
                     </div>
 
-                    <div className="v2-field-group" style={{ flex: 1 }}>
+                    <div className="v2-field-group" style={{ flex: 1, minWidth: 0 }}>
                       <label className="v2-field-label">Logradouro / Rua</label>
                       <div className="v2-input-wrapper">
                         <input
@@ -1036,9 +1005,9 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                     </div>
                   </div>
 
-                  {/* Número, Complemento & Cidade/UF */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '8px' }}>
-                    <div className="v2-field-group">
+                  {/* Número & Bairro/Cidade */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '95px 1fr', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                    <div className="v2-field-group" style={{ minWidth: 0 }}>
                       <label className="v2-field-label">Número</label>
                       <div className="v2-input-wrapper">
                         <input
@@ -1051,7 +1020,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                       </div>
                     </div>
 
-                    <div className="v2-field-group">
+                    <div className="v2-field-group" style={{ minWidth: 0 }}>
                       <label className="v2-field-label">Bairro / Cidade</label>
                       <div className="v2-input-wrapper">
                         <input
@@ -1069,40 +1038,43 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                   <label style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    gap: '9px',
+                    gap: '10px',
                     cursor: 'pointer',
-                    marginTop: '4px',
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    background: 'rgba(15, 23, 42, 0.03)'
+                    marginTop: '2px',
+                    padding: '10px 12px',
+                    borderRadius: '12px',
+                    background: 'rgba(15, 23, 42, 0.03)',
+                    boxSizing: 'border-box',
+                    width: '100%'
                   }}>
                     <input
                       type="checkbox"
                       checked={acceptLGPD}
                       onChange={e => setAcceptLGPD(e.target.checked)}
-                      style={{ marginTop: '2px', accentColor: 'var(--accent-primary, #0f766e)' }}
+                      style={{ marginTop: '3px', accentColor: 'var(--accent-primary, #0f766e)' }}
                     />
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.35 }}>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.4 }}>
                       Concordo com os Termos de Uso e Política de Privacidade da igreja.
                     </span>
                   </label>
 
                   {/* Ações: Voltar para Passo 1 ou Finalizar Cadastro */}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '4px', width: '100%', boxSizing: 'border-box' }}>
                     <button
                       type="button"
                       onClick={() => { triggerHaptic('light'); setSignupStep(1); }}
                       className="v2-pressable"
                       style={{
-                        height: '46px',
-                        padding: '0 16px',
+                        height: '48px',
+                        padding: '0 20px',
                         background: '#f1f5f9',
                         border: 'none',
-                        borderRadius: '12px',
+                        borderRadius: '14px',
                         color: '#475569',
-                        fontSize: '0.84rem',
+                        fontSize: '0.86rem',
                         fontWeight: 600,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        flexShrink: 0
                       }}
                     >
                       Voltar
