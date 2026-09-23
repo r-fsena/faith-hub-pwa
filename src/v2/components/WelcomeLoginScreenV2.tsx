@@ -230,18 +230,13 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
     }
   }, [isTransitionEnabled]);
 
-  // Sincronização impecável de Viewport na inicialização para evitar gap/salto no mobile Safari/Chrome
+  // Sincroniza a barra de status/navegação móvel (theme-color) com a cor da tela (#090d16)
   useEffect(() => {
-    window.scrollTo(0, 0);
-
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const originalColor = metaThemeColor?.getAttribute('content') || '#0f766e';
+    metaThemeColor?.setAttribute('content', '#090d16');
     return () => {
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
+      metaThemeColor?.setAttribute('content', originalColor);
     };
   }, []);
 
@@ -497,7 +492,6 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         bottom: 0,
         width: '100%',
         height: '100%',
-        minHeight: '-webkit-fill-available',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -506,8 +500,6 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         zIndex: 100,
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        touchAction: 'none',
-        overscrollBehavior: 'none',
         cursor: isDragging ? 'grabbing' : 'default'
       }}
     >
@@ -691,13 +683,12 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '0 24px calc(max(env(safe-area-inset-bottom, 0px), 16px) + 14px) 24px',
+          padding: '0 24px calc(env(safe-area-inset-bottom, 0px) + 20px) 24px',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
           userSelect: 'none',
-          WebkitUserSelect: 'none',
-          touchAction: 'pan-x'
+          WebkitUserSelect: 'none'
         }}
       >
         {/* Trilho de Slides com Animação Física Suave */}
@@ -742,10 +733,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
                 {/* Título de Alto Impacto */}
                 <h1 style={{
-                  fontSize: 'clamp(1.4rem, 4.8vw, 1.85rem)',
+                  fontSize: 'clamp(1.55rem, 5.2vw, 2.05rem)',
                   fontWeight: 800,
                   color: '#ffffff',
-                  lineHeight: 1.18,
+                  lineHeight: 1.16,
                   letterSpacing: '-0.025em',
                   margin: 0,
                   textShadow: '0 2px 14px rgba(0, 0, 0, 0.5)'
@@ -755,11 +746,11 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
                 {/* Subtítulo Minimalista */}
                 <p style={{
-                  fontSize: '0.84rem',
-                  color: '#cbd5e1',
-                  lineHeight: 1.45,
+                  fontSize: '0.88rem',
+                  color: '#e2e8f0',
+                  lineHeight: 1.48,
                   margin: 0,
-                  maxWidth: '420px',
+                  maxWidth: '440px',
                   letterSpacing: '-0.01em'
                 }}>
                   {slide.description}
@@ -811,9 +802,9 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               background: '#ffffff',
               color: '#0f172a',
               fontWeight: 700,
-              fontSize: '0.90rem',
+              fontSize: '0.94rem',
               borderRadius: '999px',
-              padding: '11px 28px',
+              padding: '13px 32px',
               cursor: 'pointer',
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
               border: 'none',
