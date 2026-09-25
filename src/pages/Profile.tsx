@@ -11,6 +11,7 @@ import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
 import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { WelcomeLoginScreenV1 as WelcomeLoginScreen } from '../v1/components/WelcomeLoginScreenV1';
+import { checkIsMasterOrAdmin } from '../utils/roles';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -641,6 +642,21 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
   // =========================================================================
   // SE ESTÁ AUTENTICADO: RENDERIZA O PERFIL DO MEMBRO
   // =========================================================================
+  if (isAuthenticated && !user) {
+    return (
+      <div className="pwa-content animate-fade-in" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '60vh', display: 'flex' }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          border: '3px solid var(--accent-primary-light, rgba(15, 118, 110, 0.2))',
+          borderTopColor: 'var(--accent-primary, #0f766e)',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+      </div>
+    );
+  }
+
   if (isAuthenticated && user) {
     return (
       <div className="pwa-content animate-fade-in" style={{ gap: '16px' }}>
@@ -724,7 +740,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               </p>
 
               <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                {checkIsMasterOrAdmin(user.email, memberProfile.role) ? (
+                {checkIsMasterOrAdmin(user?.email, memberProfile.role) ? (
                   <span style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#92400e', border: '1px solid #fcd34d', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 900 }}>
                     👑 Administrador Master
                   </span>
@@ -1075,7 +1091,19 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         }}>
           <button 
             type="button" 
-            onClick={signOut}
+            onClick={async () => {
+              try {
+                sessionStorage.removeItem('faithhub_guest_explored');
+                localStorage.removeItem('faithhub_user_avatar');
+                localStorage.removeItem('faithhub_user_name');
+                await signOut();
+                if (onContinueAsGuest) {
+                  onContinueAsGuest();
+                }
+              } catch (e) {
+                console.error('Erro ao sair da conta:', e);
+              }
+            }}
             style={{
               background: '#fef2f2',
               color: '#dc2626',
