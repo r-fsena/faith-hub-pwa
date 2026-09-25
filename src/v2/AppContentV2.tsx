@@ -72,11 +72,18 @@ export const AppContentV2: React.FC = () => {
     });
   }, [activeTab]);
 
-  // Redireciona para a Home automaticamente ao logar
+  // Redireciona de acordo com o estado de autenticação
   const prevAuthRef = useRef(isAuthenticated);
   useEffect(() => {
+    // Ao logar estando em profile: vai para a Home
     if (!prevAuthRef.current && isAuthenticated && activeTab === 'profile') {
       setActiveTab('home');
+      setSubView('none');
+    }
+    // Ao deslogar / sair da conta: redireciona IMEDIATAMENTE para a tela inicial de login
+    if (prevAuthRef.current && !isAuthenticated) {
+      sessionStorage.removeItem('faithhub_guest_explored');
+      setActiveTab('profile');
       setSubView('none');
     }
     prevAuthRef.current = isAuthenticated;
@@ -348,6 +355,11 @@ export const AppContentV2: React.FC = () => {
                     onLoginSuccess={() => {
                       sessionStorage.removeItem('faithhub_guest_explored');
                       setActiveTab('home');
+                      setSubView('none');
+                    }}
+                    onLogout={() => {
+                      sessionStorage.removeItem('faithhub_guest_explored');
+                      setActiveTab('profile');
                       setSubView('none');
                     }}
                     onContinueAsGuest={() => {

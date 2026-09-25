@@ -58,9 +58,10 @@ const EyeOffIcon = () => (
 export interface ProfileProps {
   onLoginSuccess?: () => void;
   onContinueAsGuest?: () => void;
+  onLogout?: () => void;
 }
 
-export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest }) => {
+export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest, onLogout }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -1097,8 +1098,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 localStorage.removeItem('faithhub_user_avatar');
                 localStorage.removeItem('faithhub_user_name');
                 await signOut();
-                if (onContinueAsGuest) {
-                  onContinueAsGuest();
+                if (onLogout) {
+                  onLogout();
                 }
               } catch (e) {
                 console.error('Erro ao sair da conta:', e);

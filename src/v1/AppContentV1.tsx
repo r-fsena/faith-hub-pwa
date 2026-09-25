@@ -35,11 +35,18 @@ export const AppContentV1: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
-  // Redireciona para a Home automaticamente ao logar
+  // Redireciona de acordo com o estado de autenticação
   const prevAuthRef = useRef(isAuthenticated);
   useEffect(() => {
     if (!prevAuthRef.current && isAuthenticated && activeTab === 'profile') {
       setActiveTab('home');
+      setSubView('none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // Ao deslogar / sair da conta: redireciona IMEDIATAMENTE para a tela inicial de login
+    if (prevAuthRef.current && !isAuthenticated) {
+      sessionStorage.removeItem('faithhub_guest_explored');
+      setActiveTab('profile');
       setSubView('none');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -261,6 +268,12 @@ export const AppContentV1: React.FC = () => {
                 onLoginSuccess={() => {
                   sessionStorage.removeItem('faithhub_guest_explored');
                   setActiveTab('home');
+                  setSubView('none');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onLogout={() => {
+                  sessionStorage.removeItem('faithhub_guest_explored');
+                  setActiveTab('profile');
                   setSubView('none');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
