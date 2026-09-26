@@ -152,8 +152,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                 type="button"
                 onClick={handleMarkAllRead}
                 style={{
-                  background: '#f1f5f9',
-                  border: 'none',
+                  background: 'var(--bg-card-subtle, #f1f5f9)',
+                  border: '1px solid var(--panel-border)',
                   borderRadius: '10px',
                   padding: '6px 10px',
                   fontSize: '0.70rem',
@@ -168,7 +168,19 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             <button 
               type="button" 
               onClick={onClose}
-              style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '50%', color: 'var(--text-muted)', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                background: 'var(--bg-card-subtle, #f1f5f9)',
+                border: '1px solid var(--panel-border)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                color: 'var(--text-muted)',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
             >
               ✕
             </button>
@@ -183,8 +195,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              border: 'none',
-              background: activeFilter === 'all' ? 'var(--accent-primary)' : '#f1f5f9',
+              border: activeFilter === 'all' ? 'none' : '1px solid var(--panel-border)',
+              background: activeFilter === 'all' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'all' ? '#ffffff' : 'var(--text-secondary)',
               fontSize: '0.74rem',
               fontWeight: 800,
@@ -200,8 +212,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              border: 'none',
-              background: activeFilter === 'birthday' ? 'var(--accent-primary)' : '#f1f5f9',
+              border: activeFilter === 'birthday' ? 'none' : '1px solid var(--panel-border)',
+              background: activeFilter === 'birthday' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'birthday' ? '#ffffff' : 'var(--text-secondary)',
               fontSize: '0.74rem',
               fontWeight: 800,
@@ -220,8 +232,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              border: 'none',
-              background: activeFilter === 'spiritual' ? 'var(--accent-primary)' : '#f1f5f9',
+              border: activeFilter === 'spiritual' ? 'none' : '1px solid var(--panel-border)',
+              background: activeFilter === 'spiritual' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'spiritual' ? '#ffffff' : 'var(--text-secondary)',
               fontSize: '0.74rem',
               fontWeight: 800,
@@ -240,8 +252,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              border: 'none',
-              background: activeFilter === 'prayers' ? 'var(--accent-primary)' : '#f1f5f9',
+              border: activeFilter === 'prayers' ? 'none' : '1px solid var(--panel-border)',
+              background: activeFilter === 'prayers' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'prayers' ? '#ffffff' : 'var(--text-secondary)',
               fontSize: '0.74rem',
               fontWeight: 800,
@@ -263,7 +275,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
           {isSupported && pushStatus !== 'granted' && (
             <div 
               style={{
-                background: 'linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%)',
+                background: 'var(--bg-card-subtle, #f0fdfa)',
                 border: '1.5px solid var(--accent-primary)',
                 borderRadius: '16px',
                 padding: '12px 14px',
@@ -302,7 +314,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               Carregando novidades da comunidade...
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div style={{ background: '#ffffff', padding: '32px 16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '32px 16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
               <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>✨</div>
               Você está em dia com todos os avisos e novidades da igreja!
             </div>
@@ -314,10 +326,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   style={{
-                    background: isRead ? '#ffffff' : '#f0fdf4',
+                    background: isRead ? 'var(--bg-card, #ffffff)' : 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
                     padding: '14px',
                     borderRadius: '16px',
-                    border: isRead ? '1px solid var(--panel-border)' : '1.5px solid #86efac',
+                    border: isRead ? '1px solid var(--panel-border)' : '1.5px solid var(--accent-primary)',
                     boxShadow: 'var(--shadow-sm)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -335,7 +347,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         fontSize: '0.68rem',
                         fontWeight: 900,
                         color: n.type === 'birthday' ? '#b45309' : (n.type === 'broadcast' ? '#dc2626' : 'var(--accent-primary)'),
-                        background: n.type === 'birthday' ? '#fef3c7' : (n.type === 'broadcast' ? '#fee2e2' : 'var(--accent-primary-light)'),
+                        background: n.type === 'birthday' ? 'rgba(245, 158, 11, 0.15)' : (n.type === 'broadcast' ? 'rgba(239, 68, 68, 0.15)' : 'var(--accent-primary-light)'),
                         padding: '2px 8px',
                         borderRadius: '6px',
                         textTransform: 'uppercase',
@@ -407,7 +419,15 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             type="button" 
             className="btn-pwa-secondary" 
             onClick={onClose} 
-            style={{ fontWeight: 800, width: '100%', padding: '10px' }}
+            style={{ 
+              fontWeight: 800, 
+              width: '100%', 
+              padding: '10px',
+              background: 'var(--bg-card-subtle, #f1f5f9)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '14px'
+            }}
           >
             Fechar
           </button>

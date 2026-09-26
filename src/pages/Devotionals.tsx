@@ -400,7 +400,7 @@ export const Devotionals: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            background: '#ffffff',
+            background: 'var(--bg-card, #ffffff)',
             border: '1px solid var(--panel-border)',
             borderRadius: '24px',
             padding: '8px 14px',
@@ -433,11 +433,11 @@ export const Devotionals: React.FC = () => {
       {/* Loading Skeleton */}
       {loading && allDevotionals.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '24px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ height: '16px', background: '#f1f5f9', borderRadius: '6px', width: '35%', marginBottom: '14px' }} />
-            <div style={{ height: '26px', background: '#f1f5f9', borderRadius: '8px', width: '80%', marginBottom: '16px' }} />
-            <div style={{ height: '80px', background: '#f8fafc', borderRadius: '14px', marginBottom: '16px' }} />
-            <div style={{ height: '48px', background: '#f1f5f9', borderRadius: '12px', width: '100%' }} />
+          <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '24px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ height: '16px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '6px', width: '35%', marginBottom: '14px' }} />
+            <div style={{ height: '26px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '8px', width: '80%', marginBottom: '16px' }} />
+            <div style={{ height: '80px', background: 'var(--bg-card-subtle, #f8fafc)', borderRadius: '14px', marginBottom: '16px' }} />
+            <div style={{ height: '48px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '12px', width: '100%' }} />
           </div>
         </div>
       ) : (
@@ -629,7 +629,7 @@ export const Devotionals: React.FC = () => {
                   Próximas Mensagens
                 </h3>
                 <span style={{
-                  background: '#f1f5f9',
+                  background: 'var(--bg-card-subtle, #f1f5f9)',
                   color: 'var(--text-secondary)',
                   fontSize: '0.70rem',
                   fontWeight: 800,
@@ -760,8 +760,8 @@ export const Devotionals: React.FC = () => {
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            backgroundColor: 'var(--bg-main, #ffffff)',
-            color: 'var(--text-main, #0f172a)',
+            backgroundColor: 'var(--bg-main, var(--bg-app, #090d16))',
+            color: 'var(--text-main, #f8fafc)',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
@@ -827,8 +827,9 @@ export const Devotionals: React.FC = () => {
               </span>
               {completedIds.includes(readingDevotional.id) && (
                 <span style={{
-                  background: '#dcfce7',
-                  color: '#15803d',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
                   fontSize: '0.68rem',
                   fontWeight: 900,
                   padding: '3px 8px',
@@ -877,7 +878,7 @@ export const Devotionals: React.FC = () => {
               <div style={{
                 display: 'inline-block',
                 background: 'var(--accent-primary-light)',
-                color: 'var(--accent-primary)',
+                color: 'var(--accent-contrast, var(--accent-primary))',
                 fontWeight: 800,
                 fontSize: '0.78rem',
                 padding: '4px 12px',
@@ -1174,9 +1175,9 @@ export const Devotionals: React.FC = () => {
                 justifyContent: 'center',
                 gap: '8px',
                 marginBottom: '26px',
-                background: completedIds.includes(readingDevotional.id) ? '#ecfdf5' : 'var(--accent-primary-gradient)',
-                color: completedIds.includes(readingDevotional.id) ? '#059669' : '#ffffff',
-                border: completedIds.includes(readingDevotional.id) ? '2px solid #a7f3d0' : 'none',
+                background: completedIds.includes(readingDevotional.id) ? 'rgba(16, 185, 129, 0.15)' : 'var(--accent-primary-gradient)',
+                color: completedIds.includes(readingDevotional.id) ? '#10b981' : '#ffffff',
+                border: completedIds.includes(readingDevotional.id) ? '2px solid #10b981' : 'none',
                 boxShadow: completedIds.includes(readingDevotional.id) ? 'none' : '0 4px 16px rgba(15, 118, 110, 0.25)',
                 transition: 'all 0.2s ease'
               }}
@@ -1221,16 +1222,16 @@ export const Devotionals: React.FC = () => {
             {/* Comentário Pastoral Profético */}
             {readingDevotional.pastoral_comment && (
               <div style={{
-                background: 'var(--bg-card-subtle, #fffbeb)',
+                background: 'var(--bg-card-subtle, #1e293b)',
                 padding: '16px 18px',
                 borderRadius: '16px',
                 border: '1px solid var(--panel-border)',
                 marginBottom: '28px'
               }}>
-                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--accent-contrast, #b45309)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--accent-contrast, #d97706)', marginBottom: '4px' }}>
                   💬 Palavra Pastoral
                 </div>
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-main, #78350f)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: '0.86rem', color: 'var(--text-main)', margin: 0, lineHeight: 1.5 }}>
                   "{readingDevotional.pastoral_comment}"
                 </p>
               </div>
@@ -1275,9 +1276,9 @@ export const Devotionals: React.FC = () => {
                 type="button"
                 onClick={() => toggleLike(readingDevotional.id)}
                 style={{
-                  background: likedIds.includes(readingDevotional.id) ? '#fee2e2' : '#f1f5f9',
+                  background: likedIds.includes(readingDevotional.id) ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-card-subtle, #f1f5f9)',
                   color: likedIds.includes(readingDevotional.id) ? '#ef4444' : 'var(--text-secondary)',
-                  border: 'none',
+                  border: '1px solid var(--panel-border)',
                   padding: '10px 16px',
                   borderRadius: '12px',
                   fontWeight: 800,

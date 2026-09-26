@@ -8,6 +8,7 @@
   --v2-glass-surface: rgba(255, 255, 255, 0.86);
   --v2-glass-border: rgba(255, 255, 255, 0.75);
   --v2-subtle-border: rgba(226, 232, 240, 0.8);
+  --bg-main: var(--v2-bg);
   --v2-radius-sm: 12px;
   --v2-radius-md: 18px;
   --v2-radius-lg: 24px;
@@ -171,6 +172,7 @@ body[data-theme="dark"] .v2-shell {
   --v2-glass-border: rgba(255, 255, 255, 0.10) !important;
   --v2-subtle-border: rgba(255, 255, 255, 0.08) !important;
   --bg-app: #090d16 !important;
+  --bg-main: #090d16 !important;
   --bg-card: #111827 !important;
   --bg-card-subtle: #1e293b !important;
   --panel-border: rgba(255, 255, 255, 0.10) !important;
