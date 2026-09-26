@@ -240,6 +240,38 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
     };
   }, []);
 
+  // Medição da altura física real do display para renderizar diretamente no tamanho total do celular
+  const [displayHeight, setDisplayHeight] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile && window.screen?.height) {
+        return `${window.screen.height}px`;
+      }
+    }
+    return '100lvh';
+  });
+
+  useEffect(() => {
+    const updateDisplayHeight = () => {
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && window.screen?.height) {
+          const fullHeight = Math.max(window.screen.height, window.innerHeight);
+          setDisplayHeight(`${fullHeight}px`);
+        } else {
+          setDisplayHeight('100lvh');
+        }
+      }
+    };
+    updateDisplayHeight();
+    window.addEventListener('resize', updateDisplayHeight);
+    window.addEventListener('orientationchange', updateDisplayHeight);
+    return () => {
+      window.removeEventListener('resize', updateDisplayHeight);
+      window.removeEventListener('orientationchange', updateDisplayHeight);
+    };
+  }, []);
+
   // Gestos de Touch / Arraste
   const handleDragStart = (clientX: number) => {
     if (isAuthDrawerOpen) return;
@@ -489,9 +521,9 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
-        width: '100%',
-        height: '100%',
+        width: '100vw',
+        height: displayHeight,
+        minHeight: '100lvh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',

@@ -46,9 +46,10 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Quando em modo de tela cheia de Boas-Vindas / Auth: remove padding inferior de navegação */
+/* Quando em modo de tela cheia de Boas-Vindas / Auth: remove padding inferior de navegação e alinha cor de fundo */
 .v2-shell.v2-auth-shell {
   padding-bottom: 0 !important;
+  background-color: #090d16 !important;
 }
 
 /* Em telas maiores (Desktop / Tablets / Telas > 600px):

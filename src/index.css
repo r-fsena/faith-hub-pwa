@@ -58,6 +58,11 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body:has(.v2-auth-shell),
+html:has(.v2-auth-shell) {
+  background-color: #090d16 !important;
+}
+
 body {
   display: flex;
   flex-direction: column;
