@@ -8,6 +8,8 @@ import { CartFloatingButton, CartDrawer } from '../components/CartDrawer';
 import { LivePlayerModal } from '../components/LivePlayerModal';
 import { NotificationsModal } from '../components/NotificationsModal';
 import { AuthGate } from '../components/AuthGate';
+import { BottomSheet } from '../components/BottomSheet';
+import { fetchCampuses, getActiveCampusId, setActiveCampusId } from '../services/api';
 
 import { Home } from '../pages/Home';
 import { Devotionals } from '../pages/Devotionals';
@@ -34,6 +36,33 @@ export const AppContentV1: React.FC = () => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+
+  // Gestão Unificada de Congregações / Unidades (Campuses)
+  const [campuses, setCampuses] = useState<any[]>([]);
+  const [activeCampusId, setSelectedCampusId] = useState<string>(() => getActiveCampusId());
+  const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCampuses(branding.organization_id).then(list => setCampuses(list || []));
+  }, [branding.organization_id]);
+
+  useEffect(() => {
+    const handleCampusChanged = (e: any) => {
+      const newCampusId = e.detail?.campusId || getActiveCampusId();
+      setSelectedCampusId(newCampusId);
+    };
+    window.addEventListener('pwa-campus-changed', handleCampusChanged);
+    return () => window.removeEventListener('pwa-campus-changed', handleCampusChanged);
+  }, []);
+
+  const handleSelectCampus = (cId: string) => {
+    setActiveCampusId(cId);
+    setSelectedCampusId(cId);
+    setIsCampusDrawerOpen(false);
+    window.dispatchEvent(new CustomEvent('pwa-campus-changed', { detail: { campusId: cId } }));
+  };
+
+  const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
 
   // Redireciona de acordo com o estado de autenticação
   const prevAuthRef = useRef(isAuthenticated);
@@ -146,7 +175,7 @@ export const AppContentV1: React.FC = () => {
   const isAuthScreen = !isAuthenticated && activeTab === 'profile' && subView === 'none';
 
   return (
-    <div className="pwa-app-shell">
+    <div className={`pwa-app-shell ${isAuthScreen ? 'pwa-auth-screen' : ''}`}>
       {/* Top Header com suporte a navegação e botão Voltar */}
       {!isAuthScreen && (
         <TopHeader 
@@ -161,6 +190,8 @@ export const AppContentV1: React.FC = () => {
           title={getSubViewTitle(subView)}
           onBack={subView !== 'none' ? () => setSubView('none') : undefined}
           unreadCount={unreadNotificationsCount}
+          campusName={currentCampus?.name || 'Sede'}
+          onOpenCampusSelect={() => setIsCampusDrawerOpen(true)}
         />
       )}
 
@@ -312,6 +343,60 @@ export const AppContentV1: React.FC = () => {
         onOpenLive={() => setIsLiveOpen(true)}
         onUnreadCountChange={(count) => setUnreadNotificationsCount(count)}
       />
+
+      {/* BottomSheet Global de Seleção de Congregação / Unidade */}
+      <BottomSheet
+        isOpen={isCampusDrawerOpen}
+        onClose={() => setIsCampusDrawerOpen(false)}
+        title="Selecione a Unidade"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
+          {campuses.map(c => {
+            const isSelected = c.id === activeCampusId;
+            return (
+              <div
+                key={c.id}
+                onClick={() => handleSelectCampus(c.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '16px',
+                  background: isSelected ? 'var(--accent-primary-light)' : '#f8fafc',
+                  border: isSelected ? '1.5px solid var(--accent-primary)' : '1px solid #e2e8f0',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.90rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                    {c.name}
+                  </div>
+                  {c.address && (
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      {c.address}
+                    </div>
+                  )}
+                  {c.pastor_name && (
+                    <div style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, marginTop: '2px' }}>
+                      Pastor Local: {c.pastor_name}
+                    </div>
+                  )}
+                </div>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
+                  background: '#ffffff',
+                  flexShrink: 0
+                }} />
+              </div>
+            );
+          })}
+        </div>
+      </BottomSheet>
 
       {/* Bottom Navigation */}
       {!isAuthScreen && (

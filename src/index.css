@@ -102,23 +102,36 @@ input, select, textarea {
   flex-direction: column;
   position: relative;
   overflow-x: hidden;
+  padding-top: calc(var(--header-height) + var(--safe-top));
   padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
 }
 
-/* TOPBAR */
+.pwa-app-shell.pwa-auth-screen {
+  padding-top: var(--safe-top);
+}
+
+/* TOPBAR - Fixa no topo (Native Feel) com Safe Area */
 .pwa-topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 40;
+  left: 0;
+  right: 0;
+  z-index: 45;
   width: 100%;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--panel-border);
-  padding: calc(var(--safe-top) + 10px) 16px 10px 16px;
+  padding-top: max(var(--safe-top), 8px);
+  padding-bottom: 8px;
+  padding-left: max(var(--safe-left), 14px);
+  padding-right: max(var(--safe-right), 14px);
   min-height: calc(var(--header-height) + var(--safe-top));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 .pwa-topbar-inner {
@@ -153,6 +166,7 @@ input, select, textarea {
   font-size: 0.85rem;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .pwa-church-avatar img {
@@ -166,6 +180,72 @@ input, select, textarea {
   flex-direction: column;
   min-width: 0;
   flex: 1;
+}
+
+.pwa-greeting-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.pwa-church-sub {
+  font-size: 0.70rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+  line-height: 1.2;
+}
+
+.pwa-campus-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+  border: 1px solid rgba(15, 118, 110, 0.20);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-campus-chip:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.pwa-badge-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 900;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
 }
 
 .pwa-church-name {

@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { InstallPwaBanner } from '../components/InstallPwaBanner';
 import { VisitorModal } from '../components/VisitorModal';
-import { BottomSheet } from '../components/BottomSheet';
 import { KidsPassCard } from '../components/KidsPassCard';
 import { KidsVolunteerPanel } from '../components/KidsVolunteerPanel';
 import { HeroCarousel } from '../components/HeroCarousel';
@@ -53,7 +52,6 @@ export const Home: React.FC<HomeProps> = ({
   const [featuredEvent, setFeaturedEvent] = useState<any>(null);
   const [todayDevotional, setTodayDevotional] = useState<any>(null);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
-  const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
   const [isKidsVolunteerOpen, setIsKidsVolunteerOpen] = useState(false);
   const [campuses, setCampuses] = useState<any[]>([]);
   const [activeCampusId, setSelectedCampusId] = useState<string>(getActiveCampusId());
@@ -117,12 +115,6 @@ export const Home: React.FC<HomeProps> = ({
     } else {
       setFeaturedEvent(null);
     }
-  };
-
-  const handleSelectCampus = (cId: string) => {
-    setActiveCampusId(cId);
-    setSelectedCampusId(cId);
-    setIsCampusDrawerOpen(false);
   };
 
   const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
@@ -204,46 +196,31 @@ export const Home: React.FC<HomeProps> = ({
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
 
-      {/* Saudação Personalizada & Seletor de Unidade */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px', gap: '8px' }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.25rem' }}>{user ? '👋' : '✨'}</span>
-            <h2 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.30rem)', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user?.name ? `Olá, ${user.name.split(' ')[0]}` : 'Bem-vindo(a)'}!
-            </h2>
-          </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
-            {user ? (currentCampus?.name ? `📍 ${currentCampus.name}` : 'Membro Ativo') : 'Explore nossa comunidade'} • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
-          </p>
+      {/* Resumo de Data & Comunidade */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '2px 4px', 
+        marginTop: '-4px', 
+        marginBottom: '-6px' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'capitalize' }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </span>
         </div>
-
-        {/* Seletor de Congregação / Unidade */}
-        <button
-          type="button"
-          onClick={() => setIsCampusDrawerOpen(true)}
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--panel-border)',
-            padding: '6px 12px',
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm)',
-            flexShrink: 0
-          }}
-        >
-          <span style={{ fontSize: '0.85rem' }}>🏛️</span>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.60rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', lineHeight: 1 }}>Unidade</div>
-            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)', maxWidth: '95px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
-              {currentCampus?.name || 'Sede'}
-            </div>
-          </div>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▾</span>
-        </button>
+        <span style={{
+          fontSize: '0.70rem',
+          fontWeight: 800,
+          color: 'var(--accent-primary)',
+          background: 'var(--accent-primary-light)',
+          padding: '2px 8px',
+          borderRadius: '999px',
+          letterSpacing: '0.2px'
+        }}>
+          {user ? 'Membro Ativo' : 'Comunidade Aberta'}
+        </span>
       </div>
 
       {/* Carrossel Dinâmico de Destaques & Vídeo Inline */}
@@ -388,75 +365,6 @@ export const Home: React.FC<HomeProps> = ({
         isOpen={isVisitorModalOpen} 
         onClose={() => setIsVisitorModalOpen(false)} 
       />
-
-      {/* Drawer de Seleção de Unidade / Campus */}
-      <BottomSheet 
-        isOpen={isCampusDrawerOpen} 
-        onClose={() => setIsCampusDrawerOpen(false)}
-        maxHeight="65vh"
-      >
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <span style={{ fontSize: '1.4rem' }}>🏛️</span>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-            Escolha sua Congregação
-          </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-            Selecione o campus onde você congrega ou está visitando hoje.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '48vh', overflowY: 'auto' }}>
-          {campuses.map(c => {
-            const isSelected = c.id === activeCampusId;
-            return (
-              <div
-                key={c.id}
-                onClick={() => handleSelectCampus(c.id)}
-                style={{
-                  background: isSelected ? 'var(--accent-primary-light)' : '#ffffff',
-                  border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                      {c.name}
-                    </span>
-                    {Boolean(c.is_headquarters) && (
-                      <span style={{ fontSize: '0.62rem', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                        SEDE
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                    {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
-                  </p>
-                  {c.pastor_name && (
-                    <p style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, margin: '2px 0 0 0' }}>
-                      Pastor Local: {c.pastor_name}
-                    </p>
-                  )}
-                </div>
-
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
-                  background: '#ffffff'
-                }} />
-              </div>
-            );
-          })}
-        </div>
-      </BottomSheet>
 
       {/* Painel do Educador / Voluntário Kids Mobile */}
       <KidsVolunteerPanel 
