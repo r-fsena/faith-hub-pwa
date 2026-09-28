@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,6 +23,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 8);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const getInitials = (name: string) => {
     if (!name) return 'FH';
@@ -34,7 +43,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   // Se estiver em uma sub-tela (com botão Voltar)
   if (onBack) {
     return (
-      <header className="pwa-topbar">
+      <header className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="pwa-topbar-inner" style={{ justifyContent: 'space-between' }}>
           <button 
             type="button" 
@@ -79,7 +88,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   }
 
   return (
-    <header className="pwa-topbar">
+    <header className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
       <div className="pwa-topbar-inner">
         <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
           <div className="pwa-church-avatar" title="Ir para o Perfil">
