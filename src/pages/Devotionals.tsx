@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { fetchDevotionals, fetchTodayDevotional, getActiveCampusId } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
+import { useTheme } from '../context/ThemeContext';
 
 export interface DevotionalItem {
   id: string;
@@ -24,6 +25,8 @@ export interface DevotionalItem {
 
 export const Devotionals: React.FC = () => {
   const { branding } = useBranding();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const currentOrgId = branding.organization_id || 'org_default';
   const [currentCampusId, setCurrentCampusId] = useState<string>(() => getActiveCampusId());
 
@@ -80,6 +83,7 @@ export const Devotionals: React.FC = () => {
 
   // Estado do Player de Louvor & Meditação
   const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(false);
+  const [isMusicMinimized, setIsMusicMinimized] = useState<boolean>(false);
   const [currentSongTitle, setCurrentSongTitle] = useState<string>('');
   const [currentSongEmbedUrl, setCurrentSongEmbedUrl] = useState<string>('');
   const [showVideoEmbed, setShowVideoEmbed] = useState<boolean>(false);
@@ -101,6 +105,7 @@ export const Devotionals: React.FC = () => {
   useEffect(() => {
     if (!readingDevotional) {
       setIsPlayingMusic(false);
+      setIsMusicMinimized(false);
       setCurrentSongTitle('');
       setCurrentSongEmbedUrl('');
       setShowVideoEmbed(false);
@@ -502,8 +507,9 @@ export const Devotionals: React.FC = () => {
                     <span style={{
                       fontSize: '0.74rem',
                       fontWeight: 800,
-                      color: 'var(--accent-primary)',
-                      background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.08))',
+                      color: isDark ? '#ffffff' : 'var(--accent-primary)',
+                      background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light, rgba(15, 118, 110, 0.08))',
+                      border: isDark ? '1px solid rgba(45, 212, 191, 0.35)' : 'none',
                       padding: '4px 10px',
                       borderRadius: '12px'
                     }}>
@@ -760,24 +766,20 @@ export const Devotionals: React.FC = () => {
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            backgroundColor: 'var(--bg-main, var(--bg-app, #090d16))',
-            color: 'var(--text-main, #f8fafc)',
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            transform: 'translateZ(0)',
+            backgroundColor: isDark ? '#090d16' : 'var(--bg-main, #f8fafc)',
+            color: isDark ? '#f8fafc' : 'var(--text-main, #0f172a)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            overflow: 'hidden'
           }}
         >
-          {/* Top Bar Ergonômica do Leitor com Safe Area Inset Top para evitar sobreposição do Notch no PWA */}
+          {/* Top Bar Ergonômica do Leitor (Fixa no topo do leitor) */}
           <div style={{
-            position: 'sticky',
-            top: 0,
+            flexShrink: 0,
             zIndex: 20,
-            background: 'var(--bg-card, #ffffff)',
-            borderBottom: '1px solid var(--panel-border)',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
+            background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
+            borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--panel-border)',
+            boxShadow: isDark ? '0 2px 10px rgba(0, 0, 0, 0.40)' : '0 2px 10px rgba(0, 0, 0, 0.04)',
             paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
             paddingBottom: '14px',
             paddingLeft: '16px',
@@ -797,13 +799,13 @@ export const Devotionals: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                background: 'var(--bg-card-subtle, #f1f5f9)',
-                border: '1px solid var(--panel-border)',
+                background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f1f5f9)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border)',
                 borderRadius: '14px',
                 padding: '0 16px',
                 fontSize: '0.88rem',
                 fontWeight: 800,
-                color: 'var(--text-main)',
+                color: isDark ? '#f8fafc' : 'var(--text-main)',
                 cursor: 'pointer',
                 flexShrink: 0,
                 boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
@@ -818,7 +820,7 @@ export const Devotionals: React.FC = () => {
               <span style={{
                 fontSize: '0.78rem',
                 fontWeight: 900,
-                color: 'var(--accent-primary)',
+                color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
                 whiteSpace: 'nowrap'
@@ -846,13 +848,13 @@ export const Devotionals: React.FC = () => {
               onClick={() => handleShare(readingDevotional)}
               style={{
                 height: '42px',
-                background: 'var(--bg-card-subtle, #f8fafc)',
-                border: '1px solid var(--panel-border)',
+                background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f8fafc)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border)',
                 borderRadius: '14px',
                 padding: '0 14px',
                 fontSize: '0.82rem',
                 fontWeight: 800,
-                color: 'var(--text-main)',
+                color: isDark ? '#f8fafc' : 'var(--text-main)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -866,525 +868,614 @@ export const Devotionals: React.FC = () => {
             </button>
           </div>
 
-          {/* Conteúdo do Estudo */}
+          {/* Área de Leitura com Scroll Independente e Espaçamento Inferior Seguro */}
           <div style={{
-            maxWidth: '680px',
-            width: '100%',
-            margin: '0 auto',
-            padding: '24px 20px 90px 20px'
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            paddingBottom: isPlayingMusic 
+              ? (isMusicMinimized ? 'calc(90px + env(safe-area-inset-bottom, 16px))' : 'calc(140px + env(safe-area-inset-bottom, 16px))')
+              : 'calc(40px + env(safe-area-inset-bottom, 16px))'
           }}>
-            {/* Passagem Bíblica */}
-            {readingDevotional.passage && (
-              <div style={{
-                display: 'inline-block',
-                background: 'var(--accent-primary-light)',
-                color: 'var(--accent-contrast, var(--accent-primary))',
-                fontWeight: 800,
-                fontSize: '0.78rem',
-                padding: '4px 12px',
-                borderRadius: '16px',
-                marginBottom: '10px'
-              }}>
-                📖 {readingDevotional.passage}
-              </div>
-            )}
-
-            {/* Título */}
-            <h1 style={{
-              fontSize: 'clamp(1.40rem, 4vw, 1.85rem)',
-              fontWeight: 900,
-              color: 'var(--text-main)',
-              lineHeight: 1.25,
-              letterSpacing: '-0.02em',
-              marginBottom: '20px'
+            <div style={{
+              maxWidth: '680px',
+              width: '100%',
+              margin: '0 auto',
+              padding: '24px 20px'
             }}>
-              {readingDevotional.title}
-            </h1>
+              {/* Passagem Bíblica (Pill topo com alta legibilidade no escuro) */}
+              {readingDevotional.passage && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light)',
+                  color: isDark ? '#ffffff' : 'var(--accent-contrast, var(--accent-primary))',
+                  border: isDark ? '1px solid rgba(45, 212, 191, 0.35)' : 'none',
+                  fontWeight: 800,
+                  fontSize: '0.78rem',
+                  padding: '5px 14px',
+                  borderRadius: '16px',
+                  marginBottom: '12px'
+                }}>
+                  <span>📖</span>
+                  <span>{readingDevotional.passage}</span>
+                </div>
+              )}
 
-            {/* ======================================================= */}
-            {/* CARD DE LOUVOR SUGERIDO COM PLAYER ERGONÔMICO           */}
-            {/* ======================================================= */}
-            {readingDevotional.suggested_song_title && (
-              <div style={{
-                background: 'var(--bg-card, #ffffff)',
-                padding: '18px 20px',
-                borderRadius: '22px',
-                border: '1.5px solid var(--panel-border)',
-                marginBottom: '26px',
-                boxShadow: 'var(--shadow-sm)',
-                position: 'relative'
+              {/* Título do Estudo */}
+              <h1 style={{
+                fontSize: 'clamp(1.40rem, 4vw, 1.85rem)',
+                fontWeight: 900,
+                color: isDark ? '#f8fafc' : 'var(--text-main)',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                marginBottom: '20px'
               }}>
-                {/* Header do Card com Ícone, Título e Equalizador */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '14px',
-                      background: 'var(--accent-primary-gradient)',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.2rem',
-                      flexShrink: 0,
-                      boxShadow: '0 4px 12px rgba(15, 118, 110, 0.28)'
-                    }}>
-                      🎵
-                    </div>
-                    <div style={{ minWidth: 0 }}>
+                {readingDevotional.title}
+              </h1>
+
+              {/* ======================================================= */}
+              {/* CARD DE LOUVOR SUGERIDO COM PLAYER ERGONÔMICO           */}
+              {/* ======================================================= */}
+              {readingDevotional.suggested_song_title && (
+                <div style={{
+                  background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
+                  padding: '18px 20px',
+                  borderRadius: '22px',
+                  border: isDark ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid var(--panel-border)',
+                  marginBottom: '26px',
+                  boxShadow: isDark ? '0 4px 20px rgba(0, 0, 0, 0.35)' : 'var(--shadow-sm)',
+                  position: 'relative'
+                }}>
+                  {/* Header do Card com Ícone, Título e Equalizador */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                       <div style={{
-                        fontSize: '0.68rem',
-                        color: 'var(--accent-primary)',
-                        fontWeight: 900,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '14px',
+                        background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(15, 118, 110, 0.28)'
                       }}>
-                        Louvor para Meditação
+                        🎵
                       </div>
-                      <div style={{
-                        fontSize: '0.94rem',
-                        fontWeight: 900,
-                        color: 'var(--text-main)',
-                        lineHeight: 1.3,
-                        marginTop: '2px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {readingDevotional.suggested_song_title}
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '0.68rem',
+                          color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          Louvor para Meditação
+                        </div>
+                        <div style={{
+                          fontSize: '0.94rem',
+                          fontWeight: 900,
+                          color: isDark ? '#f8fafc' : 'var(--text-main)',
+                          lineHeight: 1.3,
+                          marginTop: '2px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {readingDevotional.suggested_song_title}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Badge Ativa com Equalizador Animado */}
+                    {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'rgba(15, 118, 110, 0.12)',
+                        border: isDark ? '1px solid rgba(45, 212, 191, 0.35)' : '1px solid rgba(15, 118, 110, 0.25)',
+                        padding: '4px 10px',
+                        borderRadius: '14px',
+                        flexShrink: 0
+                      }}>
+                        <span className="eq-bar" style={{ height: '12px', background: isDark ? '#2dd4bf' : 'var(--accent-primary)' }} />
+                        <span className="eq-bar" style={{ height: '8px', background: isDark ? '#2dd4bf' : 'var(--accent-primary)' }} />
+                        <span className="eq-bar" style={{ height: '14px', background: isDark ? '#2dd4bf' : 'var(--accent-primary)' }} />
+                        <span style={{ fontSize: '0.68rem', color: isDark ? '#2dd4bf' : 'var(--accent-primary)', fontWeight: 900, marginLeft: '2px' }}>
+                          Tocando
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Badge Ativa com Equalizador Animado */}
-                  {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      background: 'rgba(15, 118, 110, 0.12)',
-                      border: '1px solid rgba(15, 118, 110, 0.25)',
-                      padding: '4px 10px',
-                      borderRadius: '14px',
-                      flexShrink: 0
-                    }}>
-                      <span className="eq-bar" style={{ height: '12px', background: 'var(--accent-primary)' }} />
-                      <span className="eq-bar" style={{ height: '8px', background: 'var(--accent-primary)' }} />
-                      <span className="eq-bar" style={{ height: '14px', background: 'var(--accent-primary)' }} />
-                      <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 900, marginLeft: '2px' }}>
-                        Tocando
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Grupo de Botões Ergonômicos (Grid Estruturado) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  
-                  {/* Botão Principal de Ação (100% Largura - Touch Target Confortável) */}
-                  <button
-                    type="button"
-                    onClick={() => handlePlayMusic(readingDevotional.suggested_song_title, readingDevotional.suggested_song_youtube_id)}
-                    style={{
-                      width: '100%',
-                      height: '46px',
-                      padding: '0 20px',
-                      background: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
-                        ? '#fee2e2'
-                        : 'var(--accent-primary-gradient)',
-                      color: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
-                        ? '#dc2626'
-                        : '#ffffff',
-                      border: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
-                        ? '1.5px solid #fca5a5'
-                        : 'none',
-                      borderRadius: '14px',
-                      fontWeight: 900,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
-                        ? 'none'
-                        : '0 4px 14px rgba(15, 118, 110, 0.25)',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem' }}>
-                      {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title ? '⏸' : '▶'}
-                    </span>
-                    <span>
-                      {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title ? 'Pausar Música de Fundo' : 'Tocar Louvor Enquanto Lê'}
-                    </span>
-                  </button>
-
-                  {/* Linha de Ações Secundárias (2 Colunas 50%/50% Balanceadas) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {/* Grupo de Botões Ergonômicos (Grid Estruturado) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    
+                    {/* Botão Principal de Ação (100% Largura - Touch Target Confortável) */}
                     <button
                       type="button"
-                      onClick={() => setShowVideoEmbed(!showVideoEmbed)}
+                      onClick={() => handlePlayMusic(readingDevotional.suggested_song_title, readingDevotional.suggested_song_youtube_id)}
                       style={{
-                        height: '38px',
-                        padding: '0 12px',
-                        background: showVideoEmbed ? 'var(--bg-card-subtle, #f1f5f9)' : 'var(--bg-card, #ffffff)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--panel-border)',
-                        borderRadius: '12px',
-                        fontWeight: 800,
-                        fontSize: '0.78rem',
+                        width: '100%',
+                        height: '46px',
+                        padding: '0 20px',
+                        background: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
+                          ? (isDark ? 'rgba(239, 68, 68, 0.20)' : '#fee2e2')
+                          : 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                        color: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
+                          ? (isDark ? '#f87171' : '#dc2626')
+                          : '#ffffff',
+                        border: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
+                          ? (isDark ? '1.5px solid rgba(239, 68, 68, 0.4)' : '1.5px solid #fca5a5')
+                          : 'none',
+                        borderRadius: '14px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'all 0.15s ease'
+                        gap: '8px',
+                        boxShadow: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
+                          ? 'none'
+                          : '0 4px 14px rgba(15, 118, 110, 0.25)',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      <span>{showVideoEmbed ? '🙈' : '🎬'}</span>
-                      <span>{showVideoEmbed ? 'Ocultar Vídeo' : 'Ver Clipe'}</span>
+                      <span style={{ fontSize: '1rem' }}>
+                        {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title ? '⏸' : '▶'}
+                      </span>
+                      <span>
+                        {isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title ? 'Pausar Música de Fundo' : 'Tocar Louvor Enquanto Lê'}
+                      </span>
                     </button>
 
-                    <a
-                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(readingDevotional.suggested_song_title + ' louvor')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        height: '38px',
-                        padding: '0 12px',
-                        background: 'var(--bg-card, #ffffff)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--panel-border)',
-                        borderRadius: '12px',
-                        fontWeight: 800,
-                        fontSize: '0.78rem',
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span>↗</span>
-                      <span>Abrir no YouTube</span>
-                    </a>
-                  </div>
-                </div>
+                    {/* Linha de Ações Secundárias (2 Colunas 50%/50% Balanceadas) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowVideoEmbed(!showVideoEmbed)}
+                        style={{
+                          height: '38px',
+                          padding: '0 12px',
+                          background: showVideoEmbed 
+                            ? (isDark ? 'rgba(255, 255, 255, 0.14)' : 'var(--bg-card-subtle, #f1f5f9)') 
+                            : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)'),
+                          color: isDark ? '#f8fafc' : 'var(--text-main)',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                          borderRadius: '12px',
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>{showVideoEmbed ? '🙈' : '🎬'}</span>
+                        <span>{showVideoEmbed ? 'Ocultar Vídeo' : 'Ver Clipe'}</span>
+                      </button>
 
-                {/* Player de Vídeo Expansível com Aspect Ratio Perfeito */}
-                {isPlayingMusic && currentSongEmbedUrl && showVideoEmbed && (
-                  <div style={{
-                    marginTop: '14px',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.12)',
-                    background: '#000000',
-                    aspectRatio: '16 / 9',
-                    width: '100%'
-                  }}>
+                      <a
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(readingDevotional.suggested_song_title + ' louvor')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          height: '38px',
+                          padding: '0 12px',
+                          background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)',
+                          color: isDark ? '#f8fafc' : 'var(--text-main)',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                          borderRadius: '12px',
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: 'var(--shadow-sm)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>↗</span>
+                        <span>Abrir no YouTube</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Player de Vídeo Expansível com Aspect Ratio Perfeito */}
+                  {isPlayingMusic && currentSongEmbedUrl && showVideoEmbed && (
+                    <div style={{
+                      marginTop: '14px',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
+                      background: '#000000',
+                      aspectRatio: '16 / 9',
+                      width: '100%'
+                    }}>
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={currentSongEmbedUrl}
+                        title="Player de Louvor e Adoração"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ border: 'none', width: '100%', height: '100%', display: 'block' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Iframe em segundo plano quando o vídeo está oculto */}
+                  {isPlayingMusic && currentSongEmbedUrl && !showVideoEmbed && (
                     <iframe
-                      width="100%"
-                      height="100%"
+                      width="1"
+                      height="1"
                       src={currentSongEmbedUrl}
-                      title="Player de Louvor e Adoração"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{ border: 'none', width: '100%', height: '100%', display: 'block' }}
+                      title="Audio Player Background"
+                      allow="autoplay"
+                      style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '1px', height: '1px' }}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
 
-                {/* Iframe em segundo plano quando o vídeo está oculto */}
-                {isPlayingMusic && currentSongEmbedUrl && !showVideoEmbed && (
-                  <iframe
-                    width="1"
-                    height="1"
-                    src={currentSongEmbedUrl}
-                    title="Audio Player Background"
-                    allow="autoplay"
-                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '1px', height: '1px' }}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Versículo Central */}
-            {readingDevotional.verse_text && (
-              <div style={{
-                background: 'var(--bg-card-subtle, #f8fafc)',
-                padding: '18px 20px',
-                borderRadius: '18px',
-                borderLeft: '5px solid var(--accent-primary)',
-                border: '1px solid var(--panel-border)',
-                marginBottom: '24px',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <p style={{
-                  fontSize: '0.96rem',
-                  fontStyle: 'italic',
-                  color: 'var(--text-main)',
-                  lineHeight: 1.5,
-                  margin: 0
+              {/* Versículo Central - Destaque em Branco no Modo Escuro */}
+              {readingDevotional.verse_text && (
+                <div style={{
+                  background: isDark ? 'rgba(30, 41, 59, 0.70)' : 'var(--bg-card-subtle, #f8fafc)',
+                  padding: '20px',
+                  borderRadius: '18px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                  borderLeftWidth: '5px',
+                  borderLeftStyle: 'solid',
+                  borderLeftColor: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                  marginBottom: '24px',
+                  boxShadow: isDark ? '0 4px 16px rgba(0, 0, 0, 0.35)' : 'var(--shadow-sm)'
                 }}>
-                  "{readingDevotional.verse_text}"
-                </p>
-                {readingDevotional.passage && (
-                  <span style={{
-                    display: 'block',
-                    textAlign: 'right',
-                    fontSize: '0.76rem',
-                    fontWeight: 800,
-                    color: 'var(--accent-primary)',
-                    marginTop: '8px'
+                  <p style={{
+                    fontSize: '0.98rem',
+                    fontStyle: 'italic',
+                    color: isDark ? '#f8fafc' : 'var(--text-main)',
+                    lineHeight: 1.6,
+                    margin: 0
                   }}>
-                    — {readingDevotional.passage}
-                  </span>
-                )}
-              </div>
-            )}
+                    "{readingDevotional.verse_text}"
+                  </p>
+                  {readingDevotional.passage && (
+                    <span style={{
+                      display: 'block',
+                      textAlign: 'right',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      color: isDark ? '#ffffff' : 'var(--accent-primary)',
+                      marginTop: '10px',
+                      letterSpacing: '0.02em'
+                    }}>
+                      — {readingDevotional.passage}
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {/* Texto Completo de Estudo da Palavra */}
-            <div style={{
-              fontSize: '0.98rem',
-              color: 'var(--text-main)',
-              lineHeight: 1.8,
-              marginBottom: '24px',
-              whiteSpace: 'pre-line'
-            }}>
-              {readingDevotional.content}
-            </div>
-
-            {/* Botão de Marcar / Concluir Leitura do Estudo */}
-            <button
-              type="button"
-              onClick={() => toggleCompleted(readingDevotional.id)}
-              style={{
-                width: '100%',
-                padding: '14px 20px',
-                borderRadius: '16px',
-                fontWeight: 900,
-                fontSize: '0.92rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginBottom: '26px',
-                background: completedIds.includes(readingDevotional.id) ? 'rgba(16, 185, 129, 0.15)' : 'var(--accent-primary-gradient)',
-                color: completedIds.includes(readingDevotional.id) ? '#10b981' : '#ffffff',
-                border: completedIds.includes(readingDevotional.id) ? '2px solid #10b981' : 'none',
-                boxShadow: completedIds.includes(readingDevotional.id) ? 'none' : '0 4px 16px rgba(15, 118, 110, 0.25)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <span>{completedIds.includes(readingDevotional.id) ? '✅ Estudo Concluído (Toque para desmarcar)' : '✓ Marcar Estudo como Concluído'}</span>
-            </button>
-
-            {/* Oração Guiada do Dia */}
-            {readingDevotional.prayer_indication && (
+              {/* Texto Completo de Estudo da Palavra */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.06) 0%, rgba(20, 184, 166, 0.10) 100%)',
-                padding: '18px 20px',
-                borderRadius: '18px',
-                border: '1.5px solid rgba(15, 118, 110, 0.20)',
-                marginBottom: '24px'
+                fontSize: '0.98rem',
+                color: isDark ? '#f1f5f9' : 'var(--text-main)',
+                lineHeight: 1.8,
+                marginBottom: '24px',
+                whiteSpace: 'pre-line'
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.82rem',
-                  fontWeight: 900,
-                  color: 'var(--accent-primary)',
-                  marginBottom: '8px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}>
-                  <span>🙏</span> Oração do Dia
-                </div>
-                <p style={{
-                  fontSize: '0.90rem',
-                  color: 'var(--text-secondary)',
-                  lineHeight: 1.6,
-                  margin: 0,
-                  fontStyle: 'italic'
-                }}>
-                  "{readingDevotional.prayer_indication}"
-                </p>
-              </div>
-            )}
-
-            {/* Comentário Pastoral Profético */}
-            {readingDevotional.pastoral_comment && (
-              <div style={{
-                background: 'var(--bg-card-subtle, #1e293b)',
-                padding: '16px 18px',
-                borderRadius: '16px',
-                border: '1px solid var(--panel-border)',
-                marginBottom: '28px'
-              }}>
-                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--accent-contrast, #d97706)', marginBottom: '4px' }}>
-                  💬 Palavra Pastoral
-                </div>
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-main)', margin: 0, lineHeight: 1.5 }}>
-                  "{readingDevotional.pastoral_comment}"
-                </p>
-              </div>
-            )}
-
-            {/* Rodapé do Estudo: Autor & Botão de Edificante (Persistido) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderTop: '1px solid var(--panel-border)',
-              paddingTop: '18px',
-              marginTop: '10px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-primary-gradient)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '0.85rem'
-                }}>
-                  ✍️
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    {readingDevotional.author || 'Pr. Rafael Sena'}
-                  </div>
-                  <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                    {readingDevotional.author_role || 'Pastor Titular'}
-                  </div>
-                </div>
+                {readingDevotional.content}
               </div>
 
-              {/* Botão de Reação Persistido */}
+              {/* Botão de Marcar / Concluir Leitura do Estudo */}
               <button
                 type="button"
-                onClick={() => toggleLike(readingDevotional.id)}
+                onClick={() => toggleCompleted(readingDevotional.id)}
                 style={{
-                  background: likedIds.includes(readingDevotional.id) ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-card-subtle, #f1f5f9)',
-                  color: likedIds.includes(readingDevotional.id) ? '#ef4444' : 'var(--text-secondary)',
-                  border: '1px solid var(--panel-border)',
-                  padding: '10px 16px',
-                  borderRadius: '12px',
-                  fontWeight: 800,
-                  fontSize: '0.82rem',
+                  width: '100%',
+                  padding: '14px 20px',
+                  borderRadius: '16px',
+                  fontWeight: 900,
+                  fontSize: '0.92rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '26px',
+                  background: completedIds.includes(readingDevotional.id) 
+                    ? (isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.15)') 
+                    : 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                  color: completedIds.includes(readingDevotional.id) ? '#34d399' : '#ffffff',
+                  border: completedIds.includes(readingDevotional.id) ? '2px solid #10b981' : 'none',
+                  boxShadow: completedIds.includes(readingDevotional.id) ? 'none' : '0 4px 16px rgba(15, 118, 110, 0.25)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <span>{likedIds.includes(readingDevotional.id) ? '❤️' : '🤍'}</span>
-                <span>{likedIds.includes(readingDevotional.id) ? 'Abençoado!' : 'Foi edificante'}</span>
+                <span>{completedIds.includes(readingDevotional.id) ? '✅ Estudo Concluído (Toque para desmarcar)' : '✓ Marcar Estudo como Concluído'}</span>
               </button>
+
+              {/* Oração Guiada do Dia - Alta Visibilidade em Tema Escuro */}
+              {readingDevotional.prayer_indication && (
+                <div style={{
+                  background: isDark 
+                    ? 'linear-gradient(135deg, rgba(45, 212, 191, 0.10) 0%, rgba(15, 23, 42, 0.85) 100%)' 
+                    : 'linear-gradient(135deg, rgba(15, 118, 110, 0.06) 0%, rgba(20, 184, 166, 0.10) 100%)',
+                  padding: '20px',
+                  borderRadius: '18px',
+                  border: isDark ? '1.5px solid rgba(45, 212, 191, 0.35)' : '1.5px solid rgba(15, 118, 110, 0.20)',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '0.84rem',
+                    fontWeight: 900,
+                    color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                    marginBottom: '10px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em'
+                  }}>
+                    <span>🙏</span> <span style={{ color: isDark ? '#ffffff' : 'inherit' }}>Oração do Dia</span>
+                  </div>
+                  <p style={{
+                    fontSize: '0.92rem',
+                    color: isDark ? '#f1f5f9' : 'var(--text-secondary)',
+                    lineHeight: 1.6,
+                    margin: 0,
+                    fontStyle: 'italic'
+                  }}>
+                    "{readingDevotional.prayer_indication}"
+                  </p>
+                </div>
+              )}
+
+              {/* Comentário Pastoral Profético */}
+              {readingDevotional.pastoral_comment && (
+                <div style={{
+                  background: isDark ? 'rgba(30, 41, 59, 0.75)' : 'var(--bg-card-subtle, #1e293b)',
+                  padding: '16px 18px',
+                  borderRadius: '16px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                  marginBottom: '28px'
+                }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#fbbf24' : 'var(--accent-contrast, #d97706)', marginBottom: '6px' }}>
+                    💬 Palavra Pastoral
+                  </div>
+                  <p style={{ fontSize: '0.88rem', color: isDark ? '#f1f5f9' : 'var(--text-main)', margin: 0, lineHeight: 1.6 }}>
+                    "{readingDevotional.pastoral_comment}"
+                  </p>
+                </div>
+              )}
+
+              {/* Rodapé do Estudo: Autor & Botão de Edificante (Persistido) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--panel-border)',
+                paddingTop: '18px',
+                marginTop: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '0.85rem'
+                  }}>
+                    ✍️
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#f8fafc' : 'var(--text-main)' }}>
+                      {readingDevotional.author || 'Pr. Rafael Sena'}
+                    </div>
+                    <div style={{ fontSize: '0.70rem', color: isDark ? '#94a3b8' : 'var(--text-muted)' }}>
+                      {readingDevotional.author_role || 'Pastor Titular'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão de Reação Persistido */}
+                <button
+                  type="button"
+                  onClick={() => toggleLike(readingDevotional.id)}
+                  style={{
+                    background: likedIds.includes(readingDevotional.id) 
+                      ? 'rgba(239, 68, 68, 0.18)' 
+                      : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f1f5f9)'),
+                    color: likedIds.includes(readingDevotional.id) ? '#ef4444' : (isDark ? '#cbd5e1' : 'var(--text-secondary)'),
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                    padding: '10px 16px',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <span>{likedIds.includes(readingDevotional.id) ? '❤️' : '🤍'}</span>
+                  <span>{likedIds.includes(readingDevotional.id) ? 'Abençoado!' : 'Foi edificante'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* ======================================================= */}
-          {/* BARRA FLUTUANTE DE MEDITAÇÃO MUSICAL (STICKY FOOTER)    */}
+          {/* BARRA FLUTUANTE DE MEDITAÇÃO MUSICAL (STICKY DOCK)      */}
+          {/* Fixo na casca externa da tela - Nunca sobrepõe o texto  */}
           {/* ======================================================= */}
           {isPlayingMusic && (
-            <div style={{
-              position: 'fixed',
-              bottom: '16px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 'calc(100% - 32px)',
-              maxWidth: '540px',
-              zIndex: 10000,
-              background: 'rgba(15, 23, 42, 0.94)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: '20px',
-              padding: '12px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              animation: 'slideUp 0.3s ease-out'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                {/* Equalizador Animado */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-                  <span className="eq-bar" style={{ height: '14px', background: '#ffffff' }} />
-                  <span className="eq-bar" style={{ height: '8px', background: '#ffffff' }} />
-                  <span className="eq-bar" style={{ height: '18px', background: '#ffffff' }} />
-                  <span className="eq-bar" style={{ height: '10px', background: '#ffffff' }} />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentSongTitle}
-                  </div>
-                  <div style={{ fontSize: '0.66rem', color: '#94a3b8' }}>
-                    Tocando em segundo plano • Meditação
-                  </div>
-                </div>
-              </div>
-
-              {/* Controles de Play/Pause e Fechar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                <button
-                  type="button"
-                  onClick={() => setIsPlayingMusic(!isPlayingMusic)}
+            <>
+              {isMusicMinimized ? (
+                /* Modo Compacto: Disco Flutuante Ergonômico no Canto */
+                <div
+                  onClick={() => setIsMusicMinimized(false)}
                   style={{
-                    background: 'var(--accent-primary-gradient)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '6px 12px',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <span>{isPlayingMusic ? '⏸ Pausar' : '▶ Retomar'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlayingMusic(false);
-                    setCurrentSongTitle('');
-                    setCurrentSongEmbedUrl('');
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    color: '#e2e8f0',
-                    border: 'none',
+                    position: 'fixed',
+                    bottom: 'calc(18px + env(safe-area-inset-bottom, 12px))',
+                    right: '18px',
+                    zIndex: 10000,
+                    width: '52px',
+                    height: '52px',
                     borderRadius: '50%',
-                    width: '28px',
-                    height: '28px',
+                    background: 'linear-gradient(135deg, #0f766e, #14b8a6)',
+                    color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer'
+                    boxShadow: '0 8px 24px rgba(15, 118, 110, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.25)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease'
                   }}
-                  title="Parar música"
+                  title="Expandir tocador de louvor"
                 >
-                  ✕
-                </button>
-              </div>
-            </div>
+                  <span style={{ fontSize: '1.35rem' }}>🎵</span>
+                </div>
+              ) : (
+                /* Modo Completo: Dock Flutuante Glassmorphism */
+                <div style={{
+                  position: 'fixed',
+                  bottom: 'calc(16px + env(safe-area-inset-bottom, 10px))',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 'calc(100% - 32px)',
+                  maxWidth: '520px',
+                  zIndex: 10000,
+                  background: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(15, 23, 42, 0.94)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  borderRadius: '22px',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  boxShadow: '0 12px 36px rgba(0, 0, 0, 0.45)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.18)',
+                  animation: 'slideUp 0.3s ease-out'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                    {/* Equalizador Animado */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                      <span className="eq-bar" style={{ height: '14px', background: '#2dd4bf' }} />
+                      <span className="eq-bar" style={{ height: '8px', background: '#2dd4bf' }} />
+                      <span className="eq-bar" style={{ height: '18px', background: '#2dd4bf' }} />
+                      <span className="eq-bar" style={{ height: '10px', background: '#2dd4bf' }} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ 
+                        fontSize: '0.80rem', 
+                        fontWeight: 800, 
+                        color: '#ffffff', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis' 
+                      }}>
+                        {currentSongTitle}
+                      </div>
+                      <div style={{ fontSize: '0.66rem', color: '#94a3b8' }}>
+                        Tocando ao fundo • Meditação
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Controles de Minimizar, Play/Pause e Fechar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsPlayingMusic(!isPlayingMusic)}
+                      style={{
+                        background: 'linear-gradient(135deg, #0f766e, #14b8a6)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '6px 12px',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>{isPlayingMusic ? '⏸ Pausar' : '▶ Retomar'}</span>
+                    </button>
+
+                    {/* Botão Minimizar Ergonômico */}
+                    <button
+                      type="button"
+                      onClick={() => setIsMusicMinimized(true)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.12)',
+                        color: '#e2e8f0',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '6px 8px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        cursor: 'pointer'
+                      }}
+                      title="Minimizar tocador"
+                    >
+                      <span>▾ Min</span>
+                    </button>
+
+                    {/* Botão Fechar/Parar */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlayingMusic(false);
+                        setCurrentSongTitle('');
+                        setCurrentSongEmbedUrl('');
+                        setIsMusicMinimized(false);
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.12)',
+                        color: '#e2e8f0',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
+                      }}
+                      title="Parar música"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

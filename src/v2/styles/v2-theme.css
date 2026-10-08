@@ -181,6 +181,11 @@ body[data-theme="dark"] .v2-shell {
   --text-secondary: #cbd5e1 !important;
   --text-muted: #94a3b8 !important;
 
+  --accent-primary: #2dd4bf !important;
+  --accent-primary-hover: #14b8a6 !important;
+  --accent-primary-light: rgba(45, 212, 191, 0.15) !important;
+  --accent-contrast: #2dd4bf !important;
+
   /* Alto contraste no Seletor de Unidade / Campus */
   --v2-campus-pill-bg: rgba(255, 255, 255, 0.10) !important;
   --v2-campus-pill-border: rgba(255, 255, 255, 0.18) !important;
