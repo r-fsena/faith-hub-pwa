@@ -501,12 +501,27 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
     setLoading(true);
     setErrorMsg('');
     try {
-      await confirmSignIn({ challengeResponse: newPassword });
+      const userAttrs: Record<string, string> = {};
+      const targetPhone = phone || localStorage.getItem('faithhub_user_phone') || '';
+      if (targetPhone) {
+        const clean = targetPhone.replace(/\D/g, '');
+        if (clean.length >= 10) {
+          userAttrs.phone_number = targetPhone.startsWith('+') ? targetPhone : (clean.startsWith('55') ? `+${clean}` : `+55${clean}`);
+        }
+      }
+      await confirmSignIn({ 
+        challengeResponse: newPassword,
+        options: Object.keys(userAttrs).length > 0 ? { userAttributes: userAttrs } : undefined
+      });
       await checkAuth();
       onLoginSuccess?.();
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || 'Erro ao definir nova senha.');
+      let msg = err.message || 'Erro ao definir nova senha.';
+      if (msg.includes('phone_number is missing') || msg.includes('Invalid attributes given')) {
+        msg = 'O número de celular com DDD é obrigatório para validação de segurança.';
+      }
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }

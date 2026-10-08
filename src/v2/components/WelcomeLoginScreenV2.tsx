@@ -240,36 +240,26 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
     };
   }, []);
 
-  // Medição da altura física real do display para renderizar diretamente no tamanho total do celular
-  const [displayHeight, setDisplayHeight] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile && window.screen?.height) {
-        return `${window.screen.height}px`;
-      }
-    }
-    return '100lvh';
+  // Detecção de PWA Standalone vs Navegador Mobile (para elevar a área de ação e proteger contra a barra inferior do navegador)
+  const [isStandalone, setIsStandalone] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://')
+    );
   });
 
   useEffect(() => {
-    const updateDisplayHeight = () => {
-      if (typeof window !== 'undefined') {
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile && window.screen?.height) {
-          const fullHeight = Math.max(window.screen.height, window.innerHeight);
-          setDisplayHeight(`${fullHeight}px`);
-        } else {
-          setDisplayHeight('100lvh');
-        }
-      }
-    };
-    updateDisplayHeight();
-    window.addEventListener('resize', updateDisplayHeight);
-    window.addEventListener('orientationchange', updateDisplayHeight);
-    return () => {
-      window.removeEventListener('resize', updateDisplayHeight);
-      window.removeEventListener('orientationchange', updateDisplayHeight);
-    };
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleChange = (e: MediaQueryListEvent) => setIsStandalone(e.matches);
+    try {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } catch {
+      // Fallback para navegadores legados
+    }
   }, []);
 
   // Gestos de Touch / Arraste
@@ -519,11 +509,14 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
       style={{
         position: 'fixed',
         top: 0,
+        bottom: 0,
         left: 0,
         right: 0,
-        width: '100vw',
-        height: displayHeight,
-        minHeight: '100lvh',
+        width: '100%',
+        maxWidth: '460px',
+        margin: '0 auto',
+        height: '100dvh',
+        minHeight: '-webkit-fill-available',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -701,7 +694,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         )}
       </header>
 
-      <div style={{ flex: 1, zIndex: 5 }} />
+      <div style={{ flex: 1, minHeight: '16px', zIndex: 5 }} />
 
       {/* Carrossel de Boas-Vindas Refinado */}
       <div 
@@ -715,10 +708,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '0 24px calc(env(safe-area-inset-bottom, 0px) + 20px) 24px',
+          padding: '0 24px calc(env(safe-area-inset-bottom, 16px) + 28px) 24px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: '14px',
           userSelect: 'none',
           WebkitUserSelect: 'none'
         }}
@@ -765,10 +758,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
                 {/* Título de Alto Impacto */}
                 <h1 style={{
-                  fontSize: 'clamp(1.55rem, 5.2vw, 2.05rem)',
+                  fontSize: 'clamp(1.42rem, 4.6vw, 1.85rem)',
                   fontWeight: 800,
                   color: '#ffffff',
-                  lineHeight: 1.16,
+                  lineHeight: 1.18,
                   letterSpacing: '-0.025em',
                   margin: 0,
                   textShadow: '0 2px 14px rgba(0, 0, 0, 0.5)'
@@ -778,9 +771,9 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
                 {/* Subtítulo Minimalista */}
                 <p style={{
-                  fontSize: '0.88rem',
+                  fontSize: '0.84rem',
                   color: '#e2e8f0',
-                  lineHeight: 1.48,
+                  lineHeight: 1.45,
                   margin: 0,
                   maxWidth: '440px',
                   letterSpacing: '-0.01em'
@@ -792,40 +785,40 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           </div>
         </div>
 
-        {/* Rodapé: Indicadores de Slide + Botão Entrar Sólido */}
+        {/* Indicadores de Slide Centralizados (Dots) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '2px 0' }}>
+          {allSlides.map((_, idx) => {
+            const isActive = activeSlideIndex === idx;
+            return (
+              <div
+                key={idx}
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsTransitionEnabled(true);
+                  setVirtualSlide(idx + 1);
+                }}
+                style={{
+                  width: isActive ? '24px' : '6px',
+                  height: '5px',
+                  borderRadius: '999px',
+                  background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.3)',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  cursor: 'pointer'
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Bloco de Ações Ergonômico: Botão Entrar Full-Width + Atalho Criar Cadastro */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: '6px',
-          gap: '12px'
+          flexDirection: 'column',
+          gap: '10px',
+          width: '100%',
+          marginTop: '2px'
         }}>
-          {/* Indicadores Minimalistas em Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            {allSlides.map((_, idx) => {
-              const isActive = activeSlideIndex === idx;
-              return (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setIsTransitionEnabled(true);
-                    setVirtualSlide(idx + 1);
-                  }}
-                  style={{
-                    width: isActive ? '22px' : '6px',
-                    height: '5px',
-                    borderRadius: '999px',
-                    background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.28)',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    cursor: 'pointer'
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          {/* Botão Principal Entrar (Sólido, Refinado, Sem Gradiente de IA) */}
+          {/* Botão Principal Entrar (Sólido, Ergonômico, Acessível em Qualquer Posição) */}
           <button
             type="button"
             onClick={() => handleOpenAuth('login')}
@@ -833,20 +826,54 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             style={{
               background: '#ffffff',
               color: '#0f172a',
-              fontWeight: 700,
-              fontSize: '0.94rem',
+              fontWeight: 800,
+              fontSize: '0.96rem',
               borderRadius: '999px',
-              padding: '13px 32px',
+              padding: '14px 24px',
               cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
               border: 'none',
               outline: 'none',
               letterSpacing: '-0.01em',
-              flexShrink: 0
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            Entrar
+            <span>Entrar no Aplicativo</span>
+            <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>→</span>
           </button>
+
+          {/* Atalho Criar Cadastro / Visitante */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontSize: '0.78rem',
+            color: '#94a3b8'
+          }}>
+            <span>Ainda não tem conta?</span>
+            <button
+              type="button"
+              onClick={() => handleOpenAuth('signup')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'underline',
+                textUnderlineOffset: '3px'
+              }}
+            >
+              Cadastre-se grátis
+            </button>
+          </div>
         </div>
       </div>
 
