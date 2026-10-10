@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
+import { useTheme } from '../context/ThemeContext';
+import { getYoutubeEmbedUrl } from '../components/LivePlayerModal';
 import { 
   fetchCellGroups, 
   fetchCellPosts, 
@@ -32,11 +34,14 @@ interface Chapter {
   title: string;
   verse_reference?: string;
   icebreaker?: string;
-  content_text: string;
-  discussion_questions?: string[];
+  content_text?: string;
+  content_body?: string;
+  discussion_questions?: string[] | string;
+  questions?: string[] | string;
   practical_challenge?: string;
   media_type?: 'NONE' | 'VIDEO' | 'PDF';
   media_link?: string;
+  media_url?: string;
   scheduled_date?: string;
   status?: string;
   completed?: boolean;
@@ -166,6 +171,8 @@ type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { branding } = useBranding();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const [cells, setCells] = useState<CellGroup[]>([]);
   const [currentMember, setCurrentMember] = useState<any>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
@@ -2871,29 +2878,62 @@ export const CellGroups: React.FC = () => {
             const chapterId = readingChapter.id || String(readingChapter.chapter_number);
             const isCompleted = completedChapterIds.includes(chapterId);
 
+            // Resolução unificada de campos configurados no Studio Web
+            const contentText = (readingChapter.content_text || readingChapter.content_body || '').trim();
+            const rawQuestions = readingChapter.discussion_questions || readingChapter.questions;
+            let questionsList: string[] = [];
+            if (Array.isArray(rawQuestions)) {
+              questionsList = rawQuestions.filter(Boolean);
+            } else if (typeof rawQuestions === 'string') {
+              try {
+                const parsed = JSON.parse(rawQuestions);
+                if (Array.isArray(parsed)) questionsList = parsed.filter(Boolean);
+              } catch {}
+            }
+
+            const mediaLink = (readingChapter.media_link || readingChapter.media_url || '').trim();
+            const mediaType = readingChapter.media_type || (mediaLink.toLowerCase().includes('.pdf') ? 'PDF' : (mediaLink.includes('youtube') || mediaLink.includes('youtu.be') ? 'VIDEO' : 'NONE'));
+            const isVideo = mediaType === 'VIDEO' || mediaLink.includes('youtube') || mediaLink.includes('youtu.be');
+            const isPdf = mediaType === 'PDF' || mediaLink.toLowerCase().includes('.pdf');
+            const videoEmbedUrl = isVideo ? getYoutubeEmbedUrl(mediaLink) : '';
+            const scheduleBadge = formatChapterDateAndSchedule(readingChapter, readingChapter.chapter_number ? readingChapter.chapter_number - 1 : 0);
+
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '20px', color: isDark ? '#f8fafc' : 'var(--text-main)' }}>
                 {/* Header do Estudo */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                       <span style={{
                         fontSize: '0.70rem',
                         fontWeight: 900,
-                        color: 'var(--accent-primary)',
-                        background: 'var(--accent-primary-light)',
+                        color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                        background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light)',
                         padding: '3px 10px',
                         borderRadius: '10px',
                         textTransform: 'uppercase'
                       }}>
                         {selectedBook?.title || 'Estudo Bíblico'} • Lição {readingChapter.chapter_number}
                       </span>
+                      {scheduleBadge && (
+                        <span style={{
+                          fontSize: '0.70rem',
+                          fontWeight: 700,
+                          color: isDark ? '#cbd5e1' : 'var(--text-muted)',
+                          background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f1f5f9)',
+                          padding: '3px 8px',
+                          borderRadius: '8px'
+                        }}>
+                          {scheduleBadge}
+                        </span>
+                      )}
                       {isCompleted && (
                         <span style={{
                           fontSize: '0.70rem',
                           fontWeight: 800,
                           color: '#059669',
-                          background: '#dcfce7',
+                          background: isDark ? 'rgba(16, 185, 129, 0.20)' : '#dcfce7',
+                          border: isDark ? '1px solid rgba(16, 185, 129, 0.4)' : 'none',
                           padding: '3px 9px',
                           borderRadius: '10px'
                         }}>
@@ -2901,7 +2941,7 @@ export const CellGroups: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <h2 style={{ fontSize: '1.24rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, lineHeight: 1.3 }}>
+                    <h2 style={{ fontSize: '1.24rem', fontWeight: 900, color: isDark ? '#f8fafc' : 'var(--text-main)', margin: 0, lineHeight: 1.3 }}>
                       {readingChapter.title}
                     </h2>
                   </div>
@@ -2909,7 +2949,7 @@ export const CellGroups: React.FC = () => {
                     type="button"
                     onClick={() => setReadingChapter(null)}
                     style={{
-                      background: 'var(--bg-card-subtle, #f1f5f9)',
+                      background: isDark ? 'rgba(255, 255, 255, 0.10)' : 'var(--bg-card-subtle, #f1f5f9)',
                       border: 'none',
                       borderRadius: '50%',
                       width: '34px',
@@ -2917,7 +2957,7 @@ export const CellGroups: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'var(--text-secondary, #64748b)',
+                      color: isDark ? '#f8fafc' : 'var(--text-secondary, #64748b)',
                       cursor: 'pointer',
                       fontWeight: 700,
                       fontSize: '0.90rem',
@@ -2931,12 +2971,13 @@ export const CellGroups: React.FC = () => {
                 {/* Texto Bíblico Base */}
                 {readingChapter.verse_reference && (
                   <div style={{
-                    background: 'var(--bg-card-subtle, #eff6ff)',
-                    borderLeft: '4px solid var(--accent-primary)',
+                    background: isDark ? 'rgba(30, 41, 59, 0.70)' : 'var(--bg-card-subtle, #eff6ff)',
+                    borderLeft: `4px solid ${isDark ? '#2dd4bf' : 'var(--accent-primary)'}`,
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #dbeafe)',
                     borderRadius: '14px',
                     padding: '12px 16px',
                     fontSize: '0.88rem',
-                    color: 'var(--text-main, #1e40af)',
+                    color: isDark ? '#ffffff' : 'var(--text-main, #1e40af)',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -2944,59 +2985,81 @@ export const CellGroups: React.FC = () => {
                   }}>
                     <span style={{ fontSize: '1.2rem' }}>📖</span>
                     <div>
-                      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8 }}>Texto Bíblico Base</div>
-                      <div>{readingChapter.verse_reference}</div>
+                      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8, color: isDark ? '#2dd4bf' : 'inherit' }}>Texto Bíblico Base</div>
+                      <div style={{ color: isDark ? '#ffffff' : 'inherit', fontWeight: 800 }}>{readingChapter.verse_reference}</div>
                     </div>
                   </div>
                 )}
 
                 {/* 1. DINÂMICA / QUEBRA-GELO */}
                 {readingChapter.icebreaker && (
-                  <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', borderRadius: '16px', padding: '14px 16px', border: '1px solid var(--panel-border, #e2e8f0)' }}>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    background: isDark ? 'rgba(99, 102, 241, 0.10)' : 'var(--bg-card-subtle, #f8fafc)',
+                    borderRadius: '16px',
+                    padding: '14px 16px',
+                    border: isDark ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid var(--panel-border, #e2e8f0)'
+                  }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#818cf8', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>🧊</span>
                       <span>Quebra-Gelo / Dinâmica de Abertura</span>
                     </div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                    <div style={{ fontSize: '0.86rem', color: isDark ? '#f1f5f9' : 'var(--text-secondary)', lineHeight: 1.55 }}>
                       {readingChapter.icebreaker}
                     </div>
                   </div>
                 )}
 
-                {/* 2. MINISTRAÇÃO & CONTEÚDO PRINCIPAL */}
-                {readingChapter.content_body && (
+                {/* 2. MINISTRAÇÃO & CONTEÚDO PRINCIPAL (Planejado no Studio) */}
+                {contentText && (
                   <div>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                      💡 Ministração & Palavra da Célula
+                    <div style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 900,
+                      color: isDark ? '#2dd4bf' : 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      marginBottom: '8px',
+                      letterSpacing: '0.03em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span>💡</span>
+                      <span>Ministração & Conteúdo do Estudo</span>
                     </div>
                     <div style={{
-                      fontSize: '0.90rem',
-                      color: 'var(--text-main)',
-                      lineHeight: 1.68,
+                      fontSize: '0.92rem',
+                      color: isDark ? '#f8fafc' : 'var(--text-main)',
+                      lineHeight: 1.7,
                       whiteSpace: 'pre-line',
-                      background: 'var(--bg-card, #ffffff)',
-                      padding: '16px',
-                      borderRadius: '16px',
-                      border: '1px solid var(--panel-border, #f1f5f9)',
-                      boxShadow: 'var(--shadow-sm)'
+                      background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
+                      padding: '18px',
+                      borderRadius: '18px',
+                      border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #f1f5f9)',
+                      boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : 'var(--shadow-sm)'
                     }}>
-                      {readingChapter.content_body}
+                      {contentText}
                     </div>
                   </div>
                 )}
 
-                {/* 3. PERGUNTAS PARA COMPARTILHAMENTO */}
-                {Array.isArray(readingChapter.questions) && readingChapter.questions.length > 0 && (
-                  <div style={{ background: 'var(--bg-card-subtle, #fdf4ff)', borderRadius: '16px', padding: '16px', border: '1px solid var(--panel-border, #f5d0fe)' }}>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', marginBottom: '10px' }}>
-                      💬 Perguntas para Edificação & Partilha
+                {/* 3. PERGUNTAS PARA COMPARTILHAMENTO (Planejado no Studio) */}
+                {questionsList.length > 0 && (
+                  <div style={{
+                    background: isDark ? 'rgba(168, 85, 247, 0.10)' : 'var(--bg-card-subtle, #fdf4ff)',
+                    borderRadius: '18px',
+                    padding: '16px 18px',
+                    border: isDark ? '1px solid rgba(168, 85, 247, 0.25)' : '1px solid var(--panel-border, #f5d0fe)'
+                  }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>💬</span>
+                      <span>Perguntas para Edificação & Partilha</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {readingChapter.questions.map((q, qIdx) => (
-                        <div key={qIdx} style={{ display: 'flex', gap: '10px', fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.45 }}>
+                      {questionsList.map((q, qIdx) => (
+                        <div key={qIdx} style={{ display: 'flex', gap: '10px', fontSize: '0.86rem', color: isDark ? '#f8fafc' : 'var(--text-main)', lineHeight: 1.5, alignItems: 'flex-start' }}>
                           <span style={{
-                            width: '22px',
-                            height: '22px',
+                            width: '24px',
+                            height: '24px',
                             borderRadius: '50%',
                             background: '#c084fc',
                             color: '#ffffff',
@@ -3005,7 +3068,8 @@ export const CellGroups: React.FC = () => {
                             justifyContent: 'center',
                             fontSize: '0.72rem',
                             fontWeight: 800,
-                            flexShrink: 0
+                            flexShrink: 0,
+                            marginTop: '1px'
                           }}>
                             {qIdx + 1}
                           </span>
@@ -3018,53 +3082,83 @@ export const CellGroups: React.FC = () => {
 
                 {/* 4. DESAFIO PRÁTICO DA SEMANA */}
                 {readingChapter.practical_challenge && (
-                  <div style={{ background: 'var(--bg-card-subtle, #fffbeb)', borderRadius: '16px', padding: '14px 16px', border: '1px solid var(--panel-border, #fde68a)' }}>
-                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#d97706', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    background: isDark ? 'rgba(217, 119, 6, 0.10)' : 'var(--bg-card-subtle, #fffbeb)',
+                    borderRadius: '16px',
+                    padding: '14px 16px',
+                    border: isDark ? '1px solid rgba(217, 119, 6, 0.25)' : '1px solid var(--panel-border, #fde68a)'
+                  }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>🎯</span>
                       <span>Desafio Prático da Semana</span>
                     </div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary, #92400e)', lineHeight: 1.55 }}>
+                    <div style={{ fontSize: '0.86rem', color: isDark ? '#fde68a' : 'var(--text-secondary, #92400e)', lineHeight: 1.55 }}>
                       {readingChapter.practical_challenge}
                     </div>
                   </div>
                 )}
 
-                {/* 5. MÍDIA DE APOIO (VÍDEO / PDF) */}
-                {readingChapter.media_url && (
-                  <a
-                    href={readingChapter.media_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: '12px 16px',
-                      background: 'var(--bg-card-subtle, #f8fafc)',
-                      borderRadius: '14px',
-                      border: '1px solid var(--panel-border, #e2e8f0)',
-                      color: 'var(--accent-primary)',
-                      textDecoration: 'none',
-                      fontWeight: 800,
-                      fontSize: '0.84rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <span>{readingChapter.media_type === 'VIDEO' ? '🎥 Assistir Vídeo Complementar' : '📕 Abrir Arquivo PDF do Estudo'}</span>
-                  </a>
+                {/* 5. MÍDIA DE APOIO (VÍDEO YOUTUBE / PDF / DRIVE) */}
+                {mediaLink && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {isVideo && videoEmbedUrl && (
+                      <div style={{
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        aspectRatio: '16 / 9',
+                        width: '100%',
+                        background: '#000000',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)'
+                      }}>
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={videoEmbedUrl}
+                          title="Vídeo de Apoio do Estudo"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{ border: 'none', width: '100%', height: '100%', display: 'block' }}
+                        />
+                      </div>
+                    )}
+
+                    <a
+                      href={mediaLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '14px 18px',
+                        background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f8fafc)',
+                        borderRadius: '14px',
+                        border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border, #e2e8f0)',
+                        color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                        textDecoration: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                    >
+                      <span>{isVideo ? '🎥 Abrir Vídeo no YouTube' : isPdf ? '📕 Abrir Arquivo PDF do Estudo' : '🔗 Abrir Material de Apoio'}</span>
+                      <span style={{ fontSize: '0.90rem' }}>↗</span>
+                    </a>
+                  </div>
                 )}
 
                 {/* BOTÕES DE AÇÃO INFERIORES */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                   {isCompleted ? (
                     <button
                       type="button"
                       onClick={(e) => handleToggleCompletion(chapterId, e)}
                       style={{
                         width: '100%',
-                        background: '#ecfdf5',
-                        color: '#059669',
-                        border: '1.5px solid #a7f3d0',
+                        background: isDark ? 'rgba(16, 185, 129, 0.20)' : '#ecfdf5',
+                        color: isDark ? '#34d399' : '#059669',
+                        border: '1.5px solid #10b981',
                         borderRadius: '16px',
                         padding: '14px',
                         fontWeight: 800,
@@ -3113,9 +3207,9 @@ export const CellGroups: React.FC = () => {
                       width: '100%',
                       padding: '12px',
                       borderRadius: '14px',
-                      border: '1px solid var(--panel-border, #e2e8f0)',
-                      background: 'var(--bg-card, #ffffff)',
-                      color: 'var(--text-secondary, #64748b)',
+                      border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #e2e8f0)',
+                      background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)',
+                      color: isDark ? '#cbd5e1' : 'var(--text-secondary, #64748b)',
                       fontWeight: 800,
                       fontSize: '0.82rem',
                       cursor: 'pointer'
