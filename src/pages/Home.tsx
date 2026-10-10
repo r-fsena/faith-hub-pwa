@@ -106,7 +106,12 @@ export const Home: React.FC<HomeProps> = ({
     }
 
     const dev = await fetchTodayDevotional(branding.organization_id);
-    setTodayDevotional(dev || null);
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dev && (dev.available_date === todayStr || dev.date === todayStr)) {
+      setTodayDevotional(dev);
+    } else {
+      setTodayDevotional(null);
+    }
 
     const events = await fetchEvents(branding.organization_id, currentCampusId);
     if (events && Array.isArray(events) && events.length > 0) {
@@ -311,10 +316,10 @@ export const Home: React.FC<HomeProps> = ({
                 PALAVRA & ENSINO
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
-                {todayDevotional?.title || 'Devocional Diário'}
+                {todayDevotional?.title || 'Estudos & Devocionais'}
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                {todayDevotional?.verse_reference || 'Toque para ler mensagens e estudos bíblicos'}
+                {todayDevotional?.verse_reference || 'Toque para acessar os estudos e palavras anteriores'}
               </p>
             </div>
           </div>

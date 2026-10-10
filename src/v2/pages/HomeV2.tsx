@@ -115,10 +115,15 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       setActiveBroadcast(data);
     });
 
-    // 2. Devocional do Dia (SWR)
+    // 2. Devocional do Dia (SWR - estritamente validado para a data de hoje)
     swrFetch(`today_devotional_${orgId}`, () => fetchTodayDevotional(orgId), { persistLocal: true })
       .then(({ data }) => {
-        setTodayDevotional(data || null);
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (data && (data.available_date === todayStr || data.date === todayStr)) {
+          setTodayDevotional(data);
+        } else {
+          setTodayDevotional(null);
+        }
       });
 
     // 3. Eventos em Destaque (SWR)
@@ -397,7 +402,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em'
               }}>
-                PALAVRA & ESTUDO DIÁRIO
+                {todayDevotional ? 'PALAVRA & ESTUDO DIÁRIO' : 'PALAVRA & ENSINO'}
               </span>
               <h4 style={{ 
                 fontSize: '0.92rem', 
@@ -408,7 +413,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap'
               }}>
-                {todayDevotional?.title || 'Devocional de Hoje'}
+                {todayDevotional?.title || 'Estudos & Devocionais'}
               </h4>
               <p style={{ 
                 fontSize: '0.74rem', 
@@ -418,7 +423,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap'
               }}>
-                {todayDevotional?.verse_reference || 'Toque para ler a mensagem bíblica edificante'}
+                {todayDevotional?.verse_reference || 'Toque para acessar os estudos e palavras anteriores'}
               </p>
             </div>
           </div>

@@ -287,37 +287,25 @@ export const Devotionals: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
-  // 1. Devocional de Hoje (Fixo no topo da tela)
+  // 1. Devocional de Hoje (Estritamente agendado para o dia de hoje)
   const todayDevotional = useMemo(() => {
-    const exactToday = allDevotionals.find(d => d.raw_date === todayStr);
-    if (exactToday) return exactToday;
-
-    const pastOrToday = allDevotionals.filter(d => (d.raw_date || '') <= todayStr);
-    if (pastOrToday.length > 0) {
-      return pastOrToday[pastOrToday.length - 1];
-    }
-
-    return allDevotionals[0] || null;
+    return allDevotionals.find(d => d.raw_date === todayStr) || null;
   }, [allDevotionals, todayStr]);
 
-  // 2. Próximas Mensagens (Limitado estritamente aos próximos 7 dias à frente / semana seguinte)
+  // 2. Próximas Mensagens (Limitado estritamente aos próximos 7 dias à frente da data de hoje)
   const upcomingDevotionals = useMemo(() => {
-    if (!todayDevotional) return [];
-    const thresholdDate = todayDevotional.raw_date || todayStr;
     return allDevotionals
-      .filter(d => (d.raw_date || '') > thresholdDate && d.id !== todayDevotional.id)
+      .filter(d => (d.raw_date || '') > todayStr)
       .sort((a, b) => (a.raw_date || '').localeCompare(b.raw_date || ''))
       .slice(0, 7); // Apenas os próximos 7 dias!
-  }, [allDevotionals, todayDevotional, todayStr]);
+  }, [allDevotionals, todayStr]);
 
-  // 3. Dias Anteriores (Datas passadas < todayStr)
+  // 3. Dias Anteriores (Datas anteriores à data de hoje)
   const pastDevotionals = useMemo(() => {
-    if (!todayDevotional) return [];
-    const thresholdDate = todayDevotional.raw_date || todayStr;
     return allDevotionals
-      .filter(d => (d.raw_date || '') < thresholdDate && d.id !== todayDevotional.id)
+      .filter(d => (d.raw_date || '') < todayStr)
       .sort((a, b) => (b.raw_date || '').localeCompare(a.raw_date || ''));
-  }, [allDevotionals, todayDevotional, todayStr]);
+  }, [allDevotionals, todayStr]);
 
   // Filtro de Dias Anteriores no Modal
   const filteredPastDevotionals = useMemo(() => {
@@ -447,10 +435,7 @@ export const Devotionals: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* ======================================================= */}
-          {/* 1. CARD DE HOJE (SEMPRE FIXO NO TOPO DA TELA)          */}
-          {/* ======================================================= */}
-          {todayDevotional && (
+          {todayDevotional ? (
             <section style={{ marginBottom: '28px' }}>
               <div 
                 style={{
@@ -621,6 +606,69 @@ export const Devotionals: React.FC = () => {
                   <span>📖</span>
                   <span>{completedIds.includes(todayDevotional.id) ? 'Rever Estudo da Palavra' : 'Abrir Estudo Completo da Palavra'}</span>
                 </button>
+              </div>
+            </section>
+          ) : (
+            <section style={{ marginBottom: '28px' }}>
+              <div 
+                style={{
+                  background: isDark ? 'rgba(30, 41, 59, 0.60)' : 'var(--bg-card, #ffffff)',
+                  borderRadius: '24px',
+                  padding: 'clamp(20px, 4vw, 28px)',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1.5px solid var(--panel-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '12px'
+                }}
+              >
+                <div style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '18px',
+                  background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light, #e0f2fe)',
+                  color: isDark ? '#2dd4bf' : 'var(--accent-primary, #0284c7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.6rem'
+                }}>
+                  ✨
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : 'var(--text-main)', margin: 0 }}>
+                    Nenhum devocional agendado para hoje
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: isDark ? '#cbd5e1' : 'var(--text-muted)', margin: '6px 0 0 0', maxWidth: '380px', lineHeight: 1.55 }}>
+                    Novas palavras e reflexões diárias serão publicadas em breve. Você pode rever as mensagens anteriores ou explorar os estudos bíblicos de células.
+                  </p>
+                </div>
+                {pastDevotionals.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPastModal(true)}
+                    style={{
+                      marginTop: '4px',
+                      padding: '10px 18px',
+                      borderRadius: '14px',
+                      border: 'none',
+                      background: isDark ? '#2dd4bf' : 'var(--accent-primary)',
+                      color: isDark ? '#042f2e' : '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+                    }}
+                  >
+                    <span>🕒</span>
+                    <span>Rever Dias Anteriores ({pastDevotionals.length})</span>
+                  </button>
+                )}
               </div>
             </section>
           )}
