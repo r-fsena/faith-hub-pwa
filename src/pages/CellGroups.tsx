@@ -2878,6 +2878,43 @@ export const CellGroups: React.FC = () => {
             const chapterId = readingChapter.id || String(readingChapter.chapter_number);
             const isCompleted = completedChapterIds.includes(chapterId);
 
+            // Parser seguro de markdown (Negrito, Itálico, Sublinhado, Títulos, Listas, Citações)
+            const formatStudyMarkdown = (text: string): string => {
+              if (!text) return '';
+              let safe = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+              safe = safe.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/gi, '<u>$1</u>');
+
+              const lines = safe.split('\n');
+              const parsed: string[] = [];
+
+              for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                if (/^#\s+(.*)/.test(line)) {
+                  line = line.replace(/^#\s+(.*)/, `<h3 style="font-size: 1.10rem; font-weight: 900; margin: 12px 0 4px 0; color: ${isDark ? '#2dd4bf' : 'var(--accent-primary, #0ea5e9)'};">$1</h3>`);
+                } else if (/^##\s+(.*)/.test(line)) {
+                  line = line.replace(/^##\s+(.*)/, `<h4 style="font-size: 1.00rem; font-weight: 800; margin: 10px 0 4px 0; color: ${isDark ? '#f8fafc' : '#1e293b'};">$1</h4>`);
+                } else if (/^###\s+(.*)/.test(line)) {
+                  line = line.replace(/^###\s+(.*)/, `<h5 style="font-size: 0.90rem; font-weight: 800; margin: 8px 0 4px 0; color: ${isDark ? '#2dd4bf' : 'var(--accent-primary, #0ea5e9)'};">$1</h5>`);
+                } else if (/^&gt;\s*(.*)/.test(line)) {
+                  line = line.replace(/^&gt;\s*(.*)/, `<blockquote style="border-left: 3px solid ${isDark ? '#2dd4bf' : '#0284c7'}; background: ${isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc'}; padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-style: italic; color: ${isDark ? '#cbd5e1' : '#475569'};">$1</blockquote>`);
+                } else if (/^[\•\-\*]\s+(.*)/.test(line)) {
+                  line = line.replace(/^[\•\-\*]\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="color: ${isDark ? '#2dd4bf' : '#0284c7'}; font-weight: 900;">•</span><span style="flex: 1;">$1</span></div>`);
+                } else if (/^(\d+)\.\s+(.*)/.test(line)) {
+                  line = line.replace(/^(\d+)\.\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="font-weight: 800; color: ${isDark ? '#2dd4bf' : '#0284c7'}; min-width: 18px;">$1.</span><span style="flex: 1;">$2</span></div>`);
+                }
+
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                line = line.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                line = line.replace(/__(.*?)__/g, '<u>$1</u>');
+                parsed.push(line);
+              }
+
+              return parsed.join('<br />');
+            };
+
             // Resolução unificada de campos configurados no Studio Web
             const contentText = (readingChapter.content_text || readingChapter.content_body || '').trim();
             const rawQuestions = readingChapter.discussion_questions || readingChapter.questions;
@@ -3003,9 +3040,10 @@ export const CellGroups: React.FC = () => {
                       <span>🧊</span>
                       <span>Quebra-Gelo / Dinâmica de Abertura</span>
                     </div>
-                    <div style={{ fontSize: '0.86rem', color: isDark ? '#f1f5f9' : 'var(--text-secondary)', lineHeight: 1.55 }}>
-                      {readingChapter.icebreaker}
-                    </div>
+                    <div
+                      style={{ fontSize: '0.86rem', color: isDark ? '#f1f5f9' : 'var(--text-secondary)', lineHeight: 1.6 }}
+                      dangerouslySetInnerHTML={{ __html: formatStudyMarkdown(readingChapter.icebreaker) }}
+                    />
                   </div>
                 )}
 
@@ -3026,19 +3064,19 @@ export const CellGroups: React.FC = () => {
                       <span>💡</span>
                       <span>Ministração & Conteúdo do Estudo</span>
                     </div>
-                    <div style={{
-                      fontSize: '0.92rem',
-                      color: isDark ? '#f8fafc' : 'var(--text-main)',
-                      lineHeight: 1.7,
-                      whiteSpace: 'pre-line',
-                      background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
-                      padding: '18px',
-                      borderRadius: '18px',
-                      border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #f1f5f9)',
-                      boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : 'var(--shadow-sm)'
-                    }}>
-                      {contentText}
-                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.92rem',
+                        color: isDark ? '#f8fafc' : 'var(--text-main)',
+                        lineHeight: 1.7,
+                        background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
+                        padding: '18px',
+                        borderRadius: '18px',
+                        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #f1f5f9)',
+                        boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : 'var(--shadow-sm)'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: formatStudyMarkdown(contentText) }}
+                    />
                   </div>
                 )}
 
@@ -3092,9 +3130,10 @@ export const CellGroups: React.FC = () => {
                       <span>🎯</span>
                       <span>Desafio Prático da Semana</span>
                     </div>
-                    <div style={{ fontSize: '0.86rem', color: isDark ? '#fde68a' : 'var(--text-secondary, #92400e)', lineHeight: 1.55 }}>
-                      {readingChapter.practical_challenge}
-                    </div>
+                    <div
+                      style={{ fontSize: '0.86rem', color: isDark ? '#fde68a' : 'var(--text-secondary, #92400e)', lineHeight: 1.6 }}
+                      dangerouslySetInnerHTML={{ __html: formatStudyMarkdown(readingChapter.practical_challenge) }}
+                    />
                   </div>
                 )}
 
