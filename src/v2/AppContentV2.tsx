@@ -22,12 +22,14 @@ import { ChurchIcon, CrossIcon } from './components/Icons';
 import { HomeV2 } from './pages/HomeV2';
 import { Devotionals } from '../pages/Devotionals';
 import { CellGroups } from '../pages/CellGroups';
+import { Store } from '../pages/Store';
 import { Profile } from '../pages/Profile';
 import { WelcomeLoginScreenV2 } from './components/WelcomeLoginScreenV2';
 import { Prayers } from '../pages/Prayers';
 import { Events } from '../pages/Events';
 import { Bible } from '../pages/Bible';
 import { Giving } from '../pages/Giving';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 
@@ -120,6 +122,14 @@ export const AppContentV2: React.FC = () => {
 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
+    setVisitedTabs(prev => {
+      if (!prev.has(tab)) {
+        const next = new Set(prev);
+        next.add(tab);
+        return next;
+      }
+      return prev;
+    });
     setSubView('none');
   };
 
@@ -318,19 +328,11 @@ export const AppContentV2: React.FC = () => {
             )}
 
             {/* 4. LOJA / PDV (Renderizado sob demanda e preservado) */}
-            {visitedTabs.has('store') && (
+            {(visitedTabs.has('store') || activeTab === 'store') && (
               <div style={{ display: activeTab === 'store' ? 'block' : 'none' }}>
-                {!isAuthenticated ? (
-                  <AuthGate 
-                    featureName="Loja Oficial"
-                    featureDescription="Compre livros, devocionais, vestuário e itens com retirada expressa."
-                    onGoToLogin={() => handleTabChange('profile')}
-                    onGoToBible={() => setSubView('bible')}
-                    onBack={() => handleTabChange('home')}
-                  />
-                ) : (
+                <ErrorBoundary fallbackTitle="Erro ao carregar a Loja Oficial">
                   <Store />
-                )}
+                </ErrorBoundary>
               </div>
             )}
 

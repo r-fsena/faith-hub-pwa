@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
+import { useTheme } from '../context/ThemeContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { fetchPdvProducts, getActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
@@ -19,6 +20,8 @@ export const Store: React.FC = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const { branding } = useBranding();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const { getFeatureConfig } = useFeatureFlags();
 
   // Configuração via Feature Flag (Hierarquia Tenant -> Campus)
@@ -43,9 +46,40 @@ export const Store: React.FC = () => {
     localStorage.setItem('faithhub_pwa_catalog_layout_pref', mode);
   };
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeCampusId, setActiveCampusId] = useState<string>(getActiveCampusId());
+  const orgId = branding.organization_id || 'org_default';
+  const cacheKey = `faithhub_cached_pdv_products_${orgId}`;
+
+  // Helper seguro para imagens que nunca quebra na deserialização
+  const parseProductImages = (raw: any): string[] => {
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    if (typeof raw === 'string' && raw.trim()) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        return [raw.trim()];
+      } catch {
+        return [raw.trim()];
+      }
+    }
+    return [];
+  };
+
+  // Carrega produtos do cache local para render imediato sem telas vazias
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem(cacheKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  const [loading, setLoading] = useState<boolean>(() => products.length === 0);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeCampusId, setActiveCampusId] = useState<string>(() => getActiveCampusId());
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
   const [groups, setGroups] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'catalog' | 'my_orders'>('catalog');
@@ -55,31 +89,47 @@ export const Store: React.FC = () => {
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
   const [itemObs, setItemObs] = useState<string>('');
 
-  const loadProductsFromBackend = async (campusId?: string) => {
+  const loadProductsFromBackend = useCallback(async (campusId?: string, isManualRefresh = false) => {
     try {
-      setLoading(true);
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else if (products.length === 0) {
+        setLoading(true);
+      }
+      setErrorMessage(null);
+
       const targetCampus = campusId !== undefined ? campusId : activeCampusId;
-      const orgId = branding.organization_id || 'org_default';
-      const backendProducts = await fetchPdvProducts(orgId, targetCampus);
+      const effectiveOrgId = branding.organization_id || 'org_default';
+      const backendProducts = await fetchPdvProducts(effectiveOrgId, targetCampus);
+
       if (backendProducts && Array.isArray(backendProducts)) {
         const mapped: Product[] = backendProducts.map((p: any) => ({
-          id: p.id,
-          name: p.name || p.title,
+          id: p.id || String(Math.random()),
+          name: p.name || p.title || 'Produto sem nome',
           category: (p.category || 'Geral').trim(),
           description: p.description || '',
           price: Number(p.price) || 0,
-          image_urls: Array.isArray(p.image_urls) ? p.image_urls : (typeof p.image_urls === 'string' ? JSON.parse(p.image_urls || '[]') : [])
+          image_urls: parseProductImages(p.image_urls)
         }));
         setProducts(mapped);
+        try {
+          localStorage.setItem(`faithhub_cached_pdv_products_${effectiveOrgId}`, JSON.stringify(mapped));
+        } catch {}
       } else {
-        setProducts([]);
+        if (products.length === 0) {
+          setProducts([]);
+        }
       }
-    } catch (err) {
-      console.error('Erro ao carregar produtos:', err);
+    } catch (err: any) {
+      console.error('Erro ao carregar catálogo da loja:', err);
+      if (products.length === 0) {
+        setErrorMessage('Não foi possível conectar ao catálogo. Verifique sua conexão e tente novamente.');
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, [activeCampusId, branding.organization_id, products.length]);
 
   useEffect(() => {
     loadProductsFromBackend(activeCampusId);
@@ -97,7 +147,7 @@ export const Store: React.FC = () => {
     return () => {
       window.removeEventListener('pwa-campus-changed', handleCampusChanged);
     };
-  }, [branding.organization_id]);
+  }, [loadProductsFromBackend]);
 
   // Recalcula grupos sempre que os produtos ou o branding mudarem
   useEffect(() => {
@@ -105,7 +155,6 @@ export const Store: React.FC = () => {
   }, [products, branding.store_config]);
 
   const updateVisibleGroups = (productList: Product[]) => {
-    // 1. Extrai apenas as categorias únicas que POSSUEM produtos cadastrados
     const existingCategories = Array.from(
       new Set(productList.map(p => p.category?.trim()).filter(Boolean))
     );
@@ -116,15 +165,13 @@ export const Store: React.FC = () => {
       return;
     }
 
-    // 2. Se a igreja tiver configurado uma lista/ordem de grupos personalizada
     const configuredList = branding.store_config?.product_groups;
     if (Array.isArray(configuredList) && configuredList.length > 0) {
       const activeConfiguredNames = configuredList
         .filter((g: any) => typeof g === 'string' ? true : g.active !== false)
         .map((g: any) => typeof g === 'string' ? g.trim() : g.name?.trim())
-        .filter((name: string) => existingCategories.includes(name)); // SÓ inclui se houver produtos
+        .filter((name: string) => existingCategories.includes(name));
 
-      // Inclui categorias existentes que porventura ainda não estejam na lista de ordenação
       const missing = existingCategories.filter(cat => !activeConfiguredNames.includes(cat));
       const finalList = [...activeConfiguredNames, ...missing];
       setGroups(finalList);
@@ -176,30 +223,76 @@ export const Store: React.FC = () => {
     setItemObs('');
   };
 
+  // Cores adaptativas para Modo Claro e Escuro
+  const cardBg = isDark ? 'var(--v2-card-bg, #111827)' : '#ffffff';
+  const cardBorder = isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--panel-border, #e2e8f0)';
+  const secondaryBg = isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc';
+  const textTitleColor = isDark ? '#f8fafc' : 'var(--text-main, #0f172a)';
+  const textMutedColor = isDark ? '#94a3b8' : 'var(--text-muted, #64748b)';
+
   return (
-    <div className="pwa-content animate-fade-in">
+    <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px' }}>
       
-      {/* Header com Switch entre Catálogo e Meus Pedidos */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+      {/* Header com Switch entre Catálogo e Meus Pedidos + Botão de Recarregar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '8px',
+        flexWrap: 'wrap',
+        marginBottom: '14px'
+      }}>
         <div>
-          <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
+          <h2 className="section-title" style={{ fontSize: '1.25rem', color: textTitleColor, margin: '0 0 2px 0' }}>
             {viewMode === 'catalog' ? (branding.store_title || 'Loja Oficial') : 'Meus Pedidos'}
           </h2>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-            {viewMode === 'catalog' ? (branding.store_subtitle || 'Livros, vestuário, devocionais e itens com retirada expressa') : 'Acompanhe o status do preparo dos seus itens'}
+          <p style={{ fontSize: '0.74rem', color: textMutedColor, margin: 0 }}>
+            {viewMode === 'catalog' 
+              ? (branding.store_subtitle || 'Livros, vestuário, devocionais e itens com retirada expressa') 
+              : 'Acompanhe o status do preparo dos seus itens'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Seletor Rápido de Layout Lista/Grade se permitido pela igreja */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Botão Ergonômico de Recarregar / Atualizar Catálogo */}
+          <button
+            type="button"
+            onClick={() => loadProductsFromBackend(activeCampusId, true)}
+            disabled={loading || isRefreshing}
+            title="Recarregar catálogo de produtos"
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+              color: isDark ? '#f8fafc' : 'var(--text-main)',
+              border: 'none',
+              padding: '7px 10px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.74rem',
+              cursor: (loading || isRefreshing) ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'opacity 0.2s ease',
+              opacity: (loading || isRefreshing) ? 0.6 : 1
+            }}
+          >
+            <span style={{ display: 'inline-block' }} className={(loading || isRefreshing) ? 'animate-spin' : ''}>
+              🔄
+            </span>
+            <span style={{ fontSize: '0.68rem' }}>
+              {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+            </span>
+          </button>
+
+          {/* Seletor Rápido de Layout Lista/Grade se permitido pela congregação */}
           {viewMode === 'catalog' && layoutConfig?.allow_user_toggle !== false && (
             <div style={{
               display: 'flex',
-              background: '#f1f5f9',
+              background: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
               padding: '3px',
               borderRadius: '10px',
               gap: '2px',
-              border: '1px solid var(--panel-border)'
+              border: cardBorder
             }}>
               <button
                 type="button"
@@ -209,9 +302,9 @@ export const Store: React.FC = () => {
                   border: 'none',
                   padding: '5px 8px',
                   borderRadius: '7px',
-                  background: activeLayout === 'list' ? '#ffffff' : 'transparent',
-                  color: activeLayout === 'list' ? 'var(--accent-primary)' : 'var(--text-muted)',
-                  boxShadow: activeLayout === 'list' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  background: activeLayout === 'list' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                  color: activeLayout === 'list' ? 'var(--accent-primary)' : textMutedColor,
+                  boxShadow: activeLayout === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   fontSize: '0.74rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -231,9 +324,9 @@ export const Store: React.FC = () => {
                   border: 'none',
                   padding: '5px 8px',
                   borderRadius: '7px',
-                  background: activeLayout === 'grid' ? '#ffffff' : 'transparent',
-                  color: activeLayout === 'grid' ? 'var(--accent-primary)' : 'var(--text-muted)',
-                  boxShadow: activeLayout === 'grid' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  background: activeLayout === 'grid' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                  color: activeLayout === 'grid' ? 'var(--accent-primary)' : textMutedColor,
+                  boxShadow: activeLayout === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   fontSize: '0.74rem',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -248,6 +341,7 @@ export const Store: React.FC = () => {
             </div>
           )}
 
+          {/* Switch Catálogo / Meus Pedidos */}
           <button
             type="button"
             onClick={() => {
@@ -280,22 +374,30 @@ export const Store: React.FC = () => {
           ======================================================== */}
       {viewMode === 'catalog' ? (
         <>
-          {/* Segmented Filter Bar com Grupos Ordenados (só exibe se houver grupos com produtos) */}
+          {/* Segmented Filter Bar com Categorias */}
           {groups.length > 0 && (
-            <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
+            <div className="no-scrollbar" style={{
+              display: 'flex',
+              gap: '8px',
+              overflowX: 'auto',
+              paddingBottom: '8px',
+              marginBottom: '10px',
+              WebkitOverflowScrolling: 'touch'
+            }}>
               <button
                 type="button"
                 onClick={() => setSelectedGroup('ALL')}
                 style={{
                   padding: '7px 14px',
                   borderRadius: '999px',
-                  border: '1px solid var(--panel-border)',
-                  background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : '#ffffff',
-                  color: selectedGroup === 'ALL' ? '#ffffff' : 'var(--text-main)',
+                  border: selectedGroup === 'ALL' ? 'none' : cardBorder,
+                  background: selectedGroup === 'ALL' ? 'var(--accent-primary)' : (isDark ? 'rgba(255,255,255,0.06)' : '#ffffff'),
+                  color: selectedGroup === 'ALL' ? '#ffffff' : textTitleColor,
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  boxShadow: selectedGroup === 'ALL' ? '0 2px 6px rgba(15,118,110,0.3)' : 'none'
                 }}
               >
                 Todos ({products.length})
@@ -304,6 +406,7 @@ export const Store: React.FC = () => {
               {groups.map((group) => {
                 const count = products.filter(p => p.category === group).length;
                 if (count === 0) return null;
+                const isSelected = selectedGroup === group;
                 return (
                   <button
                     key={group}
@@ -312,13 +415,14 @@ export const Store: React.FC = () => {
                     style={{
                       padding: '7px 14px',
                       borderRadius: '999px',
-                      border: '1px solid var(--panel-border)',
-                      background: selectedGroup === group ? 'var(--accent-primary)' : '#ffffff',
-                      color: selectedGroup === group ? '#ffffff' : 'var(--text-main)',
+                      border: isSelected ? 'none' : cardBorder,
+                      background: isSelected ? 'var(--accent-primary)' : (isDark ? 'rgba(255,255,255,0.06)' : '#ffffff'),
+                      color: isSelected ? '#ffffff' : textTitleColor,
                       fontSize: '0.75rem',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      boxShadow: isSelected ? '0 2px 6px rgba(15,118,110,0.3)' : 'none'
                     }}
                   >
                     {group} ({count})
@@ -328,23 +432,95 @@ export const Store: React.FC = () => {
             </div>
           )}
 
-          {/* Grid de Produtos */}
-          {loading ? (
-            <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ fontSize: '1.8rem', marginBottom: '10px' }} className="animate-spin">🔄</div>
-              <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>
-                Carregando catálogo de produtos...
+          {/* Mensagem de Erro com Botão de Tentar Novamente */}
+          {errorMessage && (
+            <div style={{
+              background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '18px',
+              padding: '20px',
+              textAlign: 'center',
+              marginBottom: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <div style={{ fontSize: '1.8rem' }}>⚠️</div>
+              <p style={{ fontSize: '0.84rem', color: isDark ? '#fca5a5' : '#991b1b', margin: 0, fontWeight: 600 }}>
+                {errorMessage}
+              </p>
+              <button
+                type="button"
+                className="btn-pwa-primary"
+                onClick={() => loadProductsFromBackend(activeCampusId, true)}
+                style={{ width: 'auto', padding: '8px 18px', fontSize: '0.80rem' }}
+              >
+                🔄 Tentar Novamente
+              </button>
+            </div>
+          )}
+
+          {/* Carregando ou Catálogo Vazio */}
+          {loading && products.length === 0 ? (
+            <div style={{
+              background: cardBg,
+              borderRadius: '20px',
+              padding: '40px 20px',
+              textAlign: 'center',
+              border: cardBorder,
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: '10px' }} className="animate-spin">🔄</div>
+              <p style={{ fontSize: '0.84rem', fontWeight: 700, color: textMutedColor, margin: 0 }}>
+                Carregando catálogo da loja...
               </p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🛍️</div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-                Nenhum produto cadastrado na loja
+            <div style={{
+              background: cardBg,
+              borderRadius: '20px',
+              padding: '36px 20px',
+              textAlign: 'center',
+              border: cardBorder,
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>🛍️</div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: textTitleColor, margin: 0 }}>
+                Nenhum produto encontrado
               </h3>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
-                Os itens de livraria, vestuário e produtos cadastrados no Portal Web aparecerão aqui automaticamente.
+              <p style={{ fontSize: '0.78rem', color: textMutedColor, margin: 0, lineHeight: 1.45, maxWidth: '320px' }}>
+                {selectedGroup !== 'ALL' 
+                  ? `Não há produtos cadastrados na categoria "${selectedGroup}".`
+                  : 'Os itens de livraria, vestuário e produtos cadastrados no Portal Web aparecerão aqui automaticamente.'}
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGroup('ALL');
+                  loadProductsFromBackend(activeCampusId, true);
+                }}
+                style={{
+                  marginTop: '10px',
+                  background: 'var(--accent-primary-light)',
+                  color: 'var(--accent-primary)',
+                  border: 'none',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🔄</span> Atualizar Catálogo
+              </button>
             </div>
           ) : activeLayout === 'grid' ? (
             /* ========================================================
@@ -360,10 +536,10 @@ export const Store: React.FC = () => {
                   key={prod.id}
                   onClick={() => handleOpenProductModal(prod)}
                   style={{
-                    background: '#ffffff',
+                    background: cardBg,
                     borderRadius: '18px',
                     padding: '10px',
-                    border: '1px solid var(--panel-border)',
+                    border: cardBorder,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -379,18 +555,19 @@ export const Store: React.FC = () => {
                       aspectRatio: '1 / 1',
                       borderRadius: '14px',
                       overflow: 'hidden',
-                      background: '#f8fafc',
+                      background: secondaryBg,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginBottom: '8px',
-                      border: '1px solid #f1f5f9',
+                      border: cardBorder,
                       position: 'relative'
                     }}>
                       {prod.image_urls && prod.image_urls[0] ? (
                         <img
                           src={prod.image_urls[0]}
                           alt={prod.name}
+                          loading="lazy"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : (
@@ -400,7 +577,7 @@ export const Store: React.FC = () => {
                         position: 'absolute',
                         top: '6px',
                         left: '6px',
-                        background: 'rgba(255,255,255,0.92)',
+                        background: isDark ? 'rgba(17, 24, 39, 0.90)' : 'rgba(255,255,255,0.92)',
                         backdropFilter: 'blur(4px)',
                         padding: '2px 6px',
                         borderRadius: '6px',
@@ -418,7 +595,7 @@ export const Store: React.FC = () => {
                     <div style={{
                       fontWeight: 800,
                       fontSize: '0.84rem',
-                      color: 'var(--text-main)',
+                      color: textTitleColor,
                       lineHeight: 1.3,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
@@ -437,11 +614,11 @@ export const Store: React.FC = () => {
                     justifyContent: 'space-between',
                     marginTop: '10px',
                     paddingTop: '6px',
-                    borderTop: '1px solid #f8fafc'
+                    borderTop: cardBorder
                   }}>
                     <div>
-                      <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', display: 'block' }}>Preço</span>
-                      <span style={{ fontSize: '0.90rem', fontWeight: 900, color: '#059669' }}>
+                      <span style={{ fontSize: '0.62rem', color: textMutedColor, display: 'block' }}>Preço</span>
+                      <span style={{ fontSize: '0.90rem', fontWeight: 900, color: '#10b981' }}>
                         R$ {prod.price.toFixed(2).replace('.', ',')}
                       </span>
                     </div>
@@ -490,10 +667,10 @@ export const Store: React.FC = () => {
                   key={prod.id}
                   onClick={() => handleOpenProductModal(prod)}
                   style={{
-                    background: '#ffffff',
+                    background: cardBg,
                     borderRadius: '16px',
                     padding: '10px 14px',
-                    border: '1px solid var(--panel-border)',
+                    border: cardBorder,
                     boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                     display: 'flex',
                     alignItems: 'center',
@@ -505,25 +682,26 @@ export const Store: React.FC = () => {
                 >
                   {/* Miniatura ou Ícone à esquerda */}
                   <div style={{
-                    width: '48px',
-                    height: '48px',
+                    width: '50px',
+                    height: '50px',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    background: '#f8fafc',
+                    background: secondaryBg,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    border: '1px solid #f1f5f9'
+                    border: cardBorder
                   }}>
                     {prod.image_urls && prod.image_urls[0] ? (
                       <img
                         src={prod.image_urls[0]}
                         alt={prod.name}
+                        loading="lazy"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <span style={{ fontSize: '1.2rem' }}>🛍️</span>
+                      <span style={{ fontSize: '1.3rem' }}>🛍️</span>
                     )}
                   </div>
 
@@ -541,7 +719,7 @@ export const Store: React.FC = () => {
                     <div style={{
                       fontWeight: 800,
                       fontSize: '0.88rem',
-                      color: 'var(--text-main)',
+                      color: textTitleColor,
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -552,7 +730,7 @@ export const Store: React.FC = () => {
                     <div style={{
                       fontSize: '0.84rem',
                       fontWeight: 900,
-                      color: '#059669',
+                      color: '#10b981',
                       marginTop: '2px'
                     }}>
                       R$ {prod.price.toFixed(2).replace('.', ',')}
@@ -596,11 +774,11 @@ export const Store: React.FC = () => {
                       width: '28px',
                       height: '28px',
                       borderRadius: '50%',
-                      background: '#f8fafc',
+                      background: secondaryBg,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'var(--text-muted)',
+                      color: textMutedColor,
                       fontSize: '0.92rem',
                       fontWeight: 700
                     }}>
@@ -618,19 +796,27 @@ export const Store: React.FC = () => {
             ======================================================== */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '14px' }}>
           {myOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🛍️</div>
+            <div style={{ textAlign: 'center', padding: '40px 0', color: textMutedColor }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🛍️</div>
               <p style={{ fontSize: '0.85rem' }}>Você ainda não realizou nenhum pedido hoje.</p>
+              <button
+                type="button"
+                className="btn-pwa-primary"
+                onClick={() => setViewMode('catalog')}
+                style={{ width: 'auto', margin: '10px auto 0', padding: '8px 18px', fontSize: '0.80rem' }}
+              >
+                Explorar Catálogo
+              </button>
             </div>
           ) : (
             myOrders.map(order => (
               <div 
                 key={order.id}
                 style={{
-                  background: '#ffffff',
+                  background: cardBg,
                   borderRadius: '18px',
                   padding: '16px',
-                  border: '1px solid var(--panel-border)',
+                  border: cardBorder,
                   boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -639,8 +825,8 @@ export const Store: React.FC = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>{order.date}</span>
-                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-main)' }}>Pedido #{order.id}</div>
+                    <span style={{ fontSize: '0.70rem', color: textMutedColor }}>{order.date}</span>
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: textTitleColor }}>Pedido #{order.id}</div>
                   </div>
 
                   <span style={{
@@ -648,25 +834,41 @@ export const Store: React.FC = () => {
                     fontWeight: 800,
                     padding: '4px 10px',
                     borderRadius: '8px',
-                    background: order.status === 'PRONTO PARA RETIRADA' ? '#ecfdf5' : '#fffbeb',
-                    color: order.status === 'PRONTO PARA RETIRADA' ? '#059669' : '#d97706'
+                    background: order.status === 'PRONTO PARA RETIRADA' 
+                      ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5')
+                      : (isDark ? 'rgba(245, 158, 11, 0.2)' : '#fffbeb'),
+                    color: order.status === 'PRONTO PARA RETIRADA' ? '#10b981' : '#f59e0b'
                   }}>
                     {order.status === 'PRONTO PARA RETIRADA' ? '✓ PRONTO NO BALCÃO' : '⏳ EM PREPARO'}
                   </span>
                 </div>
 
-                <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{
+                  background: secondaryBg,
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
                   {order.items && order.items.map((it: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: textTitleColor }}>
                       <span>{it.qty}x {it.name} {it.obs ? `(${it.obs})` : ''}</span>
                       <span style={{ fontWeight: 700 }}>R$ {(it.price * it.qty).toFixed(2).replace('.', ',')}</span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border)', paddingTop: '10px', fontSize: '0.84rem' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>{order.delivery}</span>
-                  <span style={{ fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderTop: cardBorder,
+                  paddingTop: '10px',
+                  fontSize: '0.84rem'
+                }}>
+                  <span style={{ color: textMutedColor, fontSize: '0.76rem' }}>{order.delivery}</span>
+                  <span style={{ fontWeight: 800, color: '#10b981', fontSize: '1.05rem' }}>
                     Total: R$ {Number(order.total).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
@@ -676,7 +878,7 @@ export const Store: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Detalhes do Produto com Observação (BottomSheet Padrão Devocionais) */}
+      {/* Modal de Detalhes do Produto com Observação */}
       {selectedProductModal && (
         <BottomSheet
           isOpen={Boolean(selectedProductModal)}
@@ -697,7 +899,7 @@ export const Store: React.FC = () => {
                 }}>
                   {selectedProductModal.category}
                 </span>
-                <h2 style={{ fontSize: '1.20rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
+                <h2 style={{ fontSize: '1.20rem', fontWeight: 900, color: textTitleColor, margin: '4px 0 0 0' }}>
                   {selectedProductModal.name}
                 </h2>
               </div>
@@ -706,7 +908,7 @@ export const Store: React.FC = () => {
                 type="button"
                 onClick={() => setSelectedProductModal(null)}
                 style={{
-                  background: '#f1f5f9',
+                  background: isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9',
                   border: 'none',
                   borderRadius: '50%',
                   width: '32px',
@@ -714,7 +916,7 @@ export const Store: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#64748b',
+                  color: textMutedColor,
                   cursor: 'pointer',
                   fontWeight: 700,
                   fontSize: '0.90rem',
@@ -729,17 +931,17 @@ export const Store: React.FC = () => {
               <img
                 src={selectedProductModal.image_urls[0]}
                 alt={selectedProductModal.name}
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: '1px solid #e2e8f0' }}
+                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: cardBorder }}
               />
             )}
 
             <div style={{
-              background: '#f8fafc',
+              background: secondaryBg,
               padding: '14px',
               borderRadius: '14px',
-              border: '1px solid #e2e8f0',
+              border: cardBorder,
               fontSize: '0.86rem',
-              color: 'var(--text-secondary)',
+              color: isDark ? '#cbd5e1' : 'var(--text-secondary, #475569)',
               lineHeight: 1.5
             }}>
               {selectedProductModal.description || 'Item selecionado com carinho no catálogo da comunidade.'}
@@ -747,7 +949,7 @@ export const Store: React.FC = () => {
 
             {/* Campo de Observação por Item */}
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: textMutedColor, marginBottom: '4px', display: 'block' }}>
                 Observação para a Cozinha / Balcão (Opcional)
               </label>
               <input
@@ -760,10 +962,17 @@ export const Store: React.FC = () => {
             </div>
 
             {/* Rodapé com Preço e Botão */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--panel-border)', paddingTop: '14px', marginTop: '4px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: cardBorder,
+              paddingTop: '14px',
+              marginTop: '4px'
+            }}>
               <div>
-                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', display: 'block' }}>Preço Unitário</span>
-                <span style={{ fontSize: '1.30rem', fontWeight: 900, color: '#059669' }}>
+                <span style={{ fontSize: '0.70rem', color: textMutedColor, display: 'block' }}>Preço Unitário</span>
+                <span style={{ fontSize: '1.30rem', fontWeight: 900, color: '#10b981' }}>
                   R$ {selectedProductModal.price.toFixed(2).replace('.', ',')}
                 </span>
               </div>
