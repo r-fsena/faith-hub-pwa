@@ -17,26 +17,20 @@ const FastBootFallback = () => (
 const AppShell: React.FC = () => {
   const { isFeatureEnabled, isLoading } = useFeatureFlags();
 
-  // Avaliação de versão: Feature Flag por Tenant com suporte a override para testes (?v=2 / localStorage)
+  // V2 é a versão padrão ativa para todos os tenants e usuários
   const isV2 = useMemo(() => {
     if (typeof window !== 'undefined') {
+      // Limpa qualquer preferência legada que forçava v1 no dispositivo
+      if (localStorage.getItem('faithhub_force_v2') === 'false') {
+        localStorage.removeItem('faithhub_force_v2');
+      }
       const urlParams = new URLSearchParams(window.location.search);
-      const urlVersion = urlParams.get('v');
-      if (urlVersion === '2') {
-        localStorage.setItem('faithhub_force_v2', 'true');
-        return true;
+      if (urlParams.get('v') === '1') {
+        return false; // Diagnóstico técnico emergencial via URL
       }
-      if (urlVersion === '1') {
-        localStorage.setItem('faithhub_force_v2', 'false');
-        return false;
-      }
-
-      const localPref = localStorage.getItem('faithhub_force_v2');
-      if (localPref === 'true') return true;
-      if (localPref === 'false') return false;
     }
 
-    return isFeatureEnabled('pwa.v2_experience', false);
+    return isFeatureEnabled('pwa.v2_experience', true);
   }, [isFeatureEnabled]);
 
   if (isLoading) {
