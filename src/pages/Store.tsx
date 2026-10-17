@@ -31,6 +31,10 @@ export const Store: React.FC = () => {
   );
 
   const [userLayoutOverride, setUserLayoutOverride] = useState<'list' | 'grid' | null>(() => {
+    if (typeof window !== 'undefined') {
+      const urlLayout = new URLSearchParams(window.location.search).get('layout');
+      if (urlLayout === 'list' || urlLayout === 'grid') return urlLayout;
+    }
     return (localStorage.getItem('faithhub_pwa_catalog_layout_pref') as 'list' | 'grid') || null;
   });
 

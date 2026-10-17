@@ -287,10 +287,38 @@ export const Devotionals: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
-  // 1. Devocional de Hoje (Estritamente agendado para o dia de hoje)
+  const isDemo = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('demo') === 'true' ||
+    localStorage.getItem('faithhub_demo_auth') === 'true'
+  );
+
+  // 1. Devocional de Hoje (Estritamente agendado para o dia de hoje, ou mais recente em modo demonstração)
   const todayDevotional = useMemo(() => {
-    return allDevotionals.find(d => d.raw_date === todayStr) || null;
-  }, [allDevotionals, todayStr]);
+    const directToday = allDevotionals.find(d => d.raw_date === todayStr);
+    if (directToday) return directToday;
+    if (isDemo && allDevotionals.length > 0) {
+      const latest = allDevotionals[allDevotionals.length - 1];
+      return {
+        ...latest,
+        is_today: true,
+        date_badge: 'Hoje',
+        formatted_date: 'Hoje'
+      };
+    }
+    return null;
+  }, [allDevotionals, todayStr, isDemo]);
+
+  // Abertura automática de modais via URL para demonstração e capturas
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reading') === 'true' && todayDevotional) {
+      setReadingDevotional(todayDevotional);
+    }
+    if (urlParams.get('past') === 'true') {
+      setShowPastModal(true);
+    }
+  }, [todayDevotional]);
 
   // 2. Próximas Mensagens (Limitado estritamente aos próximos 7 dias à frente da data de hoje)
   const upcomingDevotionals = useMemo(() => {

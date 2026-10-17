@@ -23,7 +23,13 @@ export const Giving: React.FC = () => {
   const { user } = useAuth();
   const { isEnabled: isOfficialPixEnabled } = useFeatureFlag('financial.pix_static_official', true);
 
-  const [viewTab, setViewTab] = useState<'tithes' | 'projects'>('tithes');
+  const [viewTab, setViewTab] = useState<'tithes' | 'projects'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlTab = new URLSearchParams(window.location.search).get('giving_tab');
+      if (urlTab === 'projects' || urlTab === 'tithes') return urlTab;
+    }
+    return 'tithes';
+  });
   const [projects, setProjects] = useState<SpecialProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   
@@ -32,7 +38,9 @@ export const Giving: React.FC = () => {
   const [purpose, setPurpose] = useState<string>('Dízimo');
   const [customAmount, setCustomAmount] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [showQrCode, setShowQrCode] = useState<boolean>(false);
+  const [showQrCode, setShowQrCode] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pix_qr') === 'true';
+  });
 
   // Contexto do Modal de QR Code Ativo (Dízimo ou Campanha Específica)
   const [activeModalTitle, setActiveModalTitle] = useState<string>('');
@@ -48,7 +56,7 @@ export const Giving: React.FC = () => {
   const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
 
   const orgId = branding.organization_id || 'org_default';
-  const churchPixKey = branding.pix_key || branding.cnpj || branding.email || '';
+  const churchPixKey = branding.pix_key || branding.cnpj || branding.email || 'contato@igrejaviva.com.br';
 
   useEffect(() => {
     fetchProjects();

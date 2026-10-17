@@ -534,6 +534,55 @@ export async function updateCellGroupDetails(payload: any) {
   }
 }
 
+export async function recordCellMeeting(groupId: string, payload: {
+  meeting_date: string;
+  study_topic?: string;
+  offerings_amount?: number;
+  notes?: string;
+  attendees: Array<{
+    member_id?: string;
+    visitor_name?: string;
+    visitor_phone?: string;
+    status: 'PRESENT' | 'ABSENT' | 'JUSTIFIED';
+    justification?: string;
+  }>;
+}) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}/meetings`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Record cell meeting error", e);
+  }
+  return null;
+}
+
+export async function fetchCellMeetings(groupId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}/meetings`, { headers });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Fetch cell meetings fallback", e);
+  }
+  return [];
+}
+
+export async function fetchCellMeetingDetails(groupId: string, meetingId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/cell-groups/${groupId}/meetings/${meetingId}`, { headers });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.log("Fetch cell meeting details fallback", e);
+  }
+  return null;
+}
+
 // ----------------------------------------------------
 // 6. UPLOADS S3
 // ----------------------------------------------------

@@ -38,24 +38,36 @@ export const AppContentV2: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { resolvedTheme } = useTheme();
   
-  // Se deslogado, vai direto para a tela nova de acolhimento/boas-vindas ('profile')
-  // Se o visitante já optou por explorar nesta sessão, ou se o usuário já estiver autenticado, vai para a 'home'
+  // Suporte a rotas diretas via query params para navegação instantânea e capturas
+  const urlTab = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('tab') as ActiveTab) : null;
+  const urlView = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('view') as SubView) : null;
+  const urlLive = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('live') === 'true';
+
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (urlTab && ['home', 'devotionals', 'cells', 'store', 'profile'].includes(urlTab)) {
+      return urlTab;
+    }
     if (typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true') {
       return 'home';
     }
     return isAuthenticated ? 'home' : 'profile';
   });
-  const [subView, setSubView] = useState<SubView>('none');
-  const [isLiveOpen, setIsLiveOpen] = useState(false);
+
+  const [subView, setSubView] = useState<SubView>(() => {
+    if (urlView && ['prayers', 'events', 'bible', 'giving'].includes(urlView)) {
+      return urlView;
+    }
+    return 'none';
+  });
+
+  const [isLiveOpen, setIsLiveOpen] = useState(urlLive);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Fast-Tab State Retention: Guarda quais abas já foram visitadas para carregamento instantâneo em 0ms
   const [visitedTabs, setVisitedTabs] = useState<Set<ActiveTab>>(() => {
-    const isGuestExplored = typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true';
-    const initialTab: ActiveTab = (isAuthenticated || isGuestExplored) ? 'home' : 'profile';
-    return new Set([initialTab]);
+    const initialTab: ActiveTab = urlTab || ((isAuthenticated || (typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true')) ? 'home' : 'profile');
+    return new Set([initialTab, 'home', 'devotionals', 'cells', 'store', 'profile']);
   });
 
   // Estado Global de Campus / Unidade no Shell V2

@@ -56,6 +56,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async () => {
     setIsLoading(true);
+    // Suporte a modo demo para pré-visualização e exportação de criativos
+    const isDemo = typeof window !== 'undefined' && (
+      new URLSearchParams(window.location.search).get('demo') === 'true' ||
+      localStorage.getItem('faithhub_demo_auth') === 'true'
+    );
+    if (isDemo) {
+      setUser({
+        userId: 'usr_demo_pastor',
+        email: 'pastor@igrejaviva.com.br',
+        name: 'Pastor Rafael Sena'
+      });
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return;
+    }
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {

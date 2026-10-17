@@ -21,7 +21,10 @@ import {
   deletePartilhaItem,
   removeCellMember,
   updateCellGroupDetails,
-  fetchCurrentMember
+  fetchCurrentMember,
+  recordCellMeeting,
+  fetchCellMeetings,
+  fetchCellMeetingDetails
 } from '../services/api';
 import { CellsMapView } from '../components/CellsMapView';
 import { BottomSheet } from '../components/BottomSheet';
@@ -166,7 +169,7 @@ interface CellMember {
 }
 
 type PortalTab = 'dashboard' | 'mural' | 'estudos' | 'lanches' | 'lideranca';
-type LeaderSubTab = 'requests' | 'members' | 'lanches' | 'settings';
+type LeaderSubTab = 'attendance' | 'requests' | 'members' | 'lanches' | 'settings';
 
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -177,15 +180,17 @@ export const CellGroups: React.FC = () => {
   const [currentMember, setCurrentMember] = useState<any>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'portal' | 'discover'>('discover');
+  const urlMap = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('map') === 'true';
+  const urlCellTab = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('cell_tab') as PortalTab) : null;
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
-  const [portalTab, setPortalTab] = useState<PortalTab>('dashboard');
+  const [portalTab, setPortalTab] = useState<PortalTab>(urlCellTab || 'dashboard');
   const [isCellLeader, setIsCellLeader] = useState(false);
   
   // Discover State
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState('ALL');
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(urlMap);
   const [selectedCellDetail, setSelectedCellDetail] = useState<CellGroup | null>(null);
   const [readingChapter, setReadingChapter] = useState<Chapter | null>(null);
 
@@ -219,10 +224,24 @@ export const CellGroups: React.FC = () => {
   const [isAddingSnack, setIsAddingSnack] = useState(false);
 
   // Leader Hub State
-  const [leaderSubTab, setLeaderSubTab] = useState<LeaderSubTab>('requests');
+  const [leaderSubTab, setLeaderSubTab] = useState<LeaderSubTab>('attendance');
   const [pendingUsers, setPendingUsers] = useState<CellMember[]>([]);
   const [groupMembers, setGroupMembers] = useState<CellMember[]>([]);
   const [, setLoadingDetails] = useState(false);
+
+  // Chamada e Frequência Semanal (Attendance)
+  const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [studyTopic, setStudyTopic] = useState('');
+  const [offeringsAmount, setOfferingsAmount] = useState('');
+  const [meetingNotes, setMeetingNotes] = useState('');
+  const [attendeesStatus, setAttendeesStatus] = useState<Record<string, 'PRESENT' | 'ABSENT' | 'JUSTIFIED'>>({});
+  const [attendeesJustification, setAttendeesJustification] = useState<Record<string, string>>({});
+  const [visitorsList, setVisitorsList] = useState<Array<{ name: string; phone: string }>>([]);
+  const [newVisitorName, setNewVisitorName] = useState('');
+  const [newVisitorPhone, setNewVisitorPhone] = useState('');
+  const [showAddVisitor, setShowAddVisitor] = useState(false);
+  const [isRecordingMeeting, setIsRecordingMeeting] = useState(false);
+  const [meetingsHistory, setMeetingsHistory] = useState<any[]>([]);
 
   // Form edit meeting
   const [editMeetingDay, setEditMeetingDay] = useState('');
@@ -388,8 +407,16 @@ export const CellGroups: React.FC = () => {
         }
       }
 
+      // Força portal ou discover se especificado na URL para exportação de criativos
+      const urlCellPortal = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('cell_portal') : null;
+      if (urlCellPortal === 'true' && cellsArray.length > 0) {
+        assignedGroupId = cellsArray[0].id;
+      } else if (urlCellPortal === 'false') {
+        assignedGroupId = null;
+      }
+
       // Fallback local se necessário
-      if (!assignedGroupId && user?.email) {
+      if (!assignedGroupId && user?.email && urlCellPortal !== 'false') {
         assignedGroupId = localStorage.getItem(`faithhub_my_cell_group_id_${user.email.toLowerCase()}`);
       }
 
@@ -657,7 +684,17 @@ export const CellGroups: React.FC = () => {
     // 4. Processa Liderança e Encontro
     if (details) {
       if (Array.isArray(details.pending_users)) setPendingUsers(details.pending_users);
-      if (Array.isArray(details.members)) setGroupMembers(details.members);
+      if (Array.isArray(details.members)) {
+        setGroupMembers(details.members);
+        const initStatus: Record<string, 'PRESENT' | 'ABSENT' | 'JUSTIFIED'> = {};
+        details.members.forEach((m: any) => {
+          initStatus[m.id] = 'PRESENT';
+        });
+        setAttendeesStatus(initStatus);
+      }
+      fetchCellMeetings(groupId).then(res => {
+        if (Array.isArray(res)) setMeetingsHistory(res);
+      });
       setEditMeetingDay(details.meeting_day || '');
       setEditMeetingTime(details.meeting_time || '');
       setEditAddress(details.address || '');
@@ -861,6 +898,69 @@ export const CellGroups: React.FC = () => {
     if (ok) {
       setGroupMembers(prev => prev.filter(u => u.id !== member.id));
       alert(`${member.name} foi desvinculado(a) da célula.`);
+    }
+  };
+
+  const handleToggleAttendeeStatus = (memberId: string, status: 'PRESENT' | 'ABSENT' | 'JUSTIFIED') => {
+    setAttendeesStatus(prev => ({
+      ...prev,
+      [memberId]: status
+    }));
+  };
+
+  const handleAddVisitor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVisitorName.trim()) return;
+    setVisitorsList(prev => [...prev, { name: newVisitorName.trim(), phone: newVisitorPhone.trim() }]);
+    setNewVisitorName('');
+    setNewVisitorPhone('');
+    setShowAddVisitor(false);
+  };
+
+  const handleRemoveVisitor = (index: number) => {
+    setVisitorsList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveMeeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myGroupId || isRecordingMeeting) return;
+    setIsRecordingMeeting(true);
+    try {
+      const attendeesPayload = groupMembers.map(m => ({
+        member_id: m.id,
+        status: attendeesStatus[m.id] || 'PRESENT',
+        justification: attendeesJustification[m.id] || undefined
+      }));
+
+      visitorsList.forEach(v => {
+        attendeesPayload.push({
+          visitor_name: v.name,
+          visitor_phone: v.phone,
+          status: 'PRESENT' as const
+        } as any);
+      });
+
+      const res = await recordCellMeeting(myGroupId, {
+        meeting_date: meetingDate,
+        study_topic: studyTopic || undefined,
+        offerings_amount: offeringsAmount ? parseFloat(offeringsAmount) : 0,
+        notes: meetingNotes || undefined,
+        attendees: attendeesPayload
+      });
+
+      if (res) {
+        alert(`✓ Chamada registrada com sucesso!\nPresentes: ${res.present_count} | Ausentes: ${res.absent_count} | Visitantes: ${res.visitor_count}`);
+        setVisitorsList([]);
+        setMeetingNotes('');
+        const updated = await fetchCellMeetings(myGroupId);
+        if (Array.isArray(updated)) setMeetingsHistory(updated);
+      } else {
+        alert('Erro ao registrar a reunião. Tente novamente.');
+      }
+    } catch (err) {
+      alert('Erro ao conectar com o servidor.');
+    } finally {
+      setIsRecordingMeeting(false);
     }
   };
 
@@ -1112,6 +1212,50 @@ export const CellGroups: React.FC = () => {
                     </div>
                   </div>
                   <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#dc2626' }}>Ver ➔</span>
+                </div>
+              )}
+
+              {/* Atalho de Chamada Rápida para o Líder de Célula */}
+              {isCellLeader && (
+                <div 
+                  onClick={() => { setPortalTab('lideranca'); setLeaderSubTab('attendance'); }}
+                  style={{
+                    background: 'linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%)',
+                    border: '1.5px solid #99f6e4',
+                    borderRadius: '16px',
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 6px rgba(15, 118, 110, 0.08)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '12px',
+                      background: '#ccfbf1',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem'
+                    }}>
+                      📋
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f766e' }}>
+                        Chamada da Reunião Semanal
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#115e59', marginTop: '2px' }}>
+                        Registre presenças em 30s e alimente o Radar Pastoral
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f766e', background: '#e6fffa', padding: '6px 12px', borderRadius: '10px' }}>
+                    Fazer Chamada ➔
+                  </span>
                 </div>
               )}
 
@@ -2216,8 +2360,9 @@ export const CellGroups: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
               {/* Sub-navegação do Líder */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', background: '#f1f5f9', padding: '4px', borderRadius: '14px' }}>
                 {[
+                  { id: 'attendance', label: '📋 Chamada' },
                   { id: 'requests', label: pendingUsers.length > 0 ? `Pedidos (${pendingUsers.length})` : 'Pedidos' },
                   { id: 'members', label: `Membros (${groupMembers.length})` },
                   { id: 'lanches', label: 'Lanches' },
@@ -2228,13 +2373,13 @@ export const CellGroups: React.FC = () => {
                     type="button"
                     onClick={() => setLeaderSubTab(sub.id as LeaderSubTab)}
                     style={{
-                      padding: '8px 4px',
+                      padding: '8px 2px',
                       borderRadius: '10px',
                       border: 'none',
                       background: leaderSubTab === sub.id ? '#ffffff' : 'transparent',
                       color: leaderSubTab === sub.id ? 'var(--text-main)' : 'var(--text-muted)',
                       fontWeight: 800,
-                      fontSize: '0.72rem',
+                      fontSize: '0.70rem',
                       cursor: 'pointer',
                       boxShadow: leaderSubTab === sub.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                       textAlign: 'center'
@@ -2244,6 +2389,373 @@ export const CellGroups: React.FC = () => {
                   </button>
                 ))}
               </div>
+
+              {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ONE-TAP) */}
+              {leaderSubTab === 'attendance' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  {/* Formulário de Registro de Chamada */}
+                  <form onSubmit={handleSaveMeeting} style={{ background: '#ffffff', borderRadius: '20px', padding: '18px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.3rem' }}>📋</span>
+                        <div>
+                          <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                            Chamada da Reunião Semanal
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            Marque os presentes em 30 segundos
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', background: '#ecfdf5', color: '#065f46', padding: '4px 10px', borderRadius: '12px', fontWeight: 800 }}>
+                        {Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes
+                      </span>
+                    </div>
+
+                    {/* Data e Tema da Reunião */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                          Data da Reunião
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={meetingDate}
+                          onChange={e => setMeetingDate(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 10px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--panel-border)',
+                            fontSize: '0.82rem',
+                            outline: 'none',
+                            background: '#f8fafc',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                          Tema / Estudo (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Fruto do Espírito"
+                          value={studyTopic}
+                          onChange={e => setStudyTopic(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 10px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--panel-border)',
+                            fontSize: '0.82rem',
+                            outline: 'none',
+                            background: '#f8fafc',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Lista de Membros Cadastrados da Célula com One-Tap Switches */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                          Membros da Célula ({groupMembers.length})
+                        </label>
+                        <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
+                          Toque para alternar o status
+                        </span>
+                      </div>
+
+                      {groupMembers.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.80rem', background: '#f8fafc', borderRadius: '12px' }}>
+                          Nenhum membro cadastrado nesta célula ainda.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {groupMembers.map(m => {
+                            const status = attendeesStatus[m.id] || 'PRESENT';
+                            return (
+                              <div 
+                                key={m.id}
+                                style={{
+                                  padding: '10px 12px',
+                                  borderRadius: '14px',
+                                  background: status === 'PRESENT' ? '#f0fdf4' : (status === 'ABSENT' ? '#fef2f2' : '#fffbeb'),
+                                  border: status === 'PRESENT' ? '1px solid #bbf7d0' : (status === 'ABSENT' ? '1px solid #fecaca' : '1px solid #fde68a'),
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '6px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{
+                                      width: '32px',
+                                      height: '32px',
+                                      borderRadius: '50%',
+                                      background: status === 'PRESENT' ? '#22c55e' : (status === 'ABSENT' ? '#ef4444' : '#f59e0b'),
+                                      color: '#ffffff',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 800,
+                                      fontSize: '0.75rem'
+                                    }}>
+                                      {getInitials(m.name)}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                                        {m.name}
+                                      </div>
+                                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
+                                        {m.role || 'Membro'}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Botões One-Tap */}
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleAttendeeStatus(m.id, 'PRESENT')}
+                                      style={{
+                                        padding: '5px 9px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: status === 'PRESENT' ? '#22c55e' : '#e2e8f0',
+                                        color: status === 'PRESENT' ? '#ffffff' : '#64748b',
+                                        fontWeight: 800,
+                                        fontSize: '0.70rem',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      ✓ Presente
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleAttendeeStatus(m.id, 'ABSENT')}
+                                      style={{
+                                        padding: '5px 9px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: status === 'ABSENT' ? '#ef4444' : '#e2e8f0',
+                                        color: status === 'ABSENT' ? '#ffffff' : '#64748b',
+                                        fontWeight: 800,
+                                        fontSize: '0.70rem',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      ✗ Faltou
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleAttendeeStatus(m.id, 'JUSTIFIED')}
+                                      style={{
+                                        padding: '5px 7px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: status === 'JUSTIFIED' ? '#f59e0b' : '#e2e8f0',
+                                        color: status === 'JUSTIFIED' ? '#ffffff' : '#64748b',
+                                        fontWeight: 800,
+                                        fontSize: '0.70rem',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      ⚠️
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {status === 'JUSTIFIED' && (
+                                  <input
+                                    type="text"
+                                    placeholder="Justificativa da falta (ex: viagem de trabalho)..."
+                                    value={attendeesJustification[m.id] || ''}
+                                    onChange={e => setAttendeesJustification({ ...attendeesJustification, [m.id]: e.target.value })}
+                                    style={{
+                                      width: '100%',
+                                      padding: '6px 8px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #fde68a',
+                                      fontSize: '0.75rem',
+                                      outline: 'none',
+                                      background: '#ffffff',
+                                      boxSizing: 'border-box'
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Visitantes na Reunião */}
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--text-main)' }}>
+                          🌟 Novos Visitantes ({visitorsList.length})
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddVisitor(!showAddVisitor)}
+                          style={{
+                            background: '#0f766e',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {showAddVisitor ? 'Cancelar' : '+ Visitante'}
+                        </button>
+                      </div>
+
+                      {showAddVisitor && (
+                        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#ffffff', padding: '10px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+                          <input
+                            type="text"
+                            placeholder="Nome completo do visitante *"
+                            value={newVisitorName}
+                            onChange={e => setNewVisitorName(e.target.value)}
+                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.80rem', outline: 'none' }}
+                          />
+                          <input
+                            type="tel"
+                            placeholder="WhatsApp (ex: 11 98765-4321)"
+                            value={newVisitorPhone}
+                            onChange={e => setNewVisitorPhone(e.target.value)}
+                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.80rem', outline: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddVisitor}
+                            style={{
+                              background: '#22c55e',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '8px',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.78rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Adicionar à Lista de Presença
+                          </button>
+                        </div>
+                      )}
+
+                      {visitorsList.length > 0 && (
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {visitorsList.map((v, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '6px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.78rem' }}>
+                              <span>👤 <strong>{v.name}</strong> {v.phone && `(${v.phone})`}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVisitor(idx)}
+                                style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer' }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Observações Pastorais */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        Observações da Reunião (Pedidos de oração, bênçãos)
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="Ex: Cláudio pediu oração por cirurgia na família..."
+                        value={meetingNotes}
+                        onChange={e => setMeetingNotes(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          borderRadius: '10px',
+                          border: '1px solid var(--panel-border)',
+                          fontSize: '0.80rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    {/* Botão Salvar Chamada */}
+                    <button
+                      type="submit"
+                      disabled={isRecordingMeeting}
+                      style={{
+                        padding: '14px',
+                        borderRadius: '14px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
+                        color: '#ffffff',
+                        fontWeight: 900,
+                        fontSize: '0.90rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(15, 118, 110, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <span>💾</span>
+                      <span>
+                        {isRecordingMeeting 
+                          ? 'Salvando Chamada...' 
+                          : `Salvar Chamada (${Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes)`}
+                      </span>
+                    </button>
+                  </form>
+
+                  {/* Histórico das Últimas Reuniões */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>📜</span>
+                      <span>Histórico das Últimas Reuniões</span>
+                    </div>
+
+                    {meetingsHistory.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.78rem', background: '#ffffff', borderRadius: '14px', border: '1px solid var(--panel-border)' }}>
+                        Nenhuma reunião gravada anteriormente.
+                      </div>
+                    ) : (
+                      meetingsHistory.map(m => (
+                        <div key={m.id} style={{ background: '#ffffff', borderRadius: '14px', padding: '12px 14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                              📅 {new Date(m.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                              {m.study_topic && <span style={{ fontWeight: 600, color: 'var(--text-muted)', marginLeft: '6px' }}>• {m.study_topic}</span>}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              🟢 {m.present_count || 0} presentes • 🔴 {m.absent_count || 0} ausentes {m.visitor_count > 0 && `• 🌟 ${m.visitor_count} visitantes`}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '8px', fontWeight: 700 }}>
+                            Concluída
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                </div>
+              )}
 
               {/* SUBTAB 1: SOLICITAÇÕES DE ENTRADA PENDENTES */}
               {leaderSubTab === 'requests' && (

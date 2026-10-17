@@ -32,13 +32,21 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user } = useAuth();
 
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
-  const [activeTab, setActiveTab] = useState<'wall' | 'my_prayers' | 'testimonies'>('wall');
+  const [activeTab, setActiveTab] = useState<'wall' | 'my_prayers' | 'testimonies'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlTab = new URLSearchParams(window.location.search).get('prayer_tab') as any;
+      if (['wall', 'my_prayers', 'testimonies'].includes(urlTab)) return urlTab;
+    }
+    return 'wall';
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const [selectedPrayerModal, setSelectedPrayerModal] = useState<PrayerRequest | null>(null);
 
   // Modal Novo Pedido
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(() => {
+    return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('new_prayer') === 'true';
+  });
   const [authorName, setAuthorName] = useState(user?.name || '');
   const [authorPhone, setAuthorPhone] = useState(user?.phone || '');
   const [isAnonymous, setIsAnonymous] = useState(false);

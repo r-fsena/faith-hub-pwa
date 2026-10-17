@@ -21,6 +21,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     if (typeof window !== 'undefined') {
+      const urlTheme = new URLSearchParams(window.location.search).get('theme') as ThemePreference;
+      if (urlTheme === 'light' || urlTheme === 'dark') {
+        return urlTheme;
+      }
       const saved = localStorage.getItem('faithhub_theme_mode') as ThemePreference;
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         return saved;

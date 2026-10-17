@@ -36,7 +36,13 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [viewTab, setViewTab] = useState<'events' | 'my_tickets'>('events');
+  const [viewTab, setViewTab] = useState<'events' | 'my_tickets'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlTab = new URLSearchParams(window.location.search).get('event_tab');
+      if (urlTab === 'my_tickets' || urlTab === 'events') return urlTab;
+    }
+    return 'events';
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [myTickets, setMyTickets] = useState<EventTicketData[]>([]);
 
