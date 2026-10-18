@@ -842,6 +842,71 @@ export async function deleteBlockout(id: string): Promise<boolean> {
   }
 }
 
+// ----------------------------------------------------
+// 9. SHIFT SWAP (TROCA DE ESCALAS ENTRE MEMBROS)
+// ----------------------------------------------------
+export async function fetchEligiblePeersForSwap(scheduleId: string, roleId: string): Promise<any[]> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/eligible-peers?schedule_id=${scheduleId}&role_id=${roleId}`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch eligible peers error", e);
+  }
+  return [];
+}
+
+export async function requestRosterSwap(rosterItemId: string, targetMemberId?: string, reason?: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/roster/${rosterItemId}/swap`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        target_member_id: targetMemberId || undefined,
+        reason
+      })
+    });
+    const data = await res.json();
+    return { success: res.ok, message: data.message || data.error };
+  } catch (e) {
+    console.log("Request roster swap error", e);
+    return { success: false, message: 'Erro ao enviar pedido de troca' };
+  }
+}
+
+export async function fetchMyPendingSwaps(): Promise<{ incoming: any[]; outgoing: any[] }> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/swaps/pending`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch pending swaps error", e);
+  }
+  return { incoming: [], outgoing: [] };
+}
+
+export async function respondToSwap(swapId: string, action: 'ACCEPT' | 'REJECT'): Promise<{ success: boolean; message?: string }> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/swaps/${swapId}/respond`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action })
+    });
+    const data = await res.json();
+    return { success: res.ok, message: data.message || data.error };
+  } catch (e) {
+    console.log("Respond to swap error", e);
+    return { success: false, message: 'Erro ao responder à troca' };
+  }
+}
+
+
 
 
 

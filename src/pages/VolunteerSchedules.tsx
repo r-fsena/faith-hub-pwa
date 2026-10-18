@@ -7,7 +7,11 @@ import {
   joinMinistry, 
   fetchMyBlockouts, 
   createBlockout, 
-  deleteBlockout 
+  deleteBlockout,
+  fetchEligiblePeersForSwap,
+  requestRosterSwap,
+  fetchMyPendingSwaps,
+  respondToSwap
 } from '../services/api';
 
 interface VolunteerSchedulesProps {
@@ -16,10 +20,11 @@ interface VolunteerSchedulesProps {
 
 export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'my_schedules' | 'join_ministry' | 'blockouts'>('my_schedules');
+  const [activeTab, setActiveTab] = useState<'my_schedules' | 'swaps' | 'blockouts' | 'join_ministry'>('my_schedules');
   const [schedules, setSchedules] = useState<any[]>([]);
   const [ministries, setMinistries] = useState<any[]>([]);
   const [blockouts, setBlockouts] = useState<any[]>([]);
+  const [pendingSwaps, setPendingSwaps] = useState<{ incoming: any[]; outgoing: any[] }>({ incoming: [], outgoing: [] });
   const [loading, setLoading] = useState(true);
   const [answeringItemId, setAnsweringItemId] = useState<string | null>(null);
   const [declineReasonModal, setDeclineReasonModal] = useState<string | null>(null);
@@ -34,17 +39,29 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const [blockReason, setBlockReason] = useState('Viagem / Férias');
   const [savingBlockout, setSavingBlockout] = useState(false);
 
+  // Estados do Shift Swap (Troca de Escalas)
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [swapTargetSchedule, setSwapTargetSchedule] = useState<any | null>(null);
+  const [eligiblePeers, setEligiblePeers] = useState<any[]>([]);
+  const [selectedPeerId, setSelectedPeerId] = useState('');
+  const [swapReason, setSwapReason] = useState('');
+  const [requestingSwap, setRequestingSwap] = useState(false);
+  const [loadingPeers, setLoadingPeers] = useState(false);
+  const [respondingSwapId, setRespondingSwapId] = useState<string | null>(null);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [sch, mins, blk] = await Promise.all([
+      const [sch, mins, blk, swp] = await Promise.all([
         fetchMySchedules(),
         fetchMinistries(),
-        fetchMyBlockouts()
+        fetchMyBlockouts(),
+        fetchMyPendingSwaps()
       ]);
       setSchedules(sch || []);
       setMinistries(mins || []);
       setBlockouts(blk || []);
+      setPendingSwaps(swp || { incoming: [], outgoing: [] });
     } catch (e) {
       console.error(e);
     } finally {
@@ -136,6 +153,58 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
     }
   };
 
+  const handleOpenSwapModal = async (scheduleItem: any) => {
+    setSwapTargetSchedule(scheduleItem);
+    setSwapReason('');
+    setSelectedPeerId('');
+    setIsSwapModalOpen(true);
+    setLoadingPeers(true);
+    try {
+      const peers = await fetchEligiblePeersForSwap(scheduleItem.schedule_id, scheduleItem.role_id || '');
+      setEligiblePeers(peers || []);
+    } catch {
+      setEligiblePeers([]);
+    } finally {
+      setLoadingPeers(false);
+    }
+  };
+
+  const handleConfirmSwapRequest = async () => {
+    if (!swapTargetSchedule) return;
+    setRequestingSwap(true);
+    try {
+      const res = await requestRosterSwap(
+        swapTargetSchedule.roster_item_id,
+        selectedPeerId || undefined,
+        swapReason.trim() || undefined
+      );
+      if (res.success) {
+        alert('✓ Solicitação de troca enviada com sucesso!');
+        setIsSwapModalOpen(false);
+        loadData();
+      } else {
+        alert(res.message || 'Erro ao enviar pedido de troca.');
+      }
+    } finally {
+      setRequestingSwap(false);
+    }
+  };
+
+  const handleRespondSwap = async (swapId: string, action: 'ACCEPT' | 'REJECT') => {
+    setRespondingSwapId(swapId);
+    try {
+      const res = await respondToSwap(swapId, action);
+      if (res.success) {
+        alert(res.message);
+        loadData();
+      } else {
+        alert(res.message || 'Erro ao responder à troca.');
+      }
+    } finally {
+      setRespondingSwapId(null);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '100%', paddingBottom: '40px' }}>
       
@@ -173,18 +242,18 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         </div>
       </div>
 
-      {/* ABAS (3 Segmentos) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 1fr', gap: '6px', padding: '0 16px' }}>
+      {/* ABAS (4 Segmentos) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', padding: '0 16px' }}>
         <button
           onClick={() => setActiveTab('my_schedules')}
           style={{
-            padding: '10px 4px',
+            padding: '10px 2px',
             borderRadius: '12px',
             border: 'none',
             background: activeTab === 'my_schedules' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
             color: activeTab === 'my_schedules' ? '#ffffff' : 'var(--text-muted, #64748b)',
             fontWeight: 800,
-            fontSize: '0.76rem',
+            fontSize: '0.72rem',
             cursor: 'pointer',
             boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
             whiteSpace: 'nowrap',
@@ -195,15 +264,46 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         </button>
 
         <button
+          onClick={() => setActiveTab('swaps')}
+          style={{
+            padding: '10px 2px',
+            borderRadius: '12px',
+            border: 'none',
+            background: activeTab === 'swaps' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
+            color: activeTab === 'swaps' ? '#ffffff' : 'var(--text-muted, #64748b)',
+            fontWeight: 800,
+            fontSize: '0.72rem',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
+            whiteSpace: 'nowrap',
+            textAlign: 'center',
+            position: 'relative'
+          }}
+        >
+          Trocas {pendingSwaps.incoming.length > 0 && `(${pendingSwaps.incoming.length})`}
+          {pendingSwaps.incoming.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '4px',
+              right: '6px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#ef4444'
+            }} />
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('blockouts')}
           style={{
-            padding: '10px 4px',
+            padding: '10px 2px',
             borderRadius: '12px',
             border: 'none',
             background: activeTab === 'blockouts' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
             color: activeTab === 'blockouts' ? '#ffffff' : 'var(--text-muted, #64748b)',
             fontWeight: 800,
-            fontSize: '0.76rem',
+            fontSize: '0.72rem',
             cursor: 'pointer',
             boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
             whiteSpace: 'nowrap',
@@ -216,13 +316,13 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         <button
           onClick={() => setActiveTab('join_ministry')}
           style={{
-            padding: '10px 4px',
+            padding: '10px 2px',
             borderRadius: '12px',
             border: 'none',
             background: activeTab === 'join_ministry' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
             color: activeTab === 'join_ministry' ? '#ffffff' : 'var(--text-muted, #64748b)',
             fontWeight: 800,
-            fontSize: '0.76rem',
+            fontSize: '0.72rem',
             cursor: 'pointer',
             boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
             whiteSpace: 'nowrap',
@@ -398,22 +498,200 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   )}
 
                   {isAccepted && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
                       <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 700 }}>
                         ✓ Sua vaga está garantida no altar!
                       </span>
-                      <button
-                        onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                        style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Tive um imprevisto
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          onClick={() => handleOpenSwapModal(item)}
+                          style={{
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            color: '#166534',
+                            borderRadius: '8px',
+                            padding: '4px 10px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🔄 Pedir Troca
+                        </button>
+                        <button
+                          onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Recusar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.confirmation_status === 'SWAP_REQUESTED' && (
+                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🔄</span>
+                      <div style={{ fontSize: '0.76rem', color: '#92400e', fontWeight: 700, lineHeight: 1.4 }}>
+                        Troca solicitada para este culto. Aguardando confirmação de um colega voluntário.
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })
           )
+        ) : activeTab === 'swaps' ? (
+          /* ABA: TROCAS DE ESCALA (SHIFT SWAP) */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* SOLICITAÇÕES RECEBIDAS */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '1.1rem' }}>📥</span>
+                <span style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
+                  Pedidos de Troca Recebidos ({pendingSwaps.incoming.length})
+                </span>
+              </div>
+
+              {pendingSwaps.incoming.length === 0 ? (
+                <div style={{ background: 'var(--panel-bg, #ffffff)', borderRadius: '14px', padding: '24px 16px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)' }}>
+                  <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🕊️</div>
+                  <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)' }}>
+                    Nenhum pedido de troca recebido no momento.
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {pendingSwaps.incoming.map(sw => (
+                    <div
+                      key={sw.swap_id}
+                      style={{
+                        background: 'var(--panel-bg, #ffffff)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        border: '1.5px solid #3b82f6',
+                        boxShadow: 'var(--shadow-sm)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                            {sw.ministry_name}
+                          </span>
+                          <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)', marginTop: '4px' }}>
+                            {sw.requesting_member_name} precisa de substituto
+                          </div>
+                        </div>
+                        <span style={{ fontSize: '0.70rem', color: '#64748b' }}>
+                          Função: <strong>{sw.role_name}</strong>
+                        </span>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.78rem', color: '#334155' }}>
+                        <div>📅 Culto: <strong>{sw.service_title}</strong></div>
+                        <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+                          {new Date(sw.service_date).toLocaleDateString('pt-BR')} às {sw.service_time}
+                        </div>
+                        {sw.reason && (
+                          <div style={{ marginTop: '4px', fontStyle: 'italic', color: '#475569' }}>
+                            "{sw.reason}"
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                        <button
+                          onClick={() => handleRespondSwap(sw.swap_id, 'ACCEPT')}
+                          disabled={respondingSwapId === sw.swap_id}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: '#10b981',
+                            color: '#ffffff',
+                            fontWeight: 800,
+                            fontSize: '0.80rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {respondingSwapId === sw.swap_id ? 'Confirmando...' : '✓ Assumir Vaga'}
+                        </button>
+                        <button
+                          onClick={() => handleRespondSwap(sw.swap_id, 'REJECT')}
+                          disabled={respondingSwapId === sw.swap_id}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5e1',
+                            background: '#ffffff',
+                            color: '#64748b',
+                            fontWeight: 700,
+                            fontSize: '0.80rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Não Posso
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* MINHAS SOLICITAÇÕES ENVIADAS */}
+            {pendingSwaps.outgoing.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>📤</span>
+                  <span style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
+                    Suas Trocas Solicitadas ({pendingSwaps.outgoing.length})
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {pendingSwaps.outgoing.map(sw => (
+                    <div
+                      key={sw.swap_id}
+                      style={{
+                        background: 'var(--panel-bg, #ffffff)',
+                        borderRadius: '14px',
+                        padding: '14px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '0.80rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ color: '#0f172a' }}>{sw.service_title}</strong>
+                        <span style={{
+                          background: sw.status === 'PENDING' ? '#fef3c7' : (sw.status === 'ACCEPTED' ? '#dcfce7' : '#fee2e2'),
+                          color: sw.status === 'PENDING' ? '#92400e' : (sw.status === 'ACCEPTED' ? '#15803d' : '#b91c1c'),
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontWeight: 800,
+                          fontSize: '0.70rem'
+                        }}>
+                          {sw.status === 'PENDING' ? '⏳ Aguardando' : (sw.status === 'ACCEPTED' ? '✓ Aceita' : 'Recusada')}
+                        </span>
+                      </div>
+                      <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+                        {new Date(sw.service_date).toLocaleDateString('pt-BR')} • {sw.role_name}
+                      </div>
+                      {sw.target_member_name && (
+                        <div style={{ fontSize: '0.72rem', color: '#475569', marginTop: '4px' }}>
+                          Destinado a: <strong>{sw.target_member_name}</strong>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
         ) : activeTab === 'join_ministry' ? (
           
           /* ABA: QUERO SERVIR (MINISTÉRIOS) */
@@ -809,6 +1087,135 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: 800, fontSize: '0.80rem', cursor: 'pointer' }}
               >
                 Confirmar Recusa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: SOLICITAR TROCA DE ESCALA (SHIFT SWAP) */}
+      {isSwapModalOpen && swapTargetSchedule && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15,23,42,0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.4rem' }}>🔄</span>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+                  Pedir Troca de Escala
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsSwapModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.80rem' }}>
+              <div style={{ fontWeight: 800, color: '#0f172a' }}>{swapTargetSchedule.service_title}</div>
+              <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+                {new Date(swapTargetSchedule.service_date).toLocaleDateString('pt-BR')} às {swapTargetSchedule.service_time} • {swapTargetSchedule.role_name}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Colega Voluntário para Substituição:
+              </label>
+              {loadingPeers ? (
+                <div style={{ fontSize: '0.78rem', color: '#64748b', padding: '8px' }}>Buscando voluntários aptos...</div>
+              ) : (
+                <select
+                  value={selectedPeerId}
+                  onChange={e => setSelectedPeerId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.82rem',
+                    background: '#ffffff'
+                  }}
+                >
+                  <option value="">Qualquer voluntário apto (Solicitação aberta)</option>
+                  {eligiblePeers.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.phone ? `(${p.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <span style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                {eligiblePeers.length} colegas aptos disponíveis nesta data/horário.
+              </span>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Motivo da Solicitação:
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Ex: Viagem imprevista, consulta médica, plantão de trabalho..."
+                value={swapReason}
+                onChange={e => setSwapReason(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.82rem',
+                  outline: 'none',
+                  resize: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setIsSwapModalOpen(false)}
+                style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.80rem', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSwapRequest}
+                disabled={requestingSwap}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#0f766e',
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '0.80rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {requestingSwap ? 'Enviando...' : 'Confirmar Pedido de Troca'}
               </button>
             </div>
           </div>
