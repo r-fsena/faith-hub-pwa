@@ -29,9 +29,10 @@ import { Prayers } from '../pages/Prayers';
 import { Events } from '../pages/Events';
 import { Bible } from '../pages/Bible';
 import { Giving } from '../pages/Giving';
+import { VolunteerSchedules } from '../pages/VolunteerSchedules';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
-type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
+type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving' | 'volunteers';
 
 export const AppContentV2: React.FC = () => {
   const { branding } = useBranding();
@@ -54,7 +55,7 @@ export const AppContentV2: React.FC = () => {
   });
 
   const [subView, setSubView] = useState<SubView>(() => {
-    if (urlView && ['prayers', 'events', 'bible', 'giving'].includes(urlView)) {
+    if (urlView && ['prayers', 'events', 'bible', 'giving', 'volunteers'].includes(urlView)) {
       return urlView;
     }
     return 'none';
@@ -151,6 +152,7 @@ export const AppContentV2: React.FC = () => {
       case 'events': return 'Eventos & Cursos';
       case 'bible': return 'Bíblia Sagrada';
       case 'giving': return 'Contribuições & Dízimos';
+      case 'volunteers': return 'Escalas & Voluntariado';
       default: return undefined;
     }
   };
@@ -286,6 +288,20 @@ export const AppContentV2: React.FC = () => {
                 <Giving />
               )
             )}
+
+            {subView === 'volunteers' && (
+              !isAuthenticated ? (
+                <AuthGate 
+                  featureName="Escalas & Voluntariado"
+                  featureDescription="Para consultar suas escalas de serviço, confirmar presença ou ingressar em um ministério, acesse sua conta."
+                  onGoToLogin={() => handleTabChange('profile')}
+                  onGoToBible={() => setSubView('bible')}
+                  onBack={() => setSubView('none')}
+                />
+              ) : (
+                <VolunteerSchedules onBack={() => setSubView('none')} />
+              )
+            )}
           </div>
         ) : (
           /* ========================================================
@@ -302,6 +318,7 @@ export const AppContentV2: React.FC = () => {
                 onOpenEvents={() => setSubView('events')}
                 onOpenBible={() => setSubView('bible')}
                 onOpenGiving={() => setSubView('giving')}
+                onOpenVolunteers={() => setSubView('volunteers')}
               />
             </div>
 
@@ -381,6 +398,7 @@ export const AppContentV2: React.FC = () => {
                       setActiveTab('home');
                       setSubView('none');
                     }}
+                    onOpenVolunteers={() => setSubView('volunteers')}
                   />
                 )}
               </div>

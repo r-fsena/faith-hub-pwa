@@ -38,6 +38,7 @@ interface HomeV2Props {
   onOpenEvents: () => void;
   onOpenBible: () => void;
   onOpenGiving: () => void;
+  onOpenVolunteers?: () => void;
 }
 
 export const HomeV2: React.FC<HomeV2Props> = ({
@@ -46,7 +47,8 @@ export const HomeV2: React.FC<HomeV2Props> = ({
   onOpenPrayers,
   onOpenEvents,
   onOpenBible,
-  onOpenGiving
+  onOpenGiving,
+  onOpenVolunteers
 }) => {
   const { branding } = useBranding();
   const { user, isAuthenticated } = useAuth();
@@ -207,6 +209,14 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       border: 'rgba(79, 70, 229, 0.28)', 
       action: () => { triggerHaptic('selection'); onOpenPrayers(); },
       flag: 'prayers.module_enabled'
+    },
+    { 
+      label: 'Escalas & Servir', 
+      icon: <span style={{ fontSize: '22px' }}>🎼</span>, 
+      gradient: 'linear-gradient(135deg, rgba(15, 118, 110, 0.18) 0%, rgba(13, 148, 136, 0.08) 100%)',
+      border: 'rgba(15, 118, 110, 0.32)', 
+      action: () => { triggerHaptic('selection'); onOpenVolunteers ? onOpenVolunteers() : onNavigate('profile'); },
+      flag: 'cell_groups.module_enabled'
     },
   ];
 

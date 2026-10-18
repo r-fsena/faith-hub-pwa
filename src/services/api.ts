@@ -729,5 +729,73 @@ export async function fetchCurrentMember(): Promise<any> {
   return null;
 }
 
+// ----------------------------------------------------
+// 11. MINISTÉRIOS & ESCALAS DE VOLUNTÁRIOS
+// ----------------------------------------------------
+export async function fetchMySchedules(): Promise<any[]> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/my-schedules`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch my schedules fallback", e);
+  }
+  return [];
+}
+
+export async function respondToSchedule(rosterItemId: string, status: 'ACCEPTED' | 'DECLINED', decline_reason?: string): Promise<boolean> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/${rosterItemId}/respond`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ status, decline_reason })
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Respond schedule error", e);
+    return false;
+  }
+}
+
+export async function fetchMinistries(organizationId?: string, campusId?: string): Promise<any[]> {
+  try {
+    const org = organizationId || getActiveOrganizationId() || 'org_default';
+    const params = new URLSearchParams({ organization_id: org });
+    if (campusId && campusId !== 'all') params.set('campus_id', campusId);
+
+    const res = await fetch(`${API_BASE_URL}/ministries?${params.toString()}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch ministries fallback", e);
+  }
+  return [];
+}
+
+export async function joinMinistry(ministryId: string, memberId: string, rolesCsv?: string, notes?: string): Promise<boolean> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/ministries/${ministryId}/volunteers`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        member_id: memberId,
+        status: 'CANDIDATE',
+        roles_csv: rolesCsv,
+        notes
+      })
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Join ministry error", e);
+    return false;
+  }
+}
+
+
 
 

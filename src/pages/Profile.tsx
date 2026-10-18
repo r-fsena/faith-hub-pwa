@@ -59,9 +59,10 @@ export interface ProfileProps {
   onLoginSuccess?: () => void;
   onContinueAsGuest?: () => void;
   onLogout?: () => void;
+  onOpenVolunteers?: () => void;
 }
 
-export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest, onLogout }) => {
+export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest, onLogout, onOpenVolunteers }) => {
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -873,6 +874,69 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 </div>
               );
             })()}
+
+            {/* Card Ministérios & Escalas de Serviço */}
+            {onOpenVolunteers && (
+              <div 
+                onClick={onOpenVolunteers}
+                style={{
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  borderRadius: '20px',
+                  padding: '18px 20px',
+                  color: '#ffffff',
+                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.08)'
+                }}
+              >
+                <div style={{ position: 'absolute', right: '-12px', bottom: '-12px', fontSize: '4.5rem', opacity: 0.08, pointerEvents: 'none' }}>
+                  🤝
+                </div>
+                <div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#38bdf8', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.12)', padding: '2px 8px', borderRadius: '20px' }}>
+                    <span>🤝</span> Voluntariado
+                  </div>
+                  <div style={{ fontSize: '1.08rem', fontWeight: 900, marginTop: '6px', letterSpacing: '-0.02em' }}>
+                    Minhas Escalas & Servir
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                    Veja suas convocações, confirme presença ou inscreva-se
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenVolunteers();
+                  }}
+                  style={{
+                    background: '#38bdf8',
+                    color: '#0f172a',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '10px 16px',
+                    fontWeight: 900,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(56, 189, 248, 0.3)',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    zIndex: 1
+                  }}
+                >
+                  <span>Acessar</span>
+                  <span>→</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Coluna 2: Minha Comunidade, Preferências e Privacidade */}
