@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
-import { fetchCampuses, getActiveCampusId } from '../services/api';
+import { fetchCampuses, getActiveCampusId, getActiveOrganizationId } from '../services/api';
 import { BottomSheet } from './BottomSheet';
 
 interface VisitorModalProps {
@@ -73,7 +73,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.
               prayerRequest ? `Oração: ${prayerRequest}` : ''
             ].filter(Boolean).join(' | '),
             campus_id: campusId,
-            organization_id: branding.organizationId || 'org_default'
+            organization_id: (branding as any)?.organization_id || (branding as any)?.organizationId || getActiveOrganizationId() || 'org_default'
           })
         });
       } catch (apiErr) {
