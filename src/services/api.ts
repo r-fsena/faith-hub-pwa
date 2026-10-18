@@ -762,7 +762,8 @@ export async function respondToSchedule(rosterItemId: string, status: 'ACCEPTED'
 
 export async function fetchMinistries(organizationId?: string, campusId?: string): Promise<any[]> {
   try {
-    const org = organizationId || getActiveOrganizationId() || 'org_default';
+    const org = organizationId || getActiveOrganizationId();
+    if (!org) return [];
     const params = new URLSearchParams({ organization_id: org });
     if (campusId && campusId !== 'all') params.set('campus_id', campusId);
 
