@@ -31,6 +31,8 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
 
   if (!isOpen) return null;
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !whatsapp.trim()) return;
@@ -49,10 +51,34 @@ export const VisitorModal: React.FC<VisitorModalProps> = ({ isOpen, onClose }) =
         date: new Date().toLocaleDateString('pt-BR')
       };
 
-      // Salva no registro de visitantes local / envio à API
+      // Salva no registro de visitantes local
       const savedVisitors = localStorage.getItem('faithhub_registered_visitors');
       const visitorsList = savedVisitors ? JSON.parse(savedVisitors) : [];
       localStorage.setItem('faithhub_registered_visitors', JSON.stringify([visitorPayload, ...visitorsList]));
+
+      // Envia diretamente para o CRM de Acolhimento & Funil Pastoral
+      try {
+        await fetch(`${API_URL}/pastoral/visitors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            phone: whatsapp.trim(),
+            email: email.trim() || undefined,
+            neighborhood: neighborhood.trim() || undefined,
+            origin_channel: invitedBy.trim() ? 'MEMBER_INVITE' : 'SUNDAY_SERVICE',
+            notes: [
+              decisionTrack === 'FIRST_TIME' ? 'Primeira vez no culto' : decisionTrack,
+              invitedBy ? `Convidado por: ${invitedBy}` : '',
+              prayerRequest ? `Oração: ${prayerRequest}` : ''
+            ].filter(Boolean).join(' | '),
+            campus_id: campusId,
+            organization_id: branding.organizationId || 'org_default'
+          })
+        });
+      } catch (apiErr) {
+        console.warn('Erro ao sincronizar com backend pastoral:', apiErr);
+      }
 
       setIsSuccess(true);
     } catch (err) {

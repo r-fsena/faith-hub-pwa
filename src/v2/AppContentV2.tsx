@@ -30,9 +30,10 @@ import { Events } from '../pages/Events';
 import { Bible } from '../pages/Bible';
 import { Giving } from '../pages/Giving';
 import { VolunteerSchedules } from '../pages/VolunteerSchedules';
+import { WelcomeVisitor } from '../pages/WelcomeVisitor';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
-type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving' | 'volunteers';
+type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving' | 'volunteers' | 'welcome';
 
 export const AppContentV2: React.FC = () => {
   const { branding } = useBranding();
@@ -55,7 +56,7 @@ export const AppContentV2: React.FC = () => {
   });
 
   const [subView, setSubView] = useState<SubView>(() => {
-    if (urlView && ['prayers', 'events', 'bible', 'giving', 'volunteers'].includes(urlView)) {
+    if (urlView && ['prayers', 'events', 'bible', 'giving', 'volunteers', 'welcome'].includes(urlView)) {
       return urlView;
     }
     return 'none';
@@ -301,6 +302,18 @@ export const AppContentV2: React.FC = () => {
               ) : (
                 <VolunteerSchedules onBack={() => setSubView('none')} />
               )
+            )}
+
+            {/* Sub-tela: Recepção & Acolhimento de Visitantes (QR Code do Culto) */}
+            {subView === 'welcome' && (
+              <WelcomeVisitor 
+                onBack={() => setSubView('none')}
+                onExploreApp={() => {
+                  sessionStorage.setItem('faithhub_guest_explored', 'true');
+                  setActiveTab('home');
+                  setSubView('none');
+                }}
+              />
             )}
           </div>
         ) : (
