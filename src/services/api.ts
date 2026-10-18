@@ -796,6 +796,53 @@ export async function joinMinistry(ministryId: string, memberId: string, rolesCs
   }
 }
 
+export async function fetchMyBlockouts(): Promise<any[]> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch blockouts error", e);
+  }
+  return [];
+}
+
+export async function createBlockout(startDate: string, endDate: string, reason?: string): Promise<boolean> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        start_date: startDate,
+        end_date: endDate,
+        reason
+      })
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Create blockout error", e);
+    return false;
+  }
+}
+
+export async function deleteBlockout(id: string): Promise<boolean> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts/${id}`, {
+      method: 'DELETE',
+      headers
+    });
+    return res.ok;
+  } catch (e) {
+    console.log("Delete blockout error", e);
+    return false;
+  }
+}
+
+
 
 
 

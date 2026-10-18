@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { fetchMySchedules, respondToSchedule, fetchMinistries, joinMinistry } from '../services/api';
+import { 
+  fetchMySchedules, 
+  respondToSchedule, 
+  fetchMinistries, 
+  joinMinistry, 
+  fetchMyBlockouts, 
+  createBlockout, 
+  deleteBlockout 
+} from '../services/api';
 
 interface VolunteerSchedulesProps {
   onBack?: () => void;
@@ -8,9 +16,10 @@ interface VolunteerSchedulesProps {
 
 export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'my_schedules' | 'join_ministry'>('my_schedules');
+  const [activeTab, setActiveTab] = useState<'my_schedules' | 'join_ministry' | 'blockouts'>('my_schedules');
   const [schedules, setSchedules] = useState<any[]>([]);
   const [ministries, setMinistries] = useState<any[]>([]);
+  const [blockouts, setBlockouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [answeringItemId, setAnsweringItemId] = useState<string | null>(null);
   const [declineReasonModal, setDeclineReasonModal] = useState<string | null>(null);
@@ -18,15 +27,24 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const [joiningMinId, setJoiningMinId] = useState<string | null>(null);
   const [joinRolesText, setJoinRolesText] = useState('');
 
+  // Estados do Modal de Novo Bloqueio
+  const [isBlockoutModalOpen, setIsBlockoutModalOpen] = useState(false);
+  const [blockStartDate, setBlockStartDate] = useState('');
+  const [blockEndDate, setBlockEndDate] = useState('');
+  const [blockReason, setBlockReason] = useState('Viagem / Férias');
+  const [savingBlockout, setSavingBlockout] = useState(false);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [sch, mins] = await Promise.all([
+      const [sch, mins, blk] = await Promise.all([
         fetchMySchedules(),
-        fetchMinistries()
+        fetchMinistries(),
+        fetchMyBlockouts()
       ]);
       setSchedules(sch || []);
       setMinistries(mins || []);
+      setBlockouts(blk || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -79,6 +97,45 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
     }
   };
 
+  const handleCreateBlockout = async () => {
+    if (!blockStartDate || !blockEndDate) {
+      return alert('Por favor selecione a data de início e término do bloqueio.');
+    }
+    if (blockStartDate > blockEndDate) {
+      return alert('A data de término deve ser igual ou posterior à data de início.');
+    }
+    setSavingBlockout(true);
+    try {
+      const ok = await createBlockout(blockStartDate, blockEndDate, blockReason);
+      if (ok) {
+        setIsBlockoutModalOpen(false);
+        setBlockStartDate('');
+        setBlockEndDate('');
+        setBlockReason('Viagem / Férias');
+        const updated = await fetchMyBlockouts();
+        setBlockouts(updated || []);
+      } else {
+        alert('Erro ao salvar bloqueio de data.');
+      }
+    } finally {
+      setSavingBlockout(false);
+    }
+  };
+
+  const handleDeleteBlockout = async (id: string) => {
+    if (!confirm('Deseja realmente remover este bloqueio de indisponibilidade?')) return;
+    try {
+      const ok = await deleteBlockout(id);
+      if (ok) {
+        setBlockouts(prev => prev.filter(b => b.id !== id));
+      } else {
+        alert('Erro ao remover bloqueio.');
+      }
+    } catch (e) {
+      alert('Erro ao remover.');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '100%', paddingBottom: '40px' }}>
       
@@ -110,43 +167,66 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               Escalas & Voluntariado
             </h1>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
-              Seus cultos escalados e oportunidades de servir
+              Seus cultos escalados, agenda e oportunidades de servir
             </p>
           </div>
         </div>
       </div>
 
-      {/* ABAS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '0 16px' }}>
+      {/* ABAS (3 Segmentos) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 1fr', gap: '6px', padding: '0 16px' }}>
         <button
           onClick={() => setActiveTab('my_schedules')}
           style={{
-            padding: '10px',
+            padding: '10px 4px',
             borderRadius: '12px',
             border: 'none',
             background: activeTab === 'my_schedules' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
             color: activeTab === 'my_schedules' ? '#ffffff' : 'var(--text-muted, #64748b)',
             fontWeight: 800,
-            fontSize: '0.82rem',
+            fontSize: '0.76rem',
             cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))'
+            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
+            whiteSpace: 'nowrap',
+            textAlign: 'center'
           }}
         >
-          Minhas Escalas ({schedules.length})
+          Escalas ({schedules.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('blockouts')}
+          style={{
+            padding: '10px 4px',
+            borderRadius: '12px',
+            border: 'none',
+            background: activeTab === 'blockouts' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
+            color: activeTab === 'blockouts' ? '#ffffff' : 'var(--text-muted, #64748b)',
+            fontWeight: 800,
+            fontSize: '0.76rem',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
+            whiteSpace: 'nowrap',
+            textAlign: 'center'
+          }}
+        >
+          Bloqueios ({blockouts.length})
         </button>
 
         <button
           onClick={() => setActiveTab('join_ministry')}
           style={{
-            padding: '10px',
+            padding: '10px 4px',
             borderRadius: '12px',
             border: 'none',
             background: activeTab === 'join_ministry' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
             color: activeTab === 'join_ministry' ? '#ffffff' : 'var(--text-muted, #64748b)',
             fontWeight: 800,
-            fontSize: '0.82rem',
+            fontSize: '0.76rem',
             cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))'
+            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
+            whiteSpace: 'nowrap',
+            textAlign: 'center'
           }}
         >
           Quero Servir 🤝
@@ -334,7 +414,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               );
             })
           )
-        ) : (
+        ) : activeTab === 'join_ministry' ? (
           
           /* ABA: QUERO SERVIR (MINISTÉRIOS) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -436,8 +516,269 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               </div>
             ))}
           </div>
+        ) : (
+          /* ABA: BLOQUEIOS DE INDISPONIBILIDADE (FASE 3) */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            
+            {/* CARD EXPLICATIVO & BOTÃO NOVO BLOQUEIO */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#ffffff',
+              borderRadius: '18px',
+              padding: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 4px 16px rgba(15,23,42,0.15)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem' }}>🗓️</span>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '0.98rem' }}>Agenda de Indisponibilidade</div>
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                    Avise previamente quando estará viajando ou impossibilitado de servir
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                O sistema automaticamente sinalizará aos líderes dos seus ministérios para <strong>não escalarem você</strong> nas datas marcadas.
+              </div>
+
+              <button
+                onClick={() => setIsBlockoutModalOpen(true)}
+                style={{
+                  background: '#0ea5e9',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '10px 16px',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>+</span>
+                <span>Bloquear Data / Viagem</span>
+              </button>
+            </div>
+
+            {/* LISTA DE BLOQUEIOS ATIVOS */}
+            {blockouts.length === 0 ? (
+              <div style={{
+                background: 'var(--panel-bg, #ffffff)',
+                borderRadius: '16px',
+                padding: '30px 20px',
+                textAlign: 'center',
+                border: '1px solid var(--panel-border, #e2e8f0)'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
+                <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>
+                  Nenhum bloqueio cadastrado
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', marginTop: '4px' }}>
+                  Sua agenda está livre e você está apto a ser convocado para as próximas escalas.
+                </div>
+              </div>
+            ) : (
+              blockouts.map(b => {
+                const formatD = (dStr: string) => {
+                  if (!dStr) return '';
+                  const [y, m, d] = dStr.split('T')[0].split('-');
+                  return `${d}/${m}/${y}`;
+                };
+
+                return (
+                  <div
+                    key={b.id}
+                    style={{
+                      background: 'var(--panel-bg, #ffffff)',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      boxShadow: 'var(--shadow-sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          background: '#fee2e2',
+                          color: '#b91c1c',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '20px'
+                        }}>
+                          🚫 Bloqueado
+                        </span>
+                        <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                          {formatD(b.start_date)} até {formatD(b.end_date)}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
+                        Motivo: <strong>{b.reason || 'Compromisso pessoal'}</strong>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteBlockout(b.id)}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '10px',
+                        padding: '6px 12px',
+                        color: '#ef4444',
+                        fontWeight: 800,
+                        fontSize: '0.74rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+                );
+              })
+            )}
+
+          </div>
         )}
       </div>
+
+      {/* MODAL: NOVO BLOQUEIO DE INDISPONIBILIDADE */}
+      {isBlockoutModalOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15,23,42,0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '420px',
+            padding: '22px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+              Bloquear Período de Escala
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+              Defina os dias em que você estará ausente da igreja para evitar convocação na escala.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+                Data de Início
+              </label>
+              <input
+                type="date"
+                value={blockStartDate}
+                onChange={e => setBlockStartDate(e.target.value)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+                Data de Término
+              </label>
+              <input
+                type="date"
+                value={blockEndDate}
+                onChange={e => setBlockEndDate(e.target.value)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+                Motivo do Bloqueio
+              </label>
+              <select
+                value={blockReason}
+                onChange={e => setBlockReason(e.target.value)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  background: '#ffffff'
+                }}
+              >
+                <option value="Viagem / Férias">✈️ Viagem / Férias</option>
+                <option value="Trabalho / Plantão">💼 Trabalho / Plantão</option>
+                <option value="Saúde / Consulta">🏥 Saúde / Consulta / Repouso</option>
+                <option value="Família / Pessoal">👨‍👩‍👧‍👦 Família / Pessoal</option>
+                <option value="Outro Motivo">📌 Outro Motivo</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setIsBlockoutModalOpen(false)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  fontSize: '0.80rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={savingBlockout}
+                onClick={handleCreateBlockout}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#0f766e',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.80rem',
+                  cursor: savingBlockout ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {savingBlockout ? 'Salvando...' : 'Confirmar Bloqueio'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: MOTIVO DA RECUSA */}
       {declineReasonModal && (
