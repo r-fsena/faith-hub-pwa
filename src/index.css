@@ -10,6 +10,7 @@
   --bg-app: #f8fafc;
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
+  --panel-bg: #ffffff;
   --bg-card-subtle: #f1f5f9;
   --panel-border: #e2e8f0;
   
@@ -1025,6 +1026,7 @@ body[data-theme="dark"] {
   --bg-app: #090d16 !important;
   --bg-main: #090d16 !important;
   --bg-card: #111827 !important;
+  --panel-bg: #111827 !important;
   --bg-card-subtle: #1e293b !important;
   --panel-border: rgba(255, 255, 255, 0.10) !important;
   
@@ -1130,6 +1132,8 @@ body.dark [style*="background-color: rgb(255, 255, 255)"],
 body.dark [style*="background-color:#ffffff"],
 body.dark [style*="linear-gradient(135deg, #ffffff"],
 body.dark [style*="linear-gradient(135deg, rgb(255, 255, 255)"],
+body.dark [style*="--panel-bg"],
+body.dark [style*="--bg-card"],
 body[data-theme="dark"] [style*="background: #ffffff"],
 body[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
 body[data-theme="dark"] [style*="background:#ffffff"],
@@ -1138,9 +1142,13 @@ body[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
 body[data-theme="dark"] [style*="background-color:#ffffff"],
 body[data-theme="dark"] [style*="linear-gradient(135deg, #ffffff"],
 body[data-theme="dark"] [style*="linear-gradient(135deg, rgb(255, 255, 255)"],
+body[data-theme="dark"] [style*="--panel-bg"],
+body[data-theme="dark"] [style*="--bg-card"],
 :root[data-theme="dark"] [style*="background: #ffffff"],
 :root[data-theme="dark"] [style*="background-color: #ffffff"],
-:root[data-theme="dark"] [style*="linear-gradient(135deg, #ffffff"] {
+:root[data-theme="dark"] [style*="linear-gradient(135deg, #ffffff"],
+:root[data-theme="dark"] [style*="--panel-bg"],
+:root[data-theme="dark"] [style*="--bg-card"] {
   background: var(--bg-card) !important;
   color: var(--text-main) !important;
 }

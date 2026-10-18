@@ -215,7 +215,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             <button
               onClick={onBack}
               style={{
-                background: 'var(--panel-bg, #ffffff)',
+                background: 'var(--bg-card, #ffffff)',
                 border: '1px solid var(--panel-border, #e2e8f0)',
                 borderRadius: '12px',
                 width: '38px',
@@ -225,7 +225,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: 'var(--text-main, #0f172a)',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                boxShadow: 'var(--shadow-sm)'
               }}
             >
               ←
@@ -243,94 +244,48 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
       </div>
 
       {/* ABAS (4 Segmentos) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', padding: '0 16px' }}>
-        <button
-          onClick={() => setActiveTab('my_schedules')}
-          style={{
-            padding: '10px 2px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeTab === 'my_schedules' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
-            color: activeTab === 'my_schedules' ? '#ffffff' : 'var(--text-muted, #64748b)',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
-            whiteSpace: 'nowrap',
-            textAlign: 'center'
-          }}
-        >
-          Escalas ({schedules.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('swaps')}
-          style={{
-            padding: '10px 2px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeTab === 'swaps' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
-            color: activeTab === 'swaps' ? '#ffffff' : 'var(--text-muted, #64748b)',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
-            whiteSpace: 'nowrap',
-            textAlign: 'center',
-            position: 'relative'
-          }}
-        >
-          Trocas {pendingSwaps.incoming.length > 0 && `(${pendingSwaps.incoming.length})`}
-          {pendingSwaps.incoming.length > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '4px',
-              right: '6px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#ef4444'
-            }} />
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('blockouts')}
-          style={{
-            padding: '10px 2px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeTab === 'blockouts' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
-            color: activeTab === 'blockouts' ? '#ffffff' : 'var(--text-muted, #64748b)',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
-            whiteSpace: 'nowrap',
-            textAlign: 'center'
-          }}
-        >
-          Bloqueios ({blockouts.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('join_ministry')}
-          style={{
-            padding: '10px 2px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeTab === 'join_ministry' ? 'var(--accent-primary, #0f766e)' : 'var(--panel-bg, #ffffff)',
-            color: activeTab === 'join_ministry' ? '#ffffff' : 'var(--text-muted, #64748b)',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.06))',
-            whiteSpace: 'nowrap',
-            textAlign: 'center'
-          }}
-        >
-          Quero Servir 🤝
-        </button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', padding: '0 16px' }}>
+        {[
+          { key: 'my_schedules', label: `Escalas (${schedules.length})` },
+          { key: 'swaps', label: `Trocas${pendingSwaps.incoming.length > 0 ? ` (${pendingSwaps.incoming.length})` : ''}`, badge: pendingSwaps.incoming.length > 0 },
+          { key: 'blockouts', label: `Bloqueios (${blockouts.length})` },
+          { key: 'join_ministry', label: 'Quero Servir 🤝' }
+        ].map(tab => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              style={{
+                padding: '10px 4px',
+                borderRadius: '12px',
+                border: isActive ? 'none' : '1px solid var(--panel-border, #e2e8f0)',
+                background: isActive ? 'var(--accent-primary, #0f766e)' : 'var(--bg-card, #ffffff)',
+                color: isActive ? '#ffffff' : 'var(--text-secondary, #64748b)',
+                fontWeight: 800,
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+                boxShadow: isActive ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'var(--shadow-sm)',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                position: 'relative'
+              }}
+            >
+              {tab.label}
+              {tab.badge && (
+                <span style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '6px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#ef4444'
+                }} />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* CONTEÚDO */}
@@ -345,7 +300,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           
           /* ABA: MINHAS ESCALAS */
           schedules.length === 0 ? (
-            <div style={{ background: 'var(--panel-bg, #ffffff)', borderRadius: '18px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)' }}>
+            <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '18px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🙌</div>
               <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-main, #0f172a)' }}>
                 Você não possui escalas pendentes
@@ -364,7 +319,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '0.80rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(15, 118, 110, 0.25)'
                 }}
               >
                 Conhecer Ministérios e Servir
@@ -380,7 +336,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 <div
                   key={item.roster_item_id}
                   style={{
-                    background: 'var(--panel-bg, #ffffff)',
+                    background: 'var(--bg-card, #ffffff)',
                     borderRadius: '18px',
                     padding: '18px',
                     border: isAccepted 
@@ -401,7 +357,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         padding: '3px 8px',
                         borderRadius: '8px',
                         background: `${item.ministry_color || '#0f766e'}20`,
-                        color: item.ministry_color || '#0f766e',
+                        color: item.ministry_color || 'var(--accent-primary, #0f766e)',
                         textTransform: 'uppercase'
                       }}>
                         {item.ministry_name}
@@ -420,21 +376,21 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       fontWeight: 800,
                       padding: '4px 10px',
                       borderRadius: '10px',
-                      background: isAccepted ? '#ecfdf5' : (isDeclined ? '#fee2e2' : '#fef3c7'),
-                      color: isAccepted ? '#059669' : (isDeclined ? '#dc2626' : '#d97706')
+                      background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
+                      color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
                     }}>
                       {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
                     </span>
                   </div>
 
                   {/* Posição Escalada */}
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '1.1rem' }}>🏷️</span>
                     <div>
-                      <div style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
                         Sua Função nesta Escala
                       </div>
-                      <div style={{ fontWeight: 900, fontSize: '0.90rem', color: '#0f172a' }}>
+                      <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
                         {item.role_name}
                       </div>
                     </div>
@@ -442,8 +398,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
 
                   {/* Notas / Orientações */}
                   {item.schedule_notes && (
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', background: '#fffbeb', padding: '8px 12px', borderRadius: '10px', border: '1px solid #fde68a' }}>
-                      <strong>Orientações:</strong> {item.schedule_notes}
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                      <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
                     </div>
                   )}
 
@@ -480,7 +436,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           padding: '12px',
                           borderRadius: '12px',
                           border: '1.5px solid #ef4444',
-                          background: '#ffffff',
+                          background: 'var(--bg-card, #ffffff)',
                           color: '#ef4444',
                           fontWeight: 800,
                           fontSize: '0.85rem',
@@ -498,17 +454,17 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   )}
 
                   {isAccepted && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                      <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
                         ✓ Sua vaga está garantida no altar!
                       </span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <button
                           onClick={() => handleOpenSwapModal(item)}
                           style={{
-                            background: '#f0fdf4',
-                            border: '1px solid #bbf7d0',
-                            color: '#166534',
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            border: '1px solid rgba(16, 185, 129, 0.35)',
+                            color: '#10b981',
                             borderRadius: '8px',
                             padding: '4px 10px',
                             fontSize: '0.74rem',
@@ -520,7 +476,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         </button>
                         <button
                           onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                          style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
                         >
                           Recusar
                         </button>
@@ -529,9 +485,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   )}
 
                   {item.confirmation_status === 'SWAP_REQUESTED' && (
-                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.1rem' }}>🔄</span>
-                      <div style={{ fontSize: '0.76rem', color: '#92400e', fontWeight: 700, lineHeight: 1.4 }}>
+                      <div style={{ fontSize: '0.76rem', color: 'var(--text-main, #f59e0b)', fontWeight: 700, lineHeight: 1.4 }}>
                         Troca solicitada para este culto. Aguardando confirmação de um colega voluntário.
                       </div>
                     </div>
@@ -554,7 +510,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               </div>
 
               {pendingSwaps.incoming.length === 0 ? (
-                <div style={{ background: 'var(--panel-bg, #ffffff)', borderRadius: '14px', padding: '24px 16px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)' }}>
+                <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '14px', padding: '24px 16px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🕊️</div>
                   <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)' }}>
                     Nenhum pedido de troca recebido no momento.
@@ -566,7 +522,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     <div
                       key={sw.swap_id}
                       style={{
-                        background: 'var(--panel-bg, #ffffff)',
+                        background: 'var(--bg-card, #ffffff)',
                         borderRadius: '16px',
                         padding: '16px',
                         border: '1.5px solid #3b82f6',
@@ -578,25 +534,25 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                          <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
                             {sw.ministry_name}
                           </span>
                           <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)', marginTop: '4px' }}>
                             {sw.requesting_member_name} precisa de substituto
                           </div>
                         </div>
-                        <span style={{ fontSize: '0.70rem', color: '#64748b' }}>
-                          Função: <strong>{sw.role_name}</strong>
+                        <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)' }}>
+                          Função: <strong style={{ color: 'var(--text-main)' }}>{sw.role_name}</strong>
                         </span>
                       </div>
 
-                      <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.78rem', color: '#334155' }}>
+                      <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.78rem', color: 'var(--text-main, #334155)' }}>
                         <div>📅 Culto: <strong>{sw.service_title}</strong></div>
-                        <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+                        <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.74rem', marginTop: '2px' }}>
                           {new Date(sw.service_date).toLocaleDateString('pt-BR')} às {sw.service_time}
                         </div>
                         {sw.reason && (
-                          <div style={{ marginTop: '4px', fontStyle: 'italic', color: '#475569' }}>
+                          <div style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--text-secondary, #475569)' }}>
                             "{sw.reason}"
                           </div>
                         )}
@@ -625,9 +581,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           style={{
                             padding: '10px',
                             borderRadius: '10px',
-                            border: '1px solid #cbd5e1',
-                            background: '#ffffff',
-                            color: '#64748b',
+                            border: '1px solid var(--panel-border, #cbd5e1)',
+                            background: 'var(--bg-card, #ffffff)',
+                            color: 'var(--text-secondary, #64748b)',
                             fontWeight: 700,
                             fontSize: '0.80rem',
                             cursor: 'pointer'
@@ -657,18 +613,19 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     <div
                       key={sw.swap_id}
                       style={{
-                        background: 'var(--panel-bg, #ffffff)',
+                        background: 'var(--bg-card, #ffffff)',
                         borderRadius: '14px',
                         padding: '14px',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '0.80rem'
+                        border: '1px solid var(--panel-border, #e2e8f0)',
+                        fontSize: '0.80rem',
+                        boxShadow: 'var(--shadow-sm)'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong style={{ color: '#0f172a' }}>{sw.service_title}</strong>
+                        <strong style={{ color: 'var(--text-main, #0f172a)' }}>{sw.service_title}</strong>
                         <span style={{
-                          background: sw.status === 'PENDING' ? '#fef3c7' : (sw.status === 'ACCEPTED' ? '#dcfce7' : '#fee2e2'),
-                          color: sw.status === 'PENDING' ? '#92400e' : (sw.status === 'ACCEPTED' ? '#15803d' : '#b91c1c'),
+                          background: sw.status === 'PENDING' ? 'rgba(245, 158, 11, 0.15)' : (sw.status === 'ACCEPTED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'),
+                          color: sw.status === 'PENDING' ? '#f59e0b' : (sw.status === 'ACCEPTED' ? '#10b981' : '#ef4444'),
                           padding: '2px 8px',
                           borderRadius: '6px',
                           fontWeight: 800,
@@ -677,12 +634,12 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           {sw.status === 'PENDING' ? '⏳ Aguardando' : (sw.status === 'ACCEPTED' ? '✓ Aceita' : 'Recusada')}
                         </span>
                       </div>
-                      <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+                      <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.74rem', marginTop: '2px' }}>
                         {new Date(sw.service_date).toLocaleDateString('pt-BR')} • {sw.role_name}
                       </div>
                       {sw.target_member_name && (
-                        <div style={{ fontSize: '0.72rem', color: '#475569', marginTop: '4px' }}>
-                          Destinado a: <strong>{sw.target_member_name}</strong>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #475569)', marginTop: '4px' }}>
+                          Destinado a: <strong style={{ color: 'var(--text-main)' }}>{sw.target_member_name}</strong>
                         </div>
                       )}
                     </div>
@@ -696,7 +653,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           
           /* ABA: QUERO SERVIR (MINISTÉRIOS) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)', fontWeight: 600 }}>
               Escolha um ministério para manifestar interesse e entrar no bolsão de voluntários:
             </div>
 
@@ -704,7 +661,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               <div
                 key={min.id}
                 style={{
-                  background: 'var(--panel-bg, #ffffff)',
+                  background: 'var(--bg-card, #ffffff)',
                   borderRadius: '16px',
                   padding: '16px',
                   border: '1px solid var(--panel-border, #e2e8f0)',
@@ -720,8 +677,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       width: '38px',
                       height: '38px',
                       borderRadius: '12px',
-                      background: `${min.color || '#0f766e'}20`,
-                      color: min.color || '#0f766e',
+                      background: `${min.color || '#0f766e'}25`,
+                      color: min.color || 'var(--accent-primary, #0f766e)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -741,14 +698,14 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 </div>
 
                 {min.description && (
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', lineHeight: 1.4 }}>
                     {min.description}
                   </div>
                 )}
 
                 {joiningMinId === min.id ? (
-                  <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#f8fafc', padding: '12px', borderRadius: '12px' }}>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155' }}>
+                  <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '12px', borderRadius: '12px' }}>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main, #334155)' }}>
                       Quais são seus dons/funções de interesse?
                     </label>
                     <input
@@ -756,18 +713,43 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       placeholder="Ex: Toco teclado, canto, já trabalhei com crianças..."
                       value={joinRolesText}
                       onChange={e => setJoinRolesText(e.target.value)}
-                      style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.80rem', outline: 'none' }}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--panel-border, #cbd5e1)',
+                        background: 'var(--bg-card, #ffffff)',
+                        color: 'var(--text-main, #0f172a)',
+                        fontSize: '0.80rem',
+                        outline: 'none'
+                      }}
                     />
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       <button
                         onClick={() => setJoiningMinId(null)}
-                        style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.75rem', cursor: 'pointer' }}
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--panel-border, #cbd5e1)',
+                          background: 'var(--bg-card, #ffffff)',
+                          color: 'var(--text-main, #334155)',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer'
+                        }}
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={() => handleJoinMinistry(min.id)}
-                        style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', background: '#0f766e', color: '#fff', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                        style={{
+                          padding: '7px 16px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: 'var(--accent-primary, #0f766e)',
+                          color: '#ffffff',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
+                          cursor: 'pointer'
+                        }}
                       >
                         Confirmar Inscrição
                       </button>
@@ -778,14 +760,18 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     onClick={() => { setJoiningMinId(min.id); setJoinRolesText(''); }}
                     style={{
                       marginTop: '4px',
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: 'var(--accent-primary-light, #f0fdfa)',
-                      color: 'var(--accent-primary, #0f766e)',
+                      padding: '11px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--accent-primary, #0f766e)',
+                      background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
+                      color: 'var(--accent-contrast, var(--accent-primary, #0f766e))',
                       fontWeight: 800,
-                      fontSize: '0.80rem',
-                      cursor: 'pointer'
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
                     }}
                   >
                     + Quero Fazer Parte Deste Ministério
@@ -848,11 +834,12 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             {/* LISTA DE BLOQUEIOS ATIVOS */}
             {blockouts.length === 0 ? (
               <div style={{
-                background: 'var(--panel-bg, #ffffff)',
+                background: 'var(--bg-card, #ffffff)',
                 borderRadius: '16px',
                 padding: '30px 20px',
                 textAlign: 'center',
-                border: '1px solid var(--panel-border, #e2e8f0)'
+                border: '1px solid var(--panel-border, #e2e8f0)',
+                boxShadow: 'var(--shadow-sm)'
               }}>
                 <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
                 <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>
@@ -874,7 +861,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   <div
                     key={b.id}
                     style={{
-                      background: 'var(--panel-bg, #ffffff)',
+                      background: 'var(--bg-card, #ffffff)',
                       borderRadius: '16px',
                       padding: '16px',
                       border: '1px solid var(--panel-border, #e2e8f0)',
@@ -888,8 +875,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{
-                          background: '#fee2e2',
-                          color: '#b91c1c',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          color: '#ef4444',
                           fontSize: '0.68rem',
                           fontWeight: 800,
                           padding: '2px 8px',
@@ -902,15 +889,15 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         </span>
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
-                        Motivo: <strong>{b.reason || 'Compromisso pessoal'}</strong>
+                        Motivo: <strong style={{ color: 'var(--text-main)' }}>{b.reason || 'Compromisso pessoal'}</strong>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleDeleteBlockout(b.id)}
                       style={{
-                        background: '#f8fafc',
-                        border: '1px solid #cbd5e1',
+                        background: 'var(--bg-card-subtle, #f8fafc)',
+                        border: '1px solid var(--panel-border, #cbd5e1)',
                         borderRadius: '10px',
                         padding: '6px 12px',
                         color: '#ef4444',
@@ -935,8 +922,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(15,23,42,0.65)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(5px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -944,7 +931,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           padding: '16px'
         }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--bg-card, #ffffff)',
+            border: '1px solid var(--panel-border, #e2e8f0)',
             borderRadius: '20px',
             width: '100%',
             maxWidth: '420px',
@@ -952,17 +940,17 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             display: 'flex',
             flexDirection: 'column',
             gap: '14px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            boxShadow: 'var(--shadow-lg)'
           }}>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
               Bloquear Período de Escala
             </h3>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               Defina os dias em que você estará ausente da igreja para evitar convocação na escala.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary, #334155)' }}>
                 Data de Início
               </label>
               <input
@@ -972,7 +960,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{
                   padding: '10px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: '0.85rem',
                   outline: 'none'
                 }}
@@ -980,7 +970,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary, #334155)' }}>
                 Data de Término
               </label>
               <input
@@ -990,7 +980,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{
                   padding: '10px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: '0.85rem',
                   outline: 'none'
                 }}
@@ -998,7 +990,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: '#334155' }}>
+              <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary, #334155)' }}>
                 Motivo do Bloqueio
               </label>
               <select
@@ -1007,10 +999,11 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{
                   padding: '10px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: '0.85rem',
-                  outline: 'none',
-                  background: '#ffffff'
+                  outline: 'none'
                 }}
               >
                 <option value="Viagem / Férias">✈️ Viagem / Férias</option>
@@ -1028,8 +1021,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{
                   padding: '9px 16px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: '0.80rem',
                   cursor: 'pointer'
                 }}
@@ -1044,7 +1038,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   padding: '9px 18px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#0f766e',
+                  background: 'var(--accent-primary, #0f766e)',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '0.80rem',
@@ -1060,12 +1054,12 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
 
       {/* MODAL: MOTIVO DA RECUSA */}
       {declineReasonModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '20px', width: '100%', maxWidth: '400px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--panel-border, #e2e8f0)', borderRadius: '20px', width: '100%', maxWidth: '400px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: 'var(--shadow-lg)' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
               Justificar Ausência na Escala
             </h3>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               Ajude sua liderança a remanejar outro voluntário informando brevemente o motivo:
             </p>
             <textarea
@@ -1073,12 +1067,28 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               placeholder="Ex: Viagem marcada, plantão de trabalho, consulta médica..."
               value={declineText}
               onChange={e => setDeclineText(e.target.value)}
-              style={{ padding: '10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '0.82rem', outline: 'none' }}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                border: '1px solid var(--panel-border, #cbd5e1)',
+                background: 'var(--bg-card-subtle, #f8fafc)',
+                color: 'var(--text-main, #0f172a)',
+                fontSize: '0.82rem',
+                outline: 'none'
+              }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={() => setDeclineReasonModal(null)}
-                style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.80rem', cursor: 'pointer' }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #ffffff)',
+                  color: 'var(--text-main, #0f172a)',
+                  fontSize: '0.80rem',
+                  cursor: 'pointer'
+                }}
               >
                 Voltar
               </button>
@@ -1098,8 +1108,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(15,23,42,0.65)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(5px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1107,7 +1117,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           padding: '16px'
         }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--bg-card, #ffffff)',
+            border: '1px solid var(--panel-border, #e2e8f0)',
             borderRadius: '20px',
             width: '100%',
             maxWidth: '440px',
@@ -1115,36 +1126,36 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             display: 'flex',
             flexDirection: 'column',
             gap: '14px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+            boxShadow: 'var(--shadow-lg)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.4rem' }}>🔄</span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
                   Pedir Troca de Escala
                 </h3>
               </div>
               <button
                 onClick={() => setIsSwapModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'var(--text-muted, #94a3b8)', cursor: 'pointer' }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.80rem' }}>
-              <div style={{ fontWeight: 800, color: '#0f172a' }}>{swapTargetSchedule.service_title}</div>
-              <div style={{ color: '#64748b', fontSize: '0.74rem', marginTop: '2px' }}>
+            <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--panel-border, #e2e8f0)', fontSize: '0.80rem' }}>
+              <div style={{ fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>{swapTargetSchedule.service_title}</div>
+              <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.74rem', marginTop: '2px' }}>
                 {new Date(swapTargetSchedule.service_date).toLocaleDateString('pt-BR')} às {swapTargetSchedule.service_time} • {swapTargetSchedule.role_name}
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary, #334155)', marginBottom: '6px' }}>
                 Colega Voluntário para Substituição:
               </label>
               {loadingPeers ? (
-                <div style={{ fontSize: '0.78rem', color: '#64748b', padding: '8px' }}>Buscando voluntários aptos...</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', padding: '8px' }}>Buscando voluntários aptos...</div>
               ) : (
                 <select
                   value={selectedPeerId}
@@ -1153,9 +1164,11 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--panel-border, #cbd5e1)',
                     fontSize: '0.82rem',
-                    background: '#ffffff'
+                    background: 'var(--bg-card-subtle, #f8fafc)',
+                    color: 'var(--text-main, #0f172a)',
+                    outline: 'none'
                   }}
                 >
                   <option value="">Qualquer voluntário apto (Solicitação aberta)</option>
@@ -1166,13 +1179,13 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   ))}
                 </select>
               )}
-              <span style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', display: 'block' }}>
                 {eligiblePeers.length} colegas aptos disponíveis nesta data/horário.
               </span>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary, #334155)', marginBottom: '6px' }}>
                 Motivo da Solicitação:
               </label>
               <textarea
@@ -1184,7 +1197,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: '0.82rem',
                   outline: 'none',
                   resize: 'none'
@@ -1196,7 +1211,15 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               <button
                 type="button"
                 onClick={() => setIsSwapModalOpen(false)}
-                style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.80rem', cursor: 'pointer' }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--panel-border, #cbd5e1)',
+                  background: 'var(--bg-card-subtle, #f8fafc)',
+                  color: 'var(--text-main, #0f172a)',
+                  fontSize: '0.80rem',
+                  cursor: 'pointer'
+                }}
               >
                 Cancelar
               </button>
@@ -1208,7 +1231,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   padding: '8px 18px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#0f766e',
+                  background: 'var(--accent-primary, #0f766e)',
                   color: '#fff',
                   fontWeight: 800,
                   fontSize: '0.80rem',
