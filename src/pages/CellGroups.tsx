@@ -908,6 +908,14 @@ export const CellGroups: React.FC = () => {
     }));
   };
 
+  const handleMarkAllPresent = () => {
+    const updated: Record<string, 'PRESENT'> = {};
+    groupMembers.forEach(m => {
+      updated[m.id] = 'PRESENT';
+    });
+    setAttendeesStatus(updated);
+  };
+
   const handleAddVisitor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVisitorName.trim()) return;
@@ -2390,34 +2398,74 @@ export const CellGroups: React.FC = () => {
                 ))}
               </div>
 
-              {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ONE-TAP) */}
+              {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ONE-TAP ERGONÔMICO) */}
               {leaderSubTab === 'attendance' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
                   {/* Formulário de Registro de Chamada */}
-                  <form onSubmit={handleSaveMeeting} style={{ background: '#ffffff', borderRadius: '20px', padding: '18px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '1.3rem' }}>📋</span>
+                  <form 
+                    onSubmit={handleSaveMeeting} 
+                    style={{ 
+                      background: 'var(--bg-card, #ffffff)', 
+                      borderRadius: '20px', 
+                      padding: '20px 16px', 
+                      border: '1px solid var(--panel-border, #e2e8f0)', 
+                      boxShadow: 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06))', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '16px' 
+                    }}
+                  >
+                    {/* Header com Ícone e Contadores */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--panel-border, #f1f5f9)', paddingBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.25rem',
+                          flexShrink: 0
+                        }}>
+                          📋
+                        </div>
                         <div>
-                          <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                            Chamada da Reunião Semanal
+                          <div style={{ fontWeight: 900, fontSize: '0.98rem', color: 'var(--text-main, #0f172a)', letterSpacing: '-0.2px' }}>
+                            Chamada da Reunião
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            Marque os presentes em 30 segundos
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #94a3b8)' }}>
+                            Frequência dos membros e visitantes
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.72rem', background: '#ecfdf5', color: '#065f46', padding: '4px 10px', borderRadius: '12px', fontWeight: 800 }}>
-                        {Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes
-                      </span>
+
+                      {/* Pill Resumo de Presenças */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        color: '#10b981',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 800
+                      }}>
+                        <span>🟢</span>
+                        <span>{Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes</span>
+                      </div>
                     </div>
 
                     {/* Data e Tema da Reunião */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
-                          Data da Reunião
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
+                          <span>📅</span>
+                          <span>Data da Reunião</span>
                         </label>
                         <input
                           type="date"
@@ -2426,19 +2474,21 @@ export const CellGroups: React.FC = () => {
                           onChange={e => setMeetingDate(e.target.value)}
                           style={{
                             width: '100%',
-                            padding: '9px 10px',
-                            borderRadius: '10px',
-                            border: '1px solid var(--panel-border)',
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--panel-border, #cbd5e1)',
                             fontSize: '0.82rem',
                             outline: 'none',
-                            background: '#f8fafc',
+                            background: 'var(--bg-app, #f8fafc)',
+                            color: 'var(--text-main, #0f172a)',
                             boxSizing: 'border-box'
                           }}
                         />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
-                          Tema / Estudo (Opcional)
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
+                          <span>📖</span>
+                          <span>Tema / Estudo (Opcional)</span>
                         </label>
                         <input
                           type="text"
@@ -2447,31 +2497,55 @@ export const CellGroups: React.FC = () => {
                           onChange={e => setStudyTopic(e.target.value)}
                           style={{
                             width: '100%',
-                            padding: '9px 10px',
-                            borderRadius: '10px',
-                            border: '1px solid var(--panel-border)',
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--panel-border, #cbd5e1)',
                             fontSize: '0.82rem',
                             outline: 'none',
-                            background: '#f8fafc',
+                            background: 'var(--bg-app, #f8fafc)',
+                            color: 'var(--text-main, #0f172a)',
                             boxSizing: 'border-box'
                           }}
                         />
                       </div>
                     </div>
 
-                    {/* Lista de Membros Cadastrados da Célula com One-Tap Switches */}
+                    {/* Lista de Membros Cadastrados com Segmented Control Ergonômico */}
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <label style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                          Membros da Célula ({groupMembers.length})
-                        </label>
-                        <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                          Toque para alternar o status
-                        </span>
+                      {/* Barra de Título e Botão Rápido de "Todos Presentes" */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                            Membros da Célula ({groupMembers.length})
+                          </span>
+                        </div>
+                        {groupMembers.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleMarkAllPresent}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              color: '#10b981',
+                              border: '1px solid rgba(16, 185, 129, 0.25)',
+                              padding: '5px 11px',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <span>⚡</span>
+                            <span>Marcar todos presentes</span>
+                          </button>
+                        )}
                       </div>
 
                       {groupMembers.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.80rem', background: '#f8fafc', borderRadius: '12px' }}>
+                        <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted, #94a3b8)', fontSize: '0.80rem', background: 'var(--bg-app, #f8fafc)', borderRadius: '12px', border: '1px dashed var(--panel-border, #e2e8f0)' }}>
                           Nenhum membro cadastrado nesta célula ainda.
                         </div>
                       ) : (
@@ -2484,109 +2558,169 @@ export const CellGroups: React.FC = () => {
                                 style={{
                                   padding: '10px 12px',
                                   borderRadius: '14px',
-                                  background: status === 'PRESENT' ? '#f0fdf4' : (status === 'ABSENT' ? '#fef2f2' : '#fffbeb'),
-                                  border: status === 'PRESENT' ? '1px solid #bbf7d0' : (status === 'ABSENT' ? '1px solid #fecaca' : '1px solid #fde68a'),
+                                  background: 'var(--bg-card, #ffffff)',
+                                  border: status === 'PRESENT' 
+                                    ? '1px solid rgba(16, 185, 129, 0.35)' 
+                                    : (status === 'ABSENT' ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)'),
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '6px'
+                                  gap: '8px'
                                 }}
                               >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{
-                                      width: '32px',
-                                      height: '32px',
-                                      borderRadius: '50%',
-                                      background: status === 'PRESENT' ? '#22c55e' : (status === 'ABSENT' ? '#ef4444' : '#f59e0b'),
-                                      color: '#ffffff',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontWeight: 800,
-                                      fontSize: '0.75rem'
-                                    }}>
-                                      {getInitials(m.name)}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                  {/* Info do Membro com Avatar e Indicador */}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                                    <div style={{ position: 'relative' }}>
+                                      <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        minWidth: '36px',
+                                        borderRadius: '10px',
+                                        background: getAvatarBg(m.name),
+                                        color: '#ffffff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 800,
+                                        fontSize: '0.78rem'
+                                      }}>
+                                        {getInitials(m.name)}
+                                      </div>
+                                      {/* Dot indicador de status */}
+                                      <div style={{
+                                        position: 'absolute',
+                                        bottom: '-2px',
+                                        right: '-2px',
+                                        width: '11px',
+                                        height: '11px',
+                                        borderRadius: '50%',
+                                        background: status === 'PRESENT' ? '#10b981' : (status === 'ABSENT' ? '#ef4444' : '#f59e0b'),
+                                        border: '2px solid var(--bg-card, #ffffff)'
+                                      }} />
                                     </div>
-                                    <div>
-                                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                      <div style={{ 
+                                        fontWeight: 800, 
+                                        fontSize: '0.86rem', 
+                                        color: 'var(--text-main, #0f172a)',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
+                                      }}>
                                         {m.name}
                                       </div>
-                                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                                        {m.role || 'Membro'}
+                                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #94a3b8)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <span>{m.role || 'Membro'}</span>
                                       </div>
                                     </div>
                                   </div>
 
-                                  {/* Botões One-Tap */}
-                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                  {/* Segmented Control Ergonômico de 3 Estados */}
+                                  <div style={{
+                                    display: 'inline-flex',
+                                    background: 'var(--bg-app, #f1f5f9)',
+                                    borderRadius: '10px',
+                                    padding: '2px',
+                                    border: '1px solid var(--panel-border, #e2e8f0)',
+                                    gap: '2px',
+                                    flexShrink: 0
+                                  }}>
+                                    {/* Botão Presente */}
                                     <button
                                       type="button"
                                       onClick={() => handleToggleAttendeeStatus(m.id, 'PRESENT')}
                                       style={{
-                                        padding: '5px 9px',
+                                        padding: '5px 8px',
                                         borderRadius: '8px',
                                         border: 'none',
-                                        background: status === 'PRESENT' ? '#22c55e' : '#e2e8f0',
-                                        color: status === 'PRESENT' ? '#ffffff' : '#64748b',
+                                        background: status === 'PRESENT' ? '#10b981' : 'transparent',
+                                        color: status === 'PRESENT' ? '#ffffff' : 'var(--text-muted, #64748b)',
                                         fontWeight: 800,
                                         fontSize: '0.70rem',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: status === 'PRESENT' ? '0 1px 4px rgba(16, 185, 129, 0.35)' : 'none'
                                       }}
                                     >
-                                      ✓ Presente
+                                      <span>✓</span>
+                                      <span>Presente</span>
                                     </button>
+
+                                    {/* Botão Faltou */}
                                     <button
                                       type="button"
                                       onClick={() => handleToggleAttendeeStatus(m.id, 'ABSENT')}
                                       style={{
-                                        padding: '5px 9px',
+                                        padding: '5px 8px',
                                         borderRadius: '8px',
                                         border: 'none',
-                                        background: status === 'ABSENT' ? '#ef4444' : '#e2e8f0',
-                                        color: status === 'ABSENT' ? '#ffffff' : '#64748b',
+                                        background: status === 'ABSENT' ? '#ef4444' : 'transparent',
+                                        color: status === 'ABSENT' ? '#ffffff' : 'var(--text-muted, #64748b)',
                                         fontWeight: 800,
                                         fontSize: '0.70rem',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: status === 'ABSENT' ? '0 1px 4px rgba(239, 68, 68, 0.35)' : 'none'
                                       }}
                                     >
-                                      ✗ Faltou
+                                      <span>✕</span>
+                                      <span>Faltou</span>
                                     </button>
+
+                                    {/* Botão Justificado */}
                                     <button
                                       type="button"
                                       onClick={() => handleToggleAttendeeStatus(m.id, 'JUSTIFIED')}
+                                      title="Falta Justificada"
                                       style={{
-                                        padding: '5px 7px',
+                                        padding: '5px 6px',
                                         borderRadius: '8px',
                                         border: 'none',
-                                        background: status === 'JUSTIFIED' ? '#f59e0b' : '#e2e8f0',
-                                        color: status === 'JUSTIFIED' ? '#ffffff' : '#64748b',
+                                        background: status === 'JUSTIFIED' ? '#f59e0b' : 'transparent',
+                                        color: status === 'JUSTIFIED' ? '#ffffff' : 'var(--text-muted, #64748b)',
                                         fontWeight: 800,
                                         fontSize: '0.70rem',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2px',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: status === 'JUSTIFIED' ? '0 1px 4px rgba(245, 158, 11, 0.35)' : 'none'
                                       }}
                                     >
-                                      ⚠️
+                                      <span>⚠️</span>
                                     </button>
                                   </div>
                                 </div>
 
+                                {/* Campo de Justificativa com visual integrado */}
                                 {status === 'JUSTIFIED' && (
-                                  <input
-                                    type="text"
-                                    placeholder="Justificativa da falta (ex: viagem de trabalho)..."
-                                    value={attendeesJustification[m.id] || ''}
-                                    onChange={e => setAttendeesJustification({ ...attendeesJustification, [m.id]: e.target.value })}
-                                    style={{
-                                      width: '100%',
-                                      padding: '6px 8px',
-                                      borderRadius: '8px',
-                                      border: '1px solid #fde68a',
-                                      fontSize: '0.75rem',
-                                      outline: 'none',
-                                      background: '#ffffff',
-                                      boxSizing: 'border-box'
-                                    }}
-                                  />
+                                  <div style={{ marginTop: '2px' }}>
+                                    <input
+                                      type="text"
+                                      placeholder="Motivo da falta (ex: viagem a trabalho, saúde)..."
+                                      value={attendeesJustification[m.id] || ''}
+                                      onChange={e => setAttendeesJustification({ ...attendeesJustification, [m.id]: e.target.value })}
+                                      style={{
+                                        width: '100%',
+                                        padding: '8px 10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                                        fontSize: '0.75rem',
+                                        outline: 'none',
+                                        background: 'var(--bg-app, #fffbeb)',
+                                        color: 'var(--text-main, #0f172a)',
+                                        boxSizing: 'border-box'
+                                      }}
+                                    />
+                                  </div>
                                 )}
                               </div>
                             );
@@ -2596,73 +2730,118 @@ export const CellGroups: React.FC = () => {
                     </div>
 
                     {/* Visitantes na Reunião */}
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)' }}>
+                    <div style={{ 
+                      background: 'var(--bg-app, #f8fafc)', 
+                      padding: '14px', 
+                      borderRadius: '16px', 
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--text-main)' }}>
-                          🌟 Novos Visitantes ({visitorsList.length})
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '1rem' }}>🌟</span>
+                          <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0f172a)' }}>
+                            Novos Visitantes ({visitorsList.length})
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setShowAddVisitor(!showAddVisitor)}
                           style={{
-                            background: '#0f766e',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '4px 10px',
+                            background: showAddVisitor ? 'transparent' : 'var(--accent-primary, #0f766e)',
+                            color: showAddVisitor ? 'var(--text-muted, #64748b)' : '#ffffff',
+                            border: showAddVisitor ? '1px solid var(--panel-border, #cbd5e1)' : 'none',
+                            padding: '5px 12px',
                             borderRadius: '8px',
                             fontWeight: 800,
-                            fontSize: '0.72rem',
-                            cursor: 'pointer'
+                            fontSize: '0.74rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease'
                           }}
                         >
-                          {showAddVisitor ? 'Cancelar' : '+ Visitante'}
+                          <span>{showAddVisitor ? '✕ Fechar' : '+ Adicionar'}</span>
                         </button>
                       </div>
 
                       {showAddVisitor && (
-                        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#ffffff', padding: '10px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card, #ffffff)', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border, #cbd5e1)' }}>
                           <input
                             type="text"
                             placeholder="Nome completo do visitante *"
                             value={newVisitorName}
                             onChange={e => setNewVisitorName(e.target.value)}
-                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.80rem', outline: 'none' }}
+                            style={{ 
+                              padding: '9px 10px', 
+                              borderRadius: '8px', 
+                              border: '1px solid var(--panel-border, #cbd5e1)', 
+                              fontSize: '0.80rem', 
+                              outline: 'none',
+                              background: 'var(--bg-app, #f8fafc)',
+                              color: 'var(--text-main, #0f172a)'
+                            }}
                           />
                           <input
                             type="tel"
                             placeholder="WhatsApp (ex: 11 98765-4321)"
                             value={newVisitorPhone}
                             onChange={e => setNewVisitorPhone(e.target.value)}
-                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.80rem', outline: 'none' }}
+                            style={{ 
+                              padding: '9px 10px', 
+                              borderRadius: '8px', 
+                              border: '1px solid var(--panel-border, #cbd5e1)', 
+                              fontSize: '0.80rem', 
+                              outline: 'none',
+                              background: 'var(--bg-app, #f8fafc)',
+                              color: 'var(--text-main, #0f172a)'
+                            }}
                           />
                           <button
                             type="button"
                             onClick={handleAddVisitor}
                             style={{
-                              background: '#22c55e',
+                              background: '#10b981',
                               color: '#ffffff',
                               border: 'none',
-                              padding: '8px',
+                              padding: '9px',
                               borderRadius: '8px',
                               fontWeight: 800,
                               fontSize: '0.78rem',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
                             }}
                           >
-                            Adicionar à Lista de Presença
+                            + Confirmar Visitante na Lista
                           </button>
                         </div>
                       )}
 
                       {visitorsList.length > 0 && (
-                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {visitorsList.map((v, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '6px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.78rem' }}>
-                              <span>👤 <strong>{v.name}</strong> {v.phone && `(${v.phone})`}</span>
+                            <div key={idx} style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              background: 'var(--bg-card, #ffffff)', 
+                              padding: '8px 12px', 
+                              borderRadius: '10px', 
+                              border: '1px solid var(--panel-border, #e2e8f0)', 
+                              fontSize: '0.78rem' 
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>👤</span>
+                                <strong style={{ color: 'var(--text-main, #0f172a)' }}>{v.name}</strong>
+                                {v.phone && <span style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.72rem' }}>({v.phone})</span>}
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveVisitor(idx)}
-                                style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer' }}
+                                style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer', padding: '2px 6px' }}
                               >
                                 ✕
                               </button>
@@ -2672,10 +2851,11 @@ export const CellGroups: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Observações Pastorais */}
+                    {/* Observações da Reunião */}
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
-                        Observações da Reunião (Pedidos de oração, bênçãos)
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
+                        <span>💬</span>
+                        <span>Observações & Pedidos de Oração</span>
                       </label>
                       <textarea
                         rows={2}
@@ -2684,12 +2864,16 @@ export const CellGroups: React.FC = () => {
                         onChange={e => setMeetingNotes(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '8px 10px',
-                          borderRadius: '10px',
-                          border: '1px solid var(--panel-border)',
+                          padding: '10px 12px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--panel-border, #cbd5e1)',
                           fontSize: '0.80rem',
                           outline: 'none',
-                          boxSizing: 'border-box'
+                          background: 'var(--bg-app, #f8fafc)',
+                          color: 'var(--text-main, #0f172a)',
+                          boxSizing: 'border-box',
+                          resize: 'vertical',
+                          minHeight: '60px'
                         }}
                       />
                     </div>
@@ -2705,13 +2889,15 @@ export const CellGroups: React.FC = () => {
                         background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
                         color: '#ffffff',
                         fontWeight: 900,
-                        fontSize: '0.90rem',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 10px rgba(15, 118, 110, 0.25)',
+                        fontSize: '0.92rem',
+                        cursor: isRecordingMeeting ? 'not-allowed' : 'pointer',
+                        opacity: isRecordingMeeting ? 0.7 : 1,
+                        boxShadow: '0 4px 14px rgba(15, 118, 110, 0.3)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        transition: 'transform 0.15s ease'
                       }}
                     >
                       <span>💾</span>
@@ -2725,29 +2911,80 @@ export const CellGroups: React.FC = () => {
 
                   {/* Histórico das Últimas Reuniões */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>📜</span>
                       <span>Histórico das Últimas Reuniões</span>
                     </div>
 
                     {meetingsHistory.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.78rem', background: '#ffffff', borderRadius: '14px', border: '1px solid var(--panel-border)' }}>
-                        Nenhuma reunião gravada anteriormente.
+                      <div style={{ 
+                        textAlign: 'center', 
+                        padding: '24px 16px', 
+                        color: 'var(--text-muted, #94a3b8)', 
+                        background: 'var(--bg-card, #ffffff)', 
+                        borderRadius: '16px', 
+                        border: '1px solid var(--panel-border, #e2e8f0)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <div style={{ fontSize: '1.8rem', opacity: 0.7 }}>📅</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0f172a)' }}>
+                          Nenhuma reunião gravada ainda
+                        </div>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Ao salvar a primeira chamada semanal, o histórico detalhado aparecerá aqui.
+                        </div>
                       </div>
                     ) : (
                       meetingsHistory.map(m => (
-                        <div key={m.id} style={{ background: '#ffffff', borderRadius: '14px', padding: '12px 14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
-                              📅 {new Date(m.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                              {m.study_topic && <span style={{ fontWeight: 600, color: 'var(--text-muted)', marginLeft: '6px' }}>• {m.study_topic}</span>}
+                        <div 
+                          key={m.id} 
+                          style={{ 
+                            background: 'var(--bg-card, #ffffff)', 
+                            borderRadius: '16px', 
+                            padding: '14px 16px', 
+                            border: '1px solid var(--panel-border, #e2e8f0)', 
+                            boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))',
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>📅 {new Date(m.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+                              {m.study_topic && (
+                                <span style={{ 
+                                  fontWeight: 700, 
+                                  fontSize: '0.70rem',
+                                  background: 'rgba(15, 118, 110, 0.1)', 
+                                  color: 'var(--accent-primary, #0f766e)', 
+                                  padding: '2px 8px',
+                                  borderRadius: '6px' 
+                                }}>
+                                  {m.study_topic}
+                                </span>
+                              )}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              🟢 {m.present_count || 0} presentes • 🔴 {m.absent_count || 0} ausentes {m.visitor_count > 0 && `• 🌟 ${m.visitor_count} visitantes`}
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span>🟢 {m.present_count || 0} presentes</span>
+                              <span>🔴 {m.absent_count || 0} faltas</span>
+                              {m.visitor_count > 0 && <span>🌟 {m.visitor_count} visitantes</span>}
                             </div>
                           </div>
-                          <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '8px', fontWeight: 700 }}>
-                            Concluída
+                          <span style={{ 
+                            fontSize: '0.70rem', 
+                            background: 'rgba(16, 185, 129, 0.12)', 
+                            color: '#10b981', 
+                            padding: '4px 10px', 
+                            borderRadius: '999px', 
+                            fontWeight: 800,
+                            flexShrink: 0
+                          }}>
+                            ✓ Concluída
                           </span>
                         </div>
                       ))
