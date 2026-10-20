@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { BottomSheet } from './BottomSheet';
+import { getAuthHeaders } from '../services/api';
 
 interface EventQrScannerModalProps {
   isOpen: boolean;
@@ -151,11 +152,28 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
     setValidating(true);
 
     try {
+      let cleanCode = (tokenOrCode || '').trim();
+      // Se o QR Code lido for uma URL, extrai o parâmetro token ou último segmento
+      if (cleanCode.startsWith('http://') || cleanCode.startsWith('https://')) {
+        try {
+          const url = new URL(cleanCode);
+          cleanCode = url.searchParams.get('token') || url.pathname.split('/').pop() || cleanCode;
+        } catch {}
+      }
+      // Se for JSON string, tenta extrair token ou ticket_id
+      if (cleanCode.startsWith('{') && cleanCode.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(cleanCode);
+          cleanCode = parsed.qrcode_token || parsed.token || parsed.short_code || parsed.ticket_id || cleanCode;
+        } catch {}
+      }
+
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_URL}/tickets/scan`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          token: tokenOrCode,
+          token: cleanCode,
           scanned_by: validatorName
         })
       });
