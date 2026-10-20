@@ -244,7 +244,22 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
       const res = await cancelRosterSwap(swapId, rosterItemId);
       if (res.success) {
         alert(res.message || '✓ Pedido de troca cancelado com sucesso!');
-        loadData();
+        setPendingSwaps(prev => ({
+          ...prev,
+          outgoing: prev.outgoing.map(sw => {
+            if ((swapId && sw.swap_id === swapId) || (rosterItemId && sw.roster_item_id === rosterItemId)) {
+              return { ...sw, status: 'CANCELLED' };
+            }
+            return sw;
+          })
+        }));
+        setSchedules(prev => prev.map(s => {
+          if (rosterItemId && s.roster_item_id === rosterItemId) {
+            return { ...s, confirmation_status: 'ACCEPTED' };
+          }
+          return s;
+        }));
+        await loadData();
       } else {
         alert(res.message || 'Erro ao cancelar troca.');
       }
@@ -578,23 +593,30 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             </div>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4px' }}>
-                            <button
-                              onClick={() => handleCancelSwap(undefined, item.roster_item_id)}
-                              disabled={cancellingSwap}
-                              style={{
-                                background: '#ffffff',
-                                border: '1.5px solid #f59e0b',
-                                color: '#b45309',
-                                padding: '6px 14px',
-                                borderRadius: '10px',
-                                fontSize: '0.74rem',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                                boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
-                              }}
-                            >
-                              ✕ Cancelar Troca (Vou Comparecer)
-                            </button>
+                            {(() => {
+                              const relatedSwap = pendingSwaps.outgoing.find(s => 
+                                (s.roster_item_id === item.roster_item_id || s.schedule_id === item.schedule_id) && s.status === 'PENDING'
+                              );
+                              return (
+                                <button
+                                  onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
+                                  disabled={cancellingSwap}
+                                  style={{
+                                    background: '#ffffff',
+                                    border: '1.5px solid #f59e0b',
+                                    color: '#b45309',
+                                    padding: '6px 14px',
+                                    borderRadius: '10px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
+                                  }}
+                                >
+                                  ✕ Cancelar Troca (Vou Comparecer)
+                                </button>
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
@@ -866,14 +888,18 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <strong style={{ color: 'var(--text-main, #0f172a)' }}>{sw.service_title}</strong>
                         <span style={{
-                          background: sw.status === 'PENDING' ? 'rgba(245, 158, 11, 0.15)' : (sw.status === 'ACCEPTED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'),
-                          color: sw.status === 'PENDING' ? '#f59e0b' : (sw.status === 'ACCEPTED' ? '#10b981' : '#ef4444'),
-                          padding: '2px 8px',
-                          borderRadius: '6px',
+                          background: sw.status === 'PENDING' ? 'rgba(245, 158, 11, 0.15)' : (sw.status === 'ACCEPTED' ? 'rgba(16, 185, 129, 0.15)' : (sw.status === 'CANCELLED' ? 'rgba(100, 116, 139, 0.15)' : 'rgba(239, 68, 68, 0.15)')),
+                          color: sw.status === 'PENDING' ? '#f59e0b' : (sw.status === 'ACCEPTED' ? '#10b981' : (sw.status === 'CANCELLED' ? '#64748b' : '#ef4444')),
+                          padding: '3px 10px',
+                          borderRadius: '8px',
                           fontWeight: 800,
                           fontSize: '0.70rem'
                         }}>
-                          {sw.status === 'PENDING' ? '⏳ Aguardando' : (sw.status === 'ACCEPTED' ? '✓ Aceita' : 'Recusada')}
+                          {sw.status === 'PENDING' 
+                            ? '⏳ Aguardando Substituto' 
+                            : (sw.status === 'ACCEPTED' 
+                              ? '✓ Troca Aceita' 
+                              : (sw.status === 'CANCELLED' ? '✕ Cancelada por Você' : 'Recusada'))}
                         </span>
                       </div>
                       <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.74rem', marginTop: '2px' }}>
