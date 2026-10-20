@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import { BottomSheet } from './BottomSheet';
 
 export interface EventTicketData {
@@ -39,10 +40,32 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
 }) => {
   const [showCalendarOptions, setShowCalendarOptions] = useState(false);
   const [downloadingImage, setDownloadingImage] = useState(false);
+  const [localQrDataUrl, setLocalQrDataUrl] = useState<string>('');
+  const [savedCardPreviewUrl, setSavedCardPreviewUrl] = useState<string | null>(null);
+
+  const qrData = ticket?.qrcode_token || ticket?.qr_code_data || ticket?.ticket_id || ticket?.id || '';
+
+  // Gerar QR Code localmente e offline com alta resolução
+  useEffect(() => {
+    if (qrData) {
+      QRCode.toDataURL(qrData, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      })
+      .then(url => setLocalQrDataUrl(url))
+      .catch(err => {
+        console.error('Erro ao gerar QR code local:', err);
+        setLocalQrDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}`);
+      });
+    }
+  }, [qrData]);
 
   if (!ticket) return null;
 
-  const qrData = ticket.qrcode_token || ticket.qr_code_data || ticket.ticket_id || ticket.id || '';
   const shortCode = ticket.short_code || (ticket.ticket_id?.startsWith('FH-') ? ticket.ticket_id : `FH-${(ticket.ticket_id || '').slice(-6).toUpperCase()}`);
   const eventTitle = ticket.event_title || 'Evento Especial';
   const lotName = ticket.lot_name || ticket.batch_name || 'Lote Geral';
@@ -95,98 +118,169 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
     document.body.removeChild(link);
   };
 
-  // Salvar Passaporte na Galeria (Gera imagem do ticket)
+  // Salvar Passaporte na Galeria / Carteira (Gera imagem nativa em alta resolução)
   const handleSaveToGallery = async () => {
     setDownloadingImage(true);
     try {
-      // Cria um canvas dinâmico com o layout do cartão
+      // 1. Criar canvas em alta definição (600x940)
       const canvas = document.createElement('canvas');
       canvas.width = 600;
-      canvas.height = 900;
+      canvas.height = 940;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        setDownloadingImage(false);
+        return;
+      }
 
-      // Fundo e gradiente estilo Apple Wallet
-      const grad = ctx.createLinearGradient(0, 0, 0, 900);
+      // 2. Fundo e gradiente estilo Apple Wallet
+      const grad = ctx.createLinearGradient(0, 0, 0, 940);
       grad.addColorStop(0, '#1e1b4b');
-      grad.addColorStop(0.5, '#312e81');
+      grad.addColorStop(0.45, '#312e81');
       grad.addColorStop(1, '#0f172a');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 600, 900);
+      ctx.fillRect(0, 0, 600, 940);
 
-      // Header
+      // Efeito de iluminação suave no topo
+      const glowGrad = ctx.createRadialGradient(300, 40, 20, 300, 40, 280);
+      glowGrad.addColorStop(0, 'rgba(129, 140, 248, 0.35)');
+      glowGrad.addColorStop(1, 'rgba(129, 140, 248, 0)');
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(0, 0, 600, 250);
+
+      // Header: Logo / Nome do App
       ctx.fillStyle = '#a5b4fc';
-      ctx.font = 'bold 22px Inter, sans-serif';
-      ctx.fillText('FAITH-HUB PASS', 40, 60);
+      ctx.font = 'bold 20px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('✨ FAITH-HUB PASS', 40, 56);
 
+      // Badge de Status
+      ctx.fillStyle = isUsed ? '#ef4444' : '#10b981';
+      ctx.beginPath();
+      ctx.roundRect(420, 36, 140, 30, 8);
+      ctx.fill();
       ctx.fillStyle = '#ffffff';
-      ctx.font = '900 32px Inter, sans-serif';
-      // Quebra título se for muito longo
-      const titleShort = eventTitle.length > 28 ? eventTitle.substring(0, 25) + '...' : eventTitle;
-      ctx.fillText(titleShort, 40, 110);
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isUsed ? 'UTILIZADO' : 'CONFIRMADO', 490, 56);
 
-      // Titular e Data
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '600 18px Inter, sans-serif';
-      ctx.fillText('PARTICIPANTE', 40, 160);
+      // Título do Evento
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 30px Inter, sans-serif';
+      const titleShort = eventTitle.length > 28 ? eventTitle.substring(0, 26) + '...' : eventTitle;
+      ctx.fillText(titleShort, 40, 115);
+
+      // Titular
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 15px Inter, sans-serif';
+      ctx.fillText('PARTICIPANTE / TITULAR', 40, 168);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px Inter, sans-serif';
-      ctx.fillText(ticket.attendee_name, 40, 195);
+      const attendeeShort = ticket.attendee_name.length > 26 ? ticket.attendee_name.substring(0, 24) + '...' : ticket.attendee_name;
+      ctx.fillText(attendeeShort, 40, 202);
 
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '600 18px Inter, sans-serif';
-      ctx.fillText('DATA & LOCAL', 40, 245);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 22px Inter, sans-serif';
-      ctx.fillText(`${dateFormatted} • ${locationFormatted}`, 40, 275);
+      // Data & Local
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 15px Inter, sans-serif';
+      ctx.fillText('DATA & LOCAL', 40, 248);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 20px Inter, sans-serif';
+      const locShort = `${dateFormatted} • ${locationFormatted}`;
+      ctx.fillText(locShort.length > 36 ? locShort.substring(0, 34) + '...' : locShort, 40, 280);
 
-      // Linha tracejada picotada
+      // Linha picotada divisória
       ctx.strokeStyle = '#4338ca';
       ctx.setLineDash([8, 8]);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(30, 320);
-      ctx.lineTo(570, 320);
+      ctx.moveTo(30, 325);
+      ctx.lineTo(570, 325);
       ctx.stroke();
 
       // Card Branco para QR Code
       ctx.setLineDash([]);
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.roundRect(100, 360, 400, 440, 24);
+      ctx.roundRect(80, 360, 440, 480, 24);
       ctx.fill();
 
-      // Desenha QR Code no Canvas
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
-      img.onload = () => {
-        ctx.drawImage(img, 150, 390, 300, 300);
+      // Renderiza QR Code diretamente no Canvas sem dependência de rede externa
+      const qrCanvas = document.createElement('canvas');
+      await QRCode.toCanvas(qrCanvas, qrData, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      });
+      ctx.drawImage(qrCanvas, 140, 400, 320, 320);
 
-        // Código curto
-        ctx.fillStyle = '#4f46e5';
-        ctx.font = '900 28px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(shortCode, 300, 740);
+      // Código de validação curto
+      ctx.fillStyle = '#4f46e5';
+      ctx.font = '900 30px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(shortCode, 300, 765);
 
-        ctx.fillStyle = '#64748b';
-        ctx.font = '600 16px Inter, sans-serif';
-        ctx.fillText(`Lote: ${lotName}`, 300, 775);
+      // Lote e subtítulo
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 16px Inter, sans-serif';
+      ctx.fillText(`Lote: ${lotName}`, 300, 800);
 
-        // Download
+      // Rodapé do cartão
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 13px Inter, sans-serif';
+      ctx.fillText('Apresente este passaporte no credenciamento da portaria', 300, 885);
+
+      // 3. Converter canvas para Blob e acionar compartilhamento/salvamento nativo
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setDownloadingImage(false);
+          return;
+        }
+
+        const fileName = `passaporte-${shortCode}.png`;
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        // Se suportar Web Share API com arquivos (iOS Safari e Android Chrome)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `Passaporte: ${eventTitle}`,
+              text: `Passaporte de ${ticket.attendee_name} para ${eventTitle}`,
+              files: [file]
+            });
+            setDownloadingImage(false);
+            return;
+          } catch (shareErr: any) {
+            // Se o usuário apenas cancelou o share sheet, não exibe erro
+            if (shareErr.name === 'AbortError') {
+              setDownloadingImage(false);
+              return;
+            }
+            console.warn('Erro ao compartilhar arquivo via Web Share:', shareErr);
+          }
+        }
+
+        // Fallback: Gerar Object URL para download direto e preview
+        const objectUrl = URL.createObjectURL(blob);
+        setSavedCardPreviewUrl(objectUrl);
+
+        // Tenta download direto via tag <a>
         const link = document.createElement('a');
-        link.download = `passaporte-${shortCode}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.download = fileName;
+        link.href = objectUrl;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
+
         setDownloadingImage(false);
-      };
-      img.onerror = () => {
-        setDownloadingImage(false);
-        alert("Imagem gerada. Caso não baixe automaticamente, tire um print desta tela.");
-      };
+      }, 'image/png');
+
     } catch (e) {
       setDownloadingImage(false);
-      console.error(e);
+      console.error('Erro ao gerar passaporte:', e);
+      alert('Não foi possível gerar a imagem automaticamente. Você pode tirar um print desta tela com o QR Code.');
     }
   };
 
@@ -291,7 +385,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             position: 'relative'
           }}>
             <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`} 
+              src={localQrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`} 
               alt="QR Code Passaporte"
               style={{ width: '175px', height: '175px', display: 'block', opacity: isUsed ? 0.40 : 1 }}
             />
@@ -473,6 +567,87 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
           </div>
 
         </div>
+
+        {/* ========================================================
+            MODAL DE PREVIEW DO CARTÃO SALVO (iOS & Android Fallback)
+            ======================================================== */}
+        {savedCardPreviewUrl && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#0f172a',
+              borderRadius: '20px',
+              padding: '16px',
+              maxWidth: '360px',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.92rem', textAlign: 'center' }}>
+                🎉 Passaporte Gerado!
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.72rem', margin: 0, textAlign: 'center', lineHeight: 1.4 }}>
+                No celular, você pode <strong>tocar e segurar</strong> na imagem abaixo para <strong>Salvar no Fotos / Galeria</strong>.
+              </p>
+              
+              <div style={{ maxHeight: '380px', overflowY: 'auto', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.15)' }}>
+                <img 
+                  src={savedCardPreviewUrl} 
+                  alt="Passaporte do Evento" 
+                  style={{ width: '100%', display: 'block', borderRadius: '14px' }} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
+                <a
+                  href={savedCardPreviewUrl}
+                  download={`passaporte-${shortCode}.png`}
+                  className="btn-pwa-primary"
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    fontSize: '0.78rem',
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  📥 Baixar
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSavedCardPreviewUrl(null)}
+                  className="btn-pwa-secondary"
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: '0.78rem',
+                    borderRadius: '10px'
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </BottomSheet>
