@@ -921,8 +921,21 @@ export async function respondToSwap(swapId: string, action: 'ACCEPT' | 'REJECT')
   }
 }
 
-
-
-
-
-
+export async function cancelRosterSwap(swapId?: string, rosterItemId?: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = swapId 
+      ? `${API_BASE_URL}/volunteers/swaps/${swapId}/cancel`
+      : `${API_BASE_URL}/volunteers/swaps/cancel`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ rosterItemId })
+    });
+    const data = await res.json();
+    return { success: res.ok, message: data.message || data.error };
+  } catch (e) {
+    console.log("Cancel swap error", e);
+    return { success: false, message: 'Erro ao cancelar pedido de troca' };
+  }
+}

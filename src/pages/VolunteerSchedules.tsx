@@ -12,7 +12,8 @@ import {
   fetchEligiblePeersForSwap,
   requestRosterSwap,
   fetchMyPendingSwaps,
-  respondToSwap
+  respondToSwap,
+  cancelRosterSwap
 } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 
@@ -234,6 +235,24 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
     }
   };
 
+  const [cancellingSwap, setCancellingSwap] = useState(false);
+
+  const handleCancelSwap = async (swapId?: string, rosterItemId?: string) => {
+    if (!confirm('Deseja realmente cancelar este pedido de troca e manter sua escala original?')) return;
+    setCancellingSwap(true);
+    try {
+      const res = await cancelRosterSwap(swapId, rosterItemId);
+      if (res.success) {
+        alert(res.message || '✓ Pedido de troca cancelado com sucesso!');
+        loadData();
+      } else {
+        alert(res.message || 'Erro ao cancelar troca.');
+      }
+    } finally {
+      setCancellingSwap(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '100%', paddingBottom: '40px' }}>
       
@@ -329,6 +348,41 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           
           /* ABA: MINHAS ESCALAS & MEUS MINISTÉRIOS */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* BANNER DE OPORTUNIDADE DE SERVIR: TROCAS DE COLEGAS DISPONÍVEIS */}
+            {pendingSwaps.incoming.length > 0 && (
+              <div 
+                onClick={() => setActiveTab('swaps')}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
+                  border: '1.5px solid #3b82f6',
+                  borderRadius: '16px',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ fontSize: '1.4rem' }}>🤝</div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#1e40af' }}>
+                      {pendingSwaps.incoming.length === 1 
+                        ? '1 colega precisa de substituto em seu ministério' 
+                        : `${pendingSwaps.incoming.length} colegas precisam de substitutos`}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#3b82f6', marginTop: '2px' }}>
+                      Toque para visualizar e assumir a vaga no culto
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '1.1rem', color: '#3b82f6', fontWeight: 900 }}>→</span>
+              </div>
+            )}
+
             {/* Bloco de Escalas Pessoais Atribuídas */}
             {schedules.length === 0 ? (
               <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '18px', padding: '24px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
@@ -503,10 +557,44 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       )}
 
                       {item.confirmation_status === 'SWAP_REQUESTED' && (
-                        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '1.1rem' }}>🔄</span>
-                          <div style={{ fontSize: '0.76rem', color: 'var(--text-main, #f59e0b)', fontWeight: 700, lineHeight: 1.4 }}>
-                            Troca solicitada para este culto. Aguardando confirmação de um colega voluntário.
+                        <div style={{
+                          background: 'rgba(245, 158, 11, 0.12)',
+                          border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                          borderRadius: '12px',
+                          padding: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.2rem' }}>🔄</span>
+                            <div>
+                              <div style={{ fontSize: '0.80rem', color: '#b45309', fontWeight: 800 }}>
+                                Solicitação de Troca Ativa
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                Colegas do ministério e liderança foram notificados para assumir sua vaga.
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                            <button
+                              onClick={() => handleCancelSwap(undefined, item.roster_item_id)}
+                              disabled={cancellingSwap}
+                              style={{
+                                background: '#ffffff',
+                                border: '1.5px solid #f59e0b',
+                                color: '#b45309',
+                                padding: '6px 14px',
+                                borderRadius: '10px',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
+                              }}
+                            >
+                              ✕ Cancelar Troca (Vou Comparecer)
+                            </button>
                           </div>
                         </div>
                       )}
@@ -794,6 +882,27 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       {sw.target_member_name && (
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #475569)', marginTop: '4px' }}>
                           Destinado a: <strong style={{ color: 'var(--text-main)' }}>{sw.target_member_name}</strong>
+                        </div>
+                      )}
+
+                      {sw.status === 'PENDING' && (
+                        <div style={{ marginTop: '10px', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => handleCancelSwap(sw.swap_id, sw.roster_item_id)}
+                            disabled={cancellingSwap}
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #ef4444',
+                              color: '#ef4444',
+                              padding: '5px 12px',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ✕ Cancelar Solicitação de Troca
+                          </button>
                         </div>
                       )}
                     </div>
