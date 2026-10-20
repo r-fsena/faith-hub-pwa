@@ -70,6 +70,9 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (viewTab === 'my_tickets') {
+      loadMyTickets();
+    }
   }, [viewTab]);
 
   const loadEventsFromBackend = async () => {
@@ -121,23 +124,27 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const loadMyTickets = async () => {
     // 1. Tenta carregar do cache local primeiro
     const saved = localStorage.getItem('faithhub_my_tickets');
+    let localTickets: EventTicketData[] = [];
     if (saved) {
       try {
-        setMyTickets(JSON.parse(saved));
+        localTickets = JSON.parse(saved);
+        setMyTickets(localTickets);
       } catch (e) {}
     }
 
-    // 2. Se autenticado, busca da API AWS RDS
+    // 2. Se autenticado ou com tickets no histórico, busca da API AWS RDS
     const userId = user?.userId || '';
     const phone = localStorage.getItem('faithhub_user_phone') || '';
     const email = user?.email || localStorage.getItem('faithhub_user_email') || '';
+    const ticketIds = localTickets.map(t => t.id || t.ticket_id).filter(Boolean);
 
-    if (userId || phone || email) {
+    if (userId || phone || email || ticketIds.length > 0) {
       try {
         const queryParams = new URLSearchParams();
         if (userId) queryParams.set('user_id', userId);
         if (phone) queryParams.set('phone', phone);
         if (email) queryParams.set('email', email);
+        if (ticketIds.length > 0) queryParams.set('ticket_ids', ticketIds.slice(0, 50).join(','));
 
         const res = await fetch(`${API_URL}/tickets/me?${queryParams.toString()}`);
         if (res.ok) {
@@ -490,9 +497,16 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </div>
           ) : (
             myTickets.map(tck => {
-              const isUsed = tck.status === 'USED';
+              const isUsed = tck.status === 'USED' || tck.status === 'VALIDATED' || tck.status === 'CHECKED_IN' || !!tck.scanned_at;
               const isPending = tck.status === 'PENDING';
               const shortCode = tck.short_code || `FH-${(tck.id || tck.ticket_id || '').slice(-6).toUpperCase()}`;
+
+              const validationText = tck.scanned_at ? (() => {
+                try {
+                  const d = new Date(tck.scanned_at);
+                  return `Validado em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+                } catch(e) { return 'Validado na portaria'; }
+              })() : 'Validado na portaria';
 
               return (
                 <div 
@@ -502,7 +516,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     background: isUsed ? '#f8fafc' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                     borderRadius: '20px',
                     padding: '16px',
-                    border: isUsed ? '1px solid #e2e8f0' : '1.5px solid var(--panel-border)',
+                    border: isUsed ? '1.5px solid #cbd5e1' : '1.5px solid var(--panel-border)',
                     boxShadow: isUsed ? 'none' : '0 4px 14px rgba(0,0,0,0.05)',
                     cursor: 'pointer',
                     display: 'flex',
@@ -514,17 +528,18 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{
-                      fontSize: '0.70rem',
+                      fontSize: '0.68rem',
                       fontWeight: 800,
-                      padding: '3px 10px',
+                      padding: '4px 10px',
                       borderRadius: '8px',
-                      background: isUsed ? '#e2e8f0' : (isPending ? '#fef3c7' : '#ecfdf5'),
-                      color: isUsed ? '#64748b' : (isPending ? '#b45309' : '#059669')
+                      background: isUsed ? '#f1f5f9' : (isPending ? '#fef3c7' : '#ecfdf5'),
+                      color: isUsed ? '#475569' : (isPending ? '#b45309' : '#059669'),
+                      border: isUsed ? '1px solid #cbd5e1' : 'none'
                     }}>
-                      {isUsed ? '✓ CHECK-IN REALIZADO' : (isPending ? '⏳ PENDENTE' : '● VÁLIDO')}
+                      {isUsed ? '✓ VALIDADO' : (isPending ? '⏳ PENDENTE' : '● VÁLIDO')}
                     </span>
 
-                    <span style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 900, color: isUsed ? '#64748b' : 'var(--accent-primary)', letterSpacing: '0.04em' }}>
                       {shortCode}
                     </span>
                   </div>
@@ -545,7 +560,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 900, color: isUsed ? '#475569' : 'var(--text-main)', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tck.event_title}
                       </h4>
                       <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
@@ -553,6 +568,23 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       </div>
                     </div>
                   </div>
+
+                  {isUsed && (
+                    <div style={{
+                      background: '#e2e8f0',
+                      borderRadius: '10px',
+                      padding: '6px 10px',
+                      fontSize: '0.70rem',
+                      color: '#475569',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontWeight: 700
+                    }}>
+                      <span>🔒</span>
+                      <span>{validationText} • Não pode ser reutilizado</span>
+                    </div>
+                  )}
 
                   <div style={{
                     display: 'flex',
@@ -564,7 +596,9 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     color: 'var(--text-muted)'
                   }}>
                     <span>🗓️ {tck.date_formatted}</span>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>Abrir Passaporte ➔</span>
+                    <span style={{ color: isUsed ? '#64748b' : 'var(--accent-primary)', fontWeight: 800 }}>
+                      {isUsed ? 'Ver Comprovante ➔' : 'Abrir Passaporte ➔'}
+                    </span>
                   </div>
                 </div>
               );

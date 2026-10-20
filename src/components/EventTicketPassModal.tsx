@@ -33,17 +33,45 @@ interface EventTicketPassModalProps {
   onClose: () => void;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+
 export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
   ticket,
   isOpen,
   onClose
 }) => {
+  const [activeTicket, setActiveTicket] = useState<EventTicketData | null>(ticket);
   const [showCalendarOptions, setShowCalendarOptions] = useState(false);
   const [downloadingImage, setDownloadingImage] = useState(false);
   const [localQrDataUrl, setLocalQrDataUrl] = useState<string>('');
   const [savedCardPreviewUrl, setSavedCardPreviewUrl] = useState<string | null>(null);
 
-  const qrData = ticket?.qrcode_token || ticket?.qr_code_data || ticket?.ticket_id || ticket?.id || '';
+  // Sincroniza estado com prop ticket e consulta status atualizado da API
+  useEffect(() => {
+    setActiveTicket(ticket);
+    if (ticket && isOpen) {
+      const ticketId = ticket.id || ticket.ticket_id;
+      if (ticketId) {
+        fetch(`${API_URL}/tickets/${ticketId}/pass`)
+          .then(res => res.json())
+          .then(json => {
+            if (json.data) {
+              setActiveTicket(prev => prev ? ({
+                ...prev,
+                ...json.data,
+                status: json.data.status || prev.status,
+                scanned_at: json.data.scanned_at || prev.scanned_at,
+                scanned_by: json.data.scanned_by || prev.scanned_by
+              }) : json.data);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [ticket, isOpen]);
+
+  const current = activeTicket || ticket;
+  const qrData = current?.qrcode_token || current?.qr_code_data || current?.ticket_id || current?.id || '';
 
   // Gerar QR Code localmente e offline com alta resolução
   useEffect(() => {
@@ -64,29 +92,50 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
     }
   }, [qrData]);
 
-  if (!ticket) return null;
+  if (!current) return null;
 
-  const shortCode = ticket.short_code || (ticket.ticket_id?.startsWith('FH-') ? ticket.ticket_id : `FH-${(ticket.ticket_id || '').slice(-6).toUpperCase()}`);
-  const eventTitle = ticket.event_title || 'Evento Especial';
-  const lotName = ticket.lot_name || ticket.batch_name || 'Lote Geral';
-  const dateFormatted = ticket.date_formatted || ticket.event_date || 'Data no evento';
-  const locationFormatted = ticket.event_location || ticket.location || 'Templo Principal';
-  const isUsed = ticket.status === 'USED';
-  const isPending = ticket.status === 'PENDING';
+  const shortCode = current.short_code || (current.ticket_id?.startsWith('FH-') ? current.ticket_id : `FH-${(current.ticket_id || '').slice(-6).toUpperCase()}`);
+  const eventTitle = current.event_title || 'Evento Especial';
+  const lotName = current.lot_name || current.batch_name || 'Lote Geral';
+  const dateFormatted = current.date_formatted || current.event_date || 'Data no evento';
+  const locationFormatted = current.event_location || current.location || 'Templo Principal';
+  const isUsed = current.status === 'USED' || current.status === 'VALIDATED' || current.status === 'CHECKED_IN' || !!current.scanned_at;
+  const isPending = current.status === 'PENDING';
+
+  const validationDetails = (() => {
+    if (!current.scanned_at) {
+      return {
+        dateStr: 'Ingresso conferido na portaria',
+        timeStr: 'Check-in Realizado'
+      };
+    }
+    try {
+      const d = new Date(current.scanned_at);
+      return {
+        dateStr: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
+        timeStr: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+    } catch (e) {
+      return {
+        dateStr: 'Ingresso conferido na portaria',
+        timeStr: 'Check-in Realizado'
+      };
+    }
+  })();
 
   // Gerador de Calendário Google
   const handleAddToGoogleCalendar = () => {
-    const startDate = ticket.event_date ? new Date(ticket.event_date) : new Date();
+    const startDate = current.event_date ? new Date(current.event_date) : new Date();
     const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
     const formatDateForCal = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
 
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${formatDateForCal(startDate)}/${formatDateForCal(endDate)}&details=${encodeURIComponent(`Ingresso: ${shortCode}\nTitular: ${ticket.attendee_name}\nLote: ${lotName}\nLocal: ${locationFormatted}`)}&location=${encodeURIComponent(locationFormatted)}`;
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${formatDateForCal(startDate)}/${formatDateForCal(endDate)}&details=${encodeURIComponent(`Ingresso: ${shortCode}\nTitular: ${current.attendee_name}\nLote: ${lotName}\nLocal: ${locationFormatted}`)}&location=${encodeURIComponent(locationFormatted)}`;
     window.open(url, '_blank');
   };
 
   // Gerador de Arquivo iCalendar (.ics) para Apple Calendar e Outlook
   const handleDownloadIcs = () => {
-    const startDate = ticket.event_date ? new Date(ticket.event_date) : new Date();
+    const startDate = current.event_date ? new Date(current.event_date) : new Date();
     const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
     const formatDateForCal = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
 
@@ -97,12 +146,12 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       'BEGIN:VEVENT',
-      `UID:${ticket.id || shortCode}@faithhub.app`,
+      `UID:${current.id || shortCode}@faithhub.app`,
       `DTSTAMP:${formatDateForCal(new Date())}`,
       `DTSTART:${formatDateForCal(startDate)}`,
       `DTEND:${formatDateForCal(endDate)}`,
       `SUMMARY:${eventTitle}`,
-      `DESCRIPTION:Ingresso ${shortCode} - Titular: ${ticket.attendee_name} - Lote: ${lotName}`,
+      `DESCRIPTION:Ingresso ${shortCode} - Titular: ${current.attendee_name} - Lote: ${lotName}`,
       `LOCATION:${locationFormatted}`,
       'STATUS:CONFIRMED',
       'END:VEVENT',
@@ -197,40 +246,89 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
       ctx.lineTo(570, 325);
       ctx.stroke();
 
-      // Card Branco para QR Code
+      // Card Branco para QR Code ou Comprovante de Validação
       ctx.setLineDash([]);
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.roundRect(80, 360, 440, 480, 24);
       ctx.fill();
 
-      // Renderiza QR Code diretamente no Canvas sem dependência de rede externa
-      const qrCanvas = document.createElement('canvas');
-      await QRCode.toCanvas(qrCanvas, qrData, {
-        width: 320,
-        margin: 1,
-        color: {
-          dark: '#0f172a',
-          light: '#ffffff'
+      if (isUsed) {
+        // Círculo Verde com Checkmark
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(300, 470, 48, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 48px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('✓', 300, 486);
+
+        // Título Validado
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '900 28px Inter, sans-serif';
+        ctx.fillText('INGRESSO VALIDADO', 300, 560);
+
+        ctx.fillStyle = '#059669';
+        ctx.font = 'bold 15px Inter, sans-serif';
+        ctx.fillText('CHECK-IN CONCLUÍDO NA PORTARIA', 300, 592);
+
+        // Caixa com data/hora de validação
+        ctx.fillStyle = '#f1f5f9';
+        ctx.beginPath();
+        ctx.roundRect(110, 625, 380, 105, 16);
+        ctx.fill();
+
+        ctx.fillStyle = '#334155';
+        ctx.font = 'bold 15px Inter, sans-serif';
+        ctx.fillText(`Data: ${validationDetails.dateStr}`, 300, 660);
+        ctx.fillText(`Horário: ${validationDetails.timeStr}`, 300, 690);
+        if (current.scanned_by) {
+          ctx.fillText(`Credenciamento: ${current.scanned_by}`, 300, 718);
         }
-      });
-      ctx.drawImage(qrCanvas, 140, 400, 320, 320);
 
-      // Código de validação curto
-      ctx.fillStyle = '#4f46e5';
-      ctx.font = '900 30px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(shortCode, 300, 765);
+        // Código curto de conferência
+        ctx.fillStyle = '#4f46e5';
+        ctx.font = '900 26px Inter, sans-serif';
+        ctx.fillText(shortCode, 300, 780);
 
-      // Lote e subtítulo
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 16px Inter, sans-serif';
-      ctx.fillText(`Lote: ${lotName}`, 300, 800);
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 15px Inter, sans-serif';
+        ctx.fillText(`Lote: ${lotName}`, 300, 815);
 
-      // Rodapé do cartão
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '500 13px Inter, sans-serif';
-      ctx.fillText('Apresente este passaporte no credenciamento da portaria', 300, 885);
+        ctx.fillStyle = '#dc2626';
+        ctx.font = '600 13px Inter, sans-serif';
+        ctx.fillText('Ingresso já utilizado. Não reutilizável.', 300, 885);
+      } else {
+        // Renderiza QR Code diretamente no Canvas sem dependência de rede externa
+        const qrCanvas = document.createElement('canvas');
+        await QRCode.toCanvas(qrCanvas, qrData, {
+          width: 320,
+          margin: 1,
+          color: {
+            dark: '#0f172a',
+            light: '#ffffff'
+          }
+        });
+        ctx.drawImage(qrCanvas, 140, 400, 320, 320);
+
+        // Código de validação curto
+        ctx.fillStyle = '#4f46e5';
+        ctx.font = '900 30px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(shortCode, 300, 765);
+
+        // Lote e subtítulo
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.fillText(`Lote: ${lotName}`, 300, 800);
+
+        // Rodapé do cartão
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 13px Inter, sans-serif';
+        ctx.fillText('Apresente este passaporte no credenciamento da portaria', 300, 885);
+      }
 
       // 3. Converter canvas para Blob e acionar compartilhamento/salvamento nativo
       canvas.toBlob(async (blob) => {
@@ -247,7 +345,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
           try {
             await navigator.share({
               title: `Passaporte: ${eventTitle}`,
-              text: `Passaporte de ${ticket.attendee_name} para ${eventTitle}`,
+              text: `Passaporte de ${current.attendee_name} para ${eventTitle}`,
               files: [file]
             });
             setDownloadingImage(false);
@@ -280,7 +378,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
     } catch (e) {
       setDownloadingImage(false);
       console.error('Erro ao gerar passaporte:', e);
-      alert('Não foi possível gerar a imagem automaticamente. Você pode tirar um print desta tela com o QR Code.');
+      alert('Não foi possível gerar a imagem automaticamente. Você pode tirar um print desta tela.');
     }
   };
 
@@ -289,11 +387,11 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
       try {
         await navigator.share({
           title: `Ingresso: ${eventTitle}`,
-          text: `Meu passaporte para ${eventTitle} (${shortCode}) - Titular: ${ticket.attendee_name}`,
+          text: `Meu passaporte para ${eventTitle} (${shortCode}) - Titular: ${current.attendee_name}`,
         });
       } catch (e) {}
     } else {
-      navigator.clipboard.writeText(`Ingresso ${eventTitle} - Código: ${shortCode} - Titular: ${ticket.attendee_name}`);
+      navigator.clipboard.writeText(`Ingresso ${eventTitle} - Código: ${shortCode} - Titular: ${current.attendee_name}`);
       alert("Código do ingresso copiado para a área de transferência!");
     }
   };
@@ -339,9 +437,9 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               padding: '4px 10px',
               borderRadius: '999px',
               background: isUsed ? '#334155' : (isPending ? '#fef3c7' : '#ecfdf5'),
-              color: isUsed ? '#94a3b8' : (isPending ? '#b45309' : '#059669')
+              color: isUsed ? '#cbd5e1' : (isPending ? '#b45309' : '#059669')
             }}>
-              {isUsed ? '✓ CHECK-IN REALIZADO' : (isPending ? '⏳ PENDENTE' : '● VÁLIDO')}
+              {isUsed ? '✓ VALIDADO' : (isPending ? '⏳ PENDENTE' : '● VÁLIDO')}
             </span>
           </div>
 
@@ -355,7 +453,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             <div>
               <div style={{ fontSize: '0.64rem', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase' }}>Titular</div>
               <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {ticket.attendee_name}
+                {current.attendee_name}
               </div>
             </div>
             <div>
@@ -372,59 +470,137 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             </div>
           </div>
 
-          {/* Card Central do QR Code */}
-          <div style={{
-            background: '#ffffff',
-            padding: '16px 12px 14px 12px',
-            borderRadius: '20px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-            position: 'relative'
-          }}>
-            <img 
-              src={localQrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`} 
-              alt="QR Code Passaporte"
-              style={{ width: '175px', height: '175px', display: 'block', opacity: isUsed ? 0.40 : 1 }}
-            />
-
-            {isUsed && (
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%) rotate(-12deg)',
-                background: '#0f172a',
-                color: '#ffffff',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                fontSize: '0.80rem',
-                fontWeight: 900,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                whiteSpace: 'nowrap'
-              }}>
-                ✓ UTILIZADO NA PORTARIA
-              </div>
-            )}
-
-            {/* Código Curto de Validação Manual */}
+          {/* Card Central: Se VALIDADO não mostra o QR Code, mostra a mensagem de validação */}
+          {isUsed ? (
             <div style={{
-              background: '#e0e7ff',
-              color: '#4338ca',
-              padding: '4px 14px',
-              borderRadius: '8px',
-              fontSize: '0.86rem',
-              fontWeight: 900,
-              letterSpacing: '0.08em'
+              background: '#ffffff',
+              padding: '24px 18px 20px 18px',
+              borderRadius: '20px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              position: 'relative',
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
-              {shortCode}
+              {/* Ícone de Sucesso */}
+              <div style={{
+                width: '62px',
+                height: '62px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.9rem',
+                boxShadow: '0 6px 16px rgba(16, 185, 129, 0.35)'
+              }}>
+                ✓
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: '0 0 2px 0', letterSpacing: '-0.01em' }}>
+                  INGRESSO VALIDADO
+                </h3>
+                <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Check-in Realizado na Portaria
+                </span>
+              </div>
+
+              {/* Box com detalhes da validação */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '12px 14px',
+                width: '100%',
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                textAlign: 'left'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
+                  <span style={{ color: '#64748b', fontWeight: 600 }}>Data da Validação:</span>
+                  <strong style={{ color: '#0f172a', fontWeight: 800 }}>{validationDetails.dateStr}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
+                  <span style={{ color: '#64748b', fontWeight: 600 }}>Horário:</span>
+                  <strong style={{ color: '#0f172a', fontWeight: 800 }}>{validationDetails.timeStr}</strong>
+                </div>
+                {current.scanned_by && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
+                    <span style={{ color: '#64748b', fontWeight: 600 }}>Credenciamento:</span>
+                    <strong style={{ color: '#4338ca', fontWeight: 800 }}>{current.scanned_by}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Código Curto de Validação Manual */}
+              <div style={{
+                background: '#f1f5f9',
+                color: '#475569',
+                padding: '4px 14px',
+                borderRadius: '8px',
+                fontSize: '0.86rem',
+                fontWeight: 900,
+                letterSpacing: '0.08em'
+              }}>
+                {shortCode}
+              </div>
+
+              {/* Mensagem de alerta de não reaproveitamento */}
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                padding: '8px 12px',
+                fontSize: '0.72rem',
+                color: '#991b1b',
+                fontWeight: 600,
+                lineHeight: 1.35
+              }}>
+                🔒 O QR Code foi desativado porque este ingresso já foi utilizado para entrada no evento. Não é possível reaproveitá-lo.
+              </div>
             </div>
-            <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>
-              Apresente este QR Code no credenciamento
-            </span>
-          </div>
+          ) : (
+            <div style={{
+              background: '#ffffff',
+              padding: '16px 12px 14px 12px',
+              borderRadius: '20px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px',
+              position: 'relative'
+            }}>
+              <img 
+                src={localQrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`} 
+                alt="QR Code Passaporte"
+                style={{ width: '175px', height: '175px', display: 'block' }}
+              />
+
+              {/* Código Curto de Validação Manual */}
+              <div style={{
+                background: '#e0e7ff',
+                color: '#4338ca',
+                padding: '4px 14px',
+                borderRadius: '8px',
+                fontSize: '0.86rem',
+                fontWeight: 900,
+                letterSpacing: '0.08em'
+              }}>
+                {shortCode}
+              </div>
+              <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>
+                Apresente este QR Code no credenciamento
+              </span>
+            </div>
+          )}
 
         </div>
 
@@ -456,7 +632,11 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             }}
           >
             <span></span>
-            <span>{downloadingImage ? 'Gerando Cartão...' : 'Adicionar à Carteira / Salvar Cartão'}</span>
+            <span>
+              {isUsed 
+                ? (downloadingImage ? 'Gerando Comprovante...' : '📥 Salvar Comprovante de Entrada')
+                : (downloadingImage ? 'Gerando Cartão...' : 'Adicionar à Carteira / Salvar Cartão')}
+            </span>
           </button>
 
           {/* Botão Adicionar ao Calendário */}
