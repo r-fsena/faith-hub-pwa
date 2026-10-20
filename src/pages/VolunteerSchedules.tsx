@@ -4,6 +4,7 @@ import {
   fetchMySchedules, 
   respondToSchedule, 
   fetchMinistries, 
+  fetchMinistrySchedules,
   joinMinistry, 
   fetchMyBlockouts, 
   createBlockout, 
@@ -13,6 +14,7 @@ import {
   fetchMyPendingSwaps,
   respondToSwap
 } from '../services/api';
+import { BottomSheet } from '../components/BottomSheet';
 
 interface VolunteerSchedulesProps {
   onBack?: () => void;
@@ -48,6 +50,25 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const [requestingSwap, setRequestingSwap] = useState(false);
   const [loadingPeers, setLoadingPeers] = useState(false);
   const [respondingSwapId, setRespondingSwapId] = useState<string | null>(null);
+
+  // Estados para Visualização de Escalas do Ministério / Grupo
+  const [viewingMinistry, setViewingMinistry] = useState<any | null>(null);
+  const [ministrySchedules, setMinistrySchedules] = useState<any[]>([]);
+  const [loadingMinistrySchedules, setLoadingMinistrySchedules] = useState(false);
+
+  const handleOpenMinistrySchedules = async (min: any) => {
+    setViewingMinistry(min);
+    setLoadingMinistrySchedules(true);
+    setMinistrySchedules([]);
+    try {
+      const list = await fetchMinistrySchedules(min.id);
+      setMinistrySchedules(list || []);
+    } catch (e) {
+      console.error('Erro ao carregar escalas do ministério:', e);
+    } finally {
+      setLoadingMinistrySchedules(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -106,6 +127,14 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         alert('✓ Sua candidatura foi enviada para a liderança do ministério com sucesso!');
         setJoiningMinId(null);
         setJoinRolesText('');
+        // Atualiza imediatamente na lista para mostrar o badge de Candidato
+        setMinistries(prev => prev.map(m => m.id === ministryId ? {
+          ...m,
+          my_volunteer_status: 'CANDIDATE',
+          my_volunteer_roles: joinRolesText,
+          my_volunteer_joined_at: new Date().toISOString().split('T')[0]
+        } : m));
+        loadData();
       } else {
         alert('Erro ao enviar inscrição.');
       }
@@ -298,204 +327,329 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           </div>
         ) : activeTab === 'my_schedules' ? (
           
-          /* ABA: MINHAS ESCALAS */
-          schedules.length === 0 ? (
-            <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '18px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🙌</div>
-              <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-main, #0f172a)' }}>
-                Você não possui escalas pendentes
+          /* ABA: MINHAS ESCALAS & MEUS MINISTÉRIOS */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Bloco de Escalas Pessoais Atribuídas */}
+            {schedules.length === 0 ? (
+              <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '18px', padding: '24px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🙌</div>
+                <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
+                  Nenhuma convocação individual pendente
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', marginTop: '4px' }}>
+                  Quando a liderança escalar você para o próximo culto, seu posto aparecerá aqui para confirmação.
+                </div>
               </div>
-              <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '6px' }}>
-                Quando a liderança do seu ministério publicar a escala do próximo culto, ela aparecerá aqui para sua confirmação.
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                  🔔 Suas Próximas Convocações ({schedules.length})
+                </div>
+                {schedules.map(item => {
+                  const isAccepted = item.confirmation_status === 'ACCEPTED';
+                  const isDeclined = item.confirmation_status === 'DECLINED';
+                  const isPending = item.confirmation_status === 'PENDING';
+
+                  return (
+                    <div
+                      key={item.roster_item_id}
+                      style={{
+                        background: 'var(--bg-card, #ffffff)',
+                        borderRadius: '18px',
+                        padding: '18px',
+                        border: isAccepted 
+                          ? '1.5px solid #10b981' 
+                          : (isDeclined ? '1.5px solid #ef4444' : '1.5px solid var(--accent-primary, #0f766e)'),
+                        boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05))',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      {/* Topo do Card */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span style={{
+                            fontSize: '0.70rem',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '8px',
+                            background: `${item.ministry_color || '#0f766e'}20`,
+                            color: item.ministry_color || 'var(--accent-primary, #0f766e)',
+                            textTransform: 'uppercase'
+                          }}>
+                            {item.ministry_name}
+                          </span>
+                          <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)', marginTop: '6px' }}>
+                            {item.service_title}
+                          </div>
+                          <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                            📅 {new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} às {item.service_time}
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '4px 10px',
+                          borderRadius: '10px',
+                          background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
+                          color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
+                        }}>
+                          {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
+                        </span>
+                      </div>
+
+                      {/* Posição Escalada */}
+                      <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.1rem' }}>🏷️</span>
+                        <div>
+                          <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                            Sua Função nesta Escala
+                          </div>
+                          <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
+                            {item.role_name}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notas / Orientações */}
+                      {item.schedule_notes && (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                          <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
+                        </div>
+                      )}
+
+                      {/* Botões One-Tap de Confirmação */}
+                      {isPending && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
+                          <button
+                            onClick={() => handleRespond(item.roster_item_id, 'ACCEPTED')}
+                            disabled={answeringItemId === item.roster_item_id}
+                            style={{
+                              padding: '12px',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: '#10b981',
+                              color: '#ffffff',
+                              fontWeight: 900,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                            }}
+                          >
+                            <span>✓</span>
+                            <span>Confirmar</span>
+                          </button>
+
+                          <button
+                            onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                            disabled={answeringItemId === item.roster_item_id}
+                            style={{
+                              padding: '12px',
+                              borderRadius: '12px',
+                              border: '1.5px solid #ef4444',
+                              background: 'var(--bg-card, #ffffff)',
+                              color: '#ef4444',
+                              fontWeight: 800,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <span>✗</span>
+                            <span>Não Poderei</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {isAccepted && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
+                            ✓ Sua vaga está garantida no altar!
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => handleOpenSwapModal(item)}
+                              style={{
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                color: '#10b981',
+                                borderRadius: '8px',
+                                padding: '4px 10px',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              🔄 Pedir Troca
+                            </button>
+                            <button
+                              onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                              Recusar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {item.confirmation_status === 'SWAP_REQUESTED' && (
+                        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.1rem' }}>🔄</span>
+                          <div style={{ fontSize: '0.76rem', color: 'var(--text-main, #f59e0b)', fontWeight: 700, lineHeight: 1.4 }}>
+                            Troca solicitada para este culto. Aguardando confirmação de um colega voluntário.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <button
-                onClick={() => setActiveTab('join_ministry')}
-                style={{
-                  marginTop: '16px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'var(--accent-primary, #0f766e)',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  fontSize: '0.80rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(15, 118, 110, 0.25)'
-                }}
-              >
-                Conhecer Ministérios e Servir
-              </button>
-            </div>
-          ) : (
-            schedules.map(item => {
-              const isAccepted = item.confirmation_status === 'ACCEPTED';
-              const isDeclined = item.confirmation_status === 'DECLINED';
-              const isPending = item.confirmation_status === 'PENDING';
+            )}
+
+            {/* SEÇÃO: MEUS MINISTÉRIOS VINCULADOS & ESCALAS DO GRUPO */}
+            {(() => {
+              const enrolledMinistries = ministries.filter(m => m.my_volunteer_status);
+              if (enrolledMinistries.length === 0) {
+                return (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(13, 148, 136, 0.04) 100%)',
+                    border: '1.5px dashed var(--accent-primary, #0f766e)',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '1.4rem', marginBottom: '6px' }}>🤝</div>
+                    <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main, #0f172a)' }}>
+                      Faça parte de um Ministério
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', marginBottom: '10px' }}>
+                      Inscreva-se na equipe de Louvor, Recepção, Mídia, Kids e muito mais.
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('join_ministry')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'var(--accent-primary, #0f766e)',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Descobrir Ministérios & Voluntariar
+                    </button>
+                  </div>
+                );
+              }
 
               return (
-                <div
-                  key={item.roster_item_id}
-                  style={{
-                    background: 'var(--bg-card, #ffffff)',
-                    borderRadius: '18px',
-                    padding: '18px',
-                    border: isAccepted 
-                      ? '1.5px solid #10b981' 
-                      : (isDeclined ? '1.5px solid #ef4444' : '1.5px solid var(--accent-primary, #0f766e)'),
-                    boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05))',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                  }}
-                >
-                  {/* Topo do Card */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{
-                        fontSize: '0.70rem',
-                        fontWeight: 800,
-                        padding: '3px 8px',
-                        borderRadius: '8px',
-                        background: `${item.ministry_color || '#0f766e'}20`,
-                        color: item.ministry_color || 'var(--accent-primary, #0f766e)',
-                        textTransform: 'uppercase'
-                      }}>
-                        {item.ministry_name}
-                      </span>
-                      <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)', marginTop: '6px' }}>
-                        {item.service_title}
-                      </div>
-                      <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
-                        📅 {new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} às {item.service_time}
-                      </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                      👥 Meus Grupos & Ministérios ({enrolledMinistries.length})
                     </div>
-
-                    {/* Status Badge */}
-                    <span style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '4px 10px',
-                      borderRadius: '10px',
-                      background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
-                      color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
-                    }}>
-                      {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
+                      Toque para ver a escala completa
                     </span>
                   </div>
 
-                  {/* Posição Escalada */}
-                  <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.1rem' }}>🏷️</span>
-                    <div>
-                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
-                        Sua Função nesta Escala
-                      </div>
-                      <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
-                        {item.role_name}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notas / Orientações */}
-                  {item.schedule_notes && (
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                      <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
-                    </div>
-                  )}
-
-                  {/* Botões One-Tap de Confirmação */}
-                  {isPending && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
-                      <button
-                        onClick={() => handleRespond(item.roster_item_id, 'ACCEPTED')}
-                        disabled={answeringItemId === item.roster_item_id}
+                  {enrolledMinistries.map(min => {
+                    const isCandidate = min.my_volunteer_status === 'CANDIDATE';
+                    return (
+                      <div
+                        key={min.id}
                         style={{
-                          padding: '12px',
-                          borderRadius: '12px',
-                          border: 'none',
-                          background: '#10b981',
-                          color: '#ffffff',
-                          fontWeight: 900,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
-                        }}
-                      >
-                        <span>✓</span>
-                        <span>Confirmar</span>
-                      </button>
-
-                      <button
-                        onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                        disabled={answeringItemId === item.roster_item_id}
-                        style={{
-                          padding: '12px',
-                          borderRadius: '12px',
-                          border: '1.5px solid #ef4444',
                           background: 'var(--bg-card, #ffffff)',
-                          color: '#ef4444',
-                          fontWeight: 800,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
+                          border: isCandidate ? '1.5px solid #fde68a' : '1.5px solid var(--panel-border, #e2e8f0)',
+                          borderRadius: '16px',
+                          padding: '14px 16px',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
+                          flexDirection: 'column',
+                          gap: '10px',
+                          boxShadow: 'var(--shadow-sm)'
                         }}
                       >
-                        <span>✗</span>
-                        <span>Não Poderei</span>
-                      </button>
-                    </div>
-                  )}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '10px',
+                              background: `${min.color || '#0f766e'}20`,
+                              color: min.color || 'var(--accent-primary, #0f766e)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 900
+                            }}>
+                              {min.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>
+                                {min.name}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
+                                Líder: {min.leader_name || 'Liderança'}
+                              </div>
+                            </div>
+                          </div>
 
-                  {isAccepted && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                      <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
-                        ✓ Sua vaga está garantida no altar!
-                      </span>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button
-                          onClick={() => handleOpenSwapModal(item)}
-                          style={{
-                            background: 'rgba(16, 185, 129, 0.15)',
-                            border: '1px solid rgba(16, 185, 129, 0.35)',
-                            color: '#10b981',
-                            borderRadius: '8px',
-                            padding: '4px 10px',
-                            fontSize: '0.74rem',
+                          <span style={{
+                            fontSize: '0.68rem',
                             fontWeight: 800,
-                            cursor: 'pointer'
+                            padding: '3px 8px',
+                            borderRadius: '8px',
+                            background: isCandidate ? '#fef3c7' : '#dcfce7',
+                            color: isCandidate ? '#b45309' : '#15803d'
+                          }}>
+                            {isCandidate ? '⏳ Em Análise' : '✓ Membro'}
+                          </span>
+                        </div>
+
+                        {min.my_volunteer_roles && (
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #475569)' }}>
+                            <strong>Funções:</strong> {min.my_volunteer_roles}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => handleOpenMinistrySchedules(min)}
+                          style={{
+                            padding: '9px 14px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--accent-primary, #0f766e)',
+                            background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.08))',
+                            color: 'var(--accent-primary, #0f766e)',
+                            fontWeight: 800,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
                           }}
                         >
-                          🔄 Pedir Troca
-                        </button>
-                        <button
-                          onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          Recusar
+                          📅 Visualizar Escalas deste Grupo
                         </button>
                       </div>
-                    </div>
-                  )}
-
-                  {item.confirmation_status === 'SWAP_REQUESTED' && (
-                    <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>🔄</span>
-                      <div style={{ fontSize: '0.76rem', color: 'var(--text-main, #f59e0b)', fontWeight: 700, lineHeight: 1.4 }}>
-                        Troca solicitada para este culto. Aguardando confirmação de um colega voluntário.
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               );
-            })
-          )
+            })()}
+          </div>
         ) : activeTab === 'swaps' ? (
           /* ABA: TROCAS DE ESCALA (SHIFT SWAP) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -703,7 +857,104 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   </div>
                 )}
 
-                {joiningMinId === min.id ? (
+                {/* STATUS DE CANDIDATURA / INSCRIÇÃO REALIZADA */}
+                {min.my_volunteer_status === 'CANDIDATE' ? (
+                  <div style={{
+                    marginTop: '6px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#b45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>⏳</span> Inscrição Enviada (Em Análise)
+                      </span>
+                      {min.my_volunteer_joined_at && (
+                        <span style={{ fontSize: '0.70rem', color: '#92400e' }}>
+                          {new Date(min.my_volunteer_joined_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#78350f', lineHeight: 1.4 }}>
+                      Sua candidatura foi registrada. A liderança entrará em contato para acolhimento e alinhamento!
+                    </div>
+                    {min.my_volunteer_roles && (
+                      <div style={{ fontSize: '0.72rem', color: '#92400e', background: 'rgba(251, 191, 36, 0.25)', padding: '4px 8px', borderRadius: '6px' }}>
+                        <strong>Dons informados:</strong> {min.my_volunteer_roles}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleOpenMinistrySchedules(min)}
+                      style={{
+                        marginTop: '2px',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #f59e0b',
+                        background: '#ffffff',
+                        color: '#b45309',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      📅 Ver Escalas deste Ministério
+                    </button>
+                  </div>
+                ) : (min.my_volunteer_status === 'ACTIVE' || min.my_volunteer_status === 'TRAINING') ? (
+                  <div style={{
+                    marginTop: '6px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>✓</span> Você é voluntário neste ministério
+                      </span>
+                      <span style={{ fontSize: '0.70rem', background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>
+                        {min.my_volunteer_status === 'TRAINING' ? 'EM TREINAMENTO' : 'ATIVO'}
+                      </span>
+                    </div>
+                    {min.my_volunteer_roles && (
+                      <div style={{ fontSize: '0.74rem', color: '#166534' }}>
+                        <strong>Suas funções:</strong> {min.my_volunteer_roles}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleOpenMinistrySchedules(min)}
+                      style={{
+                        marginTop: '2px',
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'var(--accent-primary, #0f766e)',
+                        color: '#ffffff',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)'
+                      }}
+                    >
+                      📅 Ver Escalas deste Ministério
+                    </button>
+                  </div>
+                ) : joiningMinId === min.id ? (
                   <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '12px', borderRadius: '12px' }}>
                     <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main, #334155)' }}>
                       Quais são seus dons/funções de interesse?
@@ -1245,6 +1496,174 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         </div>
       )}
 
+      {/* BOTTOM SHEET: ESCALAS DO MINISTÉRIO / GRUPO */}
+      {viewingMinistry && (
+        <BottomSheet
+          isOpen={Boolean(viewingMinistry)}
+          onClose={() => setViewingMinistry(null)}
+          maxHeight="92dvh"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--panel-border, #e2e8f0)', paddingBottom: '12px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: `${viewingMinistry.color || '#0f766e'}25`,
+                color: viewingMinistry.color || 'var(--accent-primary, #0f766e)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem',
+                fontWeight: 900
+              }}>
+                {viewingMinistry.name?.charAt(0) || 'M'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
+                  Escalas: {viewingMinistry.name}
+                </h3>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                  Líder: {viewingMinistry.leader_name || 'Liderança Ministerial'}
+                </div>
+              </div>
+              {viewingMinistry.my_volunteer_status && (
+                <span style={{
+                  fontSize: '0.70rem',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  background: viewingMinistry.my_volunteer_status === 'ACTIVE' ? '#dcfce7' : '#fef3c7',
+                  color: viewingMinistry.my_volunteer_status === 'ACTIVE' ? '#15803d' : '#b45309'
+                }}>
+                  {viewingMinistry.my_volunteer_status === 'ACTIVE' ? '✓ Membro' : '⏳ Em Análise'}
+                </span>
+              )}
+            </div>
+
+            {loadingMinistrySchedules ? (
+              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted, #64748b)' }}>
+                <div style={{ fontSize: '1.6rem', marginBottom: '8px' }}>🔄</div>
+                <div>Consultando escalas do ministério...</div>
+              </div>
+            ) : ministrySchedules.length === 0 ? (
+              <div style={{
+                background: 'var(--bg-card-subtle, #f8fafc)',
+                borderRadius: '16px',
+                padding: '30px 20px',
+                textAlign: 'center',
+                border: '1px solid var(--panel-border, #e2e8f0)'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📅</div>
+                <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
+                  Nenhuma escala publicada no momento
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', marginTop: '4px' }}>
+                  Assim que a liderança publicar a escala dos próximos cultos, o time escalado aparecerá aqui.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary, #475569)' }}>
+                  Abaixo estão os próximos cultos e a equipe escalada para este ministério:
+                </div>
+
+                {ministrySchedules.map(sch => (
+                  <div
+                    key={sch.id}
+                    style={{
+                      background: 'var(--bg-card, #ffffff)',
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                  >
+                    <div style={{
+                      padding: '12px 14px',
+                      background: 'var(--bg-card-subtle, #f8fafc)',
+                      borderBottom: '1px solid var(--panel-border, #f1f5f9)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 900, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
+                          {sch.title}
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: 'var(--accent-primary, #0f766e)', fontWeight: 700, marginTop: '2px' }}>
+                          📅 {new Date(sch.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} às {sch.service_time}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
+                        {sch.roster_items?.length || 0} postos
+                      </span>
+                    </div>
+
+                    {sch.notes && (
+                      <div style={{ padding: '8px 14px', fontSize: '0.74rem', background: '#fefce8', color: '#854d0e', borderBottom: '1px solid #fef08a' }}>
+                        💡 {sch.notes}
+                      </div>
+                    )}
+
+                    <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {(!sch.roster_items || sch.roster_items.length === 0) ? (
+                        <div style={{ fontSize: '0.76rem', color: 'var(--text-muted, #94a3b8)', fontStyle: 'italic' }}>
+                          Nenhum voluntário escalado ainda.
+                        </div>
+                      ) : (
+                        sch.roster_items.map((slot: any) => {
+                          const isMe = slot.member_id === user?.userId || (user?.email && slot.member_email?.toLowerCase() === user.email.toLowerCase());
+                          return (
+                            <div
+                              key={slot.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '8px 10px',
+                                borderRadius: '10px',
+                                background: isMe ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-card-subtle, #f8fafc)',
+                                border: isMe ? '1.5px solid #10b981' : '1px solid var(--panel-border, #e2e8f0)'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{
+                                  fontSize: '0.70rem',
+                                  fontWeight: 800,
+                                  background: isMe ? '#10b981' : 'var(--accent-primary, #0f766e)',
+                                  color: '#ffffff',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  {slot.role_name}
+                                </span>
+                                <span style={{ fontSize: '0.82rem', fontWeight: isMe ? 900 : 700, color: 'var(--text-main, #0f172a)' }}>
+                                  {slot.member_name || 'Vaga Aberta'} {isMe && '⭐ (Você)'}
+                                </span>
+                              </div>
+                              <span style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                color: slot.status === 'ACCEPTED' ? '#10b981' : (slot.status === 'DECLINED' ? '#ef4444' : '#f59e0b')
+                              }}>
+                                {slot.status === 'ACCEPTED' ? '✓ Confirmado' : (slot.status === 'DECLINED' ? '✗ Recusou' : '⏳ Pendente')}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </BottomSheet>
+      )}
+
     </div>
   );
 };
+

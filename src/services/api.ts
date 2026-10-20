@@ -762,17 +762,31 @@ export async function respondToSchedule(rosterItemId: string, status: 'ACCEPTED'
 
 export async function fetchMinistries(organizationId?: string, campusId?: string): Promise<any[]> {
   try {
+    const headers = await getAuthHeaders();
     const org = organizationId || getActiveOrganizationId();
     if (!org) return [];
     const params = new URLSearchParams({ organization_id: org });
     if (campusId && campusId !== 'all') params.set('campus_id', campusId);
 
-    const res = await fetch(`${API_BASE_URL}/ministries?${params.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/ministries?${params.toString()}`, { headers });
     if (res.ok) {
       return await res.json();
     }
   } catch (e) {
     console.log("Fetch ministries fallback", e);
+  }
+  return [];
+}
+
+export async function fetchMinistrySchedules(ministryId: string): Promise<any[]> {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/ministries/${ministryId}/schedules?timeframe=upcoming&status=PUBLISHED`, { headers });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.log("Fetch ministry schedules fallback", e);
   }
   return [];
 }
