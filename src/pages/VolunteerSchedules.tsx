@@ -908,6 +908,54 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       📅 Ver Escalas deste Ministério
                     </button>
                   </div>
+                ) : min.my_volunteer_status === 'CANDIDATE' ? (
+                  <div style={{
+                    marginTop: '6px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>⏳</span> Inscrição Realizada com Sucesso!
+                      </span>
+                      <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>
+                        AGUARDANDO APROVAÇÃO
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#78350f', lineHeight: 1.4 }}>
+                      Sua solicitação está sendo avaliada pelos líderes do ministério. Assim que liberada, você poderá ser escalado(a).
+                    </div>
+                    {min.my_volunteer_roles && (
+                      <div style={{ fontSize: '0.72rem', color: '#92400e' }}>
+                        <strong>Dons informados:</strong> {min.my_volunteer_roles}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleOpenMinistrySchedules(min)}
+                      style={{
+                        marginTop: '2px',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #fcd34d',
+                        background: '#ffffff',
+                        color: '#92400e',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      📅 Visualizar Escalas deste Ministério
+                    </button>
+                  </div>
                 ) : (min.my_volunteer_status === 'ACTIVE' || min.my_volunteer_status === 'TRAINING') ? (
                   <div style={{
                     marginTop: '6px',
