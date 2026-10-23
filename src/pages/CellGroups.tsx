@@ -293,6 +293,28 @@ export const CellGroups: React.FC = () => {
     }
   };
 
+  const getAuthorColor = (name: string, isDarkTheme: boolean) => {
+    const colorsLight = ['#0284c7', '#7c3aed', '#059669', '#ea580c', '#db2777', '#0891b2', '#4f46e5'];
+    const colorsDark = ['#38bdf8', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#22d3ee', '#818cf8'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const idx = Math.abs(hash) % colorsLight.length;
+    return isDarkTheme ? colorsDark[idx] : colorsLight[idx];
+  };
+
+  const formatBubbleTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const h = d.getHours().toString().padStart(2, '0');
+      const m = d.getMinutes().toString().padStart(2, '0');
+      return `${h}:${m}`;
+    } catch {
+      return '';
+    }
+  };
+
   const formatChapterDateAndSchedule = (ch: Chapter, idx: number) => {
     let raw = (ch.scheduled_date || '').trim();
     let validDate: Date | null = null;
@@ -1308,64 +1330,113 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: MURAL - ESTILO COMUNIDADE / WHATSAPP */}
+          {/* TAB 2: MURAL - ESTILO WHATSAPP CHAT / COMUNIDADE */}
           {portalTab === 'mural' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Top Summary Banner */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* WhatsApp Group Top Header */}
               <div style={{
-                background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
-                borderRadius: '16px',
+                background: isDark ? '#202c33' : '#ffffff',
+                borderRadius: '18px',
                 padding: '12px 16px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--panel-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.35)' : 'none'
+                boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.04)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>💬</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)'
+                  }}>
+                    💬
+                  </div>
                   <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                      Mural da Célula {myGroup.name}
+                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                      Célula {myGroup.name}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : 'var(--text-muted)' }}>
-                      {posts.length} {posts.length === 1 ? 'mensagem compartilhada' : 'mensagens compartilhadas'}
+                    <div style={{ fontSize: '0.70rem', color: isDark ? '#94a3b8' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#22c55e', fontSize: '0.65rem' }}>●</span>
+                      <span>{posts.length} {posts.length === 1 ? 'mensagem' : 'mensagens compartilhadas'}</span>
                     </div>
                   </div>
                 </div>
+
                 <div style={{
-                  fontSize: '0.72rem',
-                  background: isDark ? 'rgba(59, 130, 246, 0.20)' : '#dbeafe',
-                  color: isDark ? '#93c5fd' : '#1d4ed8',
+                  fontSize: '0.70rem',
+                  background: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
+                  color: isDark ? '#4ade80' : '#15803d',
                   fontWeight: 800,
                   padding: '4px 10px',
                   borderRadius: '12px',
-                  border: isDark ? '1px solid rgba(147, 197, 253, 0.30)' : 'none'
+                  border: isDark ? '1px solid rgba(74, 222, 128, 0.25)' : 'none'
                 }}>
-                  Comunidade Viva
+                  Mural Ativo
                 </div>
               </div>
 
-              {/* Feed de Mensagens */}
-              {posts.length === 0 ? (
-                <div style={{ 
-                  background: isDark ? 'var(--bg-card)' : '#ffffff', 
-                  borderRadius: '20px', 
-                  padding: '36px 20px', 
-                  textAlign: 'center', 
-                  border: isDark ? '1px dashed rgba(255, 255, 255, 0.20)' : '1px dashed #cbd5e1' 
+              {/* Chat Container estilo WhatsApp Wallpaper */}
+              <div style={{
+                background: isDark 
+                  ? '#0b141a' 
+                  : '#efeae2',
+                borderRadius: '22px',
+                padding: '16px 12px',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                minHeight: '340px',
+                boxShadow: isDark ? 'inset 0 2px 6px rgba(0,0,0,0.5)' : 'inset 0 1px 3px rgba(0,0,0,0.06)'
+              }}>
+                {/* Pílula de Criptografia / Aviso Central do WhatsApp */}
+                <div style={{
+                  alignSelf: 'center',
+                  background: isDark ? 'rgba(32, 44, 51, 0.92)' : 'rgba(255, 255, 255, 0.94)',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '6px 14px',
+                  fontSize: '0.70rem',
+                  color: isDark ? '#94a3b8' : '#64748b',
+                  textAlign: 'center',
+                  maxWidth: '88%',
+                  lineHeight: 1.35,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+                  margin: '2px 0 6px 0'
                 }}>
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🕊️</span>
-                  <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
-                    O mural da célula está tranquilo
-                  </div>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>
-                    Compartilhe um versículo, um pedido de oração ou avise a turma sobre o encontro!
-                  </p>
+                  🔒 As mensagens compartilhadas aqui são visíveis exclusivamente para os participantes da Célula {myGroup.name}.
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {posts.map((p) => {
+
+                {/* Feed de Balões */}
+                {posts.length === 0 ? (
+                  <div style={{
+                    alignSelf: 'center',
+                    background: isDark ? 'rgba(32, 44, 51, 0.85)' : '#ffffff',
+                    borderRadius: '14px',
+                    padding: '24px 18px',
+                    textAlign: 'center',
+                    border: isDark ? '1px dashed rgba(255, 255, 255, 0.15)' : '1px dashed #cbd5e1',
+                    maxWidth: '85%',
+                    margin: '20px auto'
+                  }}>
+                    <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '6px' }}>🕊️</span>
+                    <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      Nenhuma mensagem no mural ainda
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.74rem', margin: 0 }}>
+                      Envie um recado, gratidão, versículo ou aviso para sua célula na caixa abaixo!
+                    </p>
+                  </div>
+                ) : (
+                  posts.map((p) => {
                     const authorDisplayName = p.author_name || p.author || 'Membro';
                     const isCurrentUser = Boolean(
                       (user?.name && authorDisplayName.toLowerCase() === user.name.toLowerCase()) ||
@@ -1375,86 +1446,166 @@ export const CellGroups: React.FC = () => {
                     const reactionsObj = p.reactions || {};
                     const reactionKeys = Object.keys(reactionsObj);
                     const effectiveUserId = user?.userId || user?.email || 'anonymous';
+                    const bubbleTime = formatBubbleTime(p.created_at) || formatPostTime(p.created_at);
+                    const authorColor = getAuthorColor(authorDisplayName, isDark);
 
                     return (
-                      <div 
-                        key={p.id} 
+                      <div
+                        key={p.id}
                         style={{
-                          background: isCurrentUser 
-                            ? (isDark ? 'rgba(6, 78, 59, 0.30)' : '#f0fdf4') 
-                            : (isDark ? 'var(--bg-card)' : '#ffffff'),
-                          borderRadius: '20px',
-                          padding: '16px',
-                          border: isCurrentUser 
-                            ? (isDark ? '1.5px solid rgba(52, 211, 153, 0.40)' : '1.5px solid #bbf7d0') 
-                            : (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--panel-border)'),
-                          boxShadow: 'var(--shadow-sm)',
+                          width: '100%',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '10px',
-                          position: 'relative'
+                          alignItems: isCurrentUser ? 'flex-end' : 'flex-start',
+                          gap: '2px'
                         }}
                       >
-                        {/* Header da Mensagem (Avatar + Nome + Badge + Horário) */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                            {/* Avatar com Gradiente e Iniciais */}
-                            <div style={{
-                              width: '38px',
-                              height: '38px',
-                              borderRadius: '50%',
-                              background: getAvatarBg(authorDisplayName),
-                              color: '#ffffff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 900,
-                              fontSize: '0.82rem',
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
-                            }}>
-                              {getInitials(authorDisplayName)}
-                            </div>
-
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                <span style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {authorDisplayName}
+                        {/* Balão de Mensagem */}
+                        <div
+                          style={{
+                            maxWidth: '86%',
+                            minWidth: isCurrentUser ? '120px' : '150px',
+                            background: isCurrentUser 
+                              ? (isDark ? '#005c4b' : '#d9fdd3') 
+                              : (isDark ? '#202c33' : '#ffffff'),
+                            color: isDark ? '#e9edef' : '#111b21',
+                            borderRadius: isCurrentUser 
+                              ? '14px 14px 2px 14px' 
+                              : '14px 14px 14px 2px',
+                            padding: '7px 11px 5px 12px',
+                            boxShadow: isDark 
+                              ? '0 1px 3px rgba(0, 0, 0, 0.35)' 
+                              : '0 1px 2px rgba(0, 0, 0, 0.15)',
+                            position: 'relative'
+                          }}
+                        >
+                          {/* Nome do Autor (Apenas em mensagens recebidas de outros) */}
+                          {!isCurrentUser && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: authorColor }}>
+                                {authorDisplayName}
+                              </span>
+                              {isLeaderPost && (
+                                <span style={{
+                                  fontSize: '0.60rem',
+                                  background: isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef3c7',
+                                  color: isDark ? '#fbbf24' : '#b45309',
+                                  fontWeight: 800,
+                                  padding: '1px 5px',
+                                  borderRadius: '5px'
+                                }}>
+                                  👑 Líder
                                 </span>
-                                
-                                {isCurrentUser && (
-                                  <span style={{
-                                    fontSize: '0.64rem',
-                                    background: isDark ? 'rgba(34, 197, 94, 0.25)' : '#dcfce7',
-                                    color: isDark ? '#4ade80' : '#15803d',
-                                    fontWeight: 800,
-                                    padding: '1px 6px',
-                                    borderRadius: '6px'
-                                  }}>
-                                    Você
-                                  </span>
-                                )}
+                              )}
+                            </div>
+                          )}
 
-                                {isLeaderPost && (
-                                  <span style={{
-                                    fontSize: '0.64rem',
-                                    background: isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef3c7',
-                                    color: isDark ? '#fbbf24' : '#b45309',
-                                    fontWeight: 800,
-                                    padding: '1px 6px',
-                                    borderRadius: '6px'
-                                  }}>
-                                    👑 Líder
-                                  </span>
-                                )}
+                          {/* Bloco de Mensagem Respondida (WhatsApp Quote) */}
+                          {p.reply_to_text && (
+                            <div style={{
+                              background: isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.05)',
+                              borderLeft: `4px solid ${isCurrentUser ? '#00a884' : authorColor}`,
+                              borderRadius: '7px',
+                              padding: '5px 8px',
+                              marginBottom: '6px',
+                              fontSize: '0.74rem'
+                            }}>
+                              <div style={{ fontWeight: 800, color: isCurrentUser ? (isDark ? '#25d366' : '#00a884') : authorColor, fontSize: '0.70rem' }}>
+                                @{p.reply_to_author || 'Membro'}
                               </div>
-                              <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                                {formatPostTime(p.created_at)}
+                              <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                "{p.reply_to_text}"
                               </div>
                             </div>
+                          )}
+
+                          {/* Conteúdo da Mensagem */}
+                          <div style={{
+                            fontSize: '0.88rem',
+                            lineHeight: 1.45,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            color: isDark ? '#e9edef' : '#111b21'
+                          }}>
+                            {p.content || p.content_text || ''}
                           </div>
 
-                          {/* Botão Responder Rápido */}
+                          {/* Rodapé do Balão: Horário e Checks */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: '4px',
+                            marginTop: '2px'
+                          }}>
+                            <span style={{
+                              fontSize: '0.64rem',
+                              color: isDark ? 'rgba(233, 237, 239, 0.65)' : 'rgba(17, 27, 33, 0.55)'
+                            }}>
+                              {bubbleTime}
+                            </span>
+                            {isCurrentUser && (
+                              <span style={{ color: '#53bdeb', fontSize: '0.74rem', fontWeight: 900, lineHeight: 1 }}>
+                                ✓✓
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Pílula de Reações (Encaixada na base do balão como no WhatsApp) */}
+                        {reactionKeys.length > 0 && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            background: isDark ? '#202c33' : '#ffffff',
+                            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
+                            borderRadius: '12px',
+                            padding: '2px 7px',
+                            fontSize: '0.70rem',
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
+                            marginTop: '-6px',
+                            marginRight: isCurrentUser ? '6px' : '0',
+                            marginLeft: isCurrentUser ? '0' : '6px',
+                            zIndex: 2
+                          }}>
+                            {reactionKeys.map(emoji => {
+                              const userList = reactionsObj[emoji] || [];
+                              const hasReacted = userList.includes(effectiveUserId);
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => handleReactPost(p.id, emoji)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    fontSize: '0.72rem',
+                                    color: hasReacted ? 'var(--accent-primary)' : 'inherit',
+                                    fontWeight: hasReacted ? 800 : 600
+                                  }}
+                                >
+                                  <span>{emoji}</span>
+                                  <span>{userList.length}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Barra de Ações Rápidas do Balão (Responder / Reações Emojis Rápidos) */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '1px 4px',
+                          opacity: 0.85
+                        }}>
                           <button
                             type="button"
                             onClick={() => {
@@ -1466,112 +1617,24 @@ export const CellGroups: React.FC = () => {
                               }
                             }}
                             style={{
-                              background: isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc',
-                              border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #e2e8f0',
-                              borderRadius: '10px',
-                              padding: '5px 9px',
+                              background: 'transparent',
+                              border: 'none',
+                              color: isDark ? '#94a3b8' : '#64748b',
                               fontSize: '0.70rem',
-                              fontWeight: 800,
-                              color: 'var(--accent-primary)',
+                              fontWeight: 700,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '4px',
-                              flexShrink: 0
+                              gap: '3px',
+                              padding: '2px 4px'
                             }}
                           >
                             <span>↩️</span>
                             <span>Responder</span>
                           </button>
-                        </div>
 
-                        {/* Card de Mensagem Respondida (Estilo WhatsApp Quote) */}
-                        {p.reply_to_text && (
-                          <div style={{
-                            background: isCurrentUser 
-                              ? (isDark ? 'rgba(16, 185, 129, 0.18)' : '#dcfce7') 
-                              : (isDark ? 'rgba(255, 255, 255, 0.06)' : '#f1f5f9'),
-                            borderLeft: '3.5px solid var(--accent-primary)',
-                            borderRadius: '10px',
-                            padding: '8px 12px',
-                            fontSize: '0.76rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px'
-                          }}>
-                            <div style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.72rem' }}>
-                              @{p.reply_to_author || 'Membro'}
-                            </div>
-                            <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              "{p.reply_to_text}"
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Corpo da Mensagem */}
-                        <div style={{
-                          fontSize: '0.88rem',
-                          color: 'var(--text-main)',
-                          lineHeight: 1.5,
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word'
-                        }}>
-                          {p.content || p.content_text || ''}
-                        </div>
-
-                        {/* Barra de Reações e Emojis Rápidos */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '6px',
-                          paddingTop: '6px',
-                          borderTop: isCurrentUser 
-                            ? (isDark ? '1px solid rgba(52, 211, 153, 0.20)' : '1px solid #dcfce7') 
-                            : (isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #f1f5f9')
-                        }}>
-                          {/* Reações Ativas com Contador */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                            {reactionKeys.map(emoji => {
-                              const userList = reactionsObj[emoji] || [];
-                              const hasReacted = userList.includes(effectiveUserId);
-                              return (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  onClick={() => handleReactPost(p.id, emoji)}
-                                  style={{
-                                    background: hasReacted 
-                                      ? (isDark ? 'rgba(99, 102, 241, 0.35)' : '#e0e7ff') 
-                                      : (isDark ? 'rgba(255, 255, 255, 0.06)' : '#f8fafc'),
-                                    border: hasReacted 
-                                      ? '1px solid #818cf8' 
-                                      : (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0'),
-                                    color: hasReacted 
-                                      ? (isDark ? '#c7d2fe' : '#3730a3') 
-                                      : 'var(--text-main)',
-                                    borderRadius: '16px',
-                                    padding: '2px 8px',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    transition: 'all 0.15s ease'
-                                  }}
-                                >
-                                  <span>{emoji}</span>
-                                  <span>{userList.length}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Quick Emoji Reaction Buttons */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {['❤️', '🙏', '🔥', '👏', '😍'].map(emoji => (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            {['❤️', '🙏', '🔥', '👏'].map(emoji => (
                               <button
                                 key={emoji}
                                 type="button"
@@ -1580,15 +1643,11 @@ export const CellGroups: React.FC = () => {
                                 style={{
                                   background: 'transparent',
                                   border: 'none',
-                                  fontSize: '0.96rem',
+                                  fontSize: '0.85rem',
                                   cursor: 'pointer',
-                                  padding: '2px 3px',
-                                  borderRadius: '6px',
-                                  lineHeight: 1,
-                                  transition: 'transform 0.15s ease'
+                                  padding: '1px 2px',
+                                  lineHeight: 1
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.25)'}
-                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                               >
                                 {emoji}
                               </button>
@@ -1597,41 +1656,42 @@ export const CellGroups: React.FC = () => {
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-              )}
+                  })
+                )}
+              </div>
 
-              {/* Caixa de Entrada e Envio de Mensagens */}
+              {/* Barra de Digitação Fixa estilo WhatsApp (Bottom Bar) */}
               <form 
                 onSubmit={handleAddPost} 
                 style={{
-                  background: isDark ? 'var(--bg-card)' : '#ffffff',
-                  borderRadius: '20px',
-                  padding: '14px',
-                  border: isDark ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid var(--panel-border)',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
+                  background: isDark ? '#202c33' : '#f0f2f5',
+                  borderRadius: '24px',
+                  padding: '10px 14px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.06)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px'
+                  gap: '8px'
                 }}
               >
-                {/* Banner de Citação Ativa se estiver Respondendo */}
+                {/* Banner de Resposta Ativa */}
                 {replyingTo && (
                   <div style={{
-                    background: isDark ? 'rgba(30, 41, 59, 0.85)' : '#eff6ff',
-                    borderLeft: '4px solid var(--accent-primary)',
+                    background: isDark ? 'rgba(11, 20, 26, 0.85)' : '#ffffff',
+                    borderLeft: '4px solid #00a884',
                     borderRadius: '12px',
-                    padding: '8px 12px',
+                    padding: '6px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '10px'
+                    gap: '10px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
                   }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#00a884' }}>
                         Respondendo a @{replyingTo.author_name || replyingTo.author || 'Membro'}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.70rem', color: isDark ? '#94a3b8' : '#64748b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         "{replyingTo.content || replyingTo.content_text}"
                       </div>
                     </div>
@@ -1642,7 +1702,7 @@ export const CellGroups: React.FC = () => {
                         background: 'none',
                         border: 'none',
                         color: 'var(--text-muted)',
-                        fontSize: '0.84rem',
+                        fontSize: '0.82rem',
                         cursor: 'pointer',
                         padding: '4px',
                         fontWeight: 900
@@ -1654,80 +1714,67 @@ export const CellGroups: React.FC = () => {
                   </div>
                 )}
 
-                {/* Textarea Espaçoso e Ergonômico (Largura Total) */}
-                <textarea
-                  id="cell-mural-input"
-                  className="input-pwa"
-                  placeholder={replyingTo ? `Escreva sua resposta para @${replyingTo.author_name || replyingTo.author}...` : "Compartilhe um recado, aviso, gratidão ou versículo com a célula..."}
-                  rows={3}
-                  value={newPostText}
-                  onChange={e => setNewPostText(e.target.value)}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    resize: 'none',
-                    padding: '12px 14px',
-                    fontSize: '0.88rem',
-                    borderRadius: '14px',
-                    background: isDark ? 'var(--bg-app)' : '#ffffff',
-                    border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                    color: 'var(--text-main)',
-                    lineHeight: 1.4,
-                    minHeight: '76px'
-                  }}
-                />
+                {/* Linha de Envio: Textarea Cápsula + Botão Circular de Envio */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
+                  <textarea
+                    id="cell-mural-input"
+                    placeholder={replyingTo ? `Responda a @${replyingTo.author_name || replyingTo.author}...` : "Mensagem para a célula..."}
+                    rows={1}
+                    value={newPostText}
+                    onChange={e => setNewPostText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (newPostText.trim() && !isSubmittingPost) {
+                          handleAddPost(e);
+                        }
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      minHeight: '42px',
+                      maxHeight: '120px',
+                      borderRadius: '21px',
+                      background: isDark ? '#2a3942' : '#ffffff',
+                      border: 'none',
+                      padding: '11px 16px',
+                      fontSize: '0.88rem',
+                      color: isDark ? '#e9edef' : '#111b21',
+                      resize: 'none',
+                      lineHeight: 1.35,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                  />
 
-                {/* Barra de Ações Inferior */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    {replyingTo ? '💬 Respondendo mensagem' : '✨ Visível para todos da célula'}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {replyingTo && (
-                      <button
-                        type="button"
-                        onClick={() => setReplyingTo(null)}
-                        style={{
-                          background: isDark ? 'rgba(255, 255, 255, 0.10)' : '#f1f5f9',
-                          border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
-                          color: 'var(--text-muted)',
-                          padding: '8px 14px',
-                          borderRadius: '12px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                    )}
-
-                    <button 
-                      type="submit" 
-                      disabled={!newPostText.trim() || isSubmittingPost}
-                      style={{ 
-                        background: 'var(--gradient-primary, linear-gradient(135deg, #1e3a8a, #3b82f6))',
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '9px 18px', 
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        borderRadius: '12px',
-                        height: '38px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
-                        opacity: (!newPostText.trim() || isSubmittingPost) ? 0.6 : 1,
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span>{isSubmittingPost ? 'Enviando...' : '➤'}</span>
-                      <span>{replyingTo ? 'Responder' : 'Publicar'}</span>
-                    </button>
-                  </div>
+                  <button 
+                    type="submit" 
+                    disabled={!newPostText.trim() || isSubmittingPost}
+                    title="Enviar mensagem"
+                    style={{ 
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: (newPostText.trim() && !isSubmittingPost) 
+                        ? '#00a884' 
+                        : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'),
+                      color: (newPostText.trim() && !isSubmittingPost) 
+                        ? '#ffffff' 
+                        : (isDark ? '#64748b' : '#94a3b8'),
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.05rem',
+                      cursor: (newPostText.trim() && !isSubmittingPost) ? 'pointer' : 'default',
+                      flexShrink: 0,
+                      transition: 'all 0.15s ease',
+                      boxShadow: (newPostText.trim() && !isSubmittingPost) ? '0 2px 8px rgba(0, 168, 132, 0.35)' : 'none'
+                    }}
+                  >
+                    <span>{isSubmittingPost ? '⏳' : '➤'}</span>
+                  </button>
                 </div>
               </form>
             </div>
