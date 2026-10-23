@@ -246,6 +246,8 @@ export const CellGroups: React.FC = () => {
   const [showAddVisitor, setShowAddVisitor] = useState(false);
   const [isRecordingMeeting, setIsRecordingMeeting] = useState(false);
   const [meetingsHistory, setMeetingsHistory] = useState<any[]>([]);
+  const [showDatePickerModal, setShowDatePickerModal] = useState<boolean>(false);
+  const [showTopicNotes, setShowTopicNotes] = useState<boolean>(false);
 
   // Form edit meeting
   const [editMeetingDay, setEditMeetingDay] = useState('');
@@ -351,6 +353,66 @@ export const CellGroups: React.FC = () => {
     }
 
     return options;
+  };
+
+  // Navegação semanal para a chamada (Semana anterior / Próxima semana)
+  const handleStepMeetingDate = (deltaDays: number) => {
+    try {
+      const parts = meetingDate.split('-');
+      if (parts.length !== 3) return;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const curr = new Date(y, m, d);
+      curr.setDate(curr.getDate() + deltaDays);
+      const newY = curr.getFullYear();
+      const newM = String(curr.getMonth() + 1).padStart(2, '0');
+      const newD = String(curr.getDate()).padStart(2, '0');
+      setMeetingDate(`${newY}-${newM}-${newD}`);
+    } catch {
+      // fallback silencioso
+    }
+  };
+
+  // Formatação rica e elegante da data selecionada na chamada
+  const getMeetingDateRichInfo = (dateStr: string, meetingDay?: string) => {
+    if (!dateStr) return { title: 'Data não definida', badge: 'Data' };
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return { title: dateStr, badge: 'Data' };
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const dt = new Date(y, m, d);
+      const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+      const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const dayLabel = weekdays[dt.getDay()] || '';
+      const monthLabel = months[dt.getMonth()] || '';
+      
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const nextMeetingStr = calculateNextMeetingDate(meetingDay).dateStr;
+
+      let badge = 'Encontro';
+      if (dateStr === todayStr) {
+        badge = 'Hoje';
+      } else if (dateStr === nextMeetingStr) {
+        badge = 'Próximo Encontro';
+      } else if (dateStr < todayStr) {
+        badge = 'Encontro Anterior';
+      } else {
+        badge = 'Encontro Futuro';
+      }
+
+      return {
+        dayOfWeek: dayLabel,
+        formattedShort: `${d} de ${monthLabel}`,
+        title: `${dayLabel}, ${d} de ${monthLabel}`,
+        badge
+      };
+    } catch {
+      return { title: dateStr, badge: 'Encontro' };
+    }
   };
 
   const formatNextMeetingLabel = (meetingDay?: string, meetingTime?: string) => {
@@ -1289,20 +1351,20 @@ export const CellGroups: React.FC = () => {
   return (
     <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px' }}>
       
-      {/* Header com Switch entre "Minha Célula" e "Explorar Células" (Apenas fora da tela dedicada do líder) */}
-      {portalTab !== 'lideranca' && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Header com Switch entre "Minha Célula" e "Explorar Células" (Apenas em modo Discover) */}
+      {viewMode === 'discover' && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <div>
             <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>Células & Redes</h2>
             <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-              {viewMode === 'portal' && myGroup ? 'Hub conectado do seu Pequeno Grupo' : 'Encontre uma célula perto de você'}
+              Encontre uma célula perto de você
             </p>
           </div>
 
           {cells.length > 0 && myGroupId && (
             <button 
               type="button" 
-              onClick={() => setViewMode(viewMode === 'portal' ? 'discover' : 'portal')}
+              onClick={() => setViewMode('portal')}
               style={{
                 background: 'var(--accent-primary-light)',
                 color: 'var(--accent-primary)',
@@ -1314,7 +1376,7 @@ export const CellGroups: React.FC = () => {
                 cursor: 'pointer'
               }}
             >
-              {viewMode === 'portal' ? '🔍 Explorar' : '🏠 Minha Célula'}
+              🏠 Minha Célula
             </button>
           )}
         </div>
@@ -1324,77 +1386,132 @@ export const CellGroups: React.FC = () => {
           MODO 1: PORTAL CONECTADO DA MINHA CÉLULA (SUB-APP)
           ======================================================== */}
       {viewMode === 'portal' && myGroup ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
-          {/* Card Hero da Minha Célula (Oculto na tela exclusiva do líder) */}
+          {/* Barra Superior Menor da Célula */}
           {portalTab !== 'lideranca' && (
             <div style={{
               background: (myGroup.cover_url || myGroup.image_url)
-                ? `linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.88) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
-                : 'var(--accent-primary-gradient)',
+                ? `linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
+                : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'),
               color: '#ffffff',
-              borderRadius: '20px',
-              padding: '20px',
-              boxShadow: 'var(--shadow-md)',
-              position: 'relative',
-              overflow: 'hidden'
+              borderRadius: '16px',
+              padding: '12px 16px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
-                    CÉLULA CONECTADA • {myGroup.network || 'Geral'}
-                  </span>
-                  <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginTop: '2px' }}>
-                    {myGroup.name}
-                  </h3>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '2px'
+                }}>
+                  <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
+                  <span>Célula Conectada • {myGroup.network || 'Geral'}</span>
                 </div>
+                <h3 style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 900,
+                  margin: 0,
+                  color: '#ffffff',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {myGroup.name}
+                </h3>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', padding: '10px 14px', borderRadius: '12px', marginTop: '14px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div>👤 <strong>Liderança:</strong> {myGroup.leader || myGroup.leader_name || 'Pastoral'}</div>
-                <div>🗓️ <strong>Encontro:</strong> {myGroup.meeting_day ? `${myGroup.meeting_day} às ${myGroup.meeting_time}` : (myGroup.day_time || 'A definir')}</div>
-                {myGroup.address && <div>📍 <strong>Endereço:</strong> {myGroup.address} {myGroup.neighborhood ? `(${myGroup.neighborhood})` : ''}</div>}
-              </div>
+              {cells.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => setViewMode('discover')}
+                  title="Explorar outras células"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    padding: '6px 12px',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    backdropFilter: 'blur(8px)',
+                    flexShrink: 0
+                  }}
+                >
+                  🔍 Trocar
+                </button>
+              )}
             </div>
           )}
 
           {/* Abas de Navegação Interna da Célula (Ocultas na tela exclusiva do líder) */}
           {portalTab !== 'lideranca' && (
-            <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
-            {[
-              { id: 'dashboard', label: '📊 Início' },
-              { id: 'mural', label: '💬 Mural' },
-              { id: 'estudos', label: '📖 Estudos' },
-              { id: 'lanches', label: '☕ Partilha' },
-              ...(isCellLeader ? [{ 
-                id: 'lideranca', 
-                label: pendingUsers.length > 0 ? `🛡️ Gestão do Líder (${pendingUsers.length})` : '🛡️ Gestão do Líder' 
-              }] : [])
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setPortalTab(tab.id as PortalTab)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '12px',
-                  border: portalTab === tab.id ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                  background: portalTab === tab.id 
-                    ? 'var(--accent-primary-light)' 
-                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? 'rgba(239, 68, 68, 0.20)' : '#fef2f2') : (isDark ? 'var(--bg-card)' : '#ffffff')),
-                  color: portalTab === tab.id 
-                    ? 'var(--accent-primary)' 
-                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? '#f87171' : '#dc2626') : 'var(--text-main)'),
-                  fontWeight: 800,
-                  fontSize: '0.76rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <div 
+              className="no-scrollbar" 
+              style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                overflowX: 'auto', 
+                padding: '2px 2px 4px 2px', 
+                WebkitOverflowScrolling: 'touch' 
+              }}
+            >
+              {[
+                { id: 'dashboard', icon: '📊', label: 'Início' },
+                { id: 'mural', icon: '💬', label: 'Mural' },
+                { id: 'estudos', icon: '📖', label: 'Estudos' },
+                { id: 'lanches', icon: '☕', label: 'Partilha' },
+                ...(isCellLeader ? [{ 
+                  id: 'lideranca', 
+                  icon: '🛡️',
+                  label: pendingUsers.length > 0 ? `Parte Gerencial (${pendingUsers.length})` : 'Parte Gerencial' 
+                }] : [])
+              ].map(tab => {
+                const isActive = portalTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setPortalTab(tab.id as PortalTab)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '12px',
+                      border: isActive ? '1.5px solid var(--accent-primary)' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'var(--panel-border)'}`,
+                      background: isActive 
+                        ? 'var(--accent-primary-light)' 
+                        : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? 'rgba(239, 68, 68, 0.20)' : '#fef2f2') : (isDark ? 'var(--bg-card)' : '#ffffff')),
+                      color: isActive 
+                        ? 'var(--accent-primary)' 
+                        : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? '#f87171' : '#dc2626') : 'var(--text-main)'),
+                      fontWeight: isActive ? 900 : 700,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -1507,91 +1624,22 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: MURAL - ESTILO WHATSAPP CHAT / COMUNIDADE */}
+          {/* TAB 2: MURAL - FEED LIMPO COM DIGITAÇÃO FIXA NO RODAPÉ */}
           {portalTab === 'mural' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* WhatsApp Group Top Header */}
-              <div style={{
-                background: isDark ? '#202c33' : '#ffffff',
-                borderRadius: '18px',
-                padding: '12px 16px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--panel-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.04)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #059669, #10b981)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.2rem',
-                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)'
-                  }}>
-                    💬
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
-                      Célula {myGroup.name}
-                    </div>
-                    <div style={{ fontSize: '0.70rem', color: isDark ? '#94a3b8' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ color: '#22c55e', fontSize: '0.65rem' }}>●</span>
-                      <span>{posts.length} {posts.length === 1 ? 'mensagem' : 'mensagens compartilhadas'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{
-                  fontSize: '0.70rem',
-                  background: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
-                  color: isDark ? '#4ade80' : '#15803d',
-                  fontWeight: 800,
-                  padding: '4px 10px',
-                  borderRadius: '12px',
-                  border: isDark ? '1px solid rgba(74, 222, 128, 0.25)' : 'none'
-                }}>
-                  Mural Ativo
-                </div>
-              </div>
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 64px)' }}>
+              
               {/* Chat Container estilo WhatsApp Wallpaper */}
               <div style={{
-                background: isDark 
-                  ? '#0b141a' 
-                  : '#efeae2',
-                borderRadius: '22px',
-                padding: '16px 12px',
+                background: isDark ? '#0b141a' : '#efeae2',
+                borderRadius: '20px',
+                padding: '14px 12px',
                 border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
-                minHeight: '340px',
+                gap: '10px',
+                minHeight: '380px',
                 boxShadow: isDark ? 'inset 0 2px 6px rgba(0,0,0,0.5)' : 'inset 0 1px 3px rgba(0,0,0,0.06)'
               }}>
-                {/* Pílula de Criptografia / Aviso Central do WhatsApp */}
-                <div style={{
-                  alignSelf: 'center',
-                  background: isDark ? 'rgba(32, 44, 51, 0.92)' : 'rgba(255, 255, 255, 0.94)',
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '6px 14px',
-                  fontSize: '0.70rem',
-                  color: isDark ? '#94a3b8' : '#64748b',
-                  textAlign: 'center',
-                  maxWidth: '88%',
-                  lineHeight: 1.35,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                  margin: '2px 0 6px 0'
-                }}>
-                  🔒 As mensagens compartilhadas aqui são visíveis exclusivamente para os participantes da Célula {myGroup.name}.
-                </div>
-
                 {/* Feed de Balões */}
                 {posts.length === 0 ? (
                   <div style={{
@@ -1602,14 +1650,14 @@ export const CellGroups: React.FC = () => {
                     textAlign: 'center',
                     border: isDark ? '1px dashed rgba(255, 255, 255, 0.15)' : '1px dashed #cbd5e1',
                     maxWidth: '85%',
-                    margin: '20px auto'
+                    margin: '30px auto'
                   }}>
                     <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '6px' }}>🕊️</span>
                     <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)', marginBottom: '3px' }}>
                       Nenhuma mensagem no mural ainda
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.74rem', margin: 0 }}>
-                      Envie um recado, gratidão, versículo ou aviso para sua célula na caixa abaixo!
+                      Envie um recado, gratidão, versículo ou aviso para sua célula no campo abaixo!
                     </p>
                   </div>
                 ) : (
@@ -1641,7 +1689,7 @@ export const CellGroups: React.FC = () => {
                         <div
                           style={{
                             maxWidth: '86%',
-                            minWidth: isCurrentUser ? '120px' : '150px',
+                            minWidth: isCurrentUser ? '110px' : '140px',
                             background: isCurrentUser 
                               ? (isDark ? '#005c4b' : '#d9fdd3') 
                               : (isDark ? '#202c33' : '#ffffff'),
@@ -1656,7 +1704,7 @@ export const CellGroups: React.FC = () => {
                             position: 'relative'
                           }}
                         >
-                          {/* Nome do Autor (Apenas em mensagens recebidas de outros) */}
+                          {/* Nome do Autor */}
                           {!isCurrentUser && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
                               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: authorColor }}>
@@ -1677,17 +1725,17 @@ export const CellGroups: React.FC = () => {
                             </div>
                           )}
 
-                          {/* Bloco de Mensagem Respondida (WhatsApp Quote) */}
+                          {/* Bloco de Mensagem Respondida (Quote) */}
                           {p.reply_to_text && (
                             <div style={{
                               background: isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.05)',
-                              borderLeft: `4px solid ${isCurrentUser ? '#00a884' : authorColor}`,
+                              borderLeft: `3.5px solid ${isCurrentUser ? '#00a884' : authorColor}`,
                               borderRadius: '7px',
-                              padding: '5px 8px',
+                              padding: '4px 8px',
                               marginBottom: '6px',
-                              fontSize: '0.74rem'
+                              fontSize: '0.72rem'
                             }}>
-                              <div style={{ fontWeight: 800, color: isCurrentUser ? (isDark ? '#25d366' : '#00a884') : authorColor, fontSize: '0.70rem' }}>
+                              <div style={{ fontWeight: 800, color: isCurrentUser ? (isDark ? '#25d366' : '#00a884') : authorColor, fontSize: '0.68rem' }}>
                                 @{p.reply_to_author || 'Membro'}
                               </div>
                               <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1699,7 +1747,7 @@ export const CellGroups: React.FC = () => {
                           {/* Conteúdo da Mensagem */}
                           <div style={{
                             fontSize: '0.88rem',
-                            lineHeight: 1.45,
+                            lineHeight: 1.42,
                             whiteSpace: 'pre-wrap',
                             wordBreak: 'break-word',
                             color: isDark ? '#e9edef' : '#111b21'
@@ -1707,14 +1755,35 @@ export const CellGroups: React.FC = () => {
                             {p.content || p.content_text || ''}
                           </div>
 
-                          {/* Rodapé do Balão: Horário e Checks */}
+                          {/* Rodapé do Balão: Horário, Checks e Ação Discreta de Responder */}
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-end',
-                            gap: '4px',
+                            gap: '6px',
                             marginTop: '2px'
                           }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyingTo(p);
+                                const inputEl = document.getElementById('cell-mural-input');
+                                if (inputEl) inputEl.focus();
+                              }}
+                              title="Responder"
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: isDark ? 'rgba(233, 237, 239, 0.60)' : 'rgba(17, 27, 33, 0.50)',
+                                fontSize: '0.68rem',
+                                cursor: 'pointer',
+                                padding: 0,
+                                display: 'inline-flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              ↩️
+                            </button>
                             <span style={{
                               fontSize: '0.64rem',
                               color: isDark ? 'rgba(233, 237, 239, 0.65)' : 'rgba(17, 27, 33, 0.55)'
@@ -1729,7 +1798,7 @@ export const CellGroups: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Pílula de Reações (Encaixada na base do balão como no WhatsApp) */}
+                        {/* Pílula de Reações (Apenas quando houver reações) */}
                         {reactionKeys.length > 0 && (
                           <div style={{
                             display: 'flex',
@@ -1774,186 +1843,140 @@ export const CellGroups: React.FC = () => {
                             })}
                           </div>
                         )}
-
-                        {/* Barra de Ações Rápidas do Balão (Responder / Reações Emojis Rápidos) */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '1px 4px',
-                          opacity: 0.85
-                        }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setReplyingTo(p);
-                              const inputEl = document.getElementById('cell-mural-input');
-                              if (inputEl) {
-                                inputEl.focus();
-                                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              }
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: isDark ? '#94a3b8' : '#64748b',
-                              fontSize: '0.70rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '3px',
-                              padding: '2px 4px'
-                            }}
-                          >
-                            <span>↩️</span>
-                            <span>Responder</span>
-                          </button>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            {['❤️', '🙏', '🔥', '👏'].map(emoji => (
-                              <button
-                                key={emoji}
-                                type="button"
-                                onClick={() => handleReactPost(p.id, emoji)}
-                                title={`Reagir com ${emoji}`}
-                                style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  fontSize: '0.85rem',
-                                  cursor: 'pointer',
-                                  padding: '1px 2px',
-                                  lineHeight: 1
-                                }}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     );
                   })
                 )}
               </div>
 
-              {/* Barra de Digitação Fixa estilo WhatsApp (Bottom Bar) */}
-              <form 
-                onSubmit={handleAddPost} 
-                style={{
-                  background: isDark ? '#202c33' : '#f0f2f5',
-                  borderRadius: '24px',
-                  padding: '10px 14px',
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.06)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}
-              >
-                {/* Banner de Resposta Ativa */}
-                {replyingTo && (
-                  <div style={{
-                    background: isDark ? 'rgba(11, 20, 26, 0.85)' : '#ffffff',
-                    borderLeft: '4px solid #00a884',
-                    borderRadius: '12px',
-                    padding: '6px 12px',
+              {/* Barra de Digitação FIXA Acima da Barra Inferior do PWA */}
+              <div style={{
+                position: 'fixed',
+                bottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px))',
+                left: 0,
+                right: 0,
+                zIndex: 48,
+                background: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.97)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
+                boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
+                padding: '8px 12px',
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <form 
+                  onSubmit={handleAddPost} 
+                  style={{
+                    width: '100%',
+                    maxWidth: '680px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '10px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                  }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#00a884' }}>
-                        Respondendo a @{replyingTo.author_name || replyingTo.author || 'Membro'}
-                      </div>
-                      <div style={{ fontSize: '0.70rem', color: isDark ? '#94a3b8' : '#64748b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        "{replyingTo.content || replyingTo.content_text}"
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReplyingTo(null)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-muted)',
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        fontWeight: 900
-                      }}
-                      title="Cancelar resposta"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-
-                {/* Linha de Envio: Textarea Cápsula + Botão Circular de Envio */}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
-                  <textarea
-                    id="cell-mural-input"
-                    placeholder={replyingTo ? `Responda a @${replyingTo.author_name || replyingTo.author}...` : "Mensagem para a célula..."}
-                    rows={1}
-                    value={newPostText}
-                    onChange={e => setNewPostText(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (newPostText.trim() && !isSubmittingPost) {
-                          handleAddPost(e);
-                        }
-                      }
-                    }}
-                    style={{
-                      flex: 1,
-                      minHeight: '42px',
-                      maxHeight: '120px',
-                      borderRadius: '21px',
-                      background: isDark ? '#2a3942' : '#ffffff',
-                      border: 'none',
-                      padding: '11px 16px',
-                      fontSize: '0.88rem',
-                      color: isDark ? '#e9edef' : '#111b21',
-                      resize: 'none',
-                      lineHeight: 1.35,
-                      boxSizing: 'border-box',
-                      outline: 'none',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
-                    }}
-                  />
-
-                  <button 
-                    type="submit" 
-                    disabled={!newPostText.trim() || isSubmittingPost}
-                    title="Enviar mensagem"
-                    style={{ 
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      background: (newPostText.trim() && !isSubmittingPost) 
-                        ? '#00a884' 
-                        : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'),
-                      color: (newPostText.trim() && !isSubmittingPost) 
-                        ? '#ffffff' 
-                        : (isDark ? '#64748b' : '#94a3b8'),
-                      border: 'none',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  {/* Banner de Resposta Ativa */}
+                  {replyingTo && (
+                    <div style={{
+                      background: isDark ? 'rgba(30, 41, 59, 0.90)' : '#f1f5f9',
+                      borderLeft: '3.5px solid var(--accent-primary, #00a884)',
+                      borderRadius: '10px',
+                      padding: '5px 10px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.05rem',
-                      cursor: (newPostText.trim() && !isSubmittingPost) ? 'pointer' : 'default',
-                      flexShrink: 0,
-                      transition: 'all 0.15s ease',
-                      boxShadow: (newPostText.trim() && !isSubmittingPost) ? '0 2px 8px rgba(0, 168, 132, 0.35)' : 'none'
-                    }}
-                  >
-                    <span>{isSubmittingPost ? '⏳' : '➤'}</span>
-                  </button>
-                </div>
-              </form>
+                      justifyContent: 'space-between',
+                      gap: '8px'
+                    }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary, #00a884)' }}>
+                          Respondendo a @{replyingTo.author_name || replyingTo.author || 'Membro'}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          "{replyingTo.content || replyingTo.content_text}"
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          padding: '2px 4px',
+                          fontWeight: 900
+                        }}
+                        title="Cancelar resposta"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Campo de Entrada e Botão Enviar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                    <textarea
+                      id="cell-mural-input"
+                      placeholder={replyingTo ? `Responda a @${replyingTo.author_name || replyingTo.author}...` : "Mensagem para a célula..."}
+                      rows={1}
+                      value={newPostText}
+                      onChange={e => setNewPostText(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (newPostText.trim() && !isSubmittingPost) {
+                            handleAddPost(e);
+                          }
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        minHeight: '40px',
+                        maxHeight: '100px',
+                        borderRadius: '20px',
+                        background: isDark ? '#1e293b' : '#f1f5f9',
+                        border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0'}`,
+                        padding: '10px 14px',
+                        fontSize: '0.86rem',
+                        color: 'var(--text-main)',
+                        resize: 'none',
+                        lineHeight: 1.35,
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    />
+
+                    <button 
+                      type="submit" 
+                      disabled={!newPostText.trim() || isSubmittingPost}
+                      title="Enviar mensagem"
+                      style={{ 
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: (newPostText.trim() && !isSubmittingPost) 
+                          ? 'var(--accent-primary, #059669)' 
+                          : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'),
+                        color: (newPostText.trim() && !isSubmittingPost) 
+                          ? '#ffffff' 
+                          : (isDark ? '#64748b' : '#94a3b8'),
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1rem',
+                        cursor: (newPostText.trim() && !isSubmittingPost) ? 'pointer' : 'default',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
+                        boxShadow: (newPostText.trim() && !isSubmittingPost) ? '0 2px 8px rgba(5, 150, 105, 0.35)' : 'none'
+                      }}
+                    >
+                      <span>{isSubmittingPost ? '⏳' : '➤'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
@@ -2751,43 +2774,72 @@ export const CellGroups: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sub-navegação do Líder (Pílulas Ergonômicas) */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(5, 1fr)', 
-                gap: '4px', 
-                background: isDark ? 'rgba(255,255,255,0.04)' : '#f1f5f9', 
-                padding: '4px', 
-                borderRadius: '14px',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'transparent'}`
-              }}>
+              {/* Sub-navegação do Líder (Pílulas Fluidas com Scroll Suave) */}
+              <div 
+                className="no-scrollbar"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '8px', 
+                  overflowX: 'auto',
+                  padding: '4px 2px',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 {[
-                  { id: 'attendance', label: '📋 Chamada' },
-                  { id: 'requests', label: pendingUsers.length > 0 ? `Pedidos (${pendingUsers.length})` : 'Pedidos' },
-                  { id: 'members', label: `Membros (${groupMembers.length})` },
-                  { id: 'lanches', label: 'Lanches' },
-                  { id: 'settings', label: 'Encontro' }
-                ].map(sub => (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    onClick={() => setLeaderSubTab(sub.id as LeaderSubTab)}
-                    style={{
-                      padding: '8px 2px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: leaderSubTab === sub.id ? (isDark ? 'var(--bg-card)' : '#ffffff') : 'transparent',
-                      color: leaderSubTab === sub.id ? 'var(--text-main)' : 'var(--text-muted)',
-                      fontWeight: 800,
-                      fontSize: '0.70rem',
-                      cursor: 'pointer',
-                      boxShadow: leaderSubTab === sub.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
+                  { id: 'attendance', icon: '📋', label: 'Chamada' },
+                  { id: 'requests', icon: '📩', label: 'Pedidos', count: pendingUsers.length },
+                  { id: 'members', icon: '👥', label: 'Membros', count: groupMembers.length },
+                  { id: 'lanches', icon: '☕', label: 'Lanches' },
+                  { id: 'settings', icon: '⚙️', label: 'Encontro' }
+                ].map(sub => {
+                  const isActive = leaderSubTab === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setLeaderSubTab(sub.id as LeaderSubTab)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '14px',
+                        border: isActive 
+                          ? '1.5px solid var(--accent-primary, #ea580c)' 
+                          : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                        background: isActive 
+                          ? (isDark ? '#431407' : '#ffedd5') 
+                          : (isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'),
+                        color: isActive 
+                          ? '#ea580c' 
+                          : (isDark ? '#cbd5e1' : '#475569'),
+                        fontWeight: isActive ? 900 : 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: isActive ? '0 2px 6px rgba(234, 88, 12, 0.15)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.90rem' }}>{sub.icon}</span>
+                      <span>{sub.label}</span>
+                      {typeof sub.count === 'number' && sub.count > 0 && (
+                        <span style={{
+                          background: isActive ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0'),
+                          color: isActive ? '#ffffff' : (isDark ? '#ffffff' : '#334155'),
+                          padding: '1px 6px',
+                          borderRadius: '999px',
+                          fontSize: '0.66rem',
+                          fontWeight: 900
+                        }}>
+                          {sub.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ERGONÔMICO ESTILO MOCKUP MOBILE) */}
@@ -2815,148 +2867,233 @@ export const CellGroups: React.FC = () => {
                       gap: '16px'
                     }}>
 
-                      {/* SEÇÃO 1 NO TOPO: SELEÇÃO DO ENCONTRO, TEMA E OBSERVAÇÕES */}
-                      <div style={{
-                        background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-                        borderRadius: '20px',
-                        padding: '16px',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9'}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                      }}>
-                        {/* Linha do Seletor de Encontro Semanal */}
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <label style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>📅</span>
-                              <span>Data do Encontro da Célula</span>
-                            </label>
-                            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700 }}>
-                              {myGroup.meeting_day ? `${myGroup.meeting_day}s` : 'Semanal'}
-                            </span>
-                          </div>
-
-                          {/* Pílulas de datas reais da célula */}
-                          <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
-                            {getMeetingDateOptions(myGroup.meeting_day).map(opt => {
-                              const isSelected = meetingDate === opt.date;
-                              return (
-                                <button
-                                  key={opt.date}
-                                  type="button"
-                                  onClick={() => setMeetingDate(opt.date)}
-                                  style={{
-                                    padding: '7px 12px',
-                                    borderRadius: '12px',
-                                    border: isSelected ? '1.5px solid #ea580c' : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
-                                    background: isSelected ? (isDark ? '#431407' : '#ffedd5') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
-                                    color: isSelected ? '#ea580c' : 'var(--text-main)',
-                                    fontWeight: isSelected ? 900 : 700,
-                                    fontSize: '0.74rem',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    flexShrink: 0,
-                                    transition: 'all 0.15s ease'
-                                  }}
-                                >
-                                  <span style={{ opacity: 0.75, marginRight: '4px' }}>{opt.badge} ·</span>{opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Seletor de data manual caso queira customizar */}
-                          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                              Ou outra data:
-                            </span>
-                            <input
-                              type="date"
-                              value={meetingDate}
-                              onChange={e => setMeetingDate(e.target.value)}
+                      {/* 1. NAVEGADOR SEMANAL LIMPO (‹ DATA DO ENCONTRO ▾ ›) */}
+                      {(() => {
+                        const dateInfo = getMeetingDateRichInfo(meetingDate, myGroup.meeting_day);
+                        return (
+                          <div style={{
+                            background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                            borderRadius: '20px',
+                            padding: '10px 14px',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px'
+                          }}>
+                            {/* Botão Semana Anterior */}
+                            <button
+                              type="button"
+                              onClick={() => handleStepMeetingDate(-7)}
+                              title="Semana anterior"
                               style={{
-                                padding: '5px 10px',
-                                borderRadius: '10px',
-                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                                background: isDark ? '#0f172a' : '#f8fafc',
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '12px',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                                background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
                                 color: 'var(--text-main, #0f172a)',
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                outline: 'none'
+                                fontSize: '1.25rem',
+                                fontWeight: 800,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.15s ease'
                               }}
-                            />
-                          </div>
-                        </div>
+                            >
+                              ‹
+                            </button>
 
-                        {/* Linha do Tema / Lição Abordada */}
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                              📖 Tema / Estudo do Encontro
-                            </label>
-                            {selectedBook?.title && studyTopic !== selectedBook.title && (
-                              <button
-                                type="button"
-                                onClick={() => setStudyTopic(selectedBook.title)}
+                            {/* Centro: Data Clicável para abrir o Bottom Sheet */}
+                            <button
+                              type="button"
+                              onClick={() => setShowDatePickerModal(true)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                padding: '2px 8px',
+                                minWidth: 0,
+                                flex: 1
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 900,
+                                  color: '#ea580c',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em'
+                                }}>
+                                  {dateInfo.badge}
+                                </span>
+                                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>▾</span>
+                              </div>
+                              <div style={{
+                                fontSize: '0.96rem',
+                                fontWeight: 900,
+                                color: 'var(--text-main, #0f172a)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {dateInfo.title}
+                              </div>
+                              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                                Toque para escolher outra data
+                              </span>
+                            </button>
+
+                            {/* Botão Próxima Semana */}
+                            <button
+                              type="button"
+                              onClick={() => handleStepMeetingDate(7)}
+                              title="Próxima semana"
+                              style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '12px',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                                background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                                color: 'var(--text-main, #0f172a)',
+                                fontSize: '1.25rem',
+                                fontWeight: 800,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              ›
+                            </button>
+                          </div>
+                        );
+                      })()}
+
+                      {/* 2. CARD COMPACTO EXPANSÍVEL: TEMA & NOTAS DO ENCONTRO */}
+                      <div style={{
+                        background: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+                        borderRadius: '16px',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}`,
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowTopicNotes(prev => !prev)}
+                          style={{
+                            width: '100%',
+                            padding: '11px 14px',
+                            background: 'transparent',
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            gap: '8px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                            <span style={{ fontSize: '1rem', flexShrink: 0 }}>📖</span>
+                            <div style={{ textAlign: 'left', minWidth: 0 }}>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {studyTopic ? `Estudo: ${studyTopic}` : 'Tema do Encontro & Notas'}
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                                {studyTopic || meetingNotes ? 'Clique para ver/editar tema e notas' : 'Opcional • Toque para adicionar'}
+                              </div>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', transform: showTopicNotes ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                            ▼
+                          </span>
+                        </button>
+
+                        {showTopicNotes && (
+                          <div style={{
+                            padding: '0 14px 14px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'}`,
+                            paddingTop: '12px'
+                          }}>
+                            <div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                                  Tema / Estudo Ministrado
+                                </label>
+                                {selectedBook?.title && studyTopic !== selectedBook.title && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setStudyTopic(selectedBook.title)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#ea580c',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      padding: 0
+                                    }}
+                                  >
+                                    Usar livro sugerido ↵
+                                  </button>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Ex: O Fruto do Espírito, Vivendo em Comunidade..."
+                                value={studyTopic}
+                                onChange={e => setStudyTopic(e.target.value)}
                                 style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--accent-primary, #0f766e)',
-                                  fontSize: '0.70rem',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                  padding: 0
+                                  width: '100%',
+                                  padding: '9px 12px',
+                                  borderRadius: '12px',
+                                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                  background: isDark ? '#0f172a' : '#f8fafc',
+                                  color: 'var(--text-main)',
+                                  fontSize: '0.80rem',
+                                  fontWeight: 700,
+                                  outline: 'none',
+                                  boxSizing: 'border-box'
                                 }}
-                              >
-                                Usar lição: {selectedBook.title.slice(0, 18)}...
-                              </button>
-                            )}
-                          </div>
-                          <input
-                            type="text"
-                            placeholder={selectedBook?.title ? `Sugerido: ${selectedBook.title}` : "Ex: O Fruto do Espírito, Vivendo em Comunidade..."}
-                            value={studyTopic}
-                            onChange={e => setStudyTopic(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '9px 12px',
-                              borderRadius: '12px',
-                              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                              background: isDark ? '#0f172a' : '#f8fafc',
-                              color: 'var(--text-main, #0f172a)',
-                              fontSize: '0.80rem',
-                              fontWeight: 700,
-                              outline: 'none',
-                              boxSizing: 'border-box'
-                            }}
-                          />
-                        </div>
+                              />
+                            </div>
 
-                        {/* Linha de Observações & Pedidos de Oração */}
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', marginBottom: '4px' }}>
-                            📝 Observações & Pedidos de Oração
-                          </label>
-                          <textarea
-                            rows={2}
-                            placeholder="Decisões de fé, testemunhos, pedidos de oração ou notas da célula..."
-                            value={meetingNotes}
-                            onChange={e => setMeetingNotes(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '8px 12px',
-                              borderRadius: '12px',
-                              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                              background: isDark ? '#0f172a' : '#f8fafc',
-                              color: 'var(--text-main, #0f172a)',
-                              fontSize: '0.78rem',
-                              outline: 'none',
-                              boxSizing: 'border-box',
-                              resize: 'vertical'
-                            }}
-                          />
-                        </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
+                                Observações & Pedidos de Oração
+                              </label>
+                              <textarea
+                                rows={2}
+                                placeholder="Decisões de fé, testemunhos, pedidos de oração ou notas..."
+                                value={meetingNotes}
+                                onChange={e => setMeetingNotes(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  borderRadius: '12px',
+                                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                  background: isDark ? '#0f172a' : '#f8fafc',
+                                  color: 'var(--text-main)',
+                                  fontSize: '0.78rem',
+                                  outline: 'none',
+                                  boxSizing: 'border-box',
+                                  resize: 'vertical'
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* SEÇÃO 2: CHAMADA NOMINAL DOS MEMBROS */}
@@ -4848,6 +4985,180 @@ export const CellGroups: React.FC = () => {
                 {isAddingSnack ? 'Salvando na Escala...' : '✨ Adicionar à Mesa de Comunhão'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL / BOTTOM SHEET: SELEÇÃO DA DATA DO ENCONTRO
+          ======================================================== */}
+      {showDatePickerModal && (
+        <div 
+          onClick={() => setShowDatePickerModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.70)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            padding: '0'
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: isDark ? '#1e1c2e' : '#ffffff',
+              width: '100%',
+              maxWidth: '520px',
+              borderTopLeftRadius: '28px',
+              borderTopRightRadius: '28px',
+              padding: '24px 20px',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              maxHeight: '85vh',
+              overflowY: 'auto'
+            }}
+          >
+            {/* Pill drag handle */}
+            <div style={{ width: '44px', height: '4px', background: isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1', borderRadius: '999px', margin: '0 auto -4px auto' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
+                  Data do Encontro
+                </h3>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                  Reuniões da célula: {myGroup.meeting_day ? `${myGroup.meeting_day}s` : 'Semanal'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDatePickerModal(false)}
+                style={{
+                  background: isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-main)'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Lista de Encontros Sugeridos */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                Encontros Recentes da Célula
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {getMeetingDateOptions(myGroup.meeting_day).map(opt => {
+                  const isSelected = meetingDate === opt.date;
+                  return (
+                    <button
+                      key={opt.date}
+                      type="button"
+                      onClick={() => {
+                        setMeetingDate(opt.date);
+                        setShowDatePickerModal(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        borderRadius: '16px',
+                        border: isSelected 
+                          ? '1.5px solid #ea580c' 
+                          : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                        background: isSelected 
+                          ? (isDark ? '#431407' : '#ffedd5') 
+                          : (isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc'),
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.2rem' }}>🗓️</span>
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isSelected ? '#ea580c' : 'var(--text-main)' }}>
+                            {opt.label}
+                          </div>
+                          <div style={{ fontSize: '0.70rem', color: isSelected ? '#ea580c' : 'var(--text-muted)' }}>
+                            {opt.date}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span style={{
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        background: isSelected ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'),
+                        color: isSelected ? '#ffffff' : (isDark ? '#cbd5e1' : '#475569')
+                      }}>
+                        {opt.badge}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Seletor Customizado / Qualquer Data */}
+            <div style={{
+              background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+              borderRadius: '18px',
+              padding: '14px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'}`
+            }}>
+              <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                Ou escolha outra data no calendário:
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="date"
+                  value={meetingDate}
+                  onChange={e => setMeetingDate(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                    background: isDark ? '#0f172a' : '#ffffff',
+                    color: 'var(--text-main)',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDatePickerModal(false)}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: '#ea580c',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 900,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
