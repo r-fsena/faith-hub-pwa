@@ -237,6 +237,8 @@ export const CellGroups: React.FC = () => {
   const [attendeesStatus, setAttendeesStatus] = useState<Record<string, 'PRESENT' | 'ABSENT' | 'JUSTIFIED'>>({});
   const [attendeesJustification, setAttendeesJustification] = useState<Record<string, string>>({});
   const [visitorsList, setVisitorsList] = useState<Array<{ name: string; phone: string }>>([]);
+  const [numericVisitorCount, setNumericVisitorCount] = useState<number>(0);
+  const [showAdvancedMeetingDetails, setShowAdvancedMeetingDetails] = useState<boolean>(false);
   const [newVisitorName, setNewVisitorName] = useState('');
   const [newVisitorPhone, setNewVisitorPhone] = useState('');
   const [showAddVisitor, setShowAddVisitor] = useState(false);
@@ -256,6 +258,31 @@ export const CellGroups: React.FC = () => {
     const parts = name.trim().split(' ').filter(Boolean);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const formatMeetingShortDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      const weekdays = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+      const dayName = weekdays[d.getDay()] || 'qui';
+      const formattedDay = String(day).padStart(2, '0');
+      const formattedMonth = String(month).padStart(2, '0');
+      return `${dayName}, ${formattedDay}/${formattedMonth}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatNextMeetingLabel = (meetingDay?: string, meetingTime?: string, dateStr?: string) => {
+    if (meetingDay && meetingTime) {
+      const dayShort = meetingDay.slice(0, 3);
+      const timeFormatted = meetingTime.replace(':00', 'h');
+      const dayMonth = dateStr ? formatMeetingShortDate(dateStr).split(', ')[1] : '';
+      return `${dayShort}${dayMonth ? `, ${dayMonth}` : ''} · ${timeFormatted}`;
+    }
+    return formatMeetingShortDate(dateStr);
   };
 
   const getAvatarBg = (name?: string) => {
@@ -951,17 +978,19 @@ export const CellGroups: React.FC = () => {
     setVisitorsList(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveMeeting = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveMeeting = async (e?: React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!myGroupId || isRecordingMeeting) return;
     setIsRecordingMeeting(true);
     try {
+      // Membros marcados ou ausentes por padrão
       const attendeesPayload = groupMembers.map(m => ({
         member_id: m.id,
-        status: attendeesStatus[m.id] || 'PRESENT',
+        status: attendeesStatus[m.id] || 'ABSENT',
         justification: attendeesJustification[m.id] || undefined
       }));
 
+      // Visitantes detalhados com nome
       visitorsList.forEach(v => {
         attendeesPayload.push({
           visitor_name: v.name,
@@ -970,17 +999,33 @@ export const CellGroups: React.FC = () => {
         } as any);
       });
 
+      // Quantidade de visitantes anônimos via stepper numérico
+      const extraVisitors = Math.max(0, numericVisitorCount - visitorsList.length);
+      for (let i = 1; i <= extraVisitors; i++) {
+        attendeesPayload.push({
+          visitor_name: `Visitante ${visitorsList.length + i}`,
+          status: 'PRESENT' as const
+        } as any);
+      }
+
+      // Converte ofertas no formato "85,00" ou "85"
+      const parsedOfferings = offeringsAmount
+        ? parseFloat(offeringsAmount.replace(/\./g, '').replace(',', '.'))
+        : 0;
+
       const res = await recordCellMeeting(myGroupId, {
         meeting_date: meetingDate,
         study_topic: studyTopic || undefined,
-        offerings_amount: offeringsAmount ? parseFloat(offeringsAmount) : 0,
+        offerings_amount: !isNaN(parsedOfferings) ? parsedOfferings : 0,
         notes: meetingNotes || undefined,
         attendees: attendeesPayload
       });
 
       if (res) {
-        alert(`✓ Chamada registrada com sucesso!\nPresentes: ${res.present_count} | Ausentes: ${res.absent_count} | Visitantes: ${res.visitor_count}`);
+        alert(`✓ Relatório da reunião enviado com sucesso!\nPresentes: ${res.present_count} | Ausentes: ${res.absent_count} | Visitantes: ${res.visitor_count}`);
         setVisitorsList([]);
+        setNumericVisitorCount(0);
+        setOfferingsAmount('');
         setMeetingNotes('');
         const updated = await fetchCellMeetings(myGroupId);
         if (Array.isArray(updated)) setMeetingsHistory(updated);
@@ -2470,7 +2515,7 @@ export const CellGroups: React.FC = () => {
                       padding: '8px 2px',
                       borderRadius: '10px',
                       border: 'none',
-                      background: leaderSubTab === sub.id ? '#ffffff' : 'transparent',
+                      background: leaderSubTab === sub.id ? (isDark ? 'var(--bg-card)' : '#ffffff') : 'transparent',
                       color: leaderSubTab === sub.id ? 'var(--text-main)' : 'var(--text-muted)',
                       fontWeight: 800,
                       fontSize: '0.70rem',
@@ -2484,329 +2529,356 @@ export const CellGroups: React.FC = () => {
                 ))}
               </div>
 
-              {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ONE-TAP ERGONÔMICO) */}
-              {leaderSubTab === 'attendance' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  {/* Formulário de Registro de Chamada */}
-                  <form 
-                    onSubmit={handleSaveMeeting} 
-                    style={{ 
-                      background: 'var(--bg-card, #ffffff)', 
-                      borderRadius: '20px', 
-                      padding: '20px 16px', 
-                      border: '1px solid var(--panel-border, #e2e8f0)', 
-                      boxShadow: 'var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06))', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: '16px' 
-                    }}
-                  >
-                    {/* Header com Ícone e Contadores */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--panel-border, #f1f5f9)', paddingBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {/* SUBTAB 0: CHAMADA E FREQUÊNCIA DA SEMANA (ERGONÔMICO ESTILO MOCKUP MOBILE) */}
+              {leaderSubTab === 'attendance' && (() => {
+                const markedMembersCount = groupMembers.filter(m => !!attendeesStatus[m.id]).length;
+                const unmarkedMembersCount = groupMembers.length - markedMembersCount;
+                const presentMembersCount = groupMembers.filter(m => attendeesStatus[m.id] === 'PRESENT').length;
+                const absentMembersCount = groupMembers.filter(m => attendeesStatus[m.id] === 'ABSENT').length;
+                const justifiedMembersCount = groupMembers.filter(m => attendeesStatus[m.id] === 'JUSTIFIED').length;
+                const totalVisitors = Math.max(numericVisitorCount, visitorsList.length);
+                const totalPresentWithVisitors = presentMembersCount + totalVisitors;
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    
+                    {/* HERO DO TOPO: Estilo Mobile Dark Moderno (Conforme Mockup) */}
+                    <div style={{
+                      background: isDark 
+                        ? 'linear-gradient(180deg, #181726 0%, #11101d 100%)' 
+                        : 'linear-gradient(180deg, #221e38 0%, #17142b 100%)',
+                      color: '#ffffff',
+                      borderRadius: '26px',
+                      padding: '20px 18px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '16px'
+                    }}>
+                      {/* Botão de Retorno Superior */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => setPortalTab('dashboard')}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#cbd5e1',
+                            fontSize: '0.84rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: 0
+                          }}
+                        >
+                          <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>‹</span>
+                          <span>Células</span>
+                        </button>
+                      </div>
+
+                      {/* Header com Identidade da Igreja e Célula */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '12px',
-                          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%)',
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1.25rem',
+                          fontSize: '1.4rem',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                           flexShrink: 0
                         }}>
-                          📋
+                          🌱
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 900, fontSize: '0.98rem', color: 'var(--text-main, #0f172a)', letterSpacing: '-0.2px' }}>
-                            Chamada da Reunião
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#94a3b8'
+                          }}>
+                            {myGroup.network ? `REDE ${myGroup.network.toUpperCase()}` : (branding?.appName || 'IGREJA VIDEIRA')}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #94a3b8)' }}>
-                            Frequência dos membros e visitantes
-                          </div>
+                          <h2 style={{
+                            margin: '2px 0 0 0',
+                            fontSize: '1.25rem',
+                            fontWeight: 900,
+                            color: '#ffffff',
+                            letterSpacing: '-0.3px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            Liderar · {myGroup.name}
+                          </h2>
                         </div>
                       </div>
 
-                      {/* Pill Resumo de Presenças */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)',
-                        color: '#10b981',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontSize: '0.75rem',
-                        fontWeight: 800
-                      }}>
-                        <span>🟢</span>
-                        <span>{Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes</span>
+                      {/* Dois Cards Lado a Lado do Hero */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: '16px',
+                          padding: '12px 14px'
+                        }}>
+                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                            Próxima reunião
+                          </div>
+                          <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
+                            {formatNextMeetingLabel(myGroup.meeting_day, myGroup.meeting_time, meetingDate)}
+                          </div>
+                        </div>
+
+                        <div style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: '16px',
+                          padding: '12px 14px'
+                        }}>
+                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                            Participantes
+                          </div>
+                          <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
+                            {groupMembers.length} · {pendingUsers.length > 0 ? `${pendingUsers.length} pedido novo` : 'Sem pedidos'}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Data e Tema da Reunião */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
-                          <span>📅</span>
-                          <span>Data da Reunião</span>
-                        </label>
-                        <input
-                          type="date"
-                          required
-                          value={meetingDate}
-                          onChange={e => setMeetingDate(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            borderRadius: '12px',
-                            border: '1px solid var(--panel-border, #cbd5e1)',
-                            fontSize: '0.82rem',
-                            outline: 'none',
-                            background: 'var(--bg-app, #f8fafc)',
-                            color: 'var(--text-main, #0f172a)',
-                            boxSizing: 'border-box'
-                          }}
-                        />
+                    {/* CARD PRINCIPAL DA CHAMADA (Fundo Ergonômico Acolhedor) */}
+                    <div style={{
+                      background: isDark ? 'var(--bg-card, #1e293b)' : '#faf8f5',
+                      borderRadius: '26px',
+                      padding: '20px 18px',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#eee8df'}`,
+                      boxShadow: '0 4px 18px rgba(0,0,0,0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px'
+                    }}>
+                      {/* Linha de Título e Contador */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
+                          Chamada
+                        </h3>
+                        <span style={{ fontSize: '0.80rem', fontWeight: 800, color: 'var(--text-muted, #64748b)' }}>
+                          {markedMembersCount} de {groupMembers.length} marcados
+                        </span>
                       </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
-                          <span>📖</span>
-                          <span>Tema / Estudo (Opcional)</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Fruto do Espírito"
-                          value={studyTopic}
-                          onChange={e => setStudyTopic(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            borderRadius: '12px',
-                            border: '1px solid var(--panel-border, #cbd5e1)',
-                            fontSize: '0.82rem',
-                            outline: 'none',
-                            background: 'var(--bg-app, #f8fafc)',
-                            color: 'var(--text-main, #0f172a)',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Lista de Membros Cadastrados com Segmented Control Ergonômico */}
-                    <div>
-                      {/* Barra de Título e Botão Rápido de "Todos Presentes" */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                            Membros da Célula ({groupMembers.length})
-                          </span>
+                      {/* Pills de Contadores de Status */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        {/* Presentes */}
+                        <div style={{
+                          background: isDark ? 'rgba(16, 185, 129, 0.18)' : '#dcfce7',
+                          color: isDark ? '#6ee7b7' : '#15803d',
+                          border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.3)' : '#bbf7d0'}`,
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.74rem',
+                          fontWeight: 800
+                        }}>
+                          {presentMembersCount} presente{presentMembersCount !== 1 ? 's' : ''}
                         </div>
-                        {groupMembers.length > 0 && (
+
+                        {/* Ausente */}
+                        <div style={{
+                          background: isDark ? 'rgba(239, 68, 68, 0.18)' : '#fee2e2',
+                          color: isDark ? '#fca5a5' : '#b91c1c',
+                          border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.3)' : '#fecaca'}`,
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.74rem',
+                          fontWeight: 800
+                        }}>
+                          {absentMembersCount} ausente{absentMembersCount !== 1 ? 's' : ''}
+                        </div>
+
+                        {/* Justificado */}
+                        <div style={{
+                          background: isDark ? 'rgba(168, 85, 247, 0.18)' : '#f3e8ff',
+                          color: isDark ? '#d8b4fe' : '#7e22ce',
+                          border: `1px solid ${isDark ? 'rgba(168, 85, 247, 0.3)' : '#e9d5ff'}`,
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.74rem',
+                          fontWeight: 800
+                        }}>
+                          {justifiedMembersCount} justificado{justifiedMembersCount !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+
+                      {/* Ação: Marcar todos presentes */}
+                      {groupMembers.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
                           <button
                             type="button"
                             onClick={handleMarkAllPresent}
                             style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: 'rgba(16, 185, 129, 0.12)',
-                              color: '#10b981',
-                              border: '1px solid rgba(16, 185, 129, 0.25)',
-                              padding: '5px 11px',
-                              borderRadius: '8px',
-                              fontSize: '0.72rem',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#ea580c',
                               fontWeight: 800,
+                              fontSize: '0.82rem',
                               cursor: 'pointer',
-                              transition: 'all 0.15s ease'
+                              padding: '2px 0',
+                              transition: 'opacity 0.15s ease'
                             }}
                           >
-                            <span>⚡</span>
-                            <span>Marcar todos presentes</span>
+                            Marcar todos presentes
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
+                      {/* Lista de Membros com Ergonomia Mobile */}
                       {groupMembers.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted, #94a3b8)', fontSize: '0.80rem', background: 'var(--bg-app, #f8fafc)', borderRadius: '12px', border: '1px dashed var(--panel-border, #e2e8f0)' }}>
+                        <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-muted, #94a3b8)', fontSize: '0.80rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', borderRadius: '16px', border: `1px dashed ${isDark ? '#334155' : '#e2e8f0'}` }}>
                           Nenhum membro cadastrado nesta célula ainda.
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           {groupMembers.map(m => {
-                            const status = attendeesStatus[m.id] || 'PRESENT';
+                            const status = attendeesStatus[m.id];
                             return (
-                              <div 
+                              <div
                                 key={m.id}
                                 style={{
-                                  padding: '10px 12px',
-                                  borderRadius: '14px',
-                                  background: 'var(--bg-card, #ffffff)',
-                                  border: status === 'PRESENT' 
-                                    ? '1px solid rgba(16, 185, 129, 0.35)' 
-                                    : (status === 'ABSENT' ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)'),
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                                  background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'}`,
+                                  borderRadius: '18px',
+                                  padding: '12px 14px',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '8px'
+                                  gap: '10px'
                                 }}
                               >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                                  {/* Info do Membro com Avatar e Indicador */}
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                                    <div style={{ position: 'relative' }}>
-                                      <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        minWidth: '36px',
-                                        borderRadius: '10px',
-                                        background: getAvatarBg(m.name),
-                                        color: '#ffffff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 800,
-                                        fontSize: '0.78rem'
-                                      }}>
-                                        {getInitials(m.name)}
-                                      </div>
-                                      {/* Dot indicador de status */}
-                                      <div style={{
-                                        position: 'absolute',
-                                        bottom: '-2px',
-                                        right: '-2px',
-                                        width: '11px',
-                                        height: '11px',
-                                        borderRadius: '50%',
-                                        background: status === 'PRESENT' ? '#10b981' : (status === 'ABSENT' ? '#ef4444' : '#f59e0b'),
-                                        border: '2px solid var(--bg-card, #ffffff)'
-                                      }} />
+                                {/* Linha do Membro: Avatar + Nome + Tag de Cargo */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                    <div style={{
+                                      width: '36px',
+                                      height: '36px',
+                                      borderRadius: '50%',
+                                      background: '#23223f',
+                                      color: '#ffffff',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 900,
+                                      fontSize: '0.78rem',
+                                      flexShrink: 0
+                                    }}>
+                                      {getInitials(m.name)}
                                     </div>
-                                    <div style={{ minWidth: 0, flex: 1 }}>
-                                      <div style={{ 
-                                        fontWeight: 800, 
-                                        fontSize: '0.86rem', 
-                                        color: 'var(--text-main, #0f172a)',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
-                                      }}>
-                                        {m.name}
-                                      </div>
-                                      <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #94a3b8)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <span>{m.role || 'Membro'}</span>
-                                      </div>
+                                    <div style={{ minWidth: 0, fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {m.name}
                                     </div>
                                   </div>
 
-                                  {/* Segmented Control Ergonômico de 3 Estados */}
-                                  <div style={{
-                                    display: 'inline-flex',
-                                    background: 'var(--bg-app, #f1f5f9)',
-                                    borderRadius: '10px',
-                                    padding: '2px',
-                                    border: '1px solid var(--panel-border, #e2e8f0)',
-                                    gap: '2px',
-                                    flexShrink: 0
-                                  }}>
-                                    {/* Botão Presente */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttendeeStatus(m.id, 'PRESENT')}
-                                      style={{
-                                        padding: '5px 8px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: status === 'PRESENT' ? '#10b981' : 'transparent',
-                                        color: status === 'PRESENT' ? '#ffffff' : 'var(--text-muted, #64748b)',
-                                        fontWeight: 800,
-                                        fontSize: '0.70rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '3px',
-                                        transition: 'all 0.15s ease',
-                                        boxShadow: status === 'PRESENT' ? '0 1px 4px rgba(16, 185, 129, 0.35)' : 'none'
-                                      }}
-                                    >
-                                      <span>✓</span>
-                                      <span>Presente</span>
-                                    </button>
-
-                                    {/* Botão Faltou */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttendeeStatus(m.id, 'ABSENT')}
-                                      style={{
-                                        padding: '5px 8px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: status === 'ABSENT' ? '#ef4444' : 'transparent',
-                                        color: status === 'ABSENT' ? '#ffffff' : 'var(--text-muted, #64748b)',
-                                        fontWeight: 800,
-                                        fontSize: '0.70rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '3px',
-                                        transition: 'all 0.15s ease',
-                                        boxShadow: status === 'ABSENT' ? '0 1px 4px rgba(239, 68, 68, 0.35)' : 'none'
-                                      }}
-                                    >
-                                      <span>✕</span>
-                                      <span>Faltou</span>
-                                    </button>
-
-                                    {/* Botão Justificado */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttendeeStatus(m.id, 'JUSTIFIED')}
-                                      title="Falta Justificada"
-                                      style={{
-                                        padding: '5px 6px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: status === 'JUSTIFIED' ? '#f59e0b' : 'transparent',
-                                        color: status === 'JUSTIFIED' ? '#ffffff' : 'var(--text-muted, #64748b)',
-                                        fontWeight: 800,
-                                        fontSize: '0.70rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '2px',
-                                        transition: 'all 0.15s ease',
-                                        boxShadow: status === 'JUSTIFIED' ? '0 1px 4px rgba(245, 158, 11, 0.35)' : 'none'
-                                      }}
-                                    >
-                                      <span>⚠️</span>
-                                    </button>
-                                  </div>
+                                  {m.role && m.role !== 'Membro' && (
+                                    <div style={{
+                                      background: isDark ? 'rgba(168, 85, 247, 0.2)' : '#ede9fe',
+                                      color: isDark ? '#d8b4fe' : '#6d28d9',
+                                      padding: '3px 10px',
+                                      borderRadius: '999px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 800,
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {m.role}
+                                    </div>
+                                  )}
                                 </div>
 
-                                {/* Campo de Justificativa com visual integrado */}
+                                {/* 3 Botões Cápsula Largos para Polegar */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                                  {/* Presente */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttendeeStatus(m.id, 'PRESENT')}
+                                    style={{
+                                      padding: '9px 0',
+                                      borderRadius: '12px',
+                                      border: status === 'PRESENT' ? '1.5px solid #10b981' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                                      background: status === 'PRESENT' ? (isDark ? '#064e3b' : '#ecfdf5') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
+                                      color: status === 'PRESENT' ? (isDark ? '#6ee7b7' : '#065f46') : (isDark ? '#94a3b8' : '#64748b'),
+                                      fontWeight: status === 'PRESENT' ? 900 : 700,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      textAlign: 'center',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    Presente
+                                  </button>
+
+                                  {/* Ausente */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttendeeStatus(m.id, 'ABSENT')}
+                                    style={{
+                                      padding: '9px 0',
+                                      borderRadius: '12px',
+                                      border: status === 'ABSENT' ? '1.5px solid #ef4444' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                                      background: status === 'ABSENT' ? (isDark ? '#7f1d1d' : '#fef2f2') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
+                                      color: status === 'ABSENT' ? (isDark ? '#fca5a5' : '#991b1b') : (isDark ? '#94a3b8' : '#64748b'),
+                                      fontWeight: status === 'ABSENT' ? 900 : 700,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      textAlign: 'center',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    Ausente
+                                  </button>
+
+                                  {/* Justif. */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttendeeStatus(m.id, 'JUSTIFIED')}
+                                    style={{
+                                      padding: '9px 0',
+                                      borderRadius: '12px',
+                                      border: status === 'JUSTIFIED' ? '1.5px solid #a855f7' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                                      background: status === 'JUSTIFIED' ? (isDark ? '#581c87' : '#faf5ff') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
+                                      color: status === 'JUSTIFIED' ? (isDark ? '#d8b4fe' : '#6b21a8') : (isDark ? '#94a3b8' : '#64748b'),
+                                      fontWeight: status === 'JUSTIFIED' ? 900 : 700,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      textAlign: 'center',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    Justif.
+                                  </button>
+                                </div>
+
+                                {/* Campo retrátil de Justificativa */}
                                 {status === 'JUSTIFIED' && (
-                                  <div style={{ marginTop: '2px' }}>
-                                    <input
-                                      type="text"
-                                      placeholder="Motivo da falta (ex: viagem a trabalho, saúde)..."
-                                      value={attendeesJustification[m.id] || ''}
-                                      onChange={e => setAttendeesJustification({ ...attendeesJustification, [m.id]: e.target.value })}
-                                      style={{
-                                        width: '100%',
-                                        padding: '8px 10px',
-                                        borderRadius: '8px',
-                                        border: '1px solid rgba(245, 158, 11, 0.4)',
-                                        fontSize: '0.75rem',
-                                        outline: 'none',
-                                        background: 'var(--bg-app, #fffbeb)',
-                                        color: 'var(--text-main, #0f172a)',
-                                        boxSizing: 'border-box'
-                                      }}
-                                    />
-                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder="Motivo da falta (ex: saúde, viagem, trabalho)..."
+                                    value={attendeesJustification[m.id] || ''}
+                                    onChange={e => setAttendeesJustification({ ...attendeesJustification, [m.id]: e.target.value })}
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 10px',
+                                      borderRadius: '10px',
+                                      border: '1px solid rgba(168, 85, 247, 0.4)',
+                                      background: isDark ? '#1e1b4b' : '#faf5ff',
+                                      color: 'var(--text-main, #0f172a)',
+                                      fontSize: '0.75rem',
+                                      outline: 'none',
+                                      boxSizing: 'border-box'
+                                    }}
+                                  />
                                 )}
                               </div>
                             );
@@ -2815,270 +2887,437 @@ export const CellGroups: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Visitantes na Reunião */}
-                    <div style={{ 
-                      background: 'var(--bg-app, #f8fafc)', 
-                      padding: '14px', 
-                      borderRadius: '16px', 
-                      border: '1px solid var(--panel-border, #e2e8f0)',
+                    {/* CARD DE VISITANTES E OFERTA (Conforme Mockup) */}
+                    <div style={{
+                      background: isDark ? 'var(--bg-card, #1e293b)' : '#faf8f5',
+                      borderRadius: '26px',
+                      padding: '20px 18px',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#eee8df'}`,
+                      boxShadow: '0 4px 18px rgba(0,0,0,0.04)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '10px'
+                      gap: '14px'
                     }}>
+                      {/* Linha de Visitantes: Stepper Ergonômico */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '1rem' }}>🌟</span>
-                          <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0f172a)' }}>
-                            Novos Visitantes ({visitorsList.length})
-                          </span>
+                        <div>
+                          <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)' }}>
+                            Visitantes
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>
+                            Só a quantidade
+                          </div>
                         </div>
+
+                        {/* Stepper [-] 2 [+] */}
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
+                          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                          padding: '4px 6px',
+                          borderRadius: '16px'
+                        }}>
+                          <button
+                            type="button"
+                            onClick={() => setNumericVisitorCount(prev => Math.max(0, prev - 1))}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '10px',
+                              border: 'none',
+                              background: isDark ? '#334155' : '#f8fafc',
+                              color: '#ea580c',
+                              fontSize: '1.2rem',
+                              fontWeight: 900,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            −
+                          </button>
+                          <span style={{ minWidth: '28px', textAlign: 'center', fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)' }}>
+                            {totalVisitors}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setNumericVisitorCount(prev => prev + 1)}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '10px',
+                              border: 'none',
+                              background: isDark ? '#334155' : '#f8fafc',
+                              color: '#ea580c',
+                              fontSize: '1.2rem',
+                              fontWeight: 900,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Opção Discreta para Detalhar Nomes dos Visitantes */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                         <button
                           type="button"
                           onClick={() => setShowAddVisitor(!showAddVisitor)}
                           style={{
-                            background: showAddVisitor ? 'transparent' : 'var(--accent-primary, #0f766e)',
-                            color: showAddVisitor ? 'var(--text-muted, #64748b)' : '#ffffff',
-                            border: showAddVisitor ? '1px solid var(--panel-border, #cbd5e1)' : 'none',
-                            padding: '5px 12px',
-                            borderRadius: '8px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--accent-primary, #0f766e)',
                             fontWeight: 800,
-                            fontSize: '0.74rem',
+                            fontSize: '0.72rem',
                             cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            transition: 'all 0.15s ease'
+                            padding: 0
                           }}
                         >
-                          <span>{showAddVisitor ? '✕ Fechar' : '+ Adicionar'}</span>
+                          {showAddVisitor ? '✕ Ocultar lista nominal' : '+ Detalhar nomes dos visitantes (opcional)'}
                         </button>
                       </div>
 
+                      {/* Formulário de Visitante com Nome/WhatsApp */}
                       {showAddVisitor && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card, #ffffff)', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border, #cbd5e1)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: isDark ? '#0f172a' : '#ffffff', padding: '12px', borderRadius: '14px', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
                           <input
                             type="text"
-                            placeholder="Nome completo do visitante *"
+                            placeholder="Nome completo do visitante..."
                             value={newVisitorName}
                             onChange={e => setNewVisitorName(e.target.value)}
-                            style={{ 
-                              padding: '9px 10px', 
-                              borderRadius: '8px', 
-                              border: '1px solid var(--panel-border, #cbd5e1)', 
-                              fontSize: '0.80rem', 
-                              outline: 'none',
-                              background: 'var(--bg-app, #f8fafc)',
-                              color: 'var(--text-main, #0f172a)'
-                            }}
+                            style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`, background: isDark ? '#1e293b' : '#f8fafc', color: 'var(--text-main)', fontSize: '0.80rem' }}
                           />
                           <input
                             type="tel"
-                            placeholder="WhatsApp (ex: 11 98765-4321)"
+                            placeholder="WhatsApp (ex: 11 98765-4321)..."
                             value={newVisitorPhone}
                             onChange={e => setNewVisitorPhone(e.target.value)}
-                            style={{ 
-                              padding: '9px 10px', 
-                              borderRadius: '8px', 
-                              border: '1px solid var(--panel-border, #cbd5e1)', 
-                              fontSize: '0.80rem', 
-                              outline: 'none',
-                              background: 'var(--bg-app, #f8fafc)',
-                              color: 'var(--text-main, #0f172a)'
-                            }}
+                            style={{ padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`, background: isDark ? '#1e293b' : '#f8fafc', color: 'var(--text-main)', fontSize: '0.80rem' }}
                           />
                           <button
                             type="button"
                             onClick={handleAddVisitor}
-                            style={{
-                              background: '#10b981',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '9px',
-                              borderRadius: '8px',
-                              fontWeight: 800,
-                              fontSize: '0.78rem',
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
-                            }}
+                            style={{ background: '#10b981', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '8px', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer' }}
                           >
                             + Confirmar Visitante na Lista
                           </button>
-                        </div>
-                      )}
 
-                      {visitorsList.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {visitorsList.map((v, idx) => (
-                            <div key={idx} style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              alignItems: 'center', 
-                              background: 'var(--bg-card, #ffffff)', 
-                              padding: '8px 12px', 
-                              borderRadius: '10px', 
-                              border: '1px solid var(--panel-border, #e2e8f0)', 
-                              fontSize: '0.78rem' 
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span>👤</span>
-                                <strong style={{ color: 'var(--text-main, #0f172a)' }}>{v.name}</strong>
-                                {v.phone && <span style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.72rem' }}>({v.phone})</span>}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveVisitor(idx)}
-                                style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer', padding: '2px 6px' }}
-                              >
-                                ✕
-                              </button>
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem' }}>
+                              <span>👤 <strong>{v.name}</strong> {v.phone && `(${v.phone})`}</span>
+                              <button type="button" onClick={() => handleRemoveVisitor(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 800, cursor: 'pointer' }}>✕</button>
                             </div>
                           ))}
                         </div>
                       )}
-                    </div>
 
-                    {/* Observações da Reunião */}
-                    <div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '5px' }}>
-                        <span>💬</span>
-                        <span>Observações & Pedidos de Oração</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder="Ex: Cláudio pediu oração por cirurgia na família..."
-                        value={meetingNotes}
-                        onChange={e => setMeetingNotes(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '12px',
-                          border: '1px solid var(--panel-border, #cbd5e1)',
-                          fontSize: '0.80rem',
-                          outline: 'none',
-                          background: 'var(--bg-app, #f8fafc)',
-                          color: 'var(--text-main, #0f172a)',
-                          boxSizing: 'border-box',
-                          resize: 'vertical',
-                          minHeight: '60px'
-                        }}
-                      />
-                    </div>
+                      <div style={{ height: '1px', background: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', margin: '2px 0' }} />
 
-                    {/* Botão Salvar Chamada */}
-                    <button
-                      type="submit"
-                      disabled={isRecordingMeeting}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '14px',
-                        border: 'none',
-                        background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
-                        color: '#ffffff',
-                        fontWeight: 900,
-                        fontSize: '0.92rem',
-                        cursor: isRecordingMeeting ? 'not-allowed' : 'pointer',
-                        opacity: isRecordingMeeting ? 0.7 : 1,
-                        boxShadow: '0 4px 14px rgba(15, 118, 110, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        transition: 'transform 0.15s ease'
-                      }}
-                    >
-                      <span>💾</span>
-                      <span>
-                        {isRecordingMeeting 
-                          ? 'Salvando Chamada...' 
-                          : `Salvar Chamada (${Object.values(attendeesStatus).filter(s => s === 'PRESENT').length + visitorsList.length} Presentes)`}
-                      </span>
-                    </button>
-                  </form>
-
-                  {/* Histórico das Últimas Reuniões */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>📜</span>
-                      <span>Histórico das Últimas Reuniões</span>
-                    </div>
-
-                    {meetingsHistory.length === 0 ? (
-                      <div style={{ 
-                        textAlign: 'center', 
-                        padding: '24px 16px', 
-                        color: 'var(--text-muted, #94a3b8)', 
-                        background: 'var(--bg-card, #ffffff)', 
-                        borderRadius: '16px', 
-                        border: '1px solid var(--panel-border, #e2e8f0)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <div style={{ fontSize: '1.8rem', opacity: 0.7 }}>📅</div>
-                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0f172a)' }}>
-                          Nenhuma reunião gravada ainda
+                      {/* Linha de Oferta (Opcional) */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)' }}>
+                            Oferta <span style={{ fontWeight: 600, fontSize: '0.76rem', color: 'var(--text-muted, #94a3b8)' }}>(opcional)</span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>
+                            Visível à liderança e à tesouraria
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.72rem' }}>
-                          Ao salvar a primeira chamada semanal, o histórico detalhado aparecerá aqui.
+
+                        {/* Input de Oferta Formatado */}
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
+                          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                          padding: '6px 10px',
+                          borderRadius: '14px'
+                        }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-muted, #64748b)' }}>
+                            R$
+                          </span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            value={offeringsAmount}
+                            onChange={e => setOfferingsAmount(e.target.value)}
+                            style={{
+                              width: '74px',
+                              border: 'none',
+                              outline: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-main, #0f172a)',
+                              fontWeight: 900,
+                              fontSize: '0.96rem',
+                              textAlign: 'right'
+                            }}
+                          />
                         </div>
                       </div>
-                    ) : (
-                      meetingsHistory.map(m => (
-                        <div 
-                          key={m.id} 
-                          style={{ 
-                            background: 'var(--bg-card, #ffffff)', 
-                            borderRadius: '16px', 
-                            padding: '14px 16px', 
-                            border: '1px solid var(--panel-border, #e2e8f0)', 
-                            boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))',
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
+                    </div>
+
+                    {/* ACORDEÃO RETRÁTIL: CONFIGURAÇÕES DA REUNIÃO (DATA, TEMA, OBSERVAÇÕES) */}
+                    <div style={{
+                      background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff',
+                      borderRadius: '18px',
+                      padding: '12px 16px',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedMeetingDetails(!showAdvancedMeetingDetails)}
+                        style={{
+                          width: '100%',
+                          background: 'transparent',
+                          border: 'none',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          color: 'var(--text-main, #0f172a)',
+                          fontWeight: 800,
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        <span>📅 Data, Tema & Observações</span>
+                        <span>{showAdvancedMeetingDetails ? '▲' : '▼'}</span>
+                      </button>
+
+                      {showAdvancedMeetingDetails && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingTop: '10px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}` }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
+                              Data da Reunião
+                            </label>
+                            <input
+                              type="date"
+                              value={meetingDate}
+                              onChange={e => setMeetingDate(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                background: isDark ? '#0f172a' : '#f8fafc',
+                                color: 'var(--text-main, #0f172a)',
+                                fontSize: '0.80rem',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
+                              Tema / Estudo (Opcional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ex: Fruto do Espírito"
+                              value={studyTopic}
+                              onChange={e => setStudyTopic(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                background: isDark ? '#0f172a' : '#f8fafc',
+                                color: 'var(--text-main, #0f172a)',
+                                fontSize: '0.80rem',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
+                              Observações & Pedidos de Oração
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="Anotações gerais do encontro..."
+                              value={meetingNotes}
+                              onChange={e => setMeetingNotes(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                background: isDark ? '#0f172a' : '#f8fafc',
+                                color: 'var(--text-main, #0f172a)',
+                                fontSize: '0.80rem',
+                                boxSizing: 'border-box',
+                                resize: 'vertical'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BARRA FIXA INFERIOR (STICKY ACTION BAR): Conforme Mockup */}
+                    <div style={{
+                      position: 'sticky',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      zIndex: 40,
+                      background: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(250, 248, 245, 0.96)',
+                      backdropFilter: 'blur(12px)',
+                      borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee8df'}`,
+                      padding: '12px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px',
+                      boxShadow: '0 -4px 18px rgba(0,0,0,0.06)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      margin: '0 -16px -16px -16px',
+                      borderRadius: '0 0 20px 20px'
+                    }}>
+                      {/* Aviso de Membros Não Marcados */}
+                      <div style={{ fontSize: '0.74rem', fontWeight: 700 }}>
+                        {unmarkedMembersCount > 0 ? (
+                          <span style={{ color: isDark ? '#fbbf24' : '#b45309' }}>
+                            ⚠️ {unmarkedMembersCount} pessoa{unmarkedMembersCount !== 1 ? 's' : ''} ainda sem marcar — ficarão como ausentes
+                          </span>
+                        ) : (
+                          <span style={{ color: isDark ? '#34d399' : '#15803d' }}>
+                            ✓ Todos os membros foram marcados!
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Linha com Resumo e Botão Enviar */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontWeight: 900, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
+                            {totalPresentWithVisitors} presentes · {totalVisitors} visitante{totalVisitors !== 1 ? 's' : ''}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', textTransform: 'lowercase' }}>
+                            {formatMeetingShortDate(meetingDate)}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSaveMeeting()}
+                          disabled={isRecordingMeeting}
+                          style={{
+                            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '16px',
+                            padding: '12px 22px',
+                            fontWeight: 900,
+                            fontSize: '0.92rem',
+                            cursor: isRecordingMeeting ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)',
+                            opacity: isRecordingMeeting ? 0.7 : 1,
+                            whiteSpace: 'nowrap',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '10px'
+                            gap: '6px',
+                            transition: 'transform 0.15s ease'
                           }}
                         >
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <span>📅 {new Date(m.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-                              {m.study_topic && (
-                                <span style={{ 
-                                  fontWeight: 700, 
-                                  fontSize: '0.70rem',
-                                  background: 'rgba(15, 118, 110, 0.1)', 
-                                  color: 'var(--accent-primary, #0f766e)', 
-                                  padding: '2px 8px',
-                                  borderRadius: '6px' 
-                                }}>
-                                  {m.study_topic}
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <span>🟢 {m.present_count || 0} presentes</span>
-                              <span>🔴 {m.absent_count || 0} faltas</span>
-                              {m.visitor_count > 0 && <span>🌟 {m.visitor_count} visitantes</span>}
-                            </div>
-                          </div>
-                          <span style={{ 
-                            fontSize: '0.70rem', 
-                            background: 'rgba(16, 185, 129, 0.12)', 
-                            color: '#10b981', 
-                            padding: '4px 10px', 
-                            borderRadius: '999px', 
-                            fontWeight: 800,
-                            flexShrink: 0
-                          }}>
-                            ✓ Concluída
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                          {isRecordingMeeting ? 'Enviando...' : 'Enviar relatório'}
+                        </button>
+                      </div>
+                    </div>
 
-                </div>
-              )}
+                    {/* Histórico das Últimas Reuniões */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>📜</span>
+                        <span>Histórico das Últimas Reuniões</span>
+                      </div>
+
+                      {meetingsHistory.length === 0 ? (
+                        <div style={{ 
+                          textAlign: 'center', 
+                          padding: '24px 16px', 
+                          color: 'var(--text-muted, #94a3b8)', 
+                          background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff', 
+                          borderRadius: '16px', 
+                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <div style={{ fontSize: '1.8rem', opacity: 0.7 }}>📅</div>
+                          <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0f172a)' }}>
+                            Nenhuma reunião gravada ainda
+                          </div>
+                          <div style={{ fontSize: '0.72rem' }}>
+                            Ao enviar o primeiro relatório semanal, o histórico detalhado aparecerá aqui.
+                          </div>
+                        </div>
+                      ) : (
+                        meetingsHistory.map(m => (
+                          <div 
+                            key={m.id} 
+                            style={{ 
+                              background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff', 
+                              borderRadius: '16px', 
+                              padding: '14px 16px', 
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`, 
+                              boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))',
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center',
+                              gap: '10px'
+                            }}
+                          >
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span>📅 {new Date(m.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+                                {m.study_topic && (
+                                  <span style={{ 
+                                    fontWeight: 700, 
+                                    fontSize: '0.70rem', 
+                                    background: 'rgba(15, 118, 110, 0.1)', 
+                                    color: 'var(--accent-primary, #0f766e)', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '6px' 
+                                  }}>
+                                    {m.study_topic}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <span>🟢 {m.present_count || 0} presentes</span>
+                                <span>🔴 {m.absent_count || 0} faltas</span>
+                                {m.visitor_count > 0 && <span>🌟 {m.visitor_count} visitantes</span>}
+                              </div>
+                            </div>
+                            <span style={{ 
+                              fontSize: '0.70rem', 
+                              background: 'rgba(16, 185, 129, 0.12)', 
+                              color: '#10b981', 
+                              padding: '4px 10px', 
+                              borderRadius: '999px', 
+                              fontWeight: 800,
+                              flexShrink: 0
+                            }}>
+                              ✓ Concluída
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })()}
 
               {/* SUBTAB 1: SOLICITAÇÕES DE ENTRADA PENDENTES */}
               {leaderSubTab === 'requests' && (
