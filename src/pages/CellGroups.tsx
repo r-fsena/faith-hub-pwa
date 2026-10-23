@@ -248,6 +248,7 @@ export const CellGroups: React.FC = () => {
   const [meetingsHistory, setMeetingsHistory] = useState<any[]>([]);
   const [showDatePickerModal, setShowDatePickerModal] = useState<boolean>(false);
   const [showTopicNotes, setShowTopicNotes] = useState<boolean>(false);
+  const [isCellHeaderExpanded, setIsCellHeaderExpanded] = useState<boolean>(false);
 
   // Form edit meeting
   const [editMeetingDay, setEditMeetingDay] = useState('');
@@ -1388,70 +1389,129 @@ export const CellGroups: React.FC = () => {
       {viewMode === 'portal' && myGroup ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
-          {/* Barra Superior Menor da Célula */}
+          {/* Barra Superior Menor da Célula com Expansão de Detalhes ao Clicar */}
           {portalTab !== 'lideranca' && (
-            <div style={{
-              background: (myGroup.cover_url || myGroup.image_url)
-                ? `linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
-                : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'),
-              color: '#ffffff',
-              borderRadius: '16px',
-              padding: '12px 16px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px'
-            }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{
-                  fontSize: '0.66rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginBottom: '2px'
-                }}>
-                  <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
-                  <span>Célula Conectada • {myGroup.network || 'Geral'}</span>
+            <div 
+              onClick={() => setIsCellHeaderExpanded(prev => !prev)}
+              style={{
+                background: (myGroup.cover_url || myGroup.image_url)
+                  ? `linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
+                  : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'),
+                color: '#ffffff',
+                borderRadius: '18px',
+                padding: isCellHeaderExpanded ? '16px 16px 14px 16px' : '12px 16px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              {/* Linha Principal do Banner */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{
+                    fontSize: '0.66rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#94a3b8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginBottom: '2px'
+                  }}>
+                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
+                    <span>Célula Conectada • {myGroup.network || 'Geral'}</span>
+                    <span style={{ fontSize: '0.62rem', color: '#cbd5e1', opacity: 0.8, marginLeft: '2px' }}>
+                      {isCellHeaderExpanded ? '▴ Recolher' : '▾ Ver Detalhes'}
+                    </span>
+                  </div>
+                  <h3 style={{
+                    fontSize: isCellHeaderExpanded ? '1.25rem' : '1.15rem',
+                    fontWeight: 900,
+                    margin: 0,
+                    color: '#ffffff',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {myGroup.name}
+                  </h3>
                 </div>
-                <h3 style={{
-                  fontSize: '1.15rem',
-                  fontWeight: 900,
-                  margin: 0,
-                  color: '#ffffff',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {myGroup.name}
-                </h3>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {cells.length > 1 && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewMode('discover');
+                      }}
+                      title="Explorar outras células"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.12)',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255, 255, 255, 0.16)',
+                        padding: '6px 12px',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        backdropFilter: 'blur(8px)',
+                        flexShrink: 0
+                      }}
+                    >
+                      🔍 Trocar
+                    </button>
+                  )}
+                  <span style={{ fontSize: '0.80rem', color: '#94a3b8', transform: isCellHeaderExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                    ▼
+                  </span>
+                </div>
               </div>
 
-              {cells.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => setViewMode('discover')}
-                  title="Explorar outras células"
+              {/* Informações Detalhadas da Célula (Expandido no toque) */}
+              {isCellHeaderExpanded && (
+                <div 
+                  onClick={e => e.stopPropagation()}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255, 255, 255, 0.16)',
-                    padding: '6px 12px',
-                    borderRadius: '10px',
-                    fontWeight: 800,
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    backdropFilter: 'blur(8px)',
-                    flexShrink: 0
+                    background: 'rgba(255, 255, 255, 0.14)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    padding: '12px 14px',
+                    borderRadius: '14px',
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    marginTop: '2px'
                   }}
                 >
-                  🔍 Trocar
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>👤</span>
+                    <span><strong>Liderança:</strong> {myGroup.leader || myGroup.leader_name || 'Pastoral'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🗓️</span>
+                    <span><strong>Encontro:</strong> {myGroup.meeting_day ? `${myGroup.meeting_day} às ${myGroup.meeting_time || '20:00'}` : (myGroup.day_time || 'A definir')}</span>
+                  </div>
+                  {myGroup.address && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>📍</span>
+                      <span><strong>Endereço:</strong> {myGroup.address} {myGroup.neighborhood ? `(${myGroup.neighborhood})` : ''}</span>
+                    </div>
+                  )}
+                  {myGroup.target_audience && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🎯</span>
+                      <span><strong>Público:</strong> {myGroup.target_audience}</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -1849,43 +1909,44 @@ export const CellGroups: React.FC = () => {
                 )}
               </div>
 
-              {/* Barra de Digitação FIXA Acima da Barra Inferior do PWA */}
+              {/* Campo e Botão de Envio FLUTUANTES Acima da Barra Inferior (Sem barra de fundo corrida) */}
               <div style={{
                 position: 'fixed',
-                bottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px))',
+                bottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 14px)',
                 left: 0,
                 right: 0,
                 zIndex: 48,
-                background: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.97)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
-                boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
-                padding: '8px 12px',
+                pointerEvents: 'none',
                 display: 'flex',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                padding: '0 12px'
               }}>
                 <form 
                   onSubmit={handleAddPost} 
                   style={{
                     width: '100%',
                     maxWidth: '680px',
+                    pointerEvents: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px'
                   }}
                 >
-                  {/* Banner de Resposta Ativa */}
+                  {/* Banner Flutuante de Resposta Ativa */}
                   {replyingTo && (
                     <div style={{
-                      background: isDark ? 'rgba(30, 41, 59, 0.90)' : '#f1f5f9',
+                      background: isDark ? 'rgba(30, 41, 59, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
                       borderLeft: '3.5px solid var(--accent-primary, #00a884)',
-                      borderRadius: '10px',
-                      padding: '5px 10px',
+                      borderRadius: '12px',
+                      padding: '6px 12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '8px'
+                      gap: '8px',
+                      border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0',
+                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)'
                     }}>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--accent-primary, #00a884)' }}>
@@ -1914,7 +1975,7 @@ export const CellGroups: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Campo de Entrada e Botão Enviar */}
+                  {/* Linha Flutuante: Textarea Cápsula + Botão Circular Flutuante */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                     <textarea
                       id="cell-mural-input"
@@ -1932,18 +1993,19 @@ export const CellGroups: React.FC = () => {
                       }}
                       style={{
                         flex: 1,
-                        minHeight: '40px',
+                        minHeight: '44px',
                         maxHeight: '100px',
-                        borderRadius: '20px',
-                        background: isDark ? '#1e293b' : '#f1f5f9',
-                        border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0'}`,
-                        padding: '10px 14px',
-                        fontSize: '0.86rem',
+                        borderRadius: '24px',
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                        padding: '11px 18px',
+                        fontSize: '0.88rem',
                         color: 'var(--text-main)',
                         resize: 'none',
                         lineHeight: 1.35,
                         boxSizing: 'border-box',
-                        outline: 'none'
+                        outline: 'none',
+                        boxShadow: isDark ? '0 4px 18px rgba(0, 0, 0, 0.45)' : '0 4px 16px rgba(0, 0, 0, 0.12)'
                       }}
                     />
 
@@ -1952,12 +2014,12 @@ export const CellGroups: React.FC = () => {
                       disabled={!newPostText.trim() || isSubmittingPost}
                       title="Enviar mensagem"
                       style={{ 
-                        width: '40px',
-                        height: '40px',
+                        width: '44px',
+                        height: '44px',
                         borderRadius: '50%',
                         background: (newPostText.trim() && !isSubmittingPost) 
                           ? 'var(--accent-primary, #059669)' 
-                          : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'),
+                          : (isDark ? 'rgba(255, 255, 255, 0.10)' : '#e2e8f0'),
                         color: (newPostText.trim() && !isSubmittingPost) 
                           ? '#ffffff' 
                           : (isDark ? '#64748b' : '#94a3b8'),
@@ -1965,11 +2027,13 @@ export const CellGroups: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '1rem',
+                        fontSize: '1.05rem',
                         cursor: (newPostText.trim() && !isSubmittingPost) ? 'pointer' : 'default',
                         flexShrink: 0,
                         transition: 'all 0.15s ease',
-                        boxShadow: (newPostText.trim() && !isSubmittingPost) ? '0 2px 8px rgba(5, 150, 105, 0.35)' : 'none'
+                        boxShadow: (newPostText.trim() && !isSubmittingPost) 
+                          ? '0 4px 16px rgba(5, 150, 105, 0.38)' 
+                          : (isDark ? 'none' : '0 2px 6px rgba(0,0,0,0.06)')
                       }}
                     >
                       <span>{isSubmittingPost ? '⏳' : '➤'}</span>
