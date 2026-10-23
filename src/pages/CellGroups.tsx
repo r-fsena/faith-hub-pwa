@@ -1183,10 +1183,10 @@ export const CellGroups: React.FC = () => {
                   border: portalTab === tab.id ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                   background: portalTab === tab.id 
                     ? 'var(--accent-primary-light)' 
-                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? '#fef2f2' : '#ffffff'),
+                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? 'rgba(239, 68, 68, 0.20)' : '#fef2f2') : (isDark ? 'var(--bg-card)' : '#ffffff')),
                   color: portalTab === tab.id 
                     ? 'var(--accent-primary)' 
-                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? '#dc2626' : 'var(--text-main)'),
+                    : (tab.id === 'lideranca' && pendingUsers.length > 0 ? (isDark ? '#f87171' : '#dc2626') : 'var(--text-main)'),
                   fontWeight: 800,
                   fontSize: '0.76rem',
                   cursor: 'pointer',
@@ -1313,13 +1313,14 @@ export const CellGroups: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Top Summary Banner */}
               <div style={{
-                background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
                 borderRadius: '16px',
                 padding: '12px 16px',
-                border: '1px solid var(--panel-border)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.35)' : 'none'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '1.2rem' }}>💬</span>
@@ -1327,12 +1328,20 @@ export const CellGroups: React.FC = () => {
                     <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)' }}>
                       Mural da Célula {myGroup.name}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : 'var(--text-muted)' }}>
                       {posts.length} {posts.length === 1 ? 'mensagem compartilhada' : 'mensagens compartilhadas'}
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '0.72rem', background: '#dbeafe', color: '#1d4ed8', fontWeight: 800, padding: '4px 10px', borderRadius: '12px' }}>
+                <div style={{
+                  fontSize: '0.72rem',
+                  background: isDark ? 'rgba(59, 130, 246, 0.20)' : '#dbeafe',
+                  color: isDark ? '#93c5fd' : '#1d4ed8',
+                  fontWeight: 800,
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  border: isDark ? '1px solid rgba(147, 197, 253, 0.30)' : 'none'
+                }}>
                   Comunidade Viva
                 </div>
               </div>
@@ -1340,11 +1349,11 @@ export const CellGroups: React.FC = () => {
               {/* Feed de Mensagens */}
               {posts.length === 0 ? (
                 <div style={{ 
-                  background: '#ffffff', 
+                  background: isDark ? 'var(--bg-card)' : '#ffffff', 
                   borderRadius: '20px', 
                   padding: '36px 20px', 
                   textAlign: 'center', 
-                  border: '1px dashed #cbd5e1' 
+                  border: isDark ? '1px dashed rgba(255, 255, 255, 0.20)' : '1px dashed #cbd5e1' 
                 }}>
                   <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🕊️</span>
                   <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
@@ -1371,10 +1380,14 @@ export const CellGroups: React.FC = () => {
                       <div 
                         key={p.id} 
                         style={{
-                          background: isCurrentUser ? '#f0fdf4' : '#ffffff',
+                          background: isCurrentUser 
+                            ? (isDark ? 'rgba(6, 78, 59, 0.30)' : '#f0fdf4') 
+                            : (isDark ? 'var(--bg-card)' : '#ffffff'),
                           borderRadius: '20px',
                           padding: '16px',
-                          border: isCurrentUser ? '1.5px solid #bbf7d0' : '1px solid var(--panel-border)',
+                          border: isCurrentUser 
+                            ? (isDark ? '1.5px solid rgba(52, 211, 153, 0.40)' : '1.5px solid #bbf7d0') 
+                            : (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--panel-border)'),
                           boxShadow: 'var(--shadow-sm)',
                           display: 'flex',
                           flexDirection: 'column',
@@ -1410,13 +1423,27 @@ export const CellGroups: React.FC = () => {
                                 </span>
                                 
                                 {isCurrentUser && (
-                                  <span style={{ fontSize: '0.64rem', background: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '1px 6px', borderRadius: '6px' }}>
+                                  <span style={{
+                                    fontSize: '0.64rem',
+                                    background: isDark ? 'rgba(34, 197, 94, 0.25)' : '#dcfce7',
+                                    color: isDark ? '#4ade80' : '#15803d',
+                                    fontWeight: 800,
+                                    padding: '1px 6px',
+                                    borderRadius: '6px'
+                                  }}>
                                     Você
                                   </span>
                                 )}
 
                                 {isLeaderPost && (
-                                  <span style={{ fontSize: '0.64rem', background: '#fef3c7', color: '#b45309', fontWeight: 800, padding: '1px 6px', borderRadius: '6px' }}>
+                                  <span style={{
+                                    fontSize: '0.64rem',
+                                    background: isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef3c7',
+                                    color: isDark ? '#fbbf24' : '#b45309',
+                                    fontWeight: 800,
+                                    padding: '1px 6px',
+                                    borderRadius: '6px'
+                                  }}>
                                     👑 Líder
                                   </span>
                                 )}
@@ -1439,8 +1466,8 @@ export const CellGroups: React.FC = () => {
                               }
                             }}
                             style={{
-                              background: '#f8fafc',
-                              border: '1px solid #e2e8f0',
+                              background: isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc',
+                              border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #e2e8f0',
                               borderRadius: '10px',
                               padding: '5px 9px',
                               fontSize: '0.70rem',
@@ -1461,7 +1488,9 @@ export const CellGroups: React.FC = () => {
                         {/* Card de Mensagem Respondida (Estilo WhatsApp Quote) */}
                         {p.reply_to_text && (
                           <div style={{
-                            background: isCurrentUser ? '#dcfce7' : '#f1f5f9',
+                            background: isCurrentUser 
+                              ? (isDark ? 'rgba(16, 185, 129, 0.18)' : '#dcfce7') 
+                              : (isDark ? 'rgba(255, 255, 255, 0.06)' : '#f1f5f9'),
                             borderLeft: '3.5px solid var(--accent-primary)',
                             borderRadius: '10px',
                             padding: '8px 12px',
@@ -1498,7 +1527,9 @@ export const CellGroups: React.FC = () => {
                           flexWrap: 'wrap',
                           gap: '6px',
                           paddingTop: '6px',
-                          borderTop: isCurrentUser ? '1px solid #dcfce7' : '1px solid #f1f5f9'
+                          borderTop: isCurrentUser 
+                            ? (isDark ? '1px solid rgba(52, 211, 153, 0.20)' : '1px solid #dcfce7') 
+                            : (isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #f1f5f9')
                         }}>
                           {/* Reações Ativas com Contador */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
@@ -1511,9 +1542,15 @@ export const CellGroups: React.FC = () => {
                                   type="button"
                                   onClick={() => handleReactPost(p.id, emoji)}
                                   style={{
-                                    background: hasReacted ? '#e0e7ff' : '#f8fafc',
-                                    border: hasReacted ? '1px solid #818cf8' : '1px solid #e2e8f0',
-                                    color: hasReacted ? '#3730a3' : 'var(--text-main)',
+                                    background: hasReacted 
+                                      ? (isDark ? 'rgba(99, 102, 241, 0.35)' : '#e0e7ff') 
+                                      : (isDark ? 'rgba(255, 255, 255, 0.06)' : '#f8fafc'),
+                                    border: hasReacted 
+                                      ? '1px solid #818cf8' 
+                                      : (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0'),
+                                    color: hasReacted 
+                                      ? (isDark ? '#c7d2fe' : '#3730a3') 
+                                      : 'var(--text-main)',
                                     borderRadius: '16px',
                                     padding: '2px 8px',
                                     fontSize: '0.74rem',
@@ -1568,10 +1605,10 @@ export const CellGroups: React.FC = () => {
               <form 
                 onSubmit={handleAddPost} 
                 style={{
-                  background: '#ffffff',
+                  background: isDark ? 'var(--bg-card)' : '#ffffff',
                   borderRadius: '20px',
                   padding: '14px',
-                  border: '1.5px solid var(--panel-border)',
+                  border: isDark ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid var(--panel-border)',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1581,7 +1618,7 @@ export const CellGroups: React.FC = () => {
                 {/* Banner de Citação Ativa se estiver Respondendo */}
                 {replyingTo && (
                   <div style={{
-                    background: '#eff6ff',
+                    background: isDark ? 'rgba(30, 41, 59, 0.85)' : '#eff6ff',
                     borderLeft: '4px solid var(--accent-primary)',
                     borderRadius: '12px',
                     padding: '8px 12px',
@@ -1632,7 +1669,9 @@ export const CellGroups: React.FC = () => {
                     padding: '12px 14px',
                     fontSize: '0.88rem',
                     borderRadius: '14px',
-                    border: '1px solid #cbd5e1',
+                    background: isDark ? 'var(--bg-app)' : '#ffffff',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                    color: 'var(--text-main)',
                     lineHeight: 1.4,
                     minHeight: '76px'
                   }}
@@ -1650,8 +1689,8 @@ export const CellGroups: React.FC = () => {
                         type="button"
                         onClick={() => setReplyingTo(null)}
                         style={{
-                          background: '#f1f5f9',
-                          border: 'none',
+                          background: isDark ? 'rgba(255, 255, 255, 0.10)' : '#f1f5f9',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
                           color: 'var(--text-muted)',
                           padding: '8px 14px',
                           borderRadius: '12px',
