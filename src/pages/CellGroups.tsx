@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useTheme } from '../context/ThemeContext';
@@ -936,6 +936,49 @@ export const CellGroups: React.FC = () => {
     }
   }, [myGroupMeetingDay]);
 
+  // Controles de Scroll Interno e Auto-Scroll para o Fim do Mural (Estilo WhatsApp)
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    } else if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior
+      });
+    }
+  };
+
+  // Auto-scroll instantâneo/suave para a última mensagem ao alternar para a aba Mural
+  useEffect(() => {
+    if (portalTab === 'mural') {
+      const t1 = setTimeout(() => scrollToBottom('auto'), 40);
+      const t2 = setTimeout(() => scrollToBottom('smooth'), 180);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [portalTab]);
+
+  // Auto-scroll ao receber ou carregar mensagens no Mural
+  useEffect(() => {
+    if (portalTab === 'mural' && posts.length > 0) {
+      const timer = setTimeout(() => scrollToBottom('smooth'), 80);
+      return () => clearTimeout(timer);
+    }
+  }, [posts.length, portalTab]);
+
+  // Auto-scroll adaptativo ao expandir ou recolher os detalhes da célula
+  useEffect(() => {
+    if (portalTab === 'mural') {
+      const timer = setTimeout(() => scrollToBottom('smooth'), 280);
+      return () => clearTimeout(timer);
+    }
+  }, [isCellHeaderExpanded, portalTab]);
+
   const filteredCells = cells.filter(cell => {
     const name = cell.name || '';
     const neighborhood = cell.neighborhood || '';
@@ -1021,6 +1064,9 @@ export const CellGroups: React.FC = () => {
     setNewPostText('');
     setReplyingTo(null);
     setIsSubmittingPost(false);
+    setTimeout(() => {
+      scrollToBottom('smooth');
+    }, 60);
   };
 
   const handleReactPost = async (postId: string, emoji: string) => {
@@ -1350,7 +1396,7 @@ export const CellGroups: React.FC = () => {
   }
 
   return (
-    <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px' }}>
+    <div className="pwa-content animate-fade-in" style={{ paddingBottom: (viewMode === 'portal' && portalTab === 'mural') ? '0' : '90px' }}>
       
       {/* Header com Switch entre "Minha Célula" e "Explorar Células" (Apenas em modo Discover) */}
       {viewMode === 'discover' && (
@@ -1684,22 +1730,39 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: MURAL - FEED LIMPO COM DIGITAÇÃO FIXA NO RODAPÉ */}
+          {/* TAB 2: MURAL - FEED OTIMIZADO VERTICALMENTE COM ROLAGEM INTERNA */}
           {portalTab === 'mural' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 64px)' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              paddingBottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 68px)'
+            }}>
               
-              {/* Chat Container estilo WhatsApp Wallpaper */}
-              <div style={{
-                background: isDark ? '#0b141a' : '#efeae2',
-                borderRadius: '20px',
-                padding: '14px 12px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                minHeight: '380px',
-                boxShadow: isDark ? 'inset 0 2px 6px rgba(0,0,0,0.5)' : 'inset 0 1px 3px rgba(0,0,0,0.06)'
-              }}>
+              {/* Chat Container estilo WhatsApp Wallpaper - Expandido verticalmente até a barra de envio */}
+              <div 
+                ref={chatScrollRef}
+                style={{
+                  background: isDark ? '#0b141a' : '#efeae2',
+                  backgroundImage: isDark 
+                    ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0)' 
+                    : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0)',
+                  backgroundSize: '24px 24px',
+                  borderRadius: '20px',
+                  padding: '16px 12px 14px 12px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  height: isCellHeaderExpanded 
+                    ? 'calc(100dvh - var(--bottom-nav-height, 68px) - var(--safe-bottom, 0px) - 305px)' 
+                    : 'calc(100dvh - var(--bottom-nav-height, 68px) - var(--safe-bottom, 0px) - 185px)',
+                  minHeight: '400px',
+                  overflowY: 'auto',
+                  overscrollBehavior: 'contain',
+                  WebkitOverflowScrolling: 'touch',
+                  boxShadow: isDark ? 'inset 0 2px 6px rgba(0,0,0,0.5)' : 'inset 0 1px 3px rgba(0,0,0,0.06)'
+                }}
+              >
                 {/* Feed de Balões */}
                 {posts.length === 0 ? (
                   <div style={{
@@ -1907,6 +1970,9 @@ export const CellGroups: React.FC = () => {
                     );
                   })
                 )}
+
+                {/* Marcador invisível para auto-scroll até a última mensagem (estilo WhatsApp) */}
+                <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
               </div>
 
               {/* Campo e Botão de Envio FLUTUANTES Acima da Barra Inferior (Sem barra de fundo corrida) */}
