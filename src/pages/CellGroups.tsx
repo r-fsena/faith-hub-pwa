@@ -2488,285 +2488,521 @@ export const CellGroups: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: LANCHES / PARTILHA (VISÃO MEMBROS & LIDERANÇA) */}
-          {portalTab === 'lanches' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              
-              {/* 1. CARD DISCRETO E ELEGANTE DA MESA DE COMUNHÃO */}
-              <div style={{
-                background: '#ffffff',
-                borderRadius: '18px',
-                padding: '16px',
-                border: '1px solid var(--panel-border)',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '12px',
-                      background: 'var(--accent-primary-light)',
-                      color: 'var(--accent-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.3rem'
-                    }}>
-                      🥐
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
-                        Mesa de Comunhão
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        Partilha de alimentos para nosso próximo encontro
-                      </div>
-                    </div>
-                  </div>
+          {/* TAB 4: LANCHES / PARTILHA (VISÃO PREMIUM DE COMUNHÃO & ESCALA) */}
+          {portalTab === 'lanches' && (() => {
+            const confirmedCount = snacks.filter(s => s.confirmed || s.is_confirmed).length;
+            const openCount = snacks.filter(s => !s.confirmed && !s.is_confirmed).length;
+            const myItemsCount = snacks.filter(s => {
+              const assignedPerson = s.person || s.member_name || s.user_name || '';
+              return (
+                (user?.name && assignedPerson.toLowerCase().includes(user.name.toLowerCase())) ||
+                (user?.email && assignedPerson.toLowerCase().includes(user.email.split('@')[0].toLowerCase())) ||
+                (user?.userId && s.user_id === user.userId)
+              );
+            }).length;
 
-                  <button
-                    type="button"
-                    onClick={() => setIsSnackModalOpen(true)}
-                    style={{
-                      background: 'var(--accent-primary-light)',
-                      color: 'var(--accent-primary)',
-                      border: 'none',
-                      padding: '7px 12px',
-                      borderRadius: '10px',
-                      fontWeight: 800,
-                      fontSize: '0.74rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <span>＋</span>
-                    <span>Adicionar Item</span>
-                  </button>
-                </div>
+            const nextMeetingInfo = myGroup.meeting_day ? calculateNextMeetingDate(myGroup.meeting_day) : null;
+            const coveragePercentage = snacks.length > 0 ? Math.round((confirmedCount / snacks.length) * 100) : 0;
 
-                {/* Resumo Discreto de Cobertura */}
+            const filteredSnacks = snacks.filter(snack => {
+              if (snackFilterCategory === 'ALL') return true;
+              if (snackFilterCategory === 'OPEN') return !snack.confirmed && !snack.is_confirmed;
+              if (snackFilterCategory === 'MINE') {
+                const assignedPerson = snack.person || snack.member_name || snack.user_name || '';
+                return (
+                  (user?.name && assignedPerson.toLowerCase().includes(user.name.toLowerCase())) ||
+                  (user?.email && assignedPerson.toLowerCase().includes(user.email.split('@')[0].toLowerCase())) ||
+                  (user?.userId && snack.user_id === user.userId)
+                );
+              }
+              const name = (snack.item || snack.item_name || '').toLowerCase();
+              const cat = snack.category || '';
+              if (snackFilterCategory === 'BEBIDAS') {
+                return cat === 'BEBIDAS' || name.includes('refri') || name.includes('coca') || name.includes('suco') || name.includes('bebida') || name.includes('água') || name.includes('café') || name.includes('chá');
+              }
+              if (snackFilterCategory === 'SALGADOS') {
+                return cat === 'SALGADOS' || name.includes('salgad') || name.includes('coxinha') || name.includes('pão') || name.includes('pao') || name.includes('sandu') || name.includes('torta') || name.includes('queijo');
+              }
+              if (snackFilterCategory === 'DOCES') {
+                return cat === 'DOCES' || name.includes('bolo') || name.includes('doce') || name.includes('brigadeiro') || name.includes('pudim');
+              }
+              if (snackFilterCategory === 'FRUTAS') {
+                return cat === 'FRUTAS' || name.includes('fruta') || name.includes('melancia') || name.includes('banana') || name.includes('uva') || name.includes('maçã');
+              }
+              if (snackFilterCategory === 'DESCARTAVEIS') {
+                return cat === 'DESCARTAVEIS' || name.includes('copo') || name.includes('guardanapo') || name.includes('prato') || name.includes('descart');
+              }
+              return true;
+            });
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                
+                {/* 1. HERO CARD PREMIUM DA MESA DE COMUNHÃO */}
                 <div style={{
-                  background: '#f8fafc',
-                  borderRadius: '12px',
-                  padding: '10px 12px',
-                  border: '1px solid #f1f5f9',
+                  background: isDark 
+                    ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
+                    : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                  borderRadius: '22px',
+                  padding: '18px 16px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--panel-border)',
+                  boxShadow: 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px'
+                  gap: '14px'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <span>🍽️</span>
-                      <span>Cobertura da Mesa</span>
-                    </span>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>
-                      {snacks.filter(s => s.confirmed || s.is_confirmed).length} de {snacks.length} confirmados ({snacks.length > 0 ? Math.round((snacks.filter(s => s.confirmed || s.is_confirmed).length / snacks.length) * 100) : 0}%)
-                    </span>
+                  {/* Topo do Hero: Identidade & Ação */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                      <div style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '16px',
+                        background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                        color: '#b45309',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.45rem',
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.20)',
+                        flexShrink: 0
+                      }}>
+                        🥐
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 800,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            background: isDark ? 'rgba(15, 118, 110, 0.25)' : 'var(--accent-primary-light)',
+                            color: 'var(--accent-primary)',
+                            padding: '2px 8px',
+                            borderRadius: '6px'
+                          }}>
+                            Mesa de Comunhão
+                          </span>
+                          {nextMeetingInfo && (
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              • {nextMeetingInfo.displayLabel}
+                            </span>
+                          )}
+                        </div>
+                        <h3 style={{
+                          margin: 0,
+                          fontSize: '1.08rem',
+                          fontWeight: 900,
+                          color: 'var(--text-main)',
+                          letterSpacing: '-0.3px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          Partilha da Célula
+                        </h3>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (myGroup?.meeting_day) {
+                          setNewSnackDate(calculateNextMeetingDate(myGroup.meeting_day).dateStr);
+                        }
+                        setIsSnackModalOpen(true);
+                      }}
+                      className="v2-pressable"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, #0d9488 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '9px 14px',
+                        borderRadius: '14px',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 14px rgba(15, 118, 110, 0.28)',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span style={{ fontSize: '0.90rem' }}>＋</span>
+                      <span>Adicionar</span>
+                    </button>
                   </div>
-                  <div style={{ width: '100%', height: '5px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${snacks.length > 0 ? (snacks.filter(s => s.confirmed || s.is_confirmed).length / snacks.length) * 100 : 0}%`,
-                      height: '100%',
-                      background: 'var(--accent-primary)',
-                      borderRadius: '3px',
-                      transition: 'width 0.3s ease'
-                    }} />
+
+                  {/* Painel de Cobertura e Progresso */}
+                  <div style={{
+                    background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#f8fafc',
+                    borderRadius: '16px',
+                    padding: '12px 14px',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    {/* Indicadores Numéricos */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        borderRadius: '12px',
+                        padding: '8px 12px',
+                        border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ fontSize: '1.1rem' }}>✅</span>
+                        <div>
+                          <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                            Confirmados
+                          </div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#10b981' }}>
+                            {confirmedCount} {confirmedCount === 1 ? 'item' : 'itens'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        borderRadius: '12px',
+                        padding: '8px 12px',
+                        border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ fontSize: '1.1rem' }}>{openCount > 0 ? '⏳' : '🎉'}</span>
+                        <div>
+                          <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                            Em Aberto
+                          </div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 900, color: openCount > 0 ? '#f59e0b' : '#10b981' }}>
+                            {openCount > 0 ? `${openCount} ${openCount === 1 ? 'item' : 'itens'}` : 'Tudo Pronto!'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 800 }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Preenchimento da Mesa</span>
+                        <span style={{ color: 'var(--accent-primary)' }}>{coveragePercentage}%</span>
+                      </div>
+                      <div style={{ width: '100%', height: '7px', background: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{
+                          width: `${coveragePercentage}%`,
+                          height: '100%',
+                          background: coveragePercentage === 100 
+                            ? 'linear-gradient(90deg, #10b981, #059669)' 
+                            : 'linear-gradient(90deg, var(--accent-primary, #0f766e), #14b8a6)',
+                          borderRadius: '4px',
+                          transition: 'width 0.4s ease'
+                        }} />
+                      </div>
+                    </div>
+
+                    {/* Frase Contextual de Comunhão */}
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
+                      {openCount === 0 && snacks.length > 0 && (
+                        <span style={{ color: '#059669', fontWeight: 700 }}>
+                          ✨ Mesa 100% coberta para o próximo encontro! Louvado seja Deus pela comunhão de todos!
+                        </span>
+                      )}
+                      {openCount > 0 && (
+                        <span>
+                          💡 Temos <strong>{openCount}</strong> item(ns) esperando voluntário(s). Toque em <strong>"🙋 Eu Levo"</strong> abaixo para participar!
+                        </span>
+                      )}
+                      {snacks.length === 0 && (
+                        <span>
+                          Toque em <strong>"+ Adicionar"</strong> para listar os pratos e bebidas para a próxima reunião da célula.
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* 2. FILTROS DE CATEGORIA EM PÍLULAS */}
-              <div style={{
-                display: 'flex',
-                gap: '6px',
-                overflowX: 'auto',
-                paddingBottom: '4px',
-                scrollbarWidth: 'none'
-              }}>
-                {[
-                  { id: 'ALL', label: `Todos (${snacks.length})`, icon: '🍽️' },
-                  { id: 'BEBIDAS', label: 'Bebidas', icon: '🥤' },
-                  { id: 'SALGADOS', label: 'Salgados', icon: '🥟' },
-                  { id: 'DOCES', label: 'Doces & Bolos', icon: '🍰' },
-                  { id: 'FRUTAS', label: 'Frutas', icon: '🍉' },
-                  { id: 'DESCARTAVEIS', label: 'Descartáveis', icon: '🍴' }
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSnackFilterCategory(cat.id)}
-                    style={{
-                      padding: '7px 12px',
-                      borderRadius: '12px',
-                      border: 'none',
-                      background: snackFilterCategory === cat.id ? 'var(--accent-primary)' : '#ffffff',
-                      color: snackFilterCategory === cat.id ? '#ffffff' : 'var(--text-secondary)',
-                      fontWeight: 800,
-                      fontSize: '0.74rem',
-                      cursor: 'pointer',
-                      boxShadow: snackFilterCategory === cat.id ? '0 2px 8px rgba(15,118,110,0.25)' : 'var(--shadow-sm)',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* 3. LISTA DE ITENS DA PARTILHA */}
-              {(() => {
-                const filtered = snacks.filter(snack => {
-                  if (snackFilterCategory === 'ALL') return true;
-                  const name = (snack.item || snack.item_name || '').toLowerCase();
-                  const cat = snack.category || '';
-                  if (snackFilterCategory === 'BEBIDAS') {
-                    return cat === 'BEBIDAS' || name.includes('refri') || name.includes('suco') || name.includes('bebida') || name.includes('água') || name.includes('café') || name.includes('chá');
-                  }
-                  if (snackFilterCategory === 'SALGADOS') {
-                    return cat === 'SALGADOS' || name.includes('salgad') || name.includes('coxinha') || name.includes('pão') || name.includes('pao') || name.includes('sandu') || name.includes('torta') || name.includes('queijo');
-                  }
-                  if (snackFilterCategory === 'DOCES') {
-                    return cat === 'DOCES' || name.includes('bolo') || name.includes('doce') || name.includes('brigadeiro') || name.includes('pudim');
-                  }
-                  if (snackFilterCategory === 'FRUTAS') {
-                    return cat === 'FRUTAS' || name.includes('fruta') || name.includes('melancia') || name.includes('banana') || name.includes('uva') || name.includes('maçã');
-                  }
-                  if (snackFilterCategory === 'DESCARTAVEIS') {
-                    return cat === 'DESCARTAVEIS' || name.includes('copo') || name.includes('guardanapo') || name.includes('prato') || name.includes('descart');
-                  }
-                  return true;
-                });
-
-                if (filtered.length === 0) {
-                  return (
-                    <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px dashed #cbd5e1' }}>
-                      <span style={{ fontSize: '2.2rem', display: 'block', marginBottom: '8px' }}>🥐</span>
-                      <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main)', marginBottom: '4px' }}>
-                        Mesa aguardando itens
-                      </div>
-                      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: '0 0 14px 0' }}>
-                        Toque no botão abaixo para sugerir ou voluntariar um prato/bebida!
-                      </p>
+                {/* 2. FILTROS ERGONÔMICOS EM PÍLULAS COM CONTADORES */}
+                <div 
+                  className="no-scrollbar"
+                  style={{
+                    display: 'flex',
+                    gap: '7px',
+                    overflowX: 'auto',
+                    padding: '2px 2px 4px 2px',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  {[
+                    { id: 'ALL', label: 'Todos', count: snacks.length, icon: '🍽️' },
+                    ...(openCount > 0 ? [{ id: 'OPEN', label: 'Em Aberto', count: openCount, icon: '⏳', isHighlight: true }] : []),
+                    ...(myItemsCount > 0 ? [{ id: 'MINE', label: 'Minha Parte', count: myItemsCount, icon: '🙋' }] : []),
+                    { id: 'SALGADOS', label: 'Salgados', icon: '🥟' },
+                    { id: 'BEBIDAS', label: 'Bebidas', icon: '🥤' },
+                    { id: 'DOCES', label: 'Doces & Bolos', icon: '🍰' },
+                    { id: 'FRUTAS', label: 'Frutas', icon: '🍉' },
+                    { id: 'DESCARTAVEIS', label: 'Descartáveis', icon: '🍴' }
+                  ].map(cat => {
+                    const isActive = snackFilterCategory === cat.id;
+                    return (
                       <button
+                        key={cat.id}
                         type="button"
-                        onClick={() => setIsSnackModalOpen(true)}
-                        className="btn-pwa-primary"
-                        style={{ margin: '0 auto', padding: '10px 18px', fontSize: '0.80rem' }}
+                        onClick={() => setSnackFilterCategory(cat.id)}
+                        className="v2-pressable"
+                        style={{
+                          padding: '8px 13px',
+                          borderRadius: '14px',
+                          border: isActive 
+                            ? '1.5px solid var(--accent-primary)' 
+                            : (cat.isHighlight ? (isDark ? '1px solid rgba(245, 158, 11, 0.40)' : '1px solid #fde68a') : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--panel-border)'}`),
+                          background: isActive 
+                            ? 'var(--accent-primary-light)' 
+                            : (cat.isHighlight ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb') : (isDark ? 'var(--bg-card)' : '#ffffff')),
+                          color: isActive 
+                            ? 'var(--accent-primary)' 
+                            : (cat.isHighlight ? (isDark ? '#fbbf24' : '#b45309') : 'var(--text-main)'),
+                          fontWeight: isActive ? 900 : 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer',
+                          boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s ease'
+                        }}
                       >
-                        ＋ Adicionar Item Agora
+                        <span>{cat.icon}</span>
+                        <span>{cat.label}</span>
+                        {typeof cat.count === 'number' && (
+                          <span style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            padding: '1px 6px',
+                            borderRadius: '10px',
+                            background: isActive ? 'var(--accent-primary)' : (isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'),
+                            color: isActive ? '#ffffff' : 'var(--text-muted)'
+                          }}>
+                            {cat.count}
+                          </span>
+                        )}
                       </button>
-                    </div>
-                  );
-                }
+                    );
+                  })}
+                </div>
 
-                return (
+                {/* 3. LISTA DE ITENS DA PARTILHA */}
+                {filteredSnacks.length === 0 ? (
+                  <div style={{
+                    background: isDark ? 'var(--bg-card)' : '#ffffff',
+                    borderRadius: '20px',
+                    padding: '36px 20px',
+                    textAlign: 'center',
+                    border: isDark ? '1px dashed rgba(255, 255, 255, 0.15)' : '1px dashed #cbd5e1'
+                  }}>
+                    <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '8px' }}>🥐</span>
+                    <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                      {snackFilterCategory === 'OPEN' 
+                        ? 'Nenhum item aguardando voluntário' 
+                        : (snackFilterCategory === 'MINE' 
+                          ? 'Você ainda não assumiu nenhum item' 
+                          : 'Nenhum item nesta categoria')}
+                    </div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: '0 0 16px 0', maxWidth: '300px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      {snackFilterCategory === 'OPEN' 
+                        ? 'Todos os itens já têm pessoas escaladas para levar!' 
+                        : (snackFilterCategory === 'MINE' 
+                          ? 'Escolha um item da lista e toque em "Eu Levo" para colaborar com o lanche.' 
+                          : 'Toque no botão abaixo para adicionar um item para a partilha!')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (myGroup?.meeting_day) {
+                          setNewSnackDate(calculateNextMeetingDate(myGroup.meeting_day).dateStr);
+                        }
+                        setIsSnackModalOpen(true);
+                      }}
+                      className="v2-pressable"
+                      style={{
+                        margin: '0 auto',
+                        background: 'var(--accent-primary)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '12px',
+                        fontSize: '0.80rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ＋ Adicionar Item Agora
+                    </button>
+                  </div>
+                ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {filtered.map(snack => {
+                    {filteredSnacks.map(snack => {
                       const isConfirmed = snack.confirmed || snack.is_confirmed;
                       const itemName = snack.item || snack.item_name || 'Item de Partilha';
                       const itemIcon = getSnackIcon(itemName);
                       const assignedPerson = snack.person || snack.member_name || snack.user_name || 'A definir';
-                      const isMe = assignedPerson === user?.name || (user?.email && assignedPerson.toLowerCase().includes(user.email.split('@')[0].toLowerCase()));
+                      const isMe = Boolean(
+                        (user?.name && assignedPerson.toLowerCase() === user.name.toLowerCase()) ||
+                        (user?.email && assignedPerson.toLowerCase().includes(user.email.split('@')[0].toLowerCase())) ||
+                        (user?.userId && snack.user_id === user.userId)
+                      );
 
                       return (
                         <div
                           key={snack.id}
                           style={{
-                            background: '#ffffff',
+                            background: isDark ? 'var(--bg-card)' : '#ffffff',
                             borderRadius: '18px',
                             padding: '14px 16px',
-                            border: isConfirmed ? '1px solid #e2e8f0' : '1px solid #fed7aa',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                            border: isConfirmed 
+                              ? (isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0') 
+                              : (isDark ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid #fed7aa'),
+                            boxShadow: 'var(--shadow-sm)',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            gap: '12px'
+                            gap: '12px',
+                            transition: 'all 0.2s ease'
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {/* Lado Esquerdo: Ícone + Detalhes */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                             <div style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '14px',
-                              background: isConfirmed ? '#f0fdf4' : '#fff7ed',
-                              color: isConfirmed ? '#16a34a' : '#ea580c',
+                              width: '46px',
+                              height: '46px',
+                              borderRadius: '15px',
+                              background: isConfirmed 
+                                ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') 
+                                : (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fff7ed'),
+                              color: isConfirmed ? '#10b981' : '#f59e0b',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '1.4rem',
+                              fontSize: '1.45rem',
                               flexShrink: 0
                             }}>
                               {itemIcon}
                             </div>
 
-                            <div>
-                              <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)' }}>
-                                {itemName} {snack.quantity ? <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.78rem' }}>({snack.quantity})</span> : ''}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
-                                  🗓️ {snack.event_date || snack.scheduled_date || 'Próximo Encontro'}
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                                  {itemName}
                                 </span>
-                                <span style={{ fontSize: '0.70rem', color: '#cbd5e1' }}>•</span>
-                                {isConfirmed ? (
-                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    ✓ {assignedPerson} vai levar
+                                {snack.quantity && (
+                                  <span style={{
+                                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9',
+                                    color: 'var(--text-muted)',
+                                    fontWeight: 700,
+                                    fontSize: '0.72rem',
+                                    padding: '1px 6px',
+                                    borderRadius: '6px'
+                                  }}>
+                                    {snack.quantity}
                                   </span>
+                                )}
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                {snack.event_date && (
+                                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    🗓️ {formatMeetingShortDate(snack.event_date) || snack.event_date}
+                                  </span>
+                                )}
+                                
+                                {isConfirmed ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    {snack.event_date && <span style={{ fontSize: '0.70rem', color: '#94a3b8' }}>•</span>}
+                                    <div style={{
+                                      width: '18px',
+                                      height: '18px',
+                                      borderRadius: '50%',
+                                      background: isMe ? 'var(--accent-primary)' : (isDark ? '#334155' : '#cbd5e1'),
+                                      color: '#ffffff',
+                                      fontSize: '0.58rem',
+                                      fontWeight: 900,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      {getInitials(assignedPerson)}
+                                    </div>
+                                    <span style={{
+                                      fontSize: '0.74rem',
+                                      fontWeight: 800,
+                                      color: isMe ? 'var(--accent-primary)' : (isDark ? '#10b981' : '#059669')
+                                    }}>
+                                      {isMe ? 'Você vai levar' : `${assignedPerson} vai levar`}
+                                    </span>
+                                  </div>
                                 ) : (
-                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706' }}>
-                                    ⏳ Aberto para voluntário
+                                  <span style={{
+                                    fontSize: '0.70rem',
+                                    fontWeight: 800,
+                                    color: isDark ? '#fbbf24' : '#d97706',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}>
+                                    <span>⏳</span>
+                                    <span>Aguardando voluntário</span>
                                   </span>
                                 )}
                               </div>
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          {/* Lado Direito: Ações */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                             {!isConfirmed ? (
                               <button
                                 type="button"
                                 onClick={() => handleVolunteerSnack(snack.id)}
+                                className="v2-pressable"
                                 style={{
-                                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                                   color: '#ffffff',
                                   border: 'none',
                                   padding: '8px 14px',
                                   borderRadius: '12px',
-                                  fontWeight: 800,
-                                  fontSize: '0.75rem',
+                                  fontWeight: 900,
+                                  fontSize: '0.76rem',
                                   cursor: 'pointer',
-                                  boxShadow: '0 2px 6px rgba(16,185,129,0.3)',
+                                  boxShadow: '0 3px 10px rgba(16, 185, 129, 0.32)',
                                   whiteSpace: 'nowrap'
                                 }}
                               >
                                 🙋 Eu Levo!
                               </button>
                             ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 {isMe && (
                                   <button
                                     type="button"
                                     onClick={() => handleUnvolunteerSnack(snack.id)}
                                     title="Desmarcar minha contribuição"
+                                    className="v2-pressable"
                                     style={{
-                                      background: '#f1f5f9',
-                                      color: 'var(--text-muted)',
-                                      border: 'none',
-                                      padding: '6px 10px',
+                                      background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                                      color: isDark ? '#f87171' : '#dc2626',
+                                      border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.3)' : '#fecaca'}`,
+                                      padding: '5px 9px',
                                       borderRadius: '10px',
                                       fontSize: '0.68rem',
-                                      fontWeight: 700,
+                                      fontWeight: 800,
                                       cursor: 'pointer'
                                     }}
                                   >
@@ -2774,12 +3010,16 @@ export const CellGroups: React.FC = () => {
                                   </button>
                                 )}
                                 <span style={{
-                                  background: '#ecfdf5',
-                                  color: '#059669',
+                                  background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5',
+                                  color: isDark ? '#34d399' : '#059669',
+                                  border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0'}`,
                                   padding: '5px 9px',
                                   borderRadius: '10px',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800
+                                  fontSize: '0.70rem',
+                                  fontWeight: 800,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
                                 }}>
                                   ✓ Confirmado
                                 </span>
@@ -2791,13 +3031,15 @@ export const CellGroups: React.FC = () => {
                                 type="button"
                                 onClick={() => handleDeleteSnack(snack.id)}
                                 title="Excluir item da lista"
+                                className="v2-pressable"
                                 style={{
-                                  background: 'none',
+                                  background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
                                   border: 'none',
                                   color: '#ef4444',
-                                  fontSize: '0.80rem',
+                                  fontSize: '0.82rem',
                                   cursor: 'pointer',
-                                  padding: '4px 6px'
+                                  padding: '6px 8px',
+                                  borderRadius: '8px'
                                 }}
                               >
                                 🗑️
@@ -2808,10 +3050,10 @@ export const CellGroups: React.FC = () => {
                       );
                     })}
                   </div>
-                );
-              })()}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
 
           {/* ========================================================
               TAB 5: PAINEL DE GESTÃO DO LÍDER (TELA DEDICADA MODERNA)
@@ -4884,75 +5126,85 @@ export const CellGroups: React.FC = () => {
           MODAL / BOTTOM DRAWER DE ADICIONAR ITEM À PARTILHA
           ======================================================== */}
       {isSnackModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(15, 23, 42, 0.65)',
-          backdropFilter: 'blur(6px)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          padding: '0'
-        }}>
-          <div style={{
-            background: '#ffffff',
-            width: '100%',
-            maxWidth: '500px',
-            borderTopLeftRadius: '28px',
-            borderTopRightRadius: '28px',
-            padding: '24px 20px calc(24px + env(safe-area-inset-bottom, 0px)) 20px',
-            maxHeight: '88vh',
-            overflowY: 'auto',
-            boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
+        <div 
+          onClick={() => setIsSnackModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.70)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 9999,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            padding: 0
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: isDark ? '#1e293b' : '#ffffff',
+              color: 'var(--text-main)',
+              width: '100%',
+              maxWidth: '520px',
+              borderTopLeftRadius: '28px',
+              borderTopRightRadius: '28px',
+              borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
+              padding: '22px 20px calc(24px + env(safe-area-inset-bottom, 12px)) 20px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+          >
             {/* Header do Modal */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '14px',
-                  background: '#fef3c7',
-                  color: '#d97706',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '15px',
+                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                  color: '#b45309',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.4rem'
+                  fontSize: '1.45rem',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.20)',
+                  flexShrink: 0
                 }}>
                   🥐
                 </div>
                 <div>
-                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                    Mesa de Comunhão
+                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
+                    Adicionar à Partilha
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                    Adicionar item ou sugerir para a célula
+                    Cadastre um alimento ou bebida para a célula
                   </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSnackModalOpen(false)}
+                className="v2-pressable"
                 style={{
-                  background: '#f1f5f9',
+                  background: isDark ? 'rgba(255, 255, 255, 0.10)' : '#f1f5f9',
                   border: 'none',
                   borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
+                  width: '34px',
+                  height: '34px',
                   fontSize: '0.90rem',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  fontWeight: 900
                 }}
               >
                 ✕
@@ -4961,7 +5213,7 @@ export const CellGroups: React.FC = () => {
 
             {/* Sugestões Rápidas em Pílulas com 1 Toque */}
             <div>
-              <label style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+              <label style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '8px' }}>
                 ✨ Sugestões Rápidas (1 Toque para Preencher):
               </label>
               <div style={{
@@ -4976,10 +5228,17 @@ export const CellGroups: React.FC = () => {
                       key={sIdx}
                       type="button"
                       onClick={() => handleSelectQuickSuggestion(sug)}
+                      className="v2-pressable"
                       style={{
-                        background: isSelected ? 'var(--accent-primary)' : '#f8fafc',
-                        color: isSelected ? '#ffffff' : 'var(--text-main)',
-                        border: isSelected ? '1px solid var(--accent-primary)' : '1px solid #e2e8f0',
+                        background: isSelected 
+                          ? 'var(--accent-primary)' 
+                          : (isDark ? 'rgba(255, 255, 255, 0.06)' : '#f8fafc'),
+                        color: isSelected 
+                          ? '#ffffff' 
+                          : 'var(--text-main)',
+                        border: isSelected 
+                          ? '1px solid var(--accent-primary)' 
+                          : (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid #e2e8f0'),
                         borderRadius: '12px',
                         padding: '7px 11px',
                         fontSize: '0.75rem',
@@ -5003,24 +5262,33 @@ export const CellGroups: React.FC = () => {
             <form onSubmit={handleCreateSnack} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Nome do Item */}
               <div>
-                <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Nome do Alimento / Bebida *
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
+                  Nome do Alimento ou Bebida *
                 </label>
                 <input
                   type="text"
                   className="input-pwa"
-                  placeholder="Ex: Bolo de Cenoura, Salgadinhos, Suco..."
+                  placeholder="Ex: Bolo de Cenoura, Salgadinhos, Suco de Laranja..."
                   value={newSnackItem}
                   onChange={e => setNewSnackItem(e.target.value)}
                   required
-                  style={{ width: '100%', fontSize: '0.86rem' }}
+                  style={{
+                    width: '100%',
+                    fontSize: '0.88rem',
+                    background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                    borderRadius: '12px',
+                    padding: '11px 14px',
+                    color: 'var(--text-main)',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
 
               {/* Quantidade & Data do Encontro */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
                     Quantidade Sugerida
                   </label>
                   <input
@@ -5029,12 +5297,21 @@ export const CellGroups: React.FC = () => {
                     placeholder="Ex: 2 garrafas, 1 cento"
                     value={newSnackQty}
                     onChange={e => setNewSnackQty(e.target.value)}
-                    style={{ width: '100%', fontSize: '0.84rem' }}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.84rem',
+                      background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
+                      border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                      borderRadius: '12px',
+                      padding: '11px 14px',
+                      color: 'var(--text-main)',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
                     Data do Encontro *
                   </label>
                   <input
@@ -5043,37 +5320,53 @@ export const CellGroups: React.FC = () => {
                     value={newSnackDate}
                     onChange={e => setNewSnackDate(e.target.value)}
                     required
-                    style={{ width: '100%', fontSize: '0.84rem' }}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.84rem',
+                      background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
+                      border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                      borderRadius: '12px',
+                      padding: '10px 12px',
+                      color: 'var(--text-main)',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
               </div>
 
               {/* Quem vai levar? */}
               <div>
-                <label style={{ fontSize: '0.70rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
                   Quem vai levar este item?
                 </label>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '6px',
-                  background: '#f1f5f9',
+                  background: isDark ? 'rgba(15, 23, 42, 0.70)' : '#f1f5f9',
                   padding: '4px',
-                  borderRadius: '12px'
+                  borderRadius: '14px',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0'
                 }}>
                   <button
                     type="button"
                     onClick={() => setNewSnackAssigneeMode('me')}
+                    className="v2-pressable"
                     style={{
-                      padding: '9px 8px',
-                      borderRadius: '9px',
+                      padding: '10px 8px',
+                      borderRadius: '10px',
                       border: 'none',
-                      background: newSnackAssigneeMode === 'me' ? '#ffffff' : 'transparent',
-                      color: newSnackAssigneeMode === 'me' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      background: newSnackAssigneeMode === 'me' 
+                        ? (isDark ? '#334155' : '#ffffff') 
+                        : 'transparent',
+                      color: newSnackAssigneeMode === 'me' 
+                        ? 'var(--accent-primary)' 
+                        : 'var(--text-secondary)',
                       fontWeight: 800,
-                      fontSize: '0.75rem',
+                      fontSize: '0.76rem',
                       cursor: 'pointer',
-                      boxShadow: newSnackAssigneeMode === 'me' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                      boxShadow: newSnackAssigneeMode === 'me' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     🙋 Eu mesmo levo
@@ -5081,16 +5374,22 @@ export const CellGroups: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setNewSnackAssigneeMode('open')}
+                    className="v2-pressable"
                     style={{
-                      padding: '9px 8px',
-                      borderRadius: '9px',
+                      padding: '10px 8px',
+                      borderRadius: '10px',
                       border: 'none',
-                      background: newSnackAssigneeMode === 'open' ? '#ffffff' : 'transparent',
-                      color: newSnackAssigneeMode === 'open' ? '#d97706' : 'var(--text-secondary)',
+                      background: newSnackAssigneeMode === 'open' 
+                        ? (isDark ? '#334155' : '#ffffff') 
+                        : 'transparent',
+                      color: newSnackAssigneeMode === 'open' 
+                        ? (isDark ? '#fbbf24' : '#d97706') 
+                        : 'var(--text-secondary)',
                       fontWeight: 800,
-                      fontSize: '0.75rem',
+                      fontSize: '0.76rem',
                       cursor: 'pointer',
-                      boxShadow: newSnackAssigneeMode === 'open' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                      boxShadow: newSnackAssigneeMode === 'open' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     ⏳ Deixar em Aberto
@@ -5114,7 +5413,7 @@ export const CellGroups: React.FC = () => {
                         borderRadius: '6px'
                       }}
                     >
-                      👥 Ou atribuir a um membro específico...
+                      👥 Ou atribuir a um participante específico...
                     </button>
 
                     {newSnackAssigneeMode === 'member' && (
@@ -5122,9 +5421,19 @@ export const CellGroups: React.FC = () => {
                         className="input-pwa"
                         value={newSnackAssignedMemberId}
                         onChange={e => setNewSnackAssignedMemberId(e.target.value)}
-                        style={{ width: '100%', marginTop: '6px', fontSize: '0.82rem' }}
+                        style={{
+                          width: '100%',
+                          marginTop: '6px',
+                          fontSize: '0.84rem',
+                          background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
+                          borderRadius: '12px',
+                          padding: '10px 12px',
+                          color: 'var(--text-main)',
+                          boxSizing: 'border-box'
+                        }}
                       >
-                        <option value="">Selecione um membro...</option>
+                        <option value="">Selecione um participante...</option>
                         {groupMembers.map(m => (
                           <option key={m.id} value={m.id}>{m.name}</option>
                         ))}
@@ -5138,14 +5447,14 @@ export const CellGroups: React.FC = () => {
               <button
                 type="submit"
                 disabled={isAddingSnack || !newSnackItem.trim()}
-                className="btn-pwa-primary"
+                className="btn-pwa-primary v2-pressable"
                 style={{
-                  marginTop: '8px',
+                  marginTop: '10px',
                   padding: '14px',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
+                  fontSize: '0.90rem',
+                  fontWeight: 900,
                   borderRadius: '16px',
-                  boxShadow: '0 4px 14px rgba(37,99,235,0.25)'
+                  boxShadow: '0 4px 16px rgba(15, 118, 110, 0.28)'
                 }}
               >
                 {isAddingSnack ? 'Salvando na Escala...' : '✨ Adicionar à Mesa de Comunhão'}
