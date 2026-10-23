@@ -85,6 +85,8 @@ interface CellGroup {
   description?: string;
   latitude?: number | string | null;
   longitude?: number | string | null;
+  cover_url?: string;
+  image_url?: string;
 }
 
 interface CellPost {
@@ -250,8 +252,13 @@ export const CellGroups: React.FC = () => {
   const [editMeetingTime, setEditMeetingTime] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editWhatsapp, setEditWhatsapp] = useState('');
+  const [editCoverUrl, setEditCoverUrl] = useState('');
   const [savingMeeting, setSavingMeeting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Modal de Relatório Detalhado de Encontro Passado
+  const [viewingMeetingReport, setViewingMeetingReport] = useState<any | null>(null);
+  const [loadingReportDetails, setLoadingReportDetails] = useState<boolean>(false);
 
   const getInitials = (name?: string) => {
     if (!name) return 'M';
@@ -275,14 +282,81 @@ export const CellGroups: React.FC = () => {
     }
   };
 
-  const formatNextMeetingLabel = (meetingDay?: string, meetingTime?: string, dateStr?: string) => {
-    if (meetingDay && meetingTime) {
-      const dayShort = meetingDay.slice(0, 3);
-      const timeFormatted = meetingTime.replace(':00', 'h');
-      const dayMonth = dateStr ? formatMeetingShortDate(dateStr).split(', ')[1] : '';
-      return `${dayShort}${dayMonth ? `, ${dayMonth}` : ''} · ${timeFormatted}`;
+  const getDayOfWeekIndex = (dayName?: string): number | null => {
+    if (!dayName) return null;
+    const d = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (d.includes('seg')) return 1;
+    if (d.includes('ter')) return 2;
+    if (d.includes('qua')) return 3;
+    if (d.includes('qui')) return 4;
+    if (d.includes('sex')) return 5;
+    if (d.includes('sab')) return 6;
+    if (d.includes('dom')) return 0;
+    return null;
+  };
+
+  // Calcula a data exata da próxima reunião baseando-se no dia da semana configurado na célula
+  const calculateNextMeetingDate = (meetingDay?: string): { dateStr: string; displayLabel: string } => {
+    const now = new Date();
+    const targetDayIdx = getDayOfWeekIndex(meetingDay);
+    if (targetDayIdx === null) {
+      const todayStr = now.toISOString().split('T')[0];
+      return { dateStr: todayStr, displayLabel: formatMeetingShortDate(todayStr) };
     }
-    return formatMeetingShortDate(dateStr);
+    const currentDayIdx = now.getDay();
+    let diff = (targetDayIdx - currentDayIdx + 7) % 7;
+    // Se diff for 0 (hoje é o dia do encontro), pode ser hoje mesmo!
+    const targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+    const y = targetDate.getFullYear();
+    const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const d = String(targetDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+    
+    const weekdaysCapitalized = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dayLabel = weekdaysCapitalized[targetDayIdx];
+    return { dateStr, displayLabel: `${dayLabel}, ${d}/${m}` };
+  };
+
+  // Gera as opções de datas reais dos encontros da célula para a seleção na chamada
+  const getMeetingDateOptions = (meetingDay?: string) => {
+    const targetDayIdx = getDayOfWeekIndex(meetingDay);
+    const now = new Date();
+    const options: Array<{ date: string; label: string; badge: string }> = [];
+
+    if (targetDayIdx === null) {
+      const todayStr = now.toISOString().split('T')[0];
+      options.push({ date: todayStr, label: `Hoje (${formatMeetingShortDate(todayStr)})`, badge: 'Hoje' });
+      return options;
+    }
+
+    const nextDiff = (targetDayIdx - now.getDay() + 7) % 7;
+    const nextDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + nextDiff);
+    const nextStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+    
+    options.push({
+      date: nextStr,
+      label: `${formatMeetingShortDate(nextStr)}`,
+      badge: nextDiff === 0 ? 'Hoje' : 'Próximo'
+    });
+
+    for (let i = 1; i <= 3; i++) {
+      const pastDiff = nextDiff - (i * 7);
+      const pastDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + pastDiff);
+      const pastStr = `${pastDate.getFullYear()}-${String(pastDate.getMonth() + 1).padStart(2, '0')}-${String(pastDate.getDate()).padStart(2, '0')}`;
+      options.push({
+        date: pastStr,
+        label: `${formatMeetingShortDate(pastStr)}`,
+        badge: i === 1 ? 'Último' : `${i} sem atrás`
+      });
+    }
+
+    return options;
+  };
+
+  const formatNextMeetingLabel = (meetingDay?: string, meetingTime?: string) => {
+    const next = calculateNextMeetingDate(meetingDay);
+    const timeFormatted = meetingTime ? meetingTime.replace(':00', 'h') : '20h';
+    return `${next.displayLabel} · ${timeFormatted}`;
   };
 
   const getAvatarBg = (name?: string) => {
@@ -409,6 +483,43 @@ export const CellGroups: React.FC = () => {
     }
     loadAllData();
   }, [user, isAuthenticated, branding.organization_id]);
+
+  // Preenchimento inteligente do tema com o livro ou estudo ativo
+  useEffect(() => {
+    if (!studyTopic) {
+      const activeTopic = selectedBook?.title || study?.title || '';
+      if (activeTopic) {
+        setStudyTopic(activeTopic);
+      }
+    }
+  }, [selectedBook, study, studyTopic]);
+
+  // Pré-seleção da data da reunião com base no dia do encontro da célula
+  useEffect(() => {
+    if (myGroup?.meeting_day) {
+      const nextMeeting = calculateNextMeetingDate(myGroup.meeting_day);
+      if (nextMeeting?.dateStr) {
+        setMeetingDate(nextMeeting.dateStr);
+      }
+    }
+  }, [myGroup?.meeting_day]);
+
+  const handleOpenMeetingReport = async (meeting: any) => {
+    setLoadingReportDetails(true);
+    setViewingMeetingReport(meeting);
+    try {
+      if (myGroup?.id && meeting?.id) {
+        const fullDetails = await fetchCellMeetingDetails(myGroup.id, meeting.id);
+        if (fullDetails) {
+          setViewingMeetingReport(fullDetails);
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao abrir relatório da reunião:', e);
+    } finally {
+      setLoadingReportDetails(false);
+    }
+  };
 
   const loadAllData = async () => {
     try {
@@ -748,6 +859,7 @@ export const CellGroups: React.FC = () => {
       setEditMeetingTime(details.meeting_time || '');
       setEditAddress(details.address || '');
       setEditWhatsapp(details.whatsapp_contact || details.whatsapp || '');
+      setEditCoverUrl(details.cover_url || details.image_url || '');
     } else {
       const activeCell = (groupList || cells).find(c => c.id === groupId);
       if (activeCell) {
@@ -755,6 +867,7 @@ export const CellGroups: React.FC = () => {
         setEditMeetingTime(activeCell.meeting_time || '');
         setEditAddress(activeCell.address || '');
         setEditWhatsapp(activeCell.whatsapp || activeCell.whatsapp_contact || '');
+        setEditCoverUrl(activeCell.cover_url || activeCell.image_url || '');
       }
     }
   };
@@ -1115,7 +1228,9 @@ export const CellGroups: React.FC = () => {
       meeting_day: editMeetingDay,
       meeting_time: editMeetingTime,
       address: editAddress,
-      whatsapp_contact: editWhatsapp
+      whatsapp_contact: editWhatsapp,
+      cover_url: editCoverUrl,
+      image_url: editCoverUrl
     });
 
     if (ok) {
@@ -1127,7 +1242,9 @@ export const CellGroups: React.FC = () => {
         meeting_time: editMeetingTime,
         address: editAddress,
         whatsapp: editWhatsapp,
-        whatsapp_contact: editWhatsapp
+        whatsapp_contact: editWhatsapp,
+        cover_url: editCoverUrl,
+        image_url: editCoverUrl
       } : c));
     } else {
       alert('Erro ao atualizar informações do encontro.');
@@ -1212,7 +1329,17 @@ export const CellGroups: React.FC = () => {
           
           {/* Card Hero da Minha Célula (Oculto na tela exclusiva do líder) */}
           {portalTab !== 'lideranca' && (
-            <div style={{ background: 'var(--accent-primary-gradient)', color: '#ffffff', borderRadius: '20px', padding: '20px', boxShadow: 'var(--shadow-md)' }}>
+            <div style={{
+              background: (myGroup.cover_url || myGroup.image_url)
+                ? `linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.88) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
+                : 'var(--accent-primary-gradient)',
+              color: '#ffffff',
+              borderRadius: '20px',
+              padding: '20px',
+              boxShadow: 'var(--shadow-md)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
@@ -1224,7 +1351,7 @@ export const CellGroups: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.15)', padding: '10px 14px', borderRadius: '12px', marginTop: '14px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', padding: '10px 14px', borderRadius: '12px', marginTop: '14px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div>👤 <strong>Liderança:</strong> {myGroup.leader || myGroup.leader_name || 'Pastoral'}</div>
                 <div>🗓️ <strong>Encontro:</strong> {myGroup.meeting_day ? `${myGroup.meeting_day} às ${myGroup.meeting_time}` : (myGroup.day_time || 'A definir')}</div>
                 {myGroup.address && <div>📍 <strong>Endereço:</strong> {myGroup.address} {myGroup.neighborhood ? `(${myGroup.neighborhood})` : ''}</div>}
@@ -2506,16 +2633,20 @@ export const CellGroups: React.FC = () => {
               
               {/* HERO DO TOPO: Identidade e Status da Célula para o Líder */}
               <div style={{
-                background: isDark 
-                  ? 'linear-gradient(180deg, #181726 0%, #11101d 100%)' 
-                  : 'linear-gradient(180deg, #221e38 0%, #17142b 100%)',
+                background: (myGroup.cover_url || myGroup.image_url)
+                  ? `linear-gradient(180deg, rgba(24, 23, 38, 0.72) 0%, rgba(17, 16, 29, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
+                  : (isDark 
+                    ? 'linear-gradient(180deg, #181726 0%, #11101d 100%)' 
+                    : 'linear-gradient(180deg, #221e38 0%, #17142b 100%)'),
                 color: '#ffffff',
                 borderRadius: '26px',
                 padding: '20px 18px',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px'
+                gap: '16px',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
                 {/* Botão de Retorno para a Visão Normal da Célula */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2523,20 +2654,22 @@ export const CellGroups: React.FC = () => {
                     type="button"
                     onClick={() => setPortalTab('dashboard')}
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#cbd5e1',
-                      fontSize: '0.84rem',
-                      fontWeight: 700,
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#ffffff',
+                      fontSize: '0.80rem',
+                      fontWeight: 800,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '4px',
-                      padding: 0
+                      gap: '6px',
+                      padding: '6px 12px',
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(8px)'
                     }}
                   >
-                    <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>‹</span>
-                    <span>Células</span>
+                    <span style={{ fontSize: '1rem', lineHeight: 1 }}>‹</span>
+                    <span>Voltar à Célula</span>
                   </button>
                 </div>
 
@@ -2558,13 +2691,17 @@ export const CellGroups: React.FC = () => {
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.70rem',
                       fontWeight: 800,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      color: '#94a3b8'
+                      color: '#94a3b8',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
                     }}>
-                      {myGroup.network ? `REDE ${myGroup.network.toUpperCase()}` : (branding?.appName || 'IGREJA VIDEIRA')}
+                      {(branding?.church_name || branding?.churchName || branding?.appName || 'IGREJA').toUpperCase()}
+                      {myGroup.network ? ` · REDE ${myGroup.network.toUpperCase()}` : ''}
                     </div>
                     <h2 style={{
                       margin: '2px 0 0 0',
@@ -2584,26 +2721,28 @@ export const CellGroups: React.FC = () => {
                 {/* Dois Cards Lado a Lado do Hero */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(255, 255, 255, 0.10)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
                     borderRadius: '16px',
                     padding: '12px 14px'
                   }}>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
                       Próxima reunião
                     </div>
                     <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
-                      {formatNextMeetingLabel(myGroup.meeting_day, myGroup.meeting_time, meetingDate)}
+                      {formatNextMeetingLabel(myGroup.meeting_day, myGroup.meeting_time)}
                     </div>
                   </div>
 
                   <div style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(255, 255, 255, 0.10)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
                     borderRadius: '16px',
                     padding: '12px 14px'
                   }}>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
                       Participantes
                     </div>
                     <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
@@ -2674,10 +2813,155 @@ export const CellGroups: React.FC = () => {
                       boxShadow: '0 4px 18px rgba(0,0,0,0.04)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '14px'
+                      gap: '16px'
                     }}>
-                      {/* Linha de Título e Contador */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+
+                      {/* SEÇÃO 1 NO TOPO: SELEÇÃO DO ENCONTRO, TEMA E OBSERVAÇÕES */}
+                      <div style={{
+                        background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                        borderRadius: '20px',
+                        padding: '16px',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9'}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        {/* Linha do Seletor de Encontro Semanal */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>📅</span>
+                              <span>Data do Encontro da Célula</span>
+                            </label>
+                            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700 }}>
+                              {myGroup.meeting_day ? `${myGroup.meeting_day}s` : 'Semanal'}
+                            </span>
+                          </div>
+
+                          {/* Pílulas de datas reais da célula */}
+                          <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
+                            {getMeetingDateOptions(myGroup.meeting_day).map(opt => {
+                              const isSelected = meetingDate === opt.dateStr;
+                              return (
+                                <button
+                                  key={opt.dateStr}
+                                  type="button"
+                                  onClick={() => setMeetingDate(opt.dateStr)}
+                                  style={{
+                                    padding: '7px 12px',
+                                    borderRadius: '12px',
+                                    border: isSelected ? '1.5px solid #ea580c' : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                                    background: isSelected ? (isDark ? '#431407' : '#ffedd5') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
+                                    color: isSelected ? '#ea580c' : 'var(--text-main)',
+                                    fontWeight: isSelected ? 900 : 700,
+                                    fontSize: '0.74rem',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Seletor de data manual caso queira customizar */}
+                          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              Ou outra data:
+                            </span>
+                            <input
+                              type="date"
+                              value={meetingDate}
+                              onChange={e => setMeetingDate(e.target.value)}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                                background: isDark ? '#0f172a' : '#f8fafc',
+                                color: 'var(--text-main, #0f172a)',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Linha do Tema / Lição Abordada */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                              📖 Tema / Estudo do Encontro
+                            </label>
+                            {selectedBook?.title && studyTopic !== selectedBook.title && (
+                              <button
+                                type="button"
+                                onClick={() => setStudyTopic(selectedBook.title)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--accent-primary, #0f766e)',
+                                  fontSize: '0.70rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                              >
+                                Usar lição: {selectedBook.title.slice(0, 18)}...
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder={selectedBook?.title ? `Sugerido: ${selectedBook.title}` : "Ex: O Fruto do Espírito, Vivendo em Comunidade..."}
+                            value={studyTopic}
+                            onChange={e => setStudyTopic(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '9px 12px',
+                              borderRadius: '12px',
+                              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                              background: isDark ? '#0f172a' : '#f8fafc',
+                              color: 'var(--text-main, #0f172a)',
+                              fontSize: '0.80rem',
+                              fontWeight: 700,
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+
+                        {/* Linha de Observações & Pedidos de Oração */}
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', marginBottom: '4px' }}>
+                            📝 Observações & Pedidos de Oração
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="Decisões de fé, testemunhos, pedidos de oração ou notas da célula..."
+                            value={meetingNotes}
+                            onChange={e => setMeetingNotes(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              borderRadius: '12px',
+                              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                              background: isDark ? '#0f172a' : '#f8fafc',
+                              color: 'var(--text-main, #0f172a)',
+                              fontSize: '0.78rem',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                              resize: 'vertical'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* SEÇÃO 2: CHAMADA NOMINAL DOS MEMBROS */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '4px' }}>
                         <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
                           Chamada
                         </h3>
@@ -3079,105 +3363,6 @@ export const CellGroups: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* ACORDEÃO RETRÁTIL: CONFIGURAÇÕES DA REUNIÃO (DATA, TEMA, OBSERVAÇÕES) */}
-                    <div style={{
-                      background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff',
-                      borderRadius: '18px',
-                      padding: '12px 16px',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvancedMeetingDetails(!showAdvancedMeetingDetails)}
-                        style={{
-                          width: '100%',
-                          background: 'transparent',
-                          border: 'none',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          color: 'var(--text-main, #0f172a)',
-                          fontWeight: 800,
-                          fontSize: '0.80rem',
-                          cursor: 'pointer',
-                          padding: 0
-                        }}
-                      >
-                        <span>📅 Data, Tema & Observações</span>
-                        <span>{showAdvancedMeetingDetails ? '▲' : '▼'}</span>
-                      </button>
-
-                      {showAdvancedMeetingDetails && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingTop: '10px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}` }}>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
-                              Data da Reunião
-                            </label>
-                            <input
-                              type="date"
-                              value={meetingDate}
-                              onChange={e => setMeetingDate(e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '8px 10px',
-                                borderRadius: '10px',
-                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                                background: isDark ? '#0f172a' : '#f8fafc',
-                                color: 'var(--text-main, #0f172a)',
-                                fontSize: '0.80rem',
-                                boxSizing: 'border-box'
-                              }}
-                            />
-                          </div>
-
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
-                              Tema / Estudo (Opcional)
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Ex: Fruto do Espírito"
-                              value={studyTopic}
-                              onChange={e => setStudyTopic(e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '8px 10px',
-                                borderRadius: '10px',
-                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                                background: isDark ? '#0f172a' : '#f8fafc',
-                                color: 'var(--text-main, #0f172a)',
-                                fontSize: '0.80rem',
-                                boxSizing: 'border-box'
-                              }}
-                            />
-                          </div>
-
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
-                              Observações & Pedidos de Oração
-                            </label>
-                            <textarea
-                              rows={2}
-                              placeholder="Anotações gerais do encontro..."
-                              value={meetingNotes}
-                              onChange={e => setMeetingNotes(e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '8px 10px',
-                                borderRadius: '10px',
-                                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                                background: isDark ? '#0f172a' : '#f8fafc',
-                                color: 'var(--text-main, #0f172a)',
-                                fontSize: '0.80rem',
-                                boxSizing: 'border-box',
-                                resize: 'vertical'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
                     {/* BARRA FIXA INFERIOR (STICKY ACTION BAR): Conforme Mockup */}
                     <div style={{
                       position: 'sticky',
@@ -3209,7 +3394,7 @@ export const CellGroups: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Linha com Resumo e Botão Enviar */}
+                      {/* Linha com Resumo e Botão Salvar Chamada */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                         <div>
                           <div style={{ fontWeight: 900, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
@@ -3242,7 +3427,7 @@ export const CellGroups: React.FC = () => {
                             transition: 'transform 0.15s ease'
                           }}
                         >
-                          {isRecordingMeeting ? 'Enviando...' : 'Enviar relatório'}
+                          {isRecordingMeeting ? 'Salvando Chamada...' : '💾 Salvar Chamada'}
                         </button>
                       </div>
                     </div>
@@ -3272,7 +3457,7 @@ export const CellGroups: React.FC = () => {
                             Nenhuma reunião gravada ainda
                           </div>
                           <div style={{ fontSize: '0.72rem' }}>
-                            Ao enviar o primeiro relatório semanal, o histórico detalhado aparecerá aqui.
+                            Ao salvar a primeira chamada semanal, o histórico detalhado aparecerá aqui.
                           </div>
                         </div>
                       ) : (
@@ -3288,7 +3473,8 @@ export const CellGroups: React.FC = () => {
                               display: 'flex', 
                               justifyContent: 'space-between', 
                               alignItems: 'center',
-                              gap: '10px'
+                              gap: '10px',
+                              flexWrap: 'wrap'
                             }}
                           >
                             <div style={{ minWidth: 0, flex: 1 }}>
@@ -3311,19 +3497,34 @@ export const CellGroups: React.FC = () => {
                                 <span>🟢 {m.present_count || 0} presentes</span>
                                 <span>🔴 {m.absent_count || 0} faltas</span>
                                 {m.visitor_count > 0 && <span>🌟 {m.visitor_count} visitantes</span>}
+                                {m.offerings_amount && Number(m.offerings_amount) > 0 && (
+                                  <span>💰 R$ {Number(m.offerings_amount).toFixed(2).replace('.', ',')}</span>
+                                )}
                               </div>
                             </div>
-                            <span style={{ 
-                              fontSize: '0.70rem', 
-                              background: 'rgba(16, 185, 129, 0.12)', 
-                              color: '#10b981', 
-                              padding: '4px 10px', 
-                              borderRadius: '999px', 
-                              fontWeight: 800,
-                              flexShrink: 0
-                            }}>
-                              ✓ Concluída
-                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenMeetingReport(m)}
+                              style={{
+                                background: isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc',
+                                border: `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1'}`,
+                                color: 'var(--text-main, #0f172a)',
+                                padding: '6px 12px',
+                                borderRadius: '12px',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                flexShrink: 0,
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                              }}
+                            >
+                              <span>👁️</span>
+                              <span>Ver Relatório</span>
+                            </button>
                           </div>
                         ))
                       )}
@@ -3573,6 +3774,32 @@ export const CellGroups: React.FC = () => {
                       value={editWhatsapp}
                       onChange={e => setEditWhatsapp(e.target.value)}
                     />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                      🖼️ Foto de Capa da Célula (Banner de Fundo)
+                    </label>
+                    <input 
+                      type="url" 
+                      className="input-pwa"
+                      placeholder="https://... (URL da imagem para banner e fundos)"
+                      value={editCoverUrl}
+                      onChange={e => setEditCoverUrl(e.target.value)}
+                    />
+                    {editCoverUrl && (
+                      <div style={{ marginTop: '8px', position: 'relative', borderRadius: '12px', overflow: 'hidden', height: '110px', border: '1px solid #cbd5e1' }}>
+                        <img 
+                          src={editCoverUrl} 
+                          alt="Prévia da Capa" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                        <div style={{ position: 'absolute', bottom: '6px', left: '8px', background: 'rgba(0,0,0,0.6)', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.66rem', fontWeight: 800 }}>
+                          Prévia da Capa
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {saveSuccess && (
@@ -4622,6 +4849,289 @@ export const CellGroups: React.FC = () => {
                 {isAddingSnack ? 'Salvando na Escala...' : '✨ Adicionar à Mesa de Comunhão'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL DE RELATÓRIO COMPLETO DO ENCONTRO REGISTRADO
+          ======================================================== */}
+      {viewingMeetingReport && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.70)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div style={{
+            background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff',
+            width: '100%',
+            maxWidth: '540px',
+            borderRadius: '28px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+            animation: 'fadeIn 0.2s ease'
+          }}>
+            {/* Header do Relatório */}
+            <div style={{
+              padding: '18px 20px',
+              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: isDark ? 'rgba(255,255,255,0.02)' : '#faf8f5'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.25rem'
+                }}>
+                  📋
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                    Relatório do Encontro
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    📅 {new Date(viewingMeetingReport.meeting_date).toLocaleDateString('pt-BR', { timeZone: 'UTC', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingMeetingReport(null)}
+                style={{
+                  background: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  fontSize: '0.90rem',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Conteúdo com Scroll */}
+            <div style={{ padding: '18px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {loadingReportDetails ? (
+                <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+                  ⏳ Carregando lista de chamada e participantes...
+                </div>
+              ) : (
+                <>
+                  {/* Tema do Estudo */}
+                  {viewingMeetingReport.study_topic && (
+                    <div style={{
+                      background: isDark ? 'rgba(15, 118, 110, 0.15)' : '#f0fdfa',
+                      border: `1px solid ${isDark ? 'rgba(15, 118, 110, 0.3)' : '#ccfbf1'}`,
+                      padding: '12px 14px',
+                      borderRadius: '16px'
+                    }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-primary, #0f766e)', letterSpacing: '0.05em' }}>
+                        📖 Tema Abordado no Encontro
+                      </div>
+                      <div style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--text-main)', marginTop: '2px' }}>
+                        {viewingMeetingReport.study_topic}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grid de Métricas */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                    <div style={{ background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : '#bbf7d0'}` }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#10b981' }}>
+                        {viewingMeetingReport.present_count || 0}
+                      </div>
+                      <div style={{ fontSize: '0.64rem', fontWeight: 800, color: isDark ? '#6ee7b7' : '#047857' }}>
+                        Presentes
+                      </div>
+                    </div>
+
+                    <div style={{ background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.2)' : '#fecaca'}` }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ef4444' }}>
+                        {viewingMeetingReport.absent_count || 0}
+                      </div>
+                      <div style={{ fontSize: '0.64rem', fontWeight: 800, color: isDark ? '#fca5a5' : '#b91c1c' }}>
+                        Ausentes
+                      </div>
+                    </div>
+
+                    <div style={{ background: isDark ? 'rgba(168, 85, 247, 0.12)' : '#faf5ff', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(168, 85, 247, 0.2)' : '#e9d5ff'}` }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#a855f7' }}>
+                        {viewingMeetingReport.justified_count || 0}
+                      </div>
+                      <div style={{ fontSize: '0.64rem', fontWeight: 800, color: isDark ? '#d8b4fe' : '#7e22ce' }}>
+                        Justificados
+                      </div>
+                    </div>
+
+                    <div style={{ background: isDark ? 'rgba(249, 115, 22, 0.12)' : '#fff7ed', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(249, 115, 22, 0.2)' : '#fed7aa'}` }}>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f97316' }}>
+                        {viewingMeetingReport.visitor_count || 0}
+                      </div>
+                      <div style={{ fontSize: '0.64rem', fontWeight: 800, color: isDark ? '#fdba74' : '#c2410c' }}>
+                        Visitantes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Oferta Arrecadada (se houver) */}
+                  {viewingMeetingReport.offerings_amount && Number(viewingMeetingReport.offerings_amount) > 0 && (
+                    <div style={{
+                      background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                      border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
+                      padding: '10px 14px',
+                      borderRadius: '14px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                        💰 Oferta Arrecadada:
+                      </span>
+                      <span style={{ fontSize: '0.96rem', fontWeight: 900, color: '#059669' }}>
+                        R$ {Number(viewingMeetingReport.offerings_amount).toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Observações / Anotações do Líder */}
+                  {viewingMeetingReport.notes && (
+                    <div style={{
+                      background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                      border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
+                      padding: '12px 14px',
+                      borderRadius: '14px'
+                    }}>
+                      <div style={{ fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        📝 Observações & Pedidos de Oração
+                      </div>
+                      <div style={{ fontSize: '0.80rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                        {viewingMeetingReport.notes}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lista de Chamada Registrada */}
+                  <div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Lista de Presença & Justificativas</span>
+                      <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 700 }}>
+                        {viewingMeetingReport.attendees?.length || 0} registros
+                      </span>
+                    </div>
+
+                    {(!viewingMeetingReport.attendees || viewingMeetingReport.attendees.length === 0) ? (
+                      <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.76rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc', borderRadius: '12px' }}>
+                        Nenhum detalhe nominal gravado para esta reunião.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {viewingMeetingReport.attendees.map((att: any, attIdx: number) => {
+                          const isPresent = att.status === 'PRESENT';
+                          const isAbsent = att.status === 'ABSENT';
+                          const isJustified = att.status === 'JUSTIFIED';
+                          const name = att.member_name || att.visitor_name || 'Participante';
+
+                          return (
+                            <div
+                              key={att.id || attIdx}
+                              style={{
+                                background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc',
+                                border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0'}`,
+                                borderRadius: '12px',
+                                padding: '8px 12px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span>{att.is_visitor ? '🌟' : '👤'}</span>
+                                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                                  {att.is_visitor && (
+                                    <span style={{ fontSize: '0.62rem', background: '#fff7ed', color: '#ea580c', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                      Visitante
+                                    </span>
+                                  )}
+                                </div>
+                                {isJustified && att.justification && (
+                                  <div style={{ fontSize: '0.70rem', color: '#a855f7', marginTop: '2px', fontStyle: 'italic' }}>
+                                    Motivo: {att.justification}
+                                  </div>
+                                )}
+                              </div>
+
+                              <span style={{
+                                padding: '3px 8px',
+                                borderRadius: '8px',
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                flexShrink: 0,
+                                background: isPresent 
+                                  ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#dcfce7') 
+                                  : isAbsent 
+                                    ? (isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2') 
+                                    : (isDark ? 'rgba(168, 85, 247, 0.2)' : '#f3e8ff'),
+                                color: isPresent ? '#10b981' : isAbsent ? '#ef4444' : '#a855f7'
+                              }}>
+                                {isPresent ? '✓ Presente' : isAbsent ? '✕ Ausente' : '💬 Justificado'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer com Botão de Fechar */}
+            <div style={{
+              padding: '14px 20px',
+              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}`,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              background: isDark ? 'rgba(255,255,255,0.02)' : '#faf8f5'
+            }}>
+              <button
+                type="button"
+                onClick={() => setViewingMeetingReport(null)}
+                className="btn-pwa-primary"
+                style={{ padding: '8px 18px', fontSize: '0.80rem' }}
+              >
+                Concluir Visualização
+              </button>
+            </div>
           </div>
         </div>
       )}
