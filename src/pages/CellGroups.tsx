@@ -979,6 +979,20 @@ export const CellGroups: React.FC = () => {
     }
   }, [isCellHeaderExpanded, portalTab]);
 
+  // Travar o scroll da página externa ao entrar no Mural, mantendo a tela 100% fixa (estilo WhatsApp)
+  useEffect(() => {
+    if (viewMode === 'portal' && portalTab === 'mural') {
+      const originalOverflow = document.body.style.overflow;
+      const originalOverscroll = document.body.style.overscrollBehavior;
+      document.body.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.overscrollBehavior = originalOverscroll;
+      };
+    }
+  }, [viewMode, portalTab]);
+
   const filteredCells = cells.filter(cell => {
     const name = cell.name || '';
     const neighborhood = cell.neighborhood || '';
@@ -1395,8 +1409,25 @@ export const CellGroups: React.FC = () => {
     );
   }
 
+  const isMuralView = viewMode === 'portal' && portalTab === 'mural';
+
   return (
-    <div className="pwa-content animate-fade-in" style={{ paddingBottom: (viewMode === 'portal' && portalTab === 'mural') ? '0' : '90px' }}>
+    <div 
+      className="pwa-content animate-fade-in" 
+      style={{ 
+        padding: isMuralView ? '6px 12px 0 12px' : '16px 16px 90px 16px',
+        height: isMuralView 
+          ? 'calc(100dvh - 60px - var(--bottom-nav-height, 68px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 12px) - 6px)' 
+          : 'auto',
+        maxHeight: isMuralView 
+          ? 'calc(100dvh - 60px - var(--bottom-nav-height, 68px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 12px) - 6px)' 
+          : 'none',
+        overflow: isMuralView ? 'hidden' : 'visible',
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box'
+      }}
+    >
       
       {/* Header com Switch entre "Minha Célula" e "Explorar Células" (Apenas em modo Discover) */}
       {viewMode === 'discover' && (
@@ -1433,13 +1464,21 @@ export const CellGroups: React.FC = () => {
           MODO 1: PORTAL CONECTADO DA MINHA CÉLULA (SUB-APP)
           ======================================================== */}
       {viewMode === 'portal' && myGroup ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: isMuralView ? '6px' : '12px',
+          flex: isMuralView ? 1 : 'none',
+          minHeight: 0,
+          overflow: isMuralView ? 'hidden' : 'visible'
+        }}>
           
           {/* Barra Superior Menor da Célula com Expansão de Detalhes ao Clicar */}
           {portalTab !== 'lideranca' && (
             <div 
               onClick={() => setIsCellHeaderExpanded(prev => !prev)}
               style={{
+                flexShrink: 0,
                 background: (myGroup.cover_url || myGroup.image_url)
                   ? `linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
                   : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'),
@@ -1567,6 +1606,7 @@ export const CellGroups: React.FC = () => {
             <div 
               className="no-scrollbar" 
               style={{ 
+                flexShrink: 0,
                 display: 'flex', 
                 gap: '8px', 
                 overflowX: 'auto', 
@@ -1735,28 +1775,29 @@ export const CellGroups: React.FC = () => {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              paddingBottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 68px)'
+              flex: 1,
+              minHeight: 0,
+              gap: '6px',
+              overflow: 'hidden'
             }}>
               
-              {/* Chat Container estilo WhatsApp Wallpaper - Expandido verticalmente até a barra de envio */}
+              {/* Chat Container estilo WhatsApp Wallpaper - Termina rigorosamente ANTES do campo de envio */}
               <div 
                 ref={chatScrollRef}
                 style={{
+                  flex: 1,
+                  minHeight: 0,
                   background: isDark ? '#0b141a' : '#efeae2',
                   backgroundImage: isDark 
                     ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0)' 
                     : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0)',
                   backgroundSize: '24px 24px',
                   borderRadius: '20px',
-                  padding: '16px 12px 14px 12px',
+                  padding: '14px 12px 10px 12px',
                   border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px',
-                  height: isCellHeaderExpanded 
-                    ? 'calc(100dvh - var(--bottom-nav-height, 68px) - var(--safe-bottom, 0px) - 305px)' 
-                    : 'calc(100dvh - var(--bottom-nav-height, 68px) - var(--safe-bottom, 0px) - 185px)',
-                  minHeight: '400px',
                   overflowY: 'auto',
                   overscrollBehavior: 'contain',
                   WebkitOverflowScrolling: 'touch',
@@ -1975,24 +2016,19 @@ export const CellGroups: React.FC = () => {
                 <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
               </div>
 
-              {/* Campo e Botão de Envio FLUTUANTES Acima da Barra Inferior (Sem barra de fundo corrida) */}
+              {/* Campo e Botão de Envio Posicionados Imediatamente Abaixo do Modal de Mensagens */}
               <div style={{
-                position: 'fixed',
-                bottom: 'calc(var(--bottom-nav-height, 68px) + var(--safe-bottom, 0px) + 14px)',
-                left: 0,
-                right: 0,
-                zIndex: 48,
-                pointerEvents: 'none',
+                width: '100%',
+                flexShrink: 0,
                 display: 'flex',
                 justifyContent: 'center',
-                padding: '0 12px'
+                paddingBottom: '2px'
               }}>
                 <form 
                   onSubmit={handleAddPost} 
                   style={{
                     width: '100%',
                     maxWidth: '680px',
-                    pointerEvents: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px'
