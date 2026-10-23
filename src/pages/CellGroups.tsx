@@ -1173,34 +1173,36 @@ export const CellGroups: React.FC = () => {
   return (
     <div className="pwa-content animate-fade-in" style={{ paddingBottom: '90px' }}>
       
-      {/* Header com Switch entre "Minha Célula" e "Explorar Células" */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>Células & Redes</h2>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-            {viewMode === 'portal' && myGroup ? 'Hub conectado do seu Pequeno Grupo' : 'Encontre uma célula perto de você'}
-          </p>
-        </div>
+      {/* Header com Switch entre "Minha Célula" e "Explorar Células" (Apenas fora da tela dedicada do líder) */}
+      {portalTab !== 'lideranca' && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>Células & Redes</h2>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+              {viewMode === 'portal' && myGroup ? 'Hub conectado do seu Pequeno Grupo' : 'Encontre uma célula perto de você'}
+            </p>
+          </div>
 
-        {cells.length > 0 && myGroupId && (
-          <button 
-            type="button" 
-            onClick={() => setViewMode(viewMode === 'portal' ? 'discover' : 'portal')}
-            style={{
-              background: 'var(--accent-primary-light)',
-              color: 'var(--accent-primary)',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.74rem',
-              cursor: 'pointer'
-            }}
-          >
-            {viewMode === 'portal' ? '🔍 Explorar' : '🏠 Minha Célula'}
-          </button>
-        )}
-      </div>
+          {cells.length > 0 && myGroupId && (
+            <button 
+              type="button" 
+              onClick={() => setViewMode(viewMode === 'portal' ? 'discover' : 'portal')}
+              style={{
+                background: 'var(--accent-primary-light)',
+                color: 'var(--accent-primary)',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '0.74rem',
+                cursor: 'pointer'
+              }}
+            >
+              {viewMode === 'portal' ? '🔍 Explorar' : '🏠 Minha Célula'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ========================================================
           MODO 1: PORTAL CONECTADO DA MINHA CÉLULA (SUB-APP)
@@ -1208,28 +1210,31 @@ export const CellGroups: React.FC = () => {
       {viewMode === 'portal' && myGroup ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          {/* Card Hero da Minha Célula */}
-          <div style={{ background: 'var(--accent-primary-gradient)', color: '#ffffff', borderRadius: '20px', padding: '20px', boxShadow: 'var(--shadow-md)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
-                  CÉLULA CONECTADA • {myGroup.network || 'Geral'}
-                </span>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginTop: '2px' }}>
-                  {myGroup.name}
-                </h3>
+          {/* Card Hero da Minha Célula (Oculto na tela exclusiva do líder) */}
+          {portalTab !== 'lideranca' && (
+            <div style={{ background: 'var(--accent-primary-gradient)', color: '#ffffff', borderRadius: '20px', padding: '20px', boxShadow: 'var(--shadow-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
+                    CÉLULA CONECTADA • {myGroup.network || 'Geral'}
+                  </span>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginTop: '2px' }}>
+                    {myGroup.name}
+                  </h3>
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: '10px 14px', borderRadius: '12px', marginTop: '14px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>👤 <strong>Liderança:</strong> {myGroup.leader || myGroup.leader_name || 'Pastoral'}</div>
+                <div>🗓️ <strong>Encontro:</strong> {myGroup.meeting_day ? `${myGroup.meeting_day} às ${myGroup.meeting_time}` : (myGroup.day_time || 'A definir')}</div>
+                {myGroup.address && <div>📍 <strong>Endereço:</strong> {myGroup.address} {myGroup.neighborhood ? `(${myGroup.neighborhood})` : ''}</div>}
               </div>
             </div>
+          )}
 
-            <div style={{ background: 'rgba(255,255,255,0.15)', padding: '10px 14px', borderRadius: '12px', marginTop: '14px', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div>👤 <strong>Liderança:</strong> {myGroup.leader || myGroup.leader_name || 'Pastoral'}</div>
-              <div>🗓️ <strong>Encontro:</strong> {myGroup.meeting_day ? `${myGroup.meeting_day} às ${myGroup.meeting_time}` : (myGroup.day_time || 'A definir')}</div>
-              {myGroup.address && <div>📍 <strong>Endereço:</strong> {myGroup.address} {myGroup.neighborhood ? `(${myGroup.neighborhood})` : ''}</div>}
-            </div>
-          </div>
-
-          {/* Abas de Navegação Interna da Célula (Incluindo Gestão do Líder se for Líder) */}
-          <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
+          {/* Abas de Navegação Interna da Célula (Ocultas na tela exclusiva do líder) */}
+          {portalTab !== 'lideranca' && (
+            <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', WebkitOverflowScrolling: 'touch' }}>
             {[
               { id: 'dashboard', label: '📊 Início' },
               { id: 'mural', label: '💬 Mural' },
@@ -1264,7 +1269,8 @@ export const CellGroups: React.FC = () => {
                 {tab.label}
               </button>
             ))}
-          </div>
+            </div>
+          )}
 
           {/* TAB 1: DASHBOARD */}
           {portalTab === 'dashboard' && (
@@ -2493,13 +2499,130 @@ export const CellGroups: React.FC = () => {
           )}
 
           {/* ========================================================
-              TAB 5: PAINEL DE GESTÃO DO LÍDER (ORGANIZADO NA CÉLULA)
+              TAB 5: PAINEL DE GESTÃO DO LÍDER (TELA DEDICADA MODERNA)
               ======================================================== */}
           {portalTab === 'lideranca' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
-              {/* Sub-navegação do Líder */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', background: '#f1f5f9', padding: '4px', borderRadius: '14px' }}>
+              {/* HERO DO TOPO: Identidade e Status da Célula para o Líder */}
+              <div style={{
+                background: isDark 
+                  ? 'linear-gradient(180deg, #181726 0%, #11101d 100%)' 
+                  : 'linear-gradient(180deg, #221e38 0%, #17142b 100%)',
+                color: '#ffffff',
+                borderRadius: '26px',
+                padding: '20px 18px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                {/* Botão de Retorno para a Visão Normal da Célula */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPortalTab('dashboard')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#cbd5e1',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: 0
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>‹</span>
+                    <span>Células</span>
+                  </button>
+                </div>
+
+                {/* Header com Identidade da Igreja e Célula */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.4rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                    flexShrink: 0
+                  }}>
+                    🌱
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#94a3b8'
+                    }}>
+                      {myGroup.network ? `REDE ${myGroup.network.toUpperCase()}` : (branding?.appName || 'IGREJA VIDEIRA')}
+                    </div>
+                    <h2 style={{
+                      margin: '2px 0 0 0',
+                      fontSize: '1.25rem',
+                      fontWeight: 900,
+                      color: '#ffffff',
+                      letterSpacing: '-0.3px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      Liderar · {myGroup.name}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Dois Cards Lado a Lado do Hero */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '16px',
+                    padding: '12px 14px'
+                  }}>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                      Próxima reunião
+                    </div>
+                    <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
+                      {formatNextMeetingLabel(myGroup.meeting_day, myGroup.meeting_time, meetingDate)}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '16px',
+                    padding: '12px 14px'
+                  }}>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
+                      Participantes
+                    </div>
+                    <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
+                      {groupMembers.length} · {pendingUsers.length > 0 ? `${pendingUsers.length} pedido novo` : 'Sem pedidos'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sub-navegação do Líder (Pílulas Ergonômicas) */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '4px', 
+                background: isDark ? 'rgba(255,255,255,0.04)' : '#f1f5f9', 
+                padding: '4px', 
+                borderRadius: '14px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'transparent'}`
+              }}>
                 {[
                   { id: 'attendance', label: '📋 Chamada' },
                   { id: 'requests', label: pendingUsers.length > 0 ? `Pedidos (${pendingUsers.length})` : 'Pedidos' },
@@ -2542,115 +2665,6 @@ export const CellGroups: React.FC = () => {
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     
-                    {/* HERO DO TOPO: Estilo Mobile Dark Moderno (Conforme Mockup) */}
-                    <div style={{
-                      background: isDark 
-                        ? 'linear-gradient(180deg, #181726 0%, #11101d 100%)' 
-                        : 'linear-gradient(180deg, #221e38 0%, #17142b 100%)',
-                      color: '#ffffff',
-                      borderRadius: '26px',
-                      padding: '20px 18px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px'
-                    }}>
-                      {/* Botão de Retorno Superior */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={() => setPortalTab('dashboard')}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#cbd5e1',
-                            fontSize: '0.84rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: 0
-                          }}
-                        >
-                          <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>‹</span>
-                          <span>Células</span>
-                        </button>
-                      </div>
-
-                      {/* Header com Identidade da Igreja e Célula */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{
-                          width: '46px',
-                          height: '46px',
-                          borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1.4rem',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                          flexShrink: 0
-                        }}>
-                          🌱
-                        </div>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: '#94a3b8'
-                          }}>
-                            {myGroup.network ? `REDE ${myGroup.network.toUpperCase()}` : (branding?.appName || 'IGREJA VIDEIRA')}
-                          </div>
-                          <h2 style={{
-                            margin: '2px 0 0 0',
-                            fontSize: '1.25rem',
-                            fontWeight: 900,
-                            color: '#ffffff',
-                            letterSpacing: '-0.3px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            Liderar · {myGroup.name}
-                          </h2>
-                        </div>
-                      </div>
-
-                      {/* Dois Cards Lado a Lado do Hero */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <div style={{
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          borderRadius: '16px',
-                          padding: '12px 14px'
-                        }}>
-                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
-                            Próxima reunião
-                          </div>
-                          <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
-                            {formatNextMeetingLabel(myGroup.meeting_day, myGroup.meeting_time, meetingDate)}
-                          </div>
-                        </div>
-
-                        <div style={{
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          borderRadius: '16px',
-                          padding: '12px 14px'
-                        }}>
-                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>
-                            Participantes
-                          </div>
-                          <div style={{ fontSize: '0.86rem', color: '#ffffff', fontWeight: 900, marginTop: '2px' }}>
-                            {groupMembers.length} · {pendingUsers.length > 0 ? `${pendingUsers.length} pedido novo` : 'Sem pedidos'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* CARD PRINCIPAL DA CHAMADA (Fundo Ergonômico Acolhedor) */}
                     <div style={{
                       background: isDark ? 'var(--bg-card, #1e293b)' : '#faf8f5',
