@@ -494,16 +494,6 @@ export const CellGroups: React.FC = () => {
     }
   }, [selectedBook, study, studyTopic]);
 
-  // Pré-seleção da data da reunião com base no dia do encontro da célula
-  useEffect(() => {
-    if (myGroup?.meeting_day) {
-      const nextMeeting = calculateNextMeetingDate(myGroup.meeting_day);
-      if (nextMeeting?.dateStr) {
-        setMeetingDate(nextMeeting.dateStr);
-      }
-    }
-  }, [myGroup?.meeting_day]);
-
   const handleOpenMeetingReport = async (meeting: any) => {
     setLoadingReportDetails(true);
     setViewingMeetingReport(meeting);
@@ -873,6 +863,15 @@ export const CellGroups: React.FC = () => {
   };
 
   const myGroup = cells.find(g => g.id === myGroupId) || cells[0];
+
+  // Pré-seleção da data da reunião com base no dia do encontro da célula
+  // (precisa ficar APÓS a declaração de myGroup para evitar ReferenceError/TDZ)
+  const myGroupMeetingDay = myGroup?.meeting_day;
+  useEffect(() => {
+    if (myGroupMeetingDay) {
+      setMeetingDate(calculateNextMeetingDate(myGroupMeetingDay).dateStr);
+    }
+  }, [myGroupMeetingDay]);
 
   const filteredCells = cells.filter(cell => {
     const name = cell.name || '';
@@ -2700,7 +2699,7 @@ export const CellGroups: React.FC = () => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
                     }}>
-                      {(branding?.church_name || branding?.churchName || branding?.appName || 'IGREJA').toUpperCase()}
+                      {(branding?.church_name || 'IGREJA').toUpperCase()}
                       {myGroup.network ? ` · REDE ${myGroup.network.toUpperCase()}` : ''}
                     </div>
                     <h2 style={{
@@ -2841,12 +2840,12 @@ export const CellGroups: React.FC = () => {
                           {/* Pílulas de datas reais da célula */}
                           <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
                             {getMeetingDateOptions(myGroup.meeting_day).map(opt => {
-                              const isSelected = meetingDate === opt.dateStr;
+                              const isSelected = meetingDate === opt.date;
                               return (
                                 <button
-                                  key={opt.dateStr}
+                                  key={opt.date}
                                   type="button"
-                                  onClick={() => setMeetingDate(opt.dateStr)}
+                                  onClick={() => setMeetingDate(opt.date)}
                                   style={{
                                     padding: '7px 12px',
                                     borderRadius: '12px',
@@ -2861,7 +2860,7 @@ export const CellGroups: React.FC = () => {
                                     transition: 'all 0.15s ease'
                                   }}
                                 >
-                                  {opt.label}
+                                  <span style={{ opacity: 0.75, marginRight: '4px' }}>{opt.badge} ·</span>{opt.label}
                                 </button>
                               );
                             })}

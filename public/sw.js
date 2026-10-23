@@ -1,4 +1,4 @@
-const CACHE_NAME = 'faith-hub-pwa-v6.0';
+const CACHE_NAME = 'faith-hub-pwa-v6.1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
