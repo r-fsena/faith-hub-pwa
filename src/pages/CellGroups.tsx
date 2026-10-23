@@ -2535,6 +2535,150 @@ export const CellGroups: React.FC = () => {
               return true;
             });
 
+            // Se NÃO houver nenhuma partilha cadastrada na célula ainda:
+            if (snacks.length === 0) {
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Banner Acolhedor de Estado Inicial da Partilha */}
+                  <div style={{
+                    background: isDark 
+                      ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
+                      : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    borderRadius: '24px',
+                    padding: '32px 20px',
+                    textAlign: 'center',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--panel-border)',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <div style={{
+                      width: '68px',
+                      height: '68px',
+                      borderRadius: '22px',
+                      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                      color: '#b45309',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '2.2rem',
+                      boxShadow: '0 8px 24px rgba(245, 158, 11, 0.25)',
+                      animation: 'pulseIconGlow 2.5s infinite ease-in-out'
+                    }}>
+                      🥐
+                    </div>
+
+                    <div>
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: isDark ? 'rgba(15, 118, 110, 0.25)' : 'var(--accent-primary-light)',
+                        color: 'var(--accent-primary)',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '3px 10px',
+                        borderRadius: '8px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '8px'
+                      }}>
+                        <span>Mesa de Comunhão</span>
+                        {nextMeetingInfo && <span>• {nextMeetingInfo.displayLabel}</span>}
+                      </div>
+
+                      <h3 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 900,
+                        color: 'var(--text-main)',
+                        margin: '0 0 6px 0',
+                        letterSpacing: '-0.3px'
+                      }}>
+                        Nenhuma partilha cadastrada ainda
+                      </h3>
+
+                      <p style={{
+                        fontSize: '0.82rem',
+                        color: 'var(--text-muted)',
+                        lineHeight: 1.45,
+                        margin: 0,
+                        maxWidth: '340px'
+                      }}>
+                        Planeje os comes e bebes do nosso próximo encontro! Cadastre o que a célula vai partilhar e incentive a comunhão entre todos.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (myGroup?.meeting_day) {
+                          setNewSnackDate(calculateNextMeetingDate(myGroup.meeting_day).dateStr);
+                        }
+                        setIsSnackModalOpen(true);
+                      }}
+                      className="v2-pressable"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, #0d9488 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '13px 26px',
+                        borderRadius: '16px',
+                        fontWeight: 900,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 6px 20px rgba(15, 118, 110, 0.32)'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>🥖</span>
+                      <span>Iniciar Partilha da Célula</span>
+                    </button>
+                  </div>
+
+                  {/* Card com Ideias de Alimentos para Inspirar */}
+                  <div style={{
+                    background: isDark ? 'rgba(30, 41, 59, 0.50)' : '#f8fafc',
+                    borderRadius: '20px',
+                    padding: '16px',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      💡 Sugestões de Itens para o Encontro:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0'
+                      }}>
+                        <span style={{ fontSize: '1.3rem' }}>🥟</span>
+                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)', marginTop: '4px' }}>Salgados & Pães</div>
+                        <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Pão de queijo, tortas, salgados</div>
+                      </div>
+                      <div style={{
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        padding: '12px',
+                        borderRadius: '14px',
+                        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0'
+                      }}>
+                        <span style={{ fontSize: '1.3rem' }}>🥤</span>
+                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)', marginTop: '4px' }}>Bebidas & Sucos</div>
+                        <div style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Sucos, café, refrigerante</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 
@@ -5123,92 +5267,58 @@ export const CellGroups: React.FC = () => {
       )}
 
       {/* ========================================================
-          MODAL / BOTTOM DRAWER DE ADICIONAR ITEM À PARTILHA
+          MODAL / BOTTOM SHEET DE ADICIONAR ITEM À PARTILHA
           ======================================================== */}
       {isSnackModalOpen && (
-        <div 
-          onClick={() => setIsSnackModalOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.70)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            padding: 0
-          }}
+        <BottomSheet 
+          isOpen={isSnackModalOpen} 
+          onClose={() => setIsSnackModalOpen(false)} 
+          maxHeight="92dvh"
         >
-          <div 
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: isDark ? '#1e293b' : '#ffffff',
-              color: 'var(--text-main)',
-              width: '100%',
-              maxWidth: '520px',
-              borderTopLeftRadius: '28px',
-              borderTopRightRadius: '28px',
-              borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
-              padding: '22px 20px calc(24px + env(safe-area-inset-bottom, 12px)) 20px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-          >
-            {/* Header do Modal */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '15px',
-                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                  color: '#b45309',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.45rem',
-                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.20)',
-                  flexShrink: 0
-                }}>
-                  🥐
-                </div>
-                <div>
-                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
-                    Adicionar à Partilha
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                    Cadastre um alimento ou bebida para a célula
-                  </div>
-                </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            padding: '4px 4px calc(14px + env(safe-area-inset-bottom, 0px)) 4px'
+          }}>
+            {/* Header do BottomSheet */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '4px', borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #f1f5f9' }}>
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                color: '#b45309',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.45rem',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.20)',
+                flexShrink: 0
+              }}>
+                🥐
               </div>
-              <button
-                type="button"
-                onClick={() => setIsSnackModalOpen(false)}
-                className="v2-pressable"
-                style={{
-                  background: isDark ? 'rgba(255, 255, 255, 0.10)' : '#f1f5f9',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '34px',
-                  height: '34px',
-                  fontSize: '0.90rem',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900
-                }}
-              >
-                ✕
-              </button>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  color: 'var(--accent-primary)',
+                  marginBottom: '2px'
+                }}>
+                  Mesa de Comunhão · {myGroup.name}
+                </div>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '1.10rem',
+                  fontWeight: 900,
+                  color: 'var(--text-main)',
+                  letterSpacing: '-0.3px'
+                }}>
+                  Adicionar Item à Partilha
+                </h3>
+              </div>
             </div>
 
             {/* Sugestões Rápidas em Pílulas com 1 Toque */}
@@ -5237,7 +5347,7 @@ export const CellGroups: React.FC = () => {
                           ? '#ffffff' 
                           : 'var(--text-main)',
                         border: isSelected 
-                          ? '1px solid var(--accent-primary)' 
+                          ? '1.5px solid var(--accent-primary)' 
                           : (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid #e2e8f0'),
                         borderRadius: '12px',
                         padding: '7px 11px',
@@ -5247,6 +5357,7 @@ export const CellGroups: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '5px',
+                        boxShadow: isSelected ? '0 3px 10px rgba(15, 118, 110, 0.30)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
@@ -5259,7 +5370,7 @@ export const CellGroups: React.FC = () => {
             </div>
 
             {/* Formulário de Cadastro */}
-            <form onSubmit={handleCreateSnack} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleCreateSnack} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* Nome do Item */}
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
@@ -5274,11 +5385,11 @@ export const CellGroups: React.FC = () => {
                   required
                   style={{
                     width: '100%',
-                    fontSize: '0.88rem',
+                    fontSize: '0.90rem',
                     background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    padding: '11px 14px',
+                    borderRadius: '14px',
+                    padding: '12px 14px',
                     color: 'var(--text-main)',
                     boxSizing: 'border-box'
                   }}
@@ -5299,11 +5410,11 @@ export const CellGroups: React.FC = () => {
                     onChange={e => setNewSnackQty(e.target.value)}
                     style={{
                       width: '100%',
-                      fontSize: '0.84rem',
+                      fontSize: '0.86rem',
                       background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                       border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                      borderRadius: '12px',
-                      padding: '11px 14px',
+                      borderRadius: '14px',
+                      padding: '12px 14px',
                       color: 'var(--text-main)',
                       boxSizing: 'border-box'
                     }}
@@ -5322,11 +5433,11 @@ export const CellGroups: React.FC = () => {
                     required
                     style={{
                       width: '100%',
-                      fontSize: '0.84rem',
+                      fontSize: '0.86rem',
                       background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                       border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                      borderRadius: '12px',
-                      padding: '10px 12px',
+                      borderRadius: '14px',
+                      padding: '11px 12px',
                       color: 'var(--text-main)',
                       boxSizing: 'border-box'
                     }}
@@ -5334,7 +5445,7 @@ export const CellGroups: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quem vai levar? */}
+              {/* Seletor Visual de Compromisso (Quem vai levar?) */}
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
                   Quem vai levar este item?
@@ -5342,63 +5453,82 @@ export const CellGroups: React.FC = () => {
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '6px',
-                  background: isDark ? 'rgba(15, 23, 42, 0.70)' : '#f1f5f9',
-                  padding: '4px',
-                  borderRadius: '14px',
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0'
+                  gap: '8px'
                 }}>
-                  <button
-                    type="button"
+                  {/* Opção 1: Eu mesmo levo */}
+                  <div
                     onClick={() => setNewSnackAssigneeMode('me')}
                     className="v2-pressable"
                     style={{
-                      padding: '10px 8px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: newSnackAssigneeMode === 'me' 
-                        ? (isDark ? '#334155' : '#ffffff') 
-                        : 'transparent',
-                      color: newSnackAssigneeMode === 'me' 
-                        ? 'var(--accent-primary)' 
-                        : 'var(--text-secondary)',
-                      fontWeight: 800,
-                      fontSize: '0.76rem',
+                      padding: '12px',
+                      borderRadius: '14px',
                       cursor: 'pointer',
-                      boxShadow: newSnackAssigneeMode === 'me' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                      border: newSnackAssigneeMode === 'me'
+                        ? '1.5px solid var(--accent-primary)'
+                        : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.10)' : '#e2e8f0'}`,
+                      background: newSnackAssigneeMode === 'me'
+                        ? (isDark ? 'rgba(15, 118, 110, 0.20)' : 'var(--accent-primary-light)')
+                        : (isDark ? 'rgba(15, 23, 42, 0.50)' : '#f8fafc'),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    🙋 Eu mesmo levo
-                  </button>
-                  <button
-                    type="button"
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🙋</span>
+                      <span style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 900,
+                        color: newSnackAssigneeMode === 'me' ? 'var(--accent-primary)' : 'var(--text-main)'
+                      }}>
+                        Eu vou levar
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                      Assumo este item como meu compromisso
+                    </span>
+                  </div>
+
+                  {/* Opção 2: Deixar em aberto */}
+                  <div
                     onClick={() => setNewSnackAssigneeMode('open')}
                     className="v2-pressable"
                     style={{
-                      padding: '10px 8px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: newSnackAssigneeMode === 'open' 
-                        ? (isDark ? '#334155' : '#ffffff') 
-                        : 'transparent',
-                      color: newSnackAssigneeMode === 'open' 
-                        ? (isDark ? '#fbbf24' : '#d97706') 
-                        : 'var(--text-secondary)',
-                      fontWeight: 800,
-                      fontSize: '0.76rem',
+                      padding: '12px',
+                      borderRadius: '14px',
                       cursor: 'pointer',
-                      boxShadow: newSnackAssigneeMode === 'open' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                      border: newSnackAssigneeMode === 'open'
+                        ? (isDark ? '1.5px solid #f59e0b' : '1.5px solid #d97706')
+                        : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.10)' : '#e2e8f0'}`,
+                      background: newSnackAssigneeMode === 'open'
+                        ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb')
+                        : (isDark ? 'rgba(15, 23, 42, 0.50)' : '#f8fafc'),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    ⏳ Deixar em Aberto
-                  </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>⏳</span>
+                      <span style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 900,
+                        color: newSnackAssigneeMode === 'open' ? (isDark ? '#fbbf24' : '#b45309') : 'var(--text-main)'
+                      }}>
+                        Deixar em aberto
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                      Outro participante poderá assumir
+                    </span>
+                  </div>
                 </div>
 
                 {/* Seção extra se for Líder e quiser atribuir a um membro específico */}
                 {isCellLeader && groupMembers.length > 0 && (
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginTop: '10px' }}>
                     <button
                       type="button"
                       onClick={() => setNewSnackAssigneeMode('member')}
@@ -5406,7 +5536,7 @@ export const CellGroups: React.FC = () => {
                         background: newSnackAssigneeMode === 'member' ? 'var(--accent-primary-light)' : 'transparent',
                         border: 'none',
                         color: 'var(--accent-primary)',
-                        fontSize: '0.72rem',
+                        fontSize: '0.74rem',
                         fontWeight: 800,
                         cursor: 'pointer',
                         padding: '4px 8px',
@@ -5424,11 +5554,11 @@ export const CellGroups: React.FC = () => {
                         style={{
                           width: '100%',
                           marginTop: '6px',
-                          fontSize: '0.84rem',
+                          fontSize: '0.86rem',
                           background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                           border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
                           borderRadius: '12px',
-                          padding: '10px 12px',
+                          padding: '11px 12px',
                           color: 'var(--text-main)',
                           boxSizing: 'border-box'
                         }}
@@ -5451,17 +5581,17 @@ export const CellGroups: React.FC = () => {
                 style={{
                   marginTop: '10px',
                   padding: '14px',
-                  fontSize: '0.90rem',
+                  fontSize: '0.92rem',
                   fontWeight: 900,
                   borderRadius: '16px',
                   boxShadow: '0 4px 16px rgba(15, 118, 110, 0.28)'
                 }}
               >
-                {isAddingSnack ? 'Salvando na Escala...' : '✨ Adicionar à Mesa de Comunhão'}
+                {isAddingSnack ? 'Salvando na Escala...' : '✨ Confirmar e Adicionar à Mesa'}
               </button>
             </form>
           </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ========================================================
