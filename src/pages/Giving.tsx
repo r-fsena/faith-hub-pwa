@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
-import { getUploadPresignedUrl } from '../services/api';
+import { getUploadPresignedUrl, getAuthHeaders } from '../services/api';
 import { generatePixBrCode, getPixQrCodeImageUrl, normalizePixKey } from '../services/pixGenerator';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
@@ -115,53 +115,15 @@ export const Giving: React.FC = () => {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 3000);
 
-    // Registra intenção / transação na tesouraria
-    fetch(`${API_URL}/financial/transactions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        organization_id: orgId,
-        type: 'INCOME',
-        category: projectId ? 'Campanha / Projeto' : purpose,
-        description: projectId ? `Contribuição Projeto PIX: ${customTitle || branding.church_name}` : `${purpose} via App PWA`,
-        amount: currentAmount,
-        payment_method: 'PIX',
-        status: 'PAID',
-        member_name: user?.name || user?.email || 'Membro do App',
-        origin_module: 'TITHES',
-        project_id: projectId || null
-      })
-    }).catch(() => {});
+
   };
 
   const [confirmSuccess, setConfirmSuccess] = useState(false);
 
-  const handleConfirmContribution = async (customKey?: string, projectId?: string, customTitle?: string) => {
-    try {
-      await fetch(`${API_URL}/financial/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organization_id: orgId,
-          type: 'INCOME',
-          category: projectId ? 'Campanha / Projeto' : purpose,
-          description: projectId ? `Contribuição Projeto PIX: ${customTitle || branding.church_name}` : `${purpose} via App PWA`,
-          amount: currentAmount,
-          payment_method: 'PIX',
-          status: 'PAID',
-          member_name: user?.name || user?.email || 'Membro do App',
-          origin_module: 'TITHES',
-          project_id: projectId || null
-        })
-      });
-      setConfirmSuccess(true);
-      setTimeout(() => {
-        setConfirmSuccess(false);
-        setShowQrCode(false);
-      }, 2000);
-    } catch {
-      setShowQrCode(false);
-    }
+  const handleConfirmContribution = async (_key?: string, _projectId?: string, _title?: string) => {
+    // This acknowledgement does not settle a financial transaction.
+    setConfirmSuccess(true);
+    setTimeout(() => { setConfirmSuccess(false); setShowQrCode(false); }, 2000);
   };
 
   const handleOpenQrCodeModal = (customKey?: string, projectId?: string, customTitle?: string) => {
@@ -179,19 +141,21 @@ export const Giving: React.FC = () => {
     try {
       const presigned = await getUploadPresignedUrl(file.type, 'receipts');
       let receiptUrl = '';
+      if (!presigned?.uploadUrl) throw new Error('Não foi possível iniciar o envio');
       if (presigned?.uploadUrl) {
-        await fetch(presigned.uploadUrl, {
+        const uploadResponse = await fetch(presigned.uploadUrl, {
           method: 'PUT',
           headers: { 'Content-Type': file.type },
           body: file
         });
+        if (!uploadResponse.ok) throw new Error('Falha no envio do comprovante');
         receiptUrl = presigned.uploadUrl.split('?')[0];
       }
 
       // Salva transação na tesouraria com comprovante
-      await fetch(`${API_URL}/financial/transactions`, {
+      const recordResponse = await fetch(`${API_URL}/financial/transactions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           organization_id: orgId,
           type: 'INCOME',
@@ -199,7 +163,7 @@ export const Giving: React.FC = () => {
           description: `${activeModalTitle || purpose} com comprovante anexado`,
           amount: currentAmount,
           payment_method: 'PIX',
-          status: 'PAID',
+          status: 'PENDING',
           member_name: user?.name || user?.email || 'Membro do App',
           origin_module: 'TITHES',
           receipt_url: receiptUrl || null,
@@ -207,14 +171,13 @@ export const Giving: React.FC = () => {
         })
       });
 
+      if (!recordResponse.ok) throw new Error('Não foi possível registrar o comprovante. Entre em contato com a tesouraria.');
       setReceiptAttached(true);
       alert('Comprovante anexado e enviado com sucesso à Tesouraria!');
       setShowAttachModal(false);
     } catch (err) {
       console.error(err);
-      alert('Comprovante registrado com sucesso!');
-      setReceiptAttached(true);
-      setShowAttachModal(false);
+      alert(err instanceof Error ? err.message : 'Falha ao enviar comprovante.');
     } finally {
       setUploadingReceipt(false);
     }
@@ -549,7 +512,7 @@ export const Giving: React.FC = () => {
                 style={{ borderColor: '#059669', color: '#059669', background: '#ecfdf5', fontWeight: 800, padding: '12px' }}
                 onClick={() => handleConfirmContribution(activeModalPixKey, activeModalProjectId || undefined, activeModalTitle)}
               >
-                {confirmSuccess ? '🎉 Pagamento Confirmado com Sucesso!' : '✅ Já realizei o pagamento (Confirmar)'}
+                {confirmSuccess ? 'A igreja confirmará o recebimento.' : 'Já realizei a transferência'}
               </button>
 
               <button 

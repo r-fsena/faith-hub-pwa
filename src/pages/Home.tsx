@@ -96,10 +96,10 @@ export const Home: React.FC<HomeProps> = ({
     const broadcast = await fetchActiveBroadcast(branding.organization_id, currentCampusId);
     if (broadcast) {
       setActiveBroadcast(broadcast);
-    } else if (branding.youtube_url) {
+    } else if (branding.youtube) {
       setActiveBroadcast({
         title: `Culto Oficial • ${branding.church_name}`,
-        youtube_url: branding.youtube_url
+        youtube_url: branding.youtube
       });
     } else {
       setActiveBroadcast(null);

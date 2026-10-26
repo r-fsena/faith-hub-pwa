@@ -9,7 +9,8 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
     if (token) {
       return {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-organization-id': getActiveOrganizationId()
       };
     }
     return { 'Content-Type': 'application/json' };
@@ -121,37 +122,17 @@ export async function fetchEvents(organizationId?: string, campusId?: string) {
 }
 
 export async function checkoutTicket(payload: {
-  event_id: string;
-  lot_id?: string;
-  batch_id?: string;
-  user_id?: string;
-  attendee_name: string;
-  attendee_cpf?: string;
-  attendee_whatsapp: string;
-  attendee_email?: string;
-  dietary_notes?: string;
+  event_id: string; organization_id?: string; lot_id?: string; batch_id?: string; user_id?: string;
+  attendee_name: string; attendee_cpf?: string; attendee_whatsapp: string; attendee_email?: string; dietary_notes?: string;
   payment_method: 'PIX' | 'CREDIT_CARD';
 }) {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/tickets/checkout`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {
-    console.log("Ticket checkout API fallback", e);
-  }
-  // Retorna mock de sucesso se backend local estiver offline
-  return {
-    ticket_id: `TCK-${Date.now().toString().slice(-6)}`,
-    short_code: `FH-${Math.floor(100000 + Math.random() * 900000)}`,
-    status: 'PAID',
-    qrcode_token: `TICKET_${payload.event_id}_${payload.attendee_whatsapp}`,
-    qr_code_data: `TICKET_${payload.event_id}_${payload.attendee_whatsapp}`,
-    success: true
-  };
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE_URL}/tickets/checkout`, { method: 'POST', headers,
+    body: JSON.stringify({ ...payload, organization_id: payload.organization_id || getActiveOrganizationId() }) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Não foi possível registrar a inscrição.');
+  if (!data.ticket_id || !data.qrcode_token || !data.status) throw new Error('Resposta de inscrição inválida.');
+  return data;
 }
 
 export async function fetchMyTickets() {
@@ -213,29 +194,17 @@ export async function fetchPdvProducts(organizationId?: string, campusId?: strin
 }
 
 export async function createPdvOrder(payload: {
-  user_name: string;
-  delivery_method: 'church' | 'home';
-  delivery_details: string;
-  items_json: Array<{ name: string; qty: number; price: number; obs?: string }>;
-  total_price: number;
-  organization_id?: string;
+  user_name: string; customer_phone?: string; delivery_method: 'church' | 'home'; delivery_details: string;
+  items_json: Array<{ id: string; name: string; qty: number; price: number; obs?: string }>;
+  total_price: number; organization_id?: string; payment_method: 'PIX' | 'CREDIT_CARD';
 }) {
-  try {
-    const headers = await getAuthHeaders();
-    const org = payload.organization_id || getActiveOrganizationId();
-    const res = await fetch(`${API_BASE_URL}/pdv/orders`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ ...payload, organization_id: org })
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {
-    console.log("PDV order API fallback", e);
-  }
-  return {
-    id: `ORD-${Date.now().toString().slice(-6)}`,
-    status: 'RECEBIDO E PREPARANDO'
-  };
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE_URL}/pdv/orders`, { method: 'POST', headers,
+    body: JSON.stringify({ ...payload, organization_id: payload.organization_id || getActiveOrganizationId() }) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Não foi possível registrar o pedido.');
+  if (!data.id || !data.payment_status) throw new Error('Resposta de pedido inválida.');
+  return data;
 }
 
 export async function fetchPdvOrders(organizationId?: string) {
@@ -630,7 +599,7 @@ export async function fetchPrayers(category?: string, userId?: string, orgId?: s
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
 
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: await getAuthHeaders() });
     if (res.ok) return await res.json();
   } catch (e) {
     console.log("Prayers API fallback", e);
@@ -938,4 +907,10 @@ export async function cancelRosterSwap(swapId?: string, rosterItemId?: string): 
     console.log("Cancel swap error", e);
     return { success: false, message: 'Erro ao cancelar pedido de troca' };
   }
+}
+
+export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(await getAuthHeaders());
+  new Headers(options.headers).forEach((value, key) => headers.set(key, value));
+  return fetch(url, { ...options, headers });
 }

@@ -5,6 +5,7 @@ interface BottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   maxHeight?: string;
+  title?: string;
   showCloseButton?: boolean;
 }
 
@@ -13,6 +14,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onClose,
   children,
   maxHeight = '90dvh',
+  title,
   showCloseButton = true
 }) => {
   const [dragY, setDragY] = useState<number>(0);
@@ -147,6 +149,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           </button>
         )}
 
+        {title && <h2 style={{ margin: '8px 36px 16px 0', fontSize: '1.1rem' }}>{title}</h2>}
         {/* Conteúdo do Drawer */}
         {children}
       </div>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchChurchSettings, setActiveOrganizationId } from '../services/api';
+import { fetchChurchSettings, setActiveOrganizationId, fetchCampuses, getActiveCampusId } from '../services/api';
 
 export interface ChurchBranding {
   church_name: string;
@@ -128,13 +128,17 @@ const DEFAULT_BRANDING: ChurchBranding = {
   welcome_screen_config: DEFAULT_WELCOME_SCREEN_CONFIG
 };
 
+interface Campus { id: string; name: string; }
+
 interface BrandingContextType {
+  selectedCampus: Campus | null;
   branding: ChurchBranding;
   updateBranding: (newBranding: Partial<ChurchBranding>) => void;
 }
 
 const BrandingContext = createContext<BrandingContextType>({
   branding: DEFAULT_BRANDING,
+  selectedCampus: null,
   updateBranding: () => {}
 });
 
@@ -176,6 +180,7 @@ export function getChurchSlugFromUrl(): string | null {
 }
 
 export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
   const [branding, setBranding] = useState<ChurchBranding>(DEFAULT_BRANDING);
 
   useEffect(() => {
@@ -364,8 +369,19 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     applyTheme(updated);
   };
 
+  useEffect(() => {
+    let active = true;
+    const refreshCampus = async () => {
+      const campuses: Campus[] = await fetchCampuses(branding.organization_id);
+      if (active) setSelectedCampus(campuses.find(campus => campus.id === getActiveCampusId()) || null);
+    };
+    void refreshCampus();
+    window.addEventListener('pwa-campus-changed', refreshCampus);
+    return () => { active = false; window.removeEventListener('pwa-campus-changed', refreshCampus); };
+  }, [branding.organization_id]);
+
   return (
-    <BrandingContext.Provider value={{ branding, updateBranding }}>
+    <BrandingContext.Provider value={{ branding, updateBranding, selectedCampus }}>
       {children}
     </BrandingContext.Provider>
   );

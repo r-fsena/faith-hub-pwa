@@ -71,6 +71,7 @@ interface CellGroup {
   name: string;
   network?: string;
   focus?: string;
+  target_audience?: string;
   leader?: string;
   leader_name?: string;
   leader_id?: string;
@@ -113,6 +114,8 @@ interface CellStudy {
   id: string;
   title: string;
   passage?: string;
+  verse?: string;
+  verse_reference?: string;
   theme?: string;
   verse_text?: string;
   content?: string;
@@ -163,6 +166,7 @@ const getSnackIcon = (itemText?: string) => {
 };
 
 interface CellMember {
+  phone?: string;
   id: string;
   name: string;
   email?: string;
@@ -687,7 +691,7 @@ export const CellGroups: React.FC = () => {
         
         if (fullBook.chapters && fullBook.chapters.length > 0) {
           // Expande apenas o primeiro capítulo que ainda estiver pendente (se todos concluídos, deixa todos recolhidos)
-          const firstPending = fullBook.chapters.find((ch, idx) => !mergedCompletions.includes(ch.id || String(idx)));
+          const firstPending = fullBook.chapters.find((ch: Chapter, idx: number) => !mergedCompletions.includes(ch.id || String(idx)));
           if (firstPending) {
             setExpandedChapterIds([firstPending.id || '0']);
           } else {
@@ -728,7 +732,7 @@ export const CellGroups: React.FC = () => {
       setCompletedChapterIds(mergedCompletions);
 
       if (fullBook.chapters && fullBook.chapters.length > 0) {
-        const firstPending = fullBook.chapters.find((ch, idx) => !mergedCompletions.includes(ch.id || String(idx)));
+        const firstPending = fullBook.chapters.find((ch: Chapter, idx: number) => !mergedCompletions.includes(ch.id || String(idx)));
         if (firstPending) {
           setExpandedChapterIds([firstPending.id || '0']);
         } else {
@@ -855,7 +859,7 @@ export const CellGroups: React.FC = () => {
         setCompletedChapterIds(merged);
 
         if (defaultBook.chapters && defaultBook.chapters.length > 0) {
-          const firstPending = defaultBook.chapters.find((ch, idx) => !merged.includes(ch.id || String(idx)));
+          const firstPending = defaultBook.chapters.find((ch: Chapter, idx: number) => !merged.includes(ch.id || String(idx)));
           if (firstPending) {
             setExpandedChapterIds([firstPending.id || '0']);
           } else {

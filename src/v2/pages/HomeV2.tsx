@@ -106,10 +106,10 @@ export const HomeV2: React.FC<HomeV2Props> = ({
     swrFetch(`broadcast_${orgId}_${currentCampusId || 'all'}`, async () => {
       const broadcast = await fetchActiveBroadcast(orgId, currentCampusId);
       if (broadcast) return broadcast;
-      if (branding.youtube_url) {
+      if (branding.youtube) {
         return {
           title: `Culto Oficial • ${branding.church_name}`,
-          youtube_url: branding.youtube_url
+          youtube_url: branding.youtube
         };
       }
       return null;

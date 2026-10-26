@@ -61,7 +61,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const orgId = branding.organization_id || 'org_default';
-  const campusId = selectedCampus?.id || branding.campus_id;
+  const campusId = selectedCampus?.id || selectedCampus?.id;
 
   useEffect(() => {
     loadEventsFromBackend();
@@ -228,12 +228,12 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       });
 
       const newTicket: EventTicketData = {
-        id: checkoutRes?.ticket_id || `TCK-${Date.now().toString().slice(-6)}`,
+        id: checkoutRes.ticket_id,
         ticket_id: checkoutRes?.ticket_id || `TCK-${Date.now().toString().slice(-6)}`,
-        short_code: checkoutRes?.short_code || `FH-${Math.floor(100000 + Math.random() * 900000)}`,
-        qrcode_token: checkoutRes?.qrcode_token || checkoutRes?.qr_code_data || `TICKET_${selectedEvent.id}_${attendeePhone}`,
+        short_code: checkoutRes.short_code,
+        qrcode_token: checkoutRes.qrcode_token,
         qr_code_data: checkoutRes?.qrcode_token || checkoutRes?.qr_code_data || `TICKET_${selectedEvent.id}_${attendeePhone}`,
-        status: checkoutRes?.status || 'PAID',
+        status: checkoutRes.status,
         event_title: selectedEvent.title,
         date_formatted: selectedEvent.date_formatted,
         location: selectedEvent.location,
@@ -255,7 +255,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setPaymentMode('details');
       setDietaryNotes('');
 
-      alert("🎉 Inscrição confirmada com sucesso! Seu passaporte digital com QR Code já está disponível.");
+      alert(checkoutRes.status === 'PAID' ? 'Inscrição confirmada! Seu ingresso está disponível.' : 'Inscrição registrada. O ingresso aguarda confirmação do pagamento.');
     } catch (err: any) {
       console.error(err);
       alert('Erro ao processar inscrição: ' + (err.message || 'Tente novamente'));
@@ -718,7 +718,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <button 
                       type="button" 
                       className="btn-pwa-secondary" 
-                      disabled={isSubmitting}
+                      disabled
+                      title="Pagamento por cartão indisponível. Utilize Pix."
                       onClick={() => {
                         if (!attendeeName.trim() || !attendeePhone.trim()) {
                           alert("Preencha nome e WhatsApp antes de continuar para o cartão.");

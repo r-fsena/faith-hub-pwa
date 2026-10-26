@@ -433,24 +433,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
       const userPhone = phone.trim();
       const userName = name.trim() || email.split('@')[0];
 
-      await fetch(`${API_URL}/members/self-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          name: userName,
-          phone: userPhone ? (userPhone.startsWith('+') ? userPhone : `+55${userPhone.replace(/\D/g, '')}`) : undefined,
-          birth_date: birthDate || undefined,
-          address: fullSignupAddr || undefined,
-          address_street: signupStreet || undefined,
-          address_number: signupNumber || undefined,
-          address_complement: signupComplement || undefined,
-          address_neighborhood: signupNeighborhood || undefined,
-          address_city: signupCity || undefined,
-          address_state: signupState || undefined,
-          address_zip: signupZip || undefined
-        })
-      }).catch(() => {});
+      if (fullSignupAddr) localStorage.setItem('faithhub_user_address', fullSignupAddr);
+      if (userPhone) localStorage.setItem('faithhub_user_phone', userPhone);
+      if (birthDate) localStorage.setItem('faithhub_user_birth_date', birthDate);
+
 
       alert('Conta confirmada com sucesso! Faça seu login.');
       setAuthMode('login');

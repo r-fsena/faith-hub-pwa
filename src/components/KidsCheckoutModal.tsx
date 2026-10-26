@@ -1,3 +1,4 @@
+import { authFetch } from '../services/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +15,7 @@ interface KidsCheckoutModalProps {
 export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, onClose }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
-  const orgId = branding.organization_id || branding.id || 'org_default';
+  const orgId = branding.organization_id || 'org_default';
 
   // Abas do Modal: 'list' (Presentes) | 'camera' (Escanear QR) | 'pin' (Teclado PIN)
   const [activeTab, setActiveTab] = useState<'list' | 'camera' | 'pin'>('list');
@@ -134,7 +135,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
 
   const loadRooms = async () => {
     try {
-      const res = await fetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
+      const res = await authFetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
       if (res.ok) {
         const json = await res.json();
         setRooms(json.data || []);
@@ -147,7 +148,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
   const loadCheckins = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
+      const res = await authFetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
       if (res.ok) {
         const json = await res.json();
         setActiveCheckins(json.data || []);
@@ -185,7 +186,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
     setErrorMessage('');
 
     try {
-      const res = await fetch(`${API_URL}/kids/checkout`, {
+      const res = await authFetch(`${API_URL}/kids/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

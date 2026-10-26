@@ -225,7 +225,8 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
       ctx.fillText('PARTICIPANTE / TITULAR', 40, 168);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px Inter, sans-serif';
-      const attendeeShort = ticket.attendee_name.length > 26 ? ticket.attendee_name.substring(0, 24) + '...' : ticket.attendee_name;
+      const attendeeName = ticket?.attendee_name || 'Participante';
+      const attendeeShort = attendeeName.length > 26 ? attendeeName.substring(0, 24) + '...' : attendeeName;
       ctx.fillText(attendeeShort, 40, 202);
 
       // Data & Local

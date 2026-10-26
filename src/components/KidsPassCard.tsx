@@ -1,3 +1,4 @@
+import { authFetch } from '../services/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,8 +25,8 @@ export const KidsPassCard: React.FC = () => {
     if (!parentPhone) return;
 
     try {
-      const orgId = branding.organization_id || branding.id || 'org_default';
-      const res = await fetch(`${API_URL}/kids/parent-status?phone=${encodeURIComponent(parentPhone)}&organization_id=${encodeURIComponent(orgId)}`);
+      const orgId = branding.organization_id || 'org_default';
+      const res = await authFetch(`${API_URL}/kids/parent-status?phone=${encodeURIComponent(parentPhone)}&organization_id=${encodeURIComponent(orgId)}`);
       if (res.ok) {
         const data = await res.json();
         const list = data.active_checkins || [];
@@ -56,7 +57,7 @@ export const KidsPassCard: React.FC = () => {
   };
 
   const userPhone = user?.phone || user?.attributes?.phone_number || '';
-  const orgId = branding.organization_id || branding.id || 'org_default';
+  const orgId = branding.organization_id || 'org_default';
 
   useEffect(() => {
     fetchParentStatus();

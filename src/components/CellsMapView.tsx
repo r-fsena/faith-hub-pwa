@@ -344,7 +344,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
 
       // Encontra a célula mais próxima para informar a distância
       let closest: { cell: CellGroupMapItem; dist: number } | null = null;
-      validCells.forEach(c => {
+      for (const c of validCells) {
         const cLat = Number(c.latitude);
         const cLng = Number(c.longitude);
         if (!isNaN(cLat) && !isNaN(cLng)) {
@@ -353,7 +353,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             closest = { cell: c, dist: d };
           }
         }
-      });
+      }
 
       if (closest) {
         setLocationInfo(`Você está a ${closest.dist} km da célula mais próxima (${closest.cell.name})`);

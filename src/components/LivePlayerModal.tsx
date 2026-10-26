@@ -72,10 +72,10 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
       const data = await fetchActiveBroadcast(branding.organization_id, selectedCampus?.id);
       if (data && data.youtube_url) {
         setBroadcast(data);
-      } else if (branding.youtube_url) {
+      } else if (branding.youtube) {
         setBroadcast({
           title: `Culto Oficial • ${branding.church_name}`,
-          youtube_url: branding.youtube_url
+          youtube_url: branding.youtube
         });
       }
     } catch {} finally {
@@ -85,7 +85,7 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
-  const rawUrl = broadcast?.youtube_url || branding.youtube_url || 'https://www.youtube.com/watch?v=MeX0yHMs9Nk';
+  const rawUrl = broadcast?.youtube_url || branding.youtube || 'https://www.youtube.com/watch?v=MeX0yHMs9Nk';
   const embedUrl = getYoutubeEmbedUrl(rawUrl);
   const videoTitle = broadcast?.title || `Culto de Celebração • ${branding.church_name}`;
 

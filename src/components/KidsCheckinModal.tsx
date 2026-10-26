@@ -1,3 +1,4 @@
+import { authFetch } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +16,7 @@ interface KidsCheckinModalProps {
 export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onClose }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
-  const orgId = branding.organization_id || branding.id || 'org_default';
+  const orgId = branding.organization_id || 'org_default';
 
   const [mode, setMode] = useState<'MEMBER' | 'VISITOR'>('MEMBER');
   const [rooms, setRooms] = useState<any[]>([]);
@@ -67,7 +68,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
   const loadRooms = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
+      const res = await authFetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
       if (res.ok) {
         const json = await res.json();
         const list = json.data || [];
@@ -92,7 +93,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
     }
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`, {
+      const res = await authFetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`, {
         headers
       });
       if (res.ok) {
@@ -149,7 +150,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
         checked_in_by: user?.name || 'Educador (PWA Mobile)'
       };
 
-      const res = await fetch(`${API_URL}/kids/checkin`, {
+      const res = await authFetch(`${API_URL}/kids/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -196,7 +197,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
         checked_in_by: user?.name || 'Educador (PWA Mobile)'
       };
 
-      const res = await fetch(`${API_URL}/kids/checkin`, {
+      const res = await authFetch(`${API_URL}/kids/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

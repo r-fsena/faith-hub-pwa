@@ -62,7 +62,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [submittingTestimony, setSubmittingTestimony] = useState(false);
 
   const orgId = branding.organization_id || 'org_default';
-  const campusId = selectedCampus?.id || branding.campus_id;
+  const campusId = selectedCampus?.id || selectedCampus?.id;
 
   useEffect(() => {
     loadPrayers();

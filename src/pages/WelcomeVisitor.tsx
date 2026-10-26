@@ -35,7 +35,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
         email: email.trim() || undefined,
         notes: prayerRequest.trim() ? `Pedido de oração no acolhimento: ${prayerRequest.trim()}` : undefined,
         origin_channel: 'QR_CODE',
-        organization_id: branding.organizationId || 'org_default'
+        organization_id: branding.organization_id || 'org_default'
       };
 
       const res = await fetch(`${API_URL}/pastoral/visitors`, {
@@ -87,7 +87,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
           </button>
         )}
         <div style={{ fontSize: '0.80rem', color: '#94a3b8', fontWeight: 600 }}>
-          {branding.churchName || 'Comunidade da Fé'}
+          {branding.church_name || 'Comunidade da Fé'}
         </div>
       </div>
 

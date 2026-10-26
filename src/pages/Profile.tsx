@@ -12,6 +12,7 @@ import { KidsPagingModal } from '../components/KidsPagingModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { WelcomeLoginScreenV1 as WelcomeLoginScreen } from '../v1/components/WelcomeLoginScreenV1';
 import { checkIsMasterOrAdmin } from '../utils/roles';
+import { DigitalMemberCard } from '../components/DigitalMemberCard';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
@@ -95,6 +96,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
   const [avatarUrl, setAvatarUrl] = useState<string>(CURATED_AVATARS[0]);
   const [memberProfile, setMemberProfile] = useState<{
     id?: string;
+    status?: string;
+    created_at?: string;
     name: string;
     phone: string;
     birth_date: string;
@@ -279,6 +282,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
 
         setMemberProfile({
           id: found.id || user.userId,
+          status: found.status,
+          created_at: found.created_at,
           name: finalName,
           phone: finalPhone,
           birth_date: finalBirthDate,
@@ -401,11 +406,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
       // 2. Se falhou ou membro novo, sincroniza via self-register
       if (!updatedOk) {
         try {
-          await fetch(`${API_URL}/members/self-register`, {
+          const syncResponse = await fetch(`${API_URL}/members/self-register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthHeaders(),
             body: JSON.stringify(payload)
           });
+          if (!syncResponse.ok) throw new Error('Não foi possível salvar o perfil');
           updatedOk = true;
         } catch (errSelf) {
           console.warn("Falha no self-register:", errSelf);
@@ -543,7 +549,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
       localStorage.setItem('faithhub_user_name', name.trim());
       localStorage.setItem('faithhub_user_email', email.trim());
       if (phone.trim()) localStorage.setItem('faithhub_user_phone', phone.trim());
-      if (signupAddress.trim()) localStorage.setItem('faithhub_user_address', signupAddress.trim());
+      if ([signupStreet, signupNumber, signupComplement, signupNeighborhood, signupCity, signupState, signupZip].filter(Boolean).join(', ')) localStorage.setItem('faithhub_user_address', [signupStreet, signupNumber, signupComplement, signupNeighborhood, signupCity, signupState, signupZip].filter(Boolean).join(', '));
 
       await signUp({
         username: email.trim(),
@@ -577,30 +583,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
 
       const fullSignupAddr = signupStreet 
         ? `${signupStreet}, ${signupNumber || 'S/N'}${signupComplement ? ` - ${signupComplement}` : ''} - ${signupNeighborhood}, ${signupCity} - ${signupState}`
-        : (signupAddress.trim() || localStorage.getItem('faithhub_user_address') || '');
+        : ([signupStreet, signupNumber, signupComplement, signupNeighborhood, signupCity, signupState, signupZip].filter(Boolean).join(', ') || localStorage.getItem('faithhub_user_address') || '');
       const userPhone = phone.trim() || localStorage.getItem('faithhub_user_phone') || '';
       const userName = name.trim() || localStorage.getItem('faithhub_user_name') || email.split('@')[0];
 
-      // Sincroniza imediatamente com o banco MySQL
-      await fetch(`${API_URL}/members/self-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          name: userName,
-          phone: userPhone ? (userPhone.startsWith('+') ? userPhone : `+55${userPhone.replace(/\D/g, '')}`) : undefined,
-          birth_date: birthDate || undefined,
-          address: fullSignupAddr || undefined,
-          address_street: signupStreet || undefined,
-          address_number: signupNumber || undefined,
-          address_complement: signupComplement || undefined,
-          address_neighborhood: signupNeighborhood || undefined,
-          address_city: signupCity || undefined,
-          address_state: signupState || undefined,
-          address_zip: signupZip || undefined
-        })
-      }).catch((e) => console.log('self-register error:', e));
-
+      if (fullSignupAddr) localStorage.setItem('faithhub_user_address', fullSignupAddr);
+      // Member synchronization happens only after an authenticated sign-in.
       alert('Conta confirmada com sucesso! Faça seu login.');
       setAuthMode('login');
     } catch (err: any) {
@@ -694,8 +682,27 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         />
 
         <div className="responsive-2col-layout">
-          {/* Coluna 1: Perfil do Membro, Operações Ministeriais e Logout */}
+          {/* Coluna 1: Carteirinha Digital, Perfil do Membro, Operações Ministeriais e Logout */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            {/* CARTEIRINHA DIGITAL OFICIAL COM QR CODE */}
+            {isFeatureEnabled('members.digital_card', false) && <DigitalMemberCard
+              member={{
+                id: memberProfile.id || user?.userId || user?.email,
+                name: memberProfile.name || user?.name || 'Membro da Igreja',
+                email: user?.email,
+                role: memberProfile.role || 'Membro',
+                status: memberProfile.status || 'PENDING',
+                created_at: memberProfile.created_at,
+                campus_name: memberProfile.campus_name || 'Sede Principal',
+                birth_date: memberProfile.birth_date
+              }}
+              churchName={branding.church_name || 'Faith-Hub Community'}
+              logoUrl={branding.logo_icon_url || '/brand/logo-symbol.png'}
+              avatarUrl={avatarUrl}
+              accentColor={branding.primary_color || 'var(--accent-primary, #0f766e)'}
+            />}
+
             {/* Card Principal de Perfil do Membro */}
             <div style={{
               background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',

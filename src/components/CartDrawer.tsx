@@ -49,6 +49,7 @@ export const CartDrawer: React.FC = () => {
   const [createdOrderId, setCreatedOrderId] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [orderTotal, setOrderTotal] = useState<number | null>(null);
 
   if (!isCartOpen) return null;
 
@@ -78,6 +79,7 @@ export const CartDrawer: React.FC = () => {
       : `Retirada: ${pickupOption}`;
 
     const itemsPayload = items.map(item => ({
+      id: item.productId,
       name: item.name,
       qty: item.quantity,
       price: item.price,
@@ -86,6 +88,8 @@ export const CartDrawer: React.FC = () => {
 
     try {
       const orderRes = await createPdvOrder({
+        payment_method: paymentMethod,
+        customer_phone: customerPhone.trim(),
         user_name: `${customerName.trim()} (${customerPhone.trim() || 'Sem tel'})`,
         delivery_method: deliveryMethod,
         delivery_details: `${deliveryDetailsString} [Pgto: ${paymentMethod}${extraInfo ? ` - ${extraInfo}` : ''}]`,
@@ -93,7 +97,8 @@ export const CartDrawer: React.FC = () => {
         total_price: totalPrice
       });
 
-      const orderId = orderRes?.id || `ORD-${Date.now().toString().slice(-6)}`;
+      const orderId = orderRes.id;
+      setOrderTotal(orderRes.total_price);
       setCreatedOrderId(orderId);
 
       // Salva no histórico de pedidos do usuário atual
@@ -103,8 +108,8 @@ export const CartDrawer: React.FC = () => {
       const newOrderRecord = {
         id: orderId,
         date: new Date().toLocaleDateString('pt-BR'),
-        status: 'RECEBIDO E PREPARANDO',
-        total: totalPrice,
+        status: 'AGUARDANDO PAGAMENTO',
+        total: orderRes.total_price,
         items: itemsPayload,
         delivery: deliveryDetailsString,
         payment: paymentMethod,
@@ -116,30 +121,18 @@ export const CartDrawer: React.FC = () => {
       return orderId;
     } catch (e) {
       console.error(e);
-      return `ORD-${Date.now().toString().slice(-6)}`;
+      throw e;
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleStartPix = async () => {
-    await createOrderRecord('PIX');
-    setCheckoutStep('pix');
+    try { await createOrderRecord('PIX'); setCheckoutStep('pix'); }
+    catch (error) { alert(error instanceof Error ? error.message : 'Erro ao registrar pedido.'); }
   };
 
-  const handleCreditCardSubmit = async (cardData: any) => {
-    setIsSaving(true);
-    try {
-      await createOrderRecord('CREDIT_CARD', `${cardData.installments}x cartão final ${cardData.number.slice(-4)}`);
-      alert("✅ Pagamento com Cartão Aprovado via Pagar.me!");
-      setCheckoutStep('success');
-      clearCart();
-    } catch (err) {
-      alert("Erro ao processar cartão.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleCreditCardSubmit = async () => { alert('Pagamento por cartão indisponível. Utilize Pix.'); };
 
   const getCartPixBrCode = () => {
     const rawKey = branding.pix_key || branding.cnpj || branding.email || '';
@@ -149,7 +142,7 @@ export const CartDrawer: React.FC = () => {
         pixKey: rawKey,
         merchantName: branding.church_name || 'Igreja',
         merchantCity: branding.city || 'Brasil',
-        amount: totalPrice,
+        amount: orderTotal ?? totalPrice,
         txId: createdOrderId ? `PED${createdOrderId.substring(0, 10)}` : 'LOJA',
         description: `Pedido ${createdOrderId || ''} ${branding.church_name}`.substring(0, 25)
       });
@@ -447,7 +440,7 @@ export const CartDrawer: React.FC = () => {
 
               {/* Opção Cartão de Crédito Pagar.me */}
               <div
-                onClick={() => setCheckoutStep('card')}
+                aria-disabled="true" title="Pagamento por cartão indisponível"
                 style={{
                   padding: '16px',
                   borderRadius: '16px',
@@ -546,10 +539,10 @@ export const CartDrawer: React.FC = () => {
               ✓
             </div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-              Pedido #{createdOrderId} Confirmado!
+              Pedido #{createdOrderId} Registrado!
             </h3>
             <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
-              Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado no sistema da igreja e está sendo preparado.
+              Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado. A confirmação do pagamento será feita pela igreja.
             </p>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', width: '100%', fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
               {deliveryMethod === 'church' ? `Apresente seu nome ou código no ${branding.store_counter_label || 'balcão da loja da igreja'}.` : 'Seu pedido será entregue no endereço informado.'}

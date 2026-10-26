@@ -1,3 +1,4 @@
+import { authFetch } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +18,7 @@ interface KidsVolunteerPanelProps {
 export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, onClose, initialTab }) => {
   const { branding } = useBranding();
   const { user } = useAuth();
-  const orgId = branding.organization_id || branding.id || 'org_default';
+  const orgId = branding.organization_id || 'org_default';
 
   // Subtabs no painel do voluntário
   const [subTab, setSubTab] = useState<'presence' | 'checkin' | 'calls'>('presence');
@@ -93,7 +94,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     }
     try {
       // 1. Salas
-      const roomsRes = await fetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
+      const roomsRes = await authFetch(`${API_URL}/kids/rooms?organization_id=${encodeURIComponent(orgId)}`);
       if (roomsRes.ok) {
         const json = await roomsRes.json();
         const list = json.data || [];
@@ -104,7 +105,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
       }
 
       // 2. Check-ins Ativos
-      const checkRes = await fetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
+      const checkRes = await authFetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
       if (checkRes.ok) {
         const json = await checkRes.json();
         setActiveCheckins(json.data || []);
@@ -121,7 +122,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const loadFamilies = async (query = '') => {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`, {
+      const res = await authFetch(`${API_URL}/kids/families?organization_id=${encodeURIComponent(orgId)}&search=${encodeURIComponent(query)}`, {
         headers
       });
       if (res.ok) {
@@ -166,7 +167,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
         checked_in_by: user?.name || 'Educador (PWA Mobile)'
       };
 
-      const res = await fetch(`${API_URL}/kids/checkin`, {
+      const res = await authFetch(`${API_URL}/kids/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -210,7 +211,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     if (!callingCheckin) return;
     setCallingSaving(true);
     try {
-      const res = await fetch(`${API_URL}/kids/call-parent`, {
+      const res = await authFetch(`${API_URL}/kids/call-parent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -234,7 +235,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   // Handler: Resolver Chamada
   const handleResolveCall = async (checkinId: string) => {
     try {
-      await fetch(`${API_URL}/kids/resolve-call`, {
+      await authFetch(`${API_URL}/kids/resolve-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ checkin_id: checkinId })
@@ -251,7 +252,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     if (!checkoutTarget) return;
     setCheckoutError('');
     try {
-      const res = await fetch(`${API_URL}/kids/checkout`, {
+      const res = await authFetch(`${API_URL}/kids/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -295,7 +296,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
     }
 
     try {
-      const res = await fetch(`${API_URL}/kids/checkout`, {
+      const res = await authFetch(`${API_URL}/kids/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1363,7 +1364,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
         isOpen={!!createdCheckinSuccess}
         onClose={() => {
           setCreatedCheckinSuccess(null);
-          setSubTab('rooms'); // Retorna para a tela inicial das salas
+          setSubTab('presence'); // Retorna para a tela inicial das salas
         }}
         onNewCheckin={() => {
           setCreatedCheckinSuccess(null);

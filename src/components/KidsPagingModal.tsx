@@ -1,3 +1,4 @@
+import { authFetch } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { BottomSheet } from './BottomSheet';
@@ -18,7 +19,7 @@ const CALL_REASONS = [
 
 export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClose }) => {
   const { branding } = useBranding();
-  const orgId = branding.organization_id || branding.id || 'org_default';
+  const orgId = branding.organization_id || 'org_default';
 
   const [activeCheckins, setActiveCheckins] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
+      const res = await authFetch(`${API_URL}/kids/checkins?organization_id=${encodeURIComponent(orgId)}&status=active`);
       if (res.ok) {
         const json = await res.json();
         setActiveCheckins(json.data || []);
@@ -64,7 +65,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/kids/call-parent`, {
+      const res = await authFetch(`${API_URL}/kids/call-parent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
   // Dar Baixa / Resolver Chamada
   const handleResolveCall = async (checkinId: string) => {
     try {
-      await fetch(`${API_URL}/kids/resolve-call`, {
+      await authFetch(`${API_URL}/kids/resolve-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ checkin_id: checkinId })

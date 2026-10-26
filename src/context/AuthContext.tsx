@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Amplify } from 'aws-amplify';
 import { getCurrentUser, signOut as amplifySignOut, fetchUserAttributes } from 'aws-amplify/auth';
+import { getAuthHeaders, getActiveOrganizationId } from '../services/api';
 import { Hub } from 'aws-amplify/utils';
 import awsmobile from '../aws-exports';
 
@@ -11,6 +12,8 @@ interface MemberUser {
   userId: string;
   email: string;
   name?: string;
+  phone?: string;
+  attributes?: Record<string, string | undefined>;
 }
 
 interface AuthContextType {
@@ -86,21 +89,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           userId: currentUser.userId,
           email,
-          name: name || currentUser.username
+          name: name || currentUser.username,
+          phone: attrs.phone_number,
+          attributes: attrs
         });
         setIsAuthenticated(true);
 
         // Auto-sincronização automática com a tabela de membros do MySQL
         if (email) {
-          fetch(`${API_URL}/members/self-register`, {
+          await fetch(`${API_URL}/members/self-register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthHeaders(),
             body: JSON.stringify({
+              organization_id: getActiveOrganizationId() || 'org_default',
               id: currentUser.userId,
               email,
               name: name || currentUser.username,
               phone: attrs.phone_number || undefined,
-              birthdate: attrs.birthdate || undefined
+              birthdate: attrs.birthdate || localStorage.getItem('faithhub_user_birth_date') || undefined,
+              address: localStorage.getItem('faithhub_user_address') || undefined
             })
           }).catch(() => {});
         }

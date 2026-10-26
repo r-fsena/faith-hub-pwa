@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface CartItem {
+  productId: string;
   id: string;
   name: string;
   price: number;
@@ -42,7 +43,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem('faithhub_pwa_cart');
     if (saved) {
       try {
-        setItems(JSON.parse(saved));
+        setItems(JSON.parse(saved).map((item: CartItem) => ({ ...item, productId: item.productId || item.id.replace(/_\d+$/, '') })));
       } catch (e) {}
     }
   }, []);
@@ -53,7 +54,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addItem = (product: { id: string; name: string; price: number; image_url?: string; category?: string; observation?: string }) => {
-    const existingIndex = items.findIndex(i => i.id === product.id && i.observation === product.observation);
+    const existingIndex = items.findIndex(i => i.productId === product.id && i.observation === product.observation);
     if (existingIndex > -1) {
       const updated = [...items];
       updated[existingIndex].quantity += 1;
@@ -61,6 +62,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       const newItem: CartItem = {
         id: `${product.id}_${Date.now()}`,
+        productId: product.id,
         name: product.name,
         price: product.price,
         image_url: product.image_url,
