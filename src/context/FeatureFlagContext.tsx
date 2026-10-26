@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useBranding } from './BrandingContext';
 import { getActiveCampusId } from '../services/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.us-east-2.amazonaws.com';
 
 export interface FeatureFlagContextType {
   flags: Record<string, boolean>;

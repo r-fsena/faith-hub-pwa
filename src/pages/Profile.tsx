@@ -14,7 +14,7 @@ import { WelcomeLoginScreenV1 as WelcomeLoginScreen } from '../v1/components/Wel
 import { checkIsMasterOrAdmin } from '../utils/roles';
 import { DigitalMemberCard } from '../components/DigitalMemberCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.us-east-2.amazonaws.com';
 
 const CURATED_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
