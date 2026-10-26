@@ -1,6 +1,7 @@
-const CACHE_NAME = 'faith-hub-pwa-v6.11';
+const CACHE_NAME = 'faith-hub-pwa-v6.12';
 const ASSETS_TO_CACHE = [
   '/',
+  '/index.html',
   '/manifest.json',
   '/brand/logo-symbol.png',
   '/brand/logo-original.png',
@@ -10,7 +11,9 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        console.warn('Erro ao pré-cachear alguns assets iniciais:', err);
+      });
     }).then(() => self.skipWaiting())
   );
 });
@@ -38,27 +41,40 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // Ignora chamadas de desenvolvimento, HMR, APIs e extensões
+  // Ignora chamadas que não sejam GET
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Ignora chamadas de desenvolvimento, HMR, APIs remotas e extensões
   if (
     url.includes('/@') ||
     url.includes('/src/') ||
     url.includes('chrome-extension') ||
     url.includes('execute-api') ||
-    event.request.method !== 'GET'
+    url.includes('/api/') ||
+    !url.startsWith(self.location.origin)
   ) {
     return;
   }
 
+  // Interceptação de Navegação (Páginas HTML do SPA)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html') || caches.match('/');
-      })
+      fetch(event.request)
+        .catch(async () => {
+          const cached = (await caches.match('/index.html')) || (await caches.match('/'));
+          if (cached) return cached;
+          return new Response(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Faith-Hub Offline</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h2>Modo Offline</h2><p>Verifique sua conexão com a internet para carregar o aplicativo.</p></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 }
+          );
+        })
     );
     return;
   }
 
-  // Network First para sempre carregar o bundle mais recente
+  // Interceptação de Assets Estáticos com Fallback Seguro (Nunca retorna null/undefined)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -70,8 +86,13 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       })
-      .catch(() => {
-        return caches.match(event.request);
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Fallback seguro para evitar 'response is null' no FetchEvent
+        return new Response('', { status: 404, statusText: 'Not Found in Cache or Network' });
       })
   );
 });
