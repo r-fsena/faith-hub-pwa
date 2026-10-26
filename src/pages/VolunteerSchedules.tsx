@@ -127,6 +127,33 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
     loadData();
   }, []);
 
+  // Auto-posiciona o calendário no mês da próxima escala do usuário (caso o mês atual não tenha escalas)
+  useEffect(() => {
+    if (schedules && schedules.length > 0) {
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+
+      const hasInCurrent = schedules.some(s => {
+        const iso = toDateISO(s.service_date);
+        return iso && iso.startsWith(`${curYear}-${String(curMonth).padStart(2, '0')}`);
+      });
+
+      if (!hasInCurrent) {
+        // Encontra o próximo convite pendente ou a primeira escala cadastrada
+        const target = schedules.find(s => s.confirmation_status === 'PENDING') || schedules[0];
+        const targetIso = toDateISO(target?.service_date);
+        if (targetIso) {
+          const [tY, tM] = targetIso.split('-').map(Number);
+          if (tY && tM) {
+            setCalendarMonth(new Date(tY, tM - 1, 1));
+            setSelectedCalendarDate(targetIso);
+          }
+        }
+      }
+    }
+  }, [schedules]);
+
   const handleRespond = async (rosterItemId: string, status: 'ACCEPTED' | 'DECLINED', reason?: string) => {
     setAnsweringItemId(rosterItemId);
     try {
@@ -445,8 +472,28 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               <>
                 {/* Top Bar da Aba: Contagem e Alternância de Visão Lista / Calendário */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>🔔 Suas Convocações ({schedules.length})</span>
+                    <button
+                      type="button"
+                      onClick={() => loadData()}
+                      disabled={loading}
+                      title="Sincronizar e atualizar escalas"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        padding: '2px 4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'var(--text-muted, #64748b)',
+                        opacity: loading ? 0.4 : 0.85,
+                        transition: 'opacity 0.2s'
+                      }}
+                    >
+                      {loading ? '⏳' : '🔄'}
+                    </button>
                     {(() => {
                       const pendingCount = schedules.filter(s => s.confirmation_status === 'PENDING').length;
                       if (pendingCount > 0) {
@@ -808,6 +855,66 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             <span style={{ fontSize: '0.82rem', color: '#b45309', fontWeight: 900 }}>Ver →</span>
                           </div>
                         );
+                      })()}
+
+                      {/* Banner Inteligente de Salto: Mostrado quando o mês visualizado não tem escalas mas há escalas em outro mês */}
+                      {(() => {
+                        const curYear = calendarMonth.getFullYear();
+                        const curMonth = calendarMonth.getMonth() + 1;
+                        const inThisMonth = schedules.filter(s => {
+                          const iso = toDateISO(s.service_date);
+                          if (!iso) return false;
+                          const [y, m] = iso.split('-');
+                          return parseInt(y, 10) === curYear && parseInt(m, 10) === curMonth;
+                        });
+
+                        if (inThisMonth.length === 0 && schedules.length > 0) {
+                          const nextSch = schedules[0];
+                          const nextIso = toDateISO(nextSch.service_date);
+                          if (!nextIso) return null;
+                          const [nY, nM, nD] = nextIso.split('-').map(Number);
+                          const dateObj = new Date(nY, nM - 1, nD);
+                          const monthName = dateObj.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+                          return (
+                            <div
+                              onClick={() => {
+                                setCalendarMonth(new Date(nY, nM - 1, 1));
+                                setSelectedCalendarDate(nextIso);
+                                setTimeout(() => {
+                                  const el = document.getElementById('selected-day-details-container');
+                                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }, 60);
+                              }}
+                              style={{
+                                background: 'rgba(59, 130, 246, 0.08)',
+                                border: '1.5px dashed #3b82f6',
+                                borderRadius: '14px',
+                                padding: '11px 14px',
+                                marginBottom: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '10px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '1.2rem' }}>📍</span>
+                                <div>
+                                  <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#1d4ed8' }}>
+                                    Você tem {schedules.length} escala{schedules.length > 1 ? 's' : ''} em {monthName}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                    Toque para navegar até {monthName} e ver os dias
+                                  </div>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: '0.80rem', fontWeight: 900, color: '#1d4ed8', whiteSpace: 'nowrap' }}>Ir para {dateObj.toLocaleString('pt-BR', { month: 'short' })} →</span>
+                            </div>
+                          );
+                        }
+                        return null;
                       })()}
 
                       {/* Barra de Navegação do Mês */}

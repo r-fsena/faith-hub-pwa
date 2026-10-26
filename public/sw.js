@@ -1,4 +1,4 @@
-const CACHE_NAME = 'faith-hub-pwa-v6.10';
+const CACHE_NAME = 'faith-hub-pwa-v6.11';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
@@ -13,6 +13,12 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && (event.data.type === 'SKIP_WAITING' || event.data === 'skipWaiting')) {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
