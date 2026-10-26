@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { BottomSheet } from './BottomSheet';
+import { authFetch } from '../services/api';
 
 export interface EventTicketData {
   id?: string;
@@ -52,7 +53,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
     if (ticket && isOpen) {
       const ticketId = ticket.id || ticket.ticket_id;
       if (ticketId) {
-        fetch(`${API_URL}/tickets/${ticketId}/pass`)
+        authFetch(`${API_URL}/tickets/${ticketId}/pass`)
           .then(res => res.json())
           .then(json => {
             if (json.data) {
@@ -87,7 +88,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
       .then(url => setLocalQrDataUrl(url))
       .catch(err => {
         console.error('Erro ao gerar QR code local:', err);
-        setLocalQrDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}`);
+        setLocalQrDataUrl('');
       });
     }
   }, [qrData]);
@@ -579,11 +580,17 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               gap: '8px',
               position: 'relative'
             }}>
-              <img 
-                src={localQrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`} 
-                alt="QR Code Passaporte"
-                style={{ width: '175px', height: '175px', display: 'block' }}
-              />
+              {localQrDataUrl ? (
+                <img
+                  src={localQrDataUrl}
+                  alt="QR Code Passaporte"
+                  style={{ width: '175px', height: '175px', display: 'block' }}
+                />
+              ) : (
+                <div style={{ width: 175, height: 175, display: 'grid', placeItems: 'center', color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                  QR Code indisponível. Utilize o código manual abaixo.
+                </div>
+              )}
 
               {/* Código Curto de Validação Manual */}
               <div style={{

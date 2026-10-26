@@ -33,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
+const DEMO_AUTH_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<MemberUser | null>(null);
@@ -60,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAuth = async () => {
     setIsLoading(true);
     // Suporte a modo demo para pré-visualização e exportação de criativos
-    const isDemo = typeof window !== 'undefined' && (
+    const isDemo = DEMO_AUTH_ENABLED && typeof window !== 'undefined' && (
       new URLSearchParams(window.location.search).get('demo') === 'true' ||
       localStorage.getItem('faithhub_demo_auth') === 'true'
     );

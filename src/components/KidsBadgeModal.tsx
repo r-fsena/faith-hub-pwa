@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import QRCode from 'qrcode';
 
 export interface KidsBadgeData {
   id: string;
@@ -24,10 +25,21 @@ interface KidsBadgeModalProps {
 
 export const KidsBadgeModal: React.FC<KidsBadgeModalProps> = ({ isOpen, onClose, badge, onNewCheckin }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    if (!isOpen || !badge?.security_code) {
+      setQrCodeUrl('');
+      return () => { active = false; };
+    }
+    QRCode.toDataURL(badge.security_code, { width: 250, margin: 1 })
+      .then(url => { if (active) setQrCodeUrl(url); })
+      .catch(() => { if (active) setQrCodeUrl(''); });
+    return () => { active = false; };
+  }, [isOpen, badge?.security_code]);
 
   if (!isOpen || !badge) return null;
-
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(badge.security_code)}&margin=10`;
   const cleanPhone = badge.parent_phone.replace(/\D/g, '');
   const checkinTime = new Date(badge.checkin_at || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const checkinDate = new Date(badge.checkin_at || Date.now()).toLocaleDateString('pt-BR');
@@ -146,11 +158,17 @@ export const KidsBadgeModal: React.FC<KidsBadgeModalProps> = ({ isOpen, onClose,
             alignItems: 'center',
             boxShadow: 'var(--shadow-sm)'
           }}>
-            <img 
-              src={qrCodeUrl} 
-              alt={`QR Code ${badge.security_code}`} 
-              style={{ width: 160, height: 160, borderRadius: 10, display: 'block' }} 
-            />
+            {qrCodeUrl ? (
+              <img
+                src={qrCodeUrl}
+                alt={`QR Code ${badge.security_code}`}
+                style={{ width: 160, height: 160, borderRadius: 10, display: 'block' }}
+              />
+            ) : (
+              <div style={{ width: 160, height: 160, display: 'grid', placeItems: 'center', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                QR Code indisponível. Utilize o código de retirada.
+              </div>
+            )}
             <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--text-muted)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Apresente no checkout
             </span>

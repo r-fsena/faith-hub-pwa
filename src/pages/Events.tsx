@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEvents, checkoutTicket } from '../services/api';
+import { fetchEvents, checkoutTicket, getAuthHeaders } from '../services/api';
 import { CreditCardForm } from '../components/CreditCardForm';
 import { EventTicketPassModal, type EventTicketData } from '../components/EventTicketPassModal';
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
@@ -146,7 +146,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         if (email) queryParams.set('email', email);
         if (ticketIds.length > 0) queryParams.set('ticket_ids', ticketIds.slice(0, 50).join(','));
 
-        const res = await fetch(`${API_URL}/tickets/me?${queryParams.toString()}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_URL}/tickets/me?${queryParams.toString()}`, { headers });
         if (res.ok) {
           const json = await res.json();
           const apiTickets: EventTicketData[] = (json.data || []).map((t: any) => {

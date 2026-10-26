@@ -65,7 +65,9 @@ export const Giving: React.FC = () => {
   const fetchProjects = async () => {
     setLoadingProjects(true);
     try {
-      const res = await fetch(`${API_URL}/financial/projects?organization_id=${orgId}`);
+      const res = await fetch(`${API_URL}/financial/projects?organization_id=${orgId}`, {
+        headers: await getAuthHeaders()
+      });
       if (res.ok) {
         const json = await res.json();
         setProjects(json.data || []);

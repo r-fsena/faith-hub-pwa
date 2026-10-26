@@ -17,7 +17,7 @@ const FeatureFlagContext = createContext<FeatureFlagContextType>({
   flags: {},
   configs: {},
   isLoading: true,
-  isFeatureEnabled: () => true,
+  isFeatureEnabled: () => false,
   getFeatureConfig: () => null as any,
   refreshFlags: async () => {}
 });
@@ -27,6 +27,7 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasLoadedFlags, setHasLoadedFlags] = useState(false);
 
   const fetchFlags = useCallback(async (campusOverride?: string) => {
     try {
@@ -43,12 +44,13 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       const res = await fetch(`${API_URL}/feature-flags?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setFlags(data.flags || {});
-        setConfigs(data.configs || {});
-      }
+      if (!res.ok) throw new Error(`FEATURE_FLAGS_HTTP_${res.status}`);
+      const data = await res.json();
+      setFlags(data.flags || {});
+      setConfigs(data.configs || {});
+      setHasLoadedFlags(true);
     } catch (err) {
+      setHasLoadedFlags(false);
       console.warn('Erro ao carregar feature flags no PWA:', err);
     } finally {
       setIsLoading(false);
@@ -73,12 +75,13 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const isFeatureEnabled = useCallback(
     (featureKey: string, defaultValue: boolean = true): boolean => {
+      if (!hasLoadedFlags) return false;
       if (flags[featureKey] !== undefined) {
         return Boolean(flags[featureKey]);
       }
       return defaultValue;
     },
-    [flags]
+    [flags, hasLoadedFlags]
   );
 
   const getFeatureConfig = useCallback(
@@ -125,7 +128,7 @@ export const FeatureGate: React.FC<{
   children: React.ReactNode;
   fallback?: React.ReactNode;
   defaultAllowed?: boolean;
-}> = ({ flag, children, fallback = null, defaultAllowed = true }) => {
+}> = ({ flag, children, fallback = null, defaultAllowed = false }) => {
   const { isEnabled, isLoading } = useFeatureFlag(flag, defaultAllowed);
   if (isLoading) return null;
   return isEnabled ? <>{children}</> : <>{fallback}</>;

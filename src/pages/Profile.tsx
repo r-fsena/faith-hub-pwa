@@ -4,7 +4,7 @@ import { useBranding } from '../context/BrandingContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useTheme } from '../context/ThemeContext';
 import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn, signInWithRedirect, updateUserAttributes } from 'aws-amplify/auth';
-import { getActiveCampusId, getAuthHeaders } from '../services/api';
+import { authFetch, getActiveCampusId, getAuthHeaders } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { KidsCheckinModal } from '../components/KidsCheckinModal';
 import { KidsCheckoutModal } from '../components/KidsCheckoutModal';
@@ -446,9 +446,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         setShowAvatarPicker(false);
 
         if (user?.userId) {
-          fetch(`${API_URL}/members/${user.userId}`, {
+          authFetch(`${API_URL}/members/${user.userId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ avatar_url: dataUrl })
           }).catch(() => {});
         }
@@ -463,9 +462,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
     setShowAvatarPicker(false);
 
     if (user?.userId) {
-      fetch(`${API_URL}/members/${user.userId}`, {
+      authFetch(`${API_URL}/members/${user.userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatar_url: url })
       }).catch(() => {});
     }
