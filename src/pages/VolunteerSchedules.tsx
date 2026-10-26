@@ -75,13 +75,18 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
     } catch {}
   };
 
-  const toDateISO = (d: Date | string) => {
+  const toDateISO = (d: any): string => {
     if (!d) return '';
-    if (typeof d === 'string') return d.split('T')[0];
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    if (typeof d === 'string') {
+      return d.split('T')[0].split(' ')[0].trim();
+    }
+    if (d instanceof Date && !isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+    return '';
   };
 
   const handleOpenMinistrySchedules = async (min: any) => {
@@ -746,6 +751,65 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       border: '1px solid var(--panel-border, #e2e8f0)',
                       boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))'
                     }}>
+                      {/* Banner de Alerta de Convites de Escala Pendentes neste Mês */}
+                      {(() => {
+                        const curYear = calendarMonth.getFullYear();
+                        const curMonth = calendarMonth.getMonth() + 1;
+                        const pendingInThisMonth = schedules.filter(s => {
+                          if (s.confirmation_status !== 'PENDING') return false;
+                          const iso = toDateISO(s.service_date);
+                          if (!iso) return false;
+                          const [y, m] = iso.split('-');
+                          return parseInt(y, 10) === curYear && parseInt(m, 10) === curMonth;
+                        });
+
+                        if (pendingInThisMonth.length === 0) return null;
+
+                        const firstPending = pendingInThisMonth[0];
+                        const firstPendingIso = toDateISO(firstPending.service_date);
+                        const [fYear, fMonth, fDay] = firstPendingIso.split('-');
+
+                        return (
+                          <div 
+                            onClick={() => {
+                              setSelectedCalendarDate(firstPendingIso);
+                              setTimeout(() => {
+                                const el = document.getElementById('selected-day-details-container');
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }, 60);
+                            }}
+                            style={{
+                              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.10) 100%)',
+                              border: '1.5px solid #f59e0b',
+                              borderRadius: '14px',
+                              padding: '12px 14px',
+                              marginBottom: '14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '10px',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '1.4rem' }}>🔔</span>
+                              <div>
+                                <div style={{ fontWeight: 900, fontSize: '0.84rem', color: '#b45309' }}>
+                                  {pendingInThisMonth.length === 1 
+                                    ? `Você tem 1 convite de escala em ${fDay}/${fMonth}!`
+                                    : `Você tem ${pendingInThisMonth.length} convites de escala pendentes neste mês!`}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                  Toque para visualizar o dia e confirmar sua vaga
+                                </div>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '0.82rem', color: '#b45309', fontWeight: 900 }}>Ver →</span>
+                          </div>
+                        );
+                      })()}
+
                       {/* Barra de Navegação do Mês */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                         <button
@@ -754,13 +818,13 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
                           }}
                           style={{
-                            width: '34px',
-                            height: '34px',
+                            width: '36px',
+                            height: '36px',
                             borderRadius: '10px',
                             border: '1px solid var(--panel-border, #e2e8f0)',
                             background: 'var(--bg-card-subtle, #f8fafc)',
                             color: 'var(--text-main, #0f172a)',
-                            fontSize: '1rem',
+                            fontSize: '1.1rem',
                             fontWeight: 800,
                             display: 'flex',
                             alignItems: 'center',
@@ -772,7 +836,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         </button>
 
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)', textTransform: 'capitalize' }}>
+                          <div style={{ fontWeight: 900, fontSize: '0.98rem', color: 'var(--text-main, #0f172a)', textTransform: 'capitalize' }}>
                             {calendarMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
                           </div>
                           <button
@@ -781,12 +845,16 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                               const now = new Date();
                               setCalendarMonth(now);
                               setSelectedCalendarDate(toDateISO(now));
+                              setTimeout(() => {
+                                const el = document.getElementById('selected-day-details-container');
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }, 60);
                             }}
                             style={{
                               background: 'none',
                               border: 'none',
                               color: 'var(--accent-primary, #0f766e)',
-                              fontSize: '0.70rem',
+                              fontSize: '0.72rem',
                               fontWeight: 700,
                               cursor: 'pointer',
                               padding: 0,
@@ -803,13 +871,13 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
                           }}
                           style={{
-                            width: '34px',
-                            height: '34px',
+                            width: '36px',
+                            height: '36px',
                             borderRadius: '10px',
                             border: '1px solid var(--panel-border, #e2e8f0)',
                             background: 'var(--bg-card-subtle, #f8fafc)',
                             color: 'var(--text-main, #0f172a)',
-                            fontSize: '1rem',
+                            fontSize: '1.1rem',
                             fontWeight: 800,
                             display: 'flex',
                             alignItems: 'center',
@@ -903,72 +971,133 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                       setSelectedCalendarDate(null);
                                     } else {
                                       setSelectedCalendarDate(cell.dateStr);
+                                      setTimeout(() => {
+                                        const el = document.getElementById('selected-day-details-container');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                      }, 60);
                                     }
                                   }}
                                   style={{
-                                    height: '46px',
+                                    minHeight: '52px',
                                     borderRadius: '12px',
                                     border: isSelected
-                                      ? '2px solid var(--accent-primary, #0f766e)'
-                                      : (cell.isToday ? '1.5px solid var(--accent-primary, #0f766e)' : '1px solid transparent'),
+                                      ? '2.5px solid var(--accent-primary, #0f766e)'
+                                      : (hasPending
+                                          ? '2px solid #f59e0b'
+                                          : (hasAccepted 
+                                              ? '1.5px solid #10b981' 
+                                              : (cell.isToday ? '1.5px dashed var(--accent-primary, #0f766e)' : '1px solid transparent'))),
                                     background: isSelected 
                                       ? 'var(--accent-primary, #0f766e)' 
-                                      : (hasSchedules 
-                                          ? (hasPending ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.10)') 
-                                          : 'transparent'),
+                                      : (hasPending 
+                                          ? 'rgba(245, 158, 11, 0.16)' 
+                                          : (hasAccepted 
+                                              ? 'rgba(16, 185, 129, 0.12)' 
+                                              : (hasDeclined ? 'rgba(239, 68, 68, 0.10)' : 'transparent'))),
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '2px',
+                                    gap: '1px',
                                     cursor: 'pointer',
                                     opacity: cell.isCurrentMonth ? 1 : 0.35,
                                     position: 'relative',
-                                    padding: '2px',
-                                    transition: 'all 0.15s ease'
+                                    padding: '4px 2px',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: isSelected ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'none'
                                   }}
                                 >
+                                  {/* Badge de Alerta no Topo do Dia */}
+                                  {hasPending && (
+                                    <span style={{
+                                      position: 'absolute',
+                                      top: '2px',
+                                      right: '2px',
+                                      background: isSelected ? '#ffffff' : '#f59e0b',
+                                      color: isSelected ? '#b45309' : '#ffffff',
+                                      fontSize: '0.58rem',
+                                      fontWeight: 900,
+                                      borderRadius: '50%',
+                                      width: '15px',
+                                      height: '15px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      boxShadow: '0 1px 3px rgba(245, 158, 11, 0.4)'
+                                    }}>
+                                      🔔
+                                    </span>
+                                  )}
+
+                                  {hasAccepted && !hasPending && (
+                                    <span style={{
+                                      position: 'absolute',
+                                      top: '2px',
+                                      right: '2px',
+                                      background: isSelected ? '#ffffff' : '#10b981',
+                                      color: isSelected ? '#047857' : '#ffffff',
+                                      fontSize: '0.52rem',
+                                      fontWeight: 900,
+                                      borderRadius: '50%',
+                                      width: '13px',
+                                      height: '13px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      ✓
+                                    </span>
+                                  )}
+
                                   <span style={{
-                                    fontSize: '0.82rem',
+                                    fontSize: '0.84rem',
                                     fontWeight: isSelected || cell.isToday || hasSchedules ? 900 : 600,
                                     color: isSelected 
                                       ? '#ffffff' 
-                                      : (cell.isToday ? 'var(--accent-primary, #0f766e)' : 'var(--text-main, #0f172a)')
+                                      : (hasPending 
+                                          ? '#b45309' 
+                                          : (cell.isToday ? 'var(--accent-primary, #0f766e)' : 'var(--text-main, #0f172a)'))
                                   }}>
                                     {cell.dayNum}
                                   </span>
 
-                                  {/* Indicadores Visuais de Escala */}
-                                  {hasSchedules && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                      {hasPending && (
-                                        <span style={{
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
-                                          background: isSelected ? '#fef08a' : '#f59e0b',
-                                          display: 'inline-block'
-                                        }} />
-                                      )}
-                                      {hasAccepted && !hasPending && (
-                                        <span style={{
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
-                                          background: isSelected ? '#a7f3d0' : '#10b981',
-                                          display: 'inline-block'
-                                        }} />
-                                      )}
-                                      {hasDeclined && !hasAccepted && !hasPending && (
-                                        <span style={{
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
-                                          background: isSelected ? '#fecaca' : '#ef4444',
-                                          display: 'inline-block'
-                                        }} />
-                                      )}
-                                    </div>
+                                  {/* Identificador / Tag de Escala abaixo do número */}
+                                  {hasPending && (
+                                    <span style={{
+                                      fontSize: '0.58rem',
+                                      fontWeight: 900,
+                                      color: isSelected ? '#ffffff' : '#b45309',
+                                      background: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(245, 158, 11, 0.25)',
+                                      padding: '1px 3px',
+                                      borderRadius: '4px',
+                                      lineHeight: 1,
+                                      marginTop: '1px'
+                                    }}>
+                                      Convite
+                                    </span>
+                                  )}
+
+                                  {hasAccepted && !hasPending && (
+                                    <span style={{
+                                      fontSize: '0.58rem',
+                                      fontWeight: 800,
+                                      color: isSelected ? '#ffffff' : '#10b981',
+                                      lineHeight: 1,
+                                      marginTop: '1px'
+                                    }}>
+                                      Escalado
+                                    </span>
+                                  )}
+
+                                  {hasDeclined && !hasAccepted && !hasPending && (
+                                    <span style={{
+                                      fontSize: '0.56rem',
+                                      color: isSelected ? '#ffffff' : '#ef4444',
+                                      lineHeight: 1,
+                                      marginTop: '1px'
+                                    }}>
+                                      Recusado
+                                    </span>
                                   )}
                                 </button>
                               );
@@ -990,21 +1119,21 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         color: 'var(--text-muted, #64748b)'
                       }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#f59e0b' }} />
-                          Pendente
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
+                          <strong>🔔 Convite Pendente</strong>
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
                           Confirmado
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444' }} />
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
                           Recusado
                         </span>
                       </div>
                     </div>
 
-                    {/* Escalas do Dia Selecionado ou do Mês no Calendário */}
+                    {/* Escalas do Dia Selecionado ou do Mês no Calendário (com ID para auto-scroll) */}
                     {(() => {
                       const curYear = calendarMonth.getFullYear();
                       const curMonth = calendarMonth.getMonth();
@@ -1027,10 +1156,12 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         titleText = `Escalas em ${mName.charAt(0).toUpperCase() + mName.slice(1)} (${displayed.length})`;
                       }
 
+                      const hasPendingInSelection = displayed.some(s => s.confirmation_status === 'PENDING');
+
                       return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div id="selected-day-details-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
                               {titleText}
                             </div>
                             {selectedCalendarDate && (
@@ -1041,8 +1172,8 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                   background: 'none',
                                   border: 'none',
                                   color: 'var(--accent-primary, #0f766e)',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
+                                  fontSize: '0.74rem',
+                                  fontWeight: 800,
                                   cursor: 'pointer'
                                 }}
                               >
@@ -1050,6 +1181,30 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                               </button>
                             )}
                           </div>
+
+                          {/* Banner de Atenção se houver Convite Pendente no Dia Selecionado */}
+                          {hasPendingInSelection && (
+                            <div style={{
+                              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.08) 100%)',
+                              border: '1.5px solid #f59e0b',
+                              borderRadius: '14px',
+                              padding: '12px 14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              boxShadow: '0 2px 6px rgba(245, 158, 11, 0.12)'
+                            }}>
+                              <span style={{ fontSize: '1.4rem' }}>🔔</span>
+                              <div>
+                                <div style={{ fontWeight: 900, fontSize: '0.84rem', color: '#b45309' }}>
+                                  Convocação Aguardando Sua Resposta
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                  Você foi escalado para este culto. Confirme ou recuse sua presença abaixo:
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                           {displayed.length === 0 ? (
                             <div style={{
