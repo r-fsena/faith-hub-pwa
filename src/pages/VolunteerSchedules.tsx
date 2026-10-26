@@ -57,6 +57,33 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const [ministrySchedules, setMinistrySchedules] = useState<any[]>([]);
   const [loadingMinistrySchedules, setLoadingMinistrySchedules] = useState(false);
 
+  // Estados para Alternância entre Visão Lista e Calendário de Escalas
+  const [scheduleViewMode, setScheduleViewMode] = useState<'list' | 'calendar'>(() => {
+    try {
+      return (localStorage.getItem('faithhub_schedule_view_mode') as 'list' | 'calendar') || 'list';
+    } catch {
+      return 'list';
+    }
+  });
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+
+  const handleToggleViewMode = (mode: 'list' | 'calendar') => {
+    setScheduleViewMode(mode);
+    try {
+      localStorage.setItem('faithhub_schedule_view_mode', mode);
+    } catch {}
+  };
+
+  const toDateISO = (d: Date | string) => {
+    if (!d) return '';
+    if (typeof d === 'string') return d.split('T')[0];
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const handleOpenMinistrySchedules = async (min: any) => {
     setViewingMinistry(min);
     setLoadingMinistrySchedules(true);
@@ -410,220 +437,857 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                  🔔 Suas Próximas Convocações ({schedules.length})
-                </div>
-                {schedules.map(item => {
-                  const isAccepted = item.confirmation_status === 'ACCEPTED';
-                  const isDeclined = item.confirmation_status === 'DECLINED';
-                  const isPending = item.confirmation_status === 'PENDING';
+              <>
+                {/* Top Bar da Aba: Contagem e Alternância de Visão Lista / Calendário */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🔔 Suas Convocações ({schedules.length})</span>
+                    {(() => {
+                      const pendingCount = schedules.filter(s => s.confirmation_status === 'PENDING').length;
+                      if (pendingCount > 0) {
+                        return (
+                          <span style={{
+                            background: '#f59e0b',
+                            color: '#ffffff',
+                            fontSize: '0.68rem',
+                            fontWeight: 900,
+                            padding: '2px 7px',
+                            borderRadius: '10px',
+                            boxShadow: '0 1px 4px rgba(245, 158, 11, 0.3)'
+                          }}>
+                            {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
 
-                  return (
-                    <div
-                      key={item.roster_item_id}
+                  {/* Segmented Control (Pílulas Lista | Calendário) */}
+                  <div style={{
+                    display: 'inline-flex',
+                    background: 'var(--bg-card-subtle, #f1f5f9)',
+                    padding: '3px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--panel-border, #e2e8f0)'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleViewMode('list')}
                       style={{
-                        background: 'var(--bg-card, #ffffff)',
-                        borderRadius: '18px',
-                        padding: '18px',
-                        border: isAccepted 
-                          ? '1.5px solid #10b981' 
-                          : (isDeclined ? '1.5px solid #ef4444' : '1.5px solid var(--accent-primary, #0f766e)'),
-                        boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05))',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '6px 12px',
+                        borderRadius: '9px',
+                        border: 'none',
+                        background: scheduleViewMode === 'list' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                        color: scheduleViewMode === 'list' ? 'var(--text-main, #0f172a)' : 'var(--text-muted, #64748b)',
+                        fontWeight: scheduleViewMode === 'list' ? 800 : 600,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        boxShadow: scheduleViewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
-                      {/* Topo do Card */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <span style={{
-                            fontSize: '0.70rem',
-                            fontWeight: 800,
-                            padding: '3px 8px',
-                            borderRadius: '8px',
-                            background: `${item.ministry_color || '#0f766e'}20`,
-                            color: item.ministry_color || 'var(--accent-primary, #0f766e)',
-                            textTransform: 'uppercase'
-                          }}>
-                            {item.ministry_name}
-                          </span>
-                          <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)', marginTop: '6px' }}>
-                            {item.service_title}
-                          </div>
-                          <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
-                            📅 {new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} às {item.service_time}
-                          </div>
-                        </div>
+                      <span>📋</span>
+                      <span>Lista</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleViewMode('calendar')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '6px 12px',
+                        borderRadius: '9px',
+                        border: 'none',
+                        background: scheduleViewMode === 'calendar' ? 'var(--bg-card, #ffffff)' : 'transparent',
+                        color: scheduleViewMode === 'calendar' ? 'var(--text-main, #0f172a)' : 'var(--text-muted, #64748b)',
+                        fontWeight: scheduleViewMode === 'calendar' ? 800 : 600,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        boxShadow: scheduleViewMode === 'calendar' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>📅</span>
+                      <span>Calendário</span>
+                    </button>
+                  </div>
+                </div>
 
-                        {/* Status Badge */}
-                        <span style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          padding: '4px 10px',
-                          borderRadius: '10px',
-                          background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
-                          color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
-                        }}>
-                          {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
-                        </span>
-                      </div>
+                {/* ========================================================
+                    VISÃO 1: LISTA CRONOLÓGICA TRADICIONAL
+                    ======================================================== */}
+                {scheduleViewMode === 'list' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {schedules.map(item => {
+                      const isAccepted = item.confirmation_status === 'ACCEPTED';
+                      const isDeclined = item.confirmation_status === 'DECLINED';
+                      const isPending = item.confirmation_status === 'PENDING';
 
-                      {/* Posição Escalada */}
-                      <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '1.1rem' }}>🏷️</span>
-                        <div>
-                          <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
-                            Sua Função nesta Escala
-                          </div>
-                          <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
-                            {item.role_name}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Notas / Orientações */}
-                      {item.schedule_notes && (
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                          <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
-                        </div>
-                      )}
-
-                      {/* Botões One-Tap de Confirmação */}
-                      {isPending && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
-                          <button
-                            onClick={() => handleRespond(item.roster_item_id, 'ACCEPTED')}
-                            disabled={answeringItemId === item.roster_item_id}
-                            style={{
-                              padding: '12px',
-                              borderRadius: '12px',
-                              border: 'none',
-                              background: '#10b981',
-                              color: '#ffffff',
-                              fontWeight: 900,
-                              fontSize: '0.85rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px',
-                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
-                            }}
-                          >
-                            <span>✓</span>
-                            <span>Confirmar</span>
-                          </button>
-
-                          <button
-                            onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                            disabled={answeringItemId === item.roster_item_id}
-                            style={{
-                              padding: '12px',
-                              borderRadius: '12px',
-                              border: '1.5px solid #ef4444',
-                              background: 'var(--bg-card, #ffffff)',
-                              color: '#ef4444',
-                              fontWeight: 800,
-                              fontSize: '0.85rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <span>✗</span>
-                            <span>Não Poderei</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {isAccepted && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                          <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
-                            ✓ Sua vaga está garantida no altar!
-                          </span>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <button
-                              onClick={() => handleOpenSwapModal(item)}
-                              style={{
-                                background: 'rgba(16, 185, 129, 0.15)',
-                                border: '1px solid rgba(16, 185, 129, 0.35)',
-                                color: '#10b981',
-                                borderRadius: '8px',
-                                padding: '4px 10px',
-                                fontSize: '0.74rem',
-                                fontWeight: 800,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              🔄 Pedir Troca
-                            </button>
-                            <button
-                              onClick={() => setDeclineReasonModal(item.roster_item_id)}
-                              style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
-                            >
-                              Recusar
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {item.confirmation_status === 'SWAP_REQUESTED' && (
-                        <div style={{
-                          background: 'rgba(245, 158, 11, 0.12)',
-                          border: '1.5px solid rgba(245, 158, 11, 0.4)',
-                          borderRadius: '12px',
-                          padding: '12px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '1.2rem' }}>🔄</span>
+                      return (
+                        <div
+                          key={item.roster_item_id}
+                          style={{
+                            background: 'var(--bg-card, #ffffff)',
+                            borderRadius: '18px',
+                            padding: '18px',
+                            border: isAccepted 
+                              ? '1.5px solid #10b981' 
+                              : (isDeclined ? '1.5px solid #ef4444' : '1.5px solid var(--accent-primary, #0f766e)'),
+                            boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05))',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px'
+                          }}
+                        >
+                          {/* Topo do Card */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                              <div style={{ fontSize: '0.80rem', color: '#b45309', fontWeight: 800 }}>
-                                Solicitação de Troca Ativa
+                              <span style={{
+                                fontSize: '0.70rem',
+                                fontWeight: 800,
+                                padding: '3px 8px',
+                                borderRadius: '8px',
+                                background: `${item.ministry_color || '#0f766e'}20`,
+                                color: item.ministry_color || 'var(--accent-primary, #0f766e)',
+                                textTransform: 'uppercase'
+                              }}>
+                                {item.ministry_name}
+                              </span>
+                              <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)', marginTop: '6px' }}>
+                                {item.service_title}
                               </div>
-                              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
-                                Colegas do ministério e liderança foram notificados para assumir sua vaga.
+                              <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                                📅 {new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} {item.service_time ? `às ${item.service_time.slice(0, 5)}` : ''}
+                              </div>
+                            </div>
+
+                            {/* Status Badge */}
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              padding: '4px 10px',
+                              borderRadius: '10px',
+                              background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
+                              color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
+                            }}>
+                              {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
+                            </span>
+                          </div>
+
+                          {/* Posição Escalada */}
+                          <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.1rem' }}>🏷️</span>
+                            <div>
+                              <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                Sua Função nesta Escala
+                              </div>
+                              <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
+                                {item.role_name}
                               </div>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4px' }}>
-                            {(() => {
-                              const relatedSwap = pendingSwaps.outgoing.find(s => 
-                                (s.roster_item_id === item.roster_item_id || s.schedule_id === item.schedule_id) && s.status === 'PENDING'
-                              );
-                              return (
+
+                          {/* Notas / Orientações */}
+                          {item.schedule_notes && (
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                              <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
+                            </div>
+                          )}
+
+                          {/* Botões One-Tap de Confirmação */}
+                          {isPending && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
+                              <button
+                                onClick={() => handleRespond(item.roster_item_id, 'ACCEPTED')}
+                                disabled={answeringItemId === item.roster_item_id}
+                                style={{
+                                  padding: '12px',
+                                  borderRadius: '12px',
+                                  border: 'none',
+                                  background: '#10b981',
+                                  color: '#ffffff',
+                                  fontWeight: 900,
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                                }}
+                              >
+                                <span>✓</span>
+                                <span>Confirmar</span>
+                              </button>
+
+                              <button
+                                onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                                disabled={answeringItemId === item.roster_item_id}
+                                style={{
+                                  padding: '12px',
+                                  borderRadius: '12px',
+                                  border: '1.5px solid #ef4444',
+                                  background: 'var(--bg-card, #ffffff)',
+                                  color: '#ef4444',
+                                  fontWeight: 800,
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <span>✗</span>
+                                <span>Não Poderei</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {isAccepted && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
+                                ✓ Sua vaga está garantida no altar!
+                              </span>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                 <button
-                                  onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
-                                  disabled={cancellingSwap}
+                                  onClick={() => handleOpenSwapModal(item)}
                                   style={{
-                                    background: '#ffffff',
-                                    border: '1.5px solid #f59e0b',
-                                    color: '#b45309',
-                                    padding: '6px 14px',
-                                    borderRadius: '10px',
+                                    background: 'rgba(16, 185, 129, 0.15)',
+                                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                                    color: '#10b981',
+                                    borderRadius: '8px',
+                                    padding: '4px 10px',
                                     fontSize: '0.74rem',
                                     fontWeight: 800,
-                                    cursor: 'pointer',
-                                    boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
+                                    cursor: 'pointer'
                                   }}
                                 >
-                                  ✕ Cancelar Troca (Vou Comparecer)
+                                  🔄 Pedir Troca
+                                </button>
+                                <button
+                                  onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                                  style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                  Recusar
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.confirmation_status === 'SWAP_REQUESTED' && (
+                            <div style={{
+                              background: 'rgba(245, 158, 11, 0.12)',
+                              border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '1.2rem' }}>🔄</span>
+                                <div>
+                                  <div style={{ fontSize: '0.80rem', color: '#b45309', fontWeight: 800 }}>
+                                    Solicitação de Troca Ativa
+                                  </div>
+                                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                    Colegas do ministério e liderança foram notificados para assumir sua vaga.
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                                {(() => {
+                                  const relatedSwap = pendingSwaps.outgoing.find(s => 
+                                    (s.roster_item_id === item.roster_item_id || s.schedule_id === item.schedule_id) && s.status === 'PENDING'
+                                  );
+                                  return (
+                                    <button
+                                      onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
+                                      disabled={cancellingSwap}
+                                      style={{
+                                        background: '#ffffff',
+                                        border: '1.5px solid #f59e0b',
+                                        color: '#b45309',
+                                        padding: '6px 14px',
+                                        borderRadius: '10px',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
+                                      }}
+                                    >
+                                      ✕ Cancelar Troca (Vou Comparecer)
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* ========================================================
+                     VISÃO 2: CALENDÁRIO MENSAL INTERATIVO PARA VOLUNTÁRIOS
+                     ======================================================== */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Container do Calendário */}
+                    <div style={{
+                      background: 'var(--bg-card, #ffffff)',
+                      borderRadius: '20px',
+                      padding: '16px 14px',
+                      border: '1px solid var(--panel-border, #e2e8f0)',
+                      boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))'
+                    }}>
+                      {/* Barra de Navegação do Mês */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                          }}
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--panel-border, #e2e8f0)',
+                            background: 'var(--bg-card-subtle, #f8fafc)',
+                            color: 'var(--text-main, #0f172a)',
+                            fontSize: '1rem',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ‹
+                        </button>
+
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)', textTransform: 'capitalize' }}>
+                            {calendarMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const now = new Date();
+                              setCalendarMonth(now);
+                              setSelectedCalendarDate(toDateISO(now));
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--accent-primary, #0f766e)',
+                              fontSize: '0.70rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: 0,
+                              marginTop: '2px'
+                            }}
+                          >
+                            Ir para Hoje
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+                          }}
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--panel-border, #e2e8f0)',
+                            background: 'var(--bg-card-subtle, #f8fafc)',
+                            color: 'var(--text-main, #0f172a)',
+                            fontSize: '1rem',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ›
+                        </button>
+                      </div>
+
+                      {/* Cabeçalho dos Dias da Semana */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '8px' }}>
+                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, idx) => (
+                          <div key={idx} style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--text-muted, #94a3b8)' }}>
+                            {dayName}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Grid de Dias do Mês */}
+                      {(() => {
+                        const year = calendarMonth.getFullYear();
+                        const month = calendarMonth.getMonth();
+                        const firstDayIndex = new Date(year, month, 1).getDay();
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                        const daysInPrevMonth = new Date(year, month, 0).getDate();
+                        const todayStr = toDateISO(new Date());
+
+                        const cells: Array<{
+                          dateStr: string;
+                          dayNum: number;
+                          isCurrentMonth: boolean;
+                          isToday: boolean;
+                          daySchedules: any[];
+                        }> = [];
+
+                        // Preenchimento dos dias anteriores
+                        for (let i = firstDayIndex - 1; i >= 0; i--) {
+                          const d = daysInPrevMonth - i;
+                          const dStr = toDateISO(new Date(year, month - 1, d));
+                          cells.push({
+                            dateStr: dStr,
+                            dayNum: d,
+                            isCurrentMonth: false,
+                            isToday: dStr === todayStr,
+                            daySchedules: schedules.filter(s => toDateISO(s.service_date) === dStr)
+                          });
+                        }
+
+                        // Dias do mês atual
+                        for (let d = 1; d <= daysInMonth; d++) {
+                          const dStr = toDateISO(new Date(year, month, d));
+                          cells.push({
+                            dateStr: dStr,
+                            dayNum: d,
+                            isCurrentMonth: true,
+                            isToday: dStr === todayStr,
+                            daySchedules: schedules.filter(s => toDateISO(s.service_date) === dStr)
+                          });
+                        }
+
+                        // Preenchimento dos dias seguintes até completar a última linha de 7
+                        const remaining = (7 - (cells.length % 7)) % 7;
+                        for (let d = 1; d <= remaining; d++) {
+                          const dStr = toDateISO(new Date(year, month + 1, d));
+                          cells.push({
+                            dateStr: dStr,
+                            dayNum: d,
+                            isCurrentMonth: false,
+                            isToday: dStr === todayStr,
+                            daySchedules: schedules.filter(s => toDateISO(s.service_date) === dStr)
+                          });
+                        }
+
+                        return (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                            {cells.map((cell, idx) => {
+                              const isSelected = selectedCalendarDate === cell.dateStr;
+                              const hasSchedules = cell.daySchedules.length > 0;
+                              const hasPending = cell.daySchedules.some(s => s.confirmation_status === 'PENDING');
+                              const hasAccepted = cell.daySchedules.some(s => s.confirmation_status === 'ACCEPTED');
+                              const hasDeclined = cell.daySchedules.some(s => s.confirmation_status === 'DECLINED');
+
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedCalendarDate(null);
+                                    } else {
+                                      setSelectedCalendarDate(cell.dateStr);
+                                    }
+                                  }}
+                                  style={{
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    border: isSelected
+                                      ? '2px solid var(--accent-primary, #0f766e)'
+                                      : (cell.isToday ? '1.5px solid var(--accent-primary, #0f766e)' : '1px solid transparent'),
+                                    background: isSelected 
+                                      ? 'var(--accent-primary, #0f766e)' 
+                                      : (hasSchedules 
+                                          ? (hasPending ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.10)') 
+                                          : 'transparent'),
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '2px',
+                                    cursor: 'pointer',
+                                    opacity: cell.isCurrentMonth ? 1 : 0.35,
+                                    position: 'relative',
+                                    padding: '2px',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <span style={{
+                                    fontSize: '0.82rem',
+                                    fontWeight: isSelected || cell.isToday || hasSchedules ? 900 : 600,
+                                    color: isSelected 
+                                      ? '#ffffff' 
+                                      : (cell.isToday ? 'var(--accent-primary, #0f766e)' : 'var(--text-main, #0f172a)')
+                                  }}>
+                                    {cell.dayNum}
+                                  </span>
+
+                                  {/* Indicadores Visuais de Escala */}
+                                  {hasSchedules && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      {hasPending && (
+                                        <span style={{
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          background: isSelected ? '#fef08a' : '#f59e0b',
+                                          display: 'inline-block'
+                                        }} />
+                                      )}
+                                      {hasAccepted && !hasPending && (
+                                        <span style={{
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          background: isSelected ? '#a7f3d0' : '#10b981',
+                                          display: 'inline-block'
+                                        }} />
+                                      )}
+                                      {hasDeclined && !hasAccepted && !hasPending && (
+                                        <span style={{
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          background: isSelected ? '#fecaca' : '#ef4444',
+                                          display: 'inline-block'
+                                        }} />
+                                      )}
+                                    </div>
+                                  )}
                                 </button>
                               );
-                            })()}
+                            })}
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
+
+                      {/* Legenda do Calendário */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginTop: '12px',
+                        paddingTop: '10px',
+                        borderTop: '1px solid var(--panel-border, #f1f5f9)',
+                        fontSize: '0.68rem',
+                        color: 'var(--text-muted, #64748b)'
+                      }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#f59e0b' }} />
+                          Pendente
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
+                          Confirmado
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444' }} />
+                          Recusado
+                        </span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Escalas do Dia Selecionado ou do Mês no Calendário */}
+                    {(() => {
+                      const curYear = calendarMonth.getFullYear();
+                      const curMonth = calendarMonth.getMonth();
+
+                      let displayed: any[] = [];
+                      let titleText = '';
+
+                      if (selectedCalendarDate) {
+                        displayed = schedules.filter(s => toDateISO(s.service_date) === selectedCalendarDate);
+                        const [y, m, d] = selectedCalendarDate.split('-');
+                        titleText = `Cultos e Escalas em ${d}/${m}/${y}`;
+                      } else {
+                        displayed = schedules.filter(s => {
+                          const iso = toDateISO(s.service_date);
+                          if (!iso) return false;
+                          const [sYear, sMonth] = iso.split('-');
+                          return parseInt(sYear, 10) === curYear && parseInt(sMonth, 10) === (curMonth + 1);
+                        });
+                        const mName = calendarMonth.toLocaleString('pt-BR', { month: 'long' });
+                        titleText = `Escalas em ${mName.charAt(0).toUpperCase() + mName.slice(1)} (${displayed.length})`;
+                      }
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                              {titleText}
+                            </div>
+                            {selectedCalendarDate && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCalendarDate(null)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--accent-primary, #0f766e)',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Ver todas do mês
+                              </button>
+                            )}
+                          </div>
+
+                          {displayed.length === 0 ? (
+                            <div style={{
+                              background: 'var(--bg-card, #ffffff)',
+                              borderRadius: '16px',
+                              padding: '20px 16px',
+                              textAlign: 'center',
+                              border: '1px solid var(--panel-border, #e2e8f0)'
+                            }}>
+                              <div style={{ fontSize: '1.6rem', marginBottom: '6px' }}>🕊️</div>
+                              <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main, #0f172a)' }}>
+                                {selectedCalendarDate ? 'Nenhuma escala neste dia' : 'Nenhuma convocação neste mês'}
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                                {selectedCalendarDate 
+                                  ? 'Você não está escalado para esta data. Toque em outro dia marcado com bolinha no calendário.' 
+                                  : 'Quando a liderança gerar novas escalas para este período, elas aparecerão aqui.'}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {displayed.map(item => {
+                                const isAccepted = item.confirmation_status === 'ACCEPTED';
+                                const isDeclined = item.confirmation_status === 'DECLINED';
+                                const isPending = item.confirmation_status === 'PENDING';
+
+                                return (
+                                  <div
+                                    key={item.roster_item_id}
+                                    style={{
+                                      background: 'var(--bg-card, #ffffff)',
+                                      borderRadius: '18px',
+                                      padding: '18px',
+                                      border: isAccepted 
+                                        ? '1.5px solid #10b981' 
+                                        : (isDeclined ? '1.5px solid #ef4444' : '1.5px solid var(--accent-primary, #0f766e)'),
+                                      boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05))',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '12px'
+                                    }}
+                                  >
+                                    {/* Topo do Card */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                      <div>
+                                        <span style={{
+                                          fontSize: '0.70rem',
+                                          fontWeight: 800,
+                                          padding: '3px 8px',
+                                          borderRadius: '8px',
+                                          background: `${item.ministry_color || '#0f766e'}20`,
+                                          color: item.ministry_color || 'var(--accent-primary, #0f766e)',
+                                          textTransform: 'uppercase'
+                                        }}>
+                                          {item.ministry_name}
+                                        </span>
+                                        <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main, #0f172a)', marginTop: '6px' }}>
+                                          {item.service_title}
+                                        </div>
+                                        <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+                                          📅 {new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} {item.service_time ? `às ${item.service_time.slice(0, 5)}` : ''}
+                                        </div>
+                                      </div>
+
+                                      {/* Status Badge */}
+                                      <span style={{
+                                        fontSize: '0.72rem',
+                                        fontWeight: 800,
+                                        padding: '4px 10px',
+                                        borderRadius: '10px',
+                                        background: isAccepted ? 'rgba(16, 185, 129, 0.15)' : (isDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'),
+                                        color: isAccepted ? '#10b981' : (isDeclined ? '#ef4444' : '#f59e0b')
+                                      }}>
+                                        {isAccepted ? '✓ Confirmado' : (isDeclined ? '✗ Recusado' : '⏳ Aguardando Aceite')}
+                                      </span>
+                                    </div>
+
+                                    {/* Posição Escalada */}
+                                    <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{ fontSize: '1.1rem' }}>🏷️</span>
+                                      <div>
+                                        <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                          Sua Função nesta Escala
+                                        </div>
+                                        <div style={{ fontWeight: 900, fontSize: '0.90rem', color: 'var(--text-main, #0f172a)' }}>
+                                          {item.role_name}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Notas / Orientações */}
+                                    {item.schedule_notes && (
+                                      <div style={{ fontSize: '0.78rem', color: 'var(--text-main, #0f172a)', background: 'rgba(245, 158, 11, 0.12)', padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                                        <strong style={{ color: '#f59e0b' }}>Orientações:</strong> {item.schedule_notes}
+                                      </div>
+                                    )}
+
+                                    {/* Botões One-Tap de Confirmação */}
+                                    {isPending && (
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
+                                        <button
+                                          onClick={() => handleRespond(item.roster_item_id, 'ACCEPTED')}
+                                          disabled={answeringItemId === item.roster_item_id}
+                                          style={{
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: 'none',
+                                            background: '#10b981',
+                                            color: '#ffffff',
+                                            fontWeight: 900,
+                                            fontSize: '0.85rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                                          }}
+                                        >
+                                          <span>✓</span>
+                                          <span>Confirmar</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                                          disabled={answeringItemId === item.roster_item_id}
+                                          style={{
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: '1.5px solid #ef4444',
+                                            background: 'var(--bg-card, #ffffff)',
+                                            color: '#ef4444',
+                                            fontWeight: 800,
+                                            fontSize: '0.85rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                          }}
+                                        >
+                                          <span>✗</span>
+                                          <span>Não Poderei</span>
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {isAccepted && (
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--panel-border, #f1f5f9)', paddingTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                                        <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 700 }}>
+                                          ✓ Sua vaga está garantida no altar!
+                                        </span>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                          <button
+                                            onClick={() => handleOpenSwapModal(item)}
+                                            style={{
+                                              background: 'rgba(16, 185, 129, 0.15)',
+                                              border: '1px solid rgba(16, 185, 129, 0.35)',
+                                              color: '#10b981',
+                                              borderRadius: '8px',
+                                              padding: '4px 10px',
+                                              fontSize: '0.74rem',
+                                              fontWeight: 800,
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            🔄 Pedir Troca
+                                          </button>
+                                          <button
+                                            onClick={() => setDeclineReasonModal(item.roster_item_id)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--text-muted, #94a3b8)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                          >
+                                            Recusar
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {item.confirmation_status === 'SWAP_REQUESTED' && (
+                                      <div style={{
+                                        background: 'rgba(245, 158, 11, 0.12)',
+                                        border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                                        borderRadius: '12px',
+                                        padding: '12px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px'
+                                      }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <span style={{ fontSize: '1.2rem' }}>🔄</span>
+                                          <div>
+                                            <div style={{ fontSize: '0.80rem', color: '#b45309', fontWeight: 800 }}>
+                                              Solicitação de Troca Ativa
+                                            </div>
+                                            <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #475569)', marginTop: '2px' }}>
+                                              Colegas do ministério e liderança foram notificados para assumir sua vaga.
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                                          {(() => {
+                                            const relatedSwap = pendingSwaps.outgoing.find(s => 
+                                              (s.roster_item_id === item.roster_item_id || s.schedule_id === item.schedule_id) && s.status === 'PENDING'
+                                            );
+                                            return (
+                                              <button
+                                                onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
+                                                disabled={cancellingSwap}
+                                                style={{
+                                                  background: '#ffffff',
+                                                  border: '1.5px solid #f59e0b',
+                                                  color: '#b45309',
+                                                  padding: '6px 14px',
+                                                  borderRadius: '10px',
+                                                  fontSize: '0.74rem',
+                                                  fontWeight: 800,
+                                                  cursor: 'pointer',
+                                                  boxShadow: '0 1px 3px rgba(245, 158, 11, 0.15)'
+                                                }}
+                                              >
+                                                ✕ Cancelar Troca (Vou Comparecer)
+                                              </button>
+                                            );
+                                          })()}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
             )}
 
             {/* SEÇÃO: MEUS MINISTÉRIOS VINCULADOS & ESCALAS DO GRUPO */}

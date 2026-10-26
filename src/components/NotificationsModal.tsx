@@ -29,7 +29,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   const [isSupported, setIsSupported] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'birthday' | 'spiritual' | 'prayers'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'birthday' | 'spiritual' | 'prayers' | 'schedules'>('all');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -91,6 +91,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       else if (n.actionTarget === 'cell_groups') onNavigate('cells');
       else if (n.actionTarget === 'prayers') onNavigate('home', 'prayers');
       else if (n.actionTarget === 'events') onNavigate('home', 'events');
+      else if (n.actionTarget === 'volunteer_schedules') onNavigate('home', 'volunteers');
     }
   };
 
@@ -107,6 +108,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     if (activeFilter === 'birthday') return n.type === 'birthday';
     if (activeFilter === 'spiritual') return n.type === 'devotional' || n.type === 'study' || n.type === 'broadcast';
     if (activeFilter === 'prayers') return n.type === 'prayer';
+    if (activeFilter === 'schedules') return n.type === 'schedule';
     return true;
   });
 
@@ -265,6 +267,26 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             }}
           >
             🙏 Orações
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFilter('schedules')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: activeFilter === 'schedules' ? 'none' : '1px solid var(--panel-border)',
+              background: activeFilter === 'schedules' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
+              color: activeFilter === 'schedules' ? '#ffffff' : 'var(--text-secondary)',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            ⚡ Escalas ({notifications.filter(n => n.type === 'schedule').length})
           </button>
         </div>
 

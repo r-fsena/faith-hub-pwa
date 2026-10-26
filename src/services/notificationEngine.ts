@@ -1,16 +1,17 @@
-import { fetchActiveBroadcast } from './api';
+import { fetchActiveBroadcast, fetchMySchedules, fetchMyPendingSwaps } from './api';
+import { showLocalNotification } from './pushNotifications';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://usl72lj2m5.execute-api.us-east-2.amazonaws.com';
 
 export interface AppNotification {
   id: string;
-  type: 'birthday' | 'devotional' | 'study' | 'prayer' | 'broadcast' | 'event';
+  type: 'birthday' | 'devotional' | 'study' | 'prayer' | 'broadcast' | 'event' | 'schedule';
   title: string;
   description: string;
   timeAgo: string;
   category: string;
   actionLabel?: string;
-  actionTarget?: 'devotionals' | 'prayers' | 'cell_groups' | 'events' | 'live' | 'whatsapp';
+  actionTarget?: 'devotionals' | 'prayers' | 'cell_groups' | 'events' | 'live' | 'whatsapp' | 'volunteer_schedules';
   actionPayload?: any;
   priority?: 'high' | 'normal';
   icon: string;
@@ -265,6 +266,69 @@ export async function fetchAppNotifications(orgId: string = 'org_default'): Prom
       }
     } catch (e) {
       console.warn('Erro ao buscar eventos para notificações:', e);
+    }
+
+    // 7. Convocações em Escalas de Voluntários & Ministérios
+    try {
+      const mySchedules = await fetchMySchedules();
+      if (Array.isArray(mySchedules) && mySchedules.length > 0) {
+        // Filtrar convocações pendentes de aceite
+        const pendingSchedules = mySchedules.filter((s: any) => s.confirmation_status === 'PENDING');
+        const readIds = getReadNotificationIds();
+
+        for (const item of pendingSchedules) {
+          const notifId = `roster_pending_${item.roster_item_id}`;
+          const dateFormatted = item.service_date 
+            ? new Date(item.service_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) 
+            : '';
+          const timeFormatted = item.service_time ? item.service_time.slice(0, 5) : '';
+
+          notifications.push({
+            id: notifId,
+            type: 'schedule',
+            icon: '📋',
+            category: 'Escala de Voluntário',
+            title: `Nova Convocação: ${item.ministry_name || 'Ministério'}`,
+            description: `Você foi escalado como "${item.role_name}" para o culto de ${dateFormatted}${timeFormatted ? ` às ${timeFormatted}` : ''}. Por favor, confirme ou recuse sua presença!`,
+            timeAgo: 'Aguardando Aceite',
+            priority: 'high',
+            actionLabel: 'Confirmar Presença',
+            actionTarget: 'volunteer_schedules',
+            actionPayload: { rosterItemId: item.roster_item_id },
+            createdAt: item.service_date || todayDateStr
+          });
+
+          // Disparar Web Push Notification local se ainda não foi lida
+          if (!readIds.includes(notifId)) {
+            showLocalNotification(
+              `Você foi escalado no ${item.ministry_name || 'Culto'}!`,
+              `Culto de ${dateFormatted}${timeFormatted ? ` às ${timeFormatted}` : ''} como "${item.role_name}". Toque para confirmar.`
+            ).catch(() => {});
+          }
+        }
+      }
+
+      // 8. Solicitações de Troca de Escala de Colegas (Shift Swap)
+      const swaps = await fetchMyPendingSwaps();
+      if (swaps?.incoming && Array.isArray(swaps.incoming) && swaps.incoming.length > 0) {
+        for (const swap of swaps.incoming) {
+          notifications.push({
+            id: `swap_incoming_${swap.swap_id}`,
+            type: 'schedule',
+            icon: '🤝',
+            category: 'Troca de Escala',
+            title: `Colega precisa de substituto: ${swap.ministry_name || 'Ministério'}`,
+            description: `${swap.requesting_member_name || 'Um voluntário'} solicitou substituição para o culto de ${swap.service_title || 'celebração'}.`,
+            timeAgo: 'Pendente',
+            priority: 'high',
+            actionLabel: 'Ver Pedido de Troca',
+            actionTarget: 'volunteer_schedules',
+            createdAt: todayDateStr
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar escalas para notificações:', e);
     }
 
   } catch (error) {
