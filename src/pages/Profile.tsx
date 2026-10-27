@@ -659,6 +659,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
   }
 
   if (isAuthenticated && user) {
+    const hasDigitalMemberCard = isFeatureEnabled('members.digital_card', false);
+
     return (
       <div className="pwa-content animate-fade-in" style={{ gap: '16px' }}>
         
@@ -684,7 +686,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* CARTEIRINHA DIGITAL OFICIAL COM QR CODE */}
-            {isFeatureEnabled('members.digital_card', false) && <DigitalMemberCard
+            {hasDigitalMemberCard && <DigitalMemberCard
               member={{
                 id: memberProfile.id || user?.userId || user?.email,
                 name: memberProfile.name || user?.name || 'Membro da Igreja',
@@ -701,100 +703,107 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               accentColor={branding.primary_color || 'var(--accent-primary, #0f766e)'}
             />}
 
-            {/* Card Principal de Perfil do Membro */}
+            {/* Ações do perfil — evita repetir os dados já apresentados na carteira digital */}
             <div style={{
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              borderRadius: '24px',
-              padding: '24px 20px',
+              background: 'var(--bg-card, #ffffff)',
+              borderRadius: '18px',
+              padding: '14px',
               border: '1px solid var(--panel-border)',
               boxShadow: 'var(--shadow-sm)',
-              textAlign: 'center',
-              position: 'relative'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap'
             }}>
-              {/* Avatar com Botão de Ação */}
-              <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 12px auto' }}>
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                aria-label="Trocar foto do perfil"
+                style={{
+                  position: 'relative',
+                  width: '52px',
+                  height: '52px',
+                  padding: 0,
+                  border: '2px solid var(--accent-primary)',
+                  borderRadius: '50%',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.10)'
+                }}
+              >
                 <img 
                   src={avatarUrl} 
-                  alt="Avatar" 
+                  alt="Foto do perfil" 
                   style={{
                     width: '100%',
                     height: '100%',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: '3px solid var(--accent-primary)',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
+                    display: 'block'
                   }} 
                 />
-                <button 
-                  type="button" 
+                <span style={{
+                  position: 'absolute',
+                  right: '-2px',
+                  bottom: '-2px',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--accent-primary)',
+                  color: '#ffffff',
+                  border: '2px solid var(--bg-card, #ffffff)',
+                  fontSize: '0.62rem'
+                }}>
+                  📷
+                </span>
+              </button>
+
+              <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                  {hasDigitalMemberCard ? 'Gerenciar perfil' : (memberProfile.name || user.name || 'Meu perfil')}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {hasDigitalMemberCard ? 'Foto e dados pessoais' : user.email}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flex: '0 1 auto', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
                   onClick={() => setShowAvatarPicker(true)}
                   style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    background: 'var(--accent-primary)',
-                    color: '#ffffff',
-                    border: '2px solid #ffffff',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                    background: 'var(--bg-card-subtle, #f8fafc)',
+                    border: '1px solid var(--panel-border)',
+                    borderRadius: '10px',
+                    padding: '8px 10px',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    color: 'var(--text-main)',
+                    cursor: 'pointer'
                   }}
-                  title="Trocar Foto"
                 >
-                  📷
+                  Trocar foto
                 </button>
-              </div>
-
-              <h2 style={{ fontSize: '1.30rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0 0 0' }}>
-                {memberProfile.name || user.name || 'Membro da Igreja'}
-              </h2>
-              
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                {user.email}
-              </p>
-
-              <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                {checkIsMasterOrAdmin(user?.email, memberProfile.role) ? (
-                  <span style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#92400e', border: '1px solid #fcd34d', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 900 }}>
-                    👑 Administrador Master
-                  </span>
-                ) : (
-                  <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-                    ✓ {memberProfile.role || 'Membro Ativo'}
-                  </span>
-                )}
-                <span style={{ background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-                  📍 {memberProfile.campus_name}
-                </span>
-              </div>
-
-              {/* Botão para Editar Meus Dados */}
-              <div style={{ marginTop: '16px' }}>
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(true)}
                   style={{
-                    background: 'var(--bg-card, #ffffff)',
-                    border: '1px solid var(--panel-border)',
-                    borderRadius: '12px',
-                    padding: '8px 18px',
-                    fontSize: '0.80rem',
+                    background: 'var(--accent-primary)',
+                    border: '1px solid var(--accent-primary)',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                    fontSize: '0.74rem',
                     fontWeight: 800,
-                    color: 'var(--text-main)',
+                    color: '#ffffff',
                     cursor: 'pointer',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  <span>✏️</span> Editar Meus Dados
+                  Editar dados
                 </button>
               </div>
             </div>
