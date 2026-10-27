@@ -17,6 +17,7 @@ export interface DigitalMemberCardProps {
   logoUrl?: string;
   avatarUrl?: string;
   accentColor?: string;
+  onEdit?: () => void;
 }
 
 export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
@@ -24,7 +25,8 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
   churchName = 'Faith-Hub Community',
   logoUrl,
   avatarUrl,
-  accentColor = '#0f766e'
+  accentColor = '#0f766e',
+  onEdit
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -77,23 +79,26 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
             <span>🪪</span>
             <span>Carteira Digital Oficial</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsFlipped(current => !current)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.74rem',
-              fontWeight: 700,
-              color: 'var(--accent-primary, #0f766e)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <span>🔄</span> {isFlipped ? 'Ver Frente' : 'Ver Verso'}
-          </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label="Editar dados do perfil"
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: 'var(--accent-primary, #0f766e)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <span>✏️</span> Editar dados
+            </button>
+          )}
         </div>
 
         {/* Card Interativo */}
@@ -234,6 +239,9 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
                   {isActive ? 'Membro Ativo e Regular' : 'Cadastro pendente de regularização'}
                 </div>
+                <div style={{ fontSize: '0.60rem', color: 'rgba(255, 255, 255, 0.48)', marginTop: '4px', fontWeight: 600 }}>
+                  ↻ Toque no cartão para ver o verso
+                </div>
               </div>
 
               {/* Miniatura do QR Code com toque para zoom */}
@@ -311,8 +319,13 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
-              <div style={{ fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>
-                Verificado digitalmente via Faith-Hub
+              <div>
+                <div style={{ fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>
+                  Verificado digitalmente via Faith-Hub
+                </div>
+                <div style={{ fontSize: '0.60rem', color: 'rgba(255,255,255,0.45)', marginTop: '3px', fontWeight: 600 }}>
+                  ↻ Toque no cartão para voltar
+                </div>
               </div>
               <span style={{ fontSize: '0.70rem', color: '#10b981', fontWeight: 800 }}>
                 ✓ Válido

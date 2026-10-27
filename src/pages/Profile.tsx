@@ -173,6 +173,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
   const [isEventScannerOpen, setIsEventScannerOpen] = useState(false);
   const [isOperationalMenuOpen, setIsOperationalMenuOpen] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [returnToEditAfterAvatar, setReturnToEditAfterAvatar] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(true);
 
@@ -324,6 +325,20 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
 
   const savedAvatarExists = () => Boolean(localStorage.getItem('faithhub_user_avatar'));
 
+  const openAvatarPicker = (returnToEdit = false) => {
+    setReturnToEditAfterAvatar(returnToEdit);
+    if (returnToEdit) setIsEditProfileOpen(false);
+    setShowAvatarPicker(true);
+  };
+
+  const closeAvatarPicker = () => {
+    setShowAvatarPicker(false);
+    if (returnToEditAfterAvatar) {
+      setReturnToEditAfterAvatar(false);
+      setIsEditProfileOpen(true);
+    }
+  };
+
   // Salvar Edição de Dados Pessoais (Nome, Telefone, Nascimento, Endereço Segregado)
   const handleSaveProfileData = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,7 +458,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
       if (dataUrl) {
         setAvatarUrl(dataUrl);
         localStorage.setItem('faithhub_user_avatar', dataUrl);
-        setShowAvatarPicker(false);
+        closeAvatarPicker();
 
         if (user?.userId) {
           authFetch(`${API_URL}/members/${user.userId}`, {
@@ -459,7 +474,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
   const handleSelectCuratedAvatar = (url: string) => {
     setAvatarUrl(url);
     localStorage.setItem('faithhub_user_avatar', url);
-    setShowAvatarPicker(false);
+    closeAvatarPicker();
 
     if (user?.userId) {
       authFetch(`${API_URL}/members/${user.userId}`, {
@@ -701,9 +716,11 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               logoUrl={branding.logo_icon_url || '/brand/logo-symbol.png'}
               avatarUrl={avatarUrl}
               accentColor={branding.primary_color || 'var(--accent-primary, #0f766e)'}
+              onEdit={() => setIsEditProfileOpen(true)}
             />}
 
-            {/* Ações do perfil — evita repetir os dados já apresentados na carteira digital */}
+            {/* Fallback de perfil para tenants sem a carteira digital habilitada */}
+            {!hasDigitalMemberCard && (
             <div style={{
               background: 'var(--bg-card, #ffffff)',
               borderRadius: '18px',
@@ -717,7 +734,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             }}>
               <button
                 type="button"
-                onClick={() => setShowAvatarPicker(true)}
+                onClick={() => openAvatarPicker(false)}
                 aria-label="Trocar foto do perfil"
                 style={{
                   position: 'relative',
@@ -764,17 +781,17 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
 
               <div style={{ flex: '1 1 120px', minWidth: 0 }}>
                 <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                  {hasDigitalMemberCard ? 'Gerenciar perfil' : (memberProfile.name || user.name || 'Meu perfil')}
+                  {memberProfile.name || user.name || 'Meu perfil'}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  {hasDigitalMemberCard ? 'Foto e dados pessoais' : user.email}
+                  {user.email}
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flex: '0 1 auto', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() => setShowAvatarPicker(true)}
+                  onClick={() => openAvatarPicker(false)}
                   style={{
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1px solid var(--panel-border)',
@@ -807,6 +824,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 </button>
               </div>
             </div>
+            )}
 
             {/* Card Menu Operacional (Check-in Kids, Checkout, Portaria de Eventos) */}
             {(() => {
@@ -1569,6 +1587,49 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
           </div>
 
           <form onSubmit={handleSaveProfileData} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <button
+              type="button"
+              onClick={() => openAvatarPicker(true)}
+              aria-label="Alterar foto do perfil"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px',
+                borderRadius: '16px',
+                border: '1.5px solid var(--panel-border)',
+                background: 'var(--bg-card-subtle, #f8fafc)',
+                color: 'var(--text-main)',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <img
+                src={avatarUrl}
+                alt="Foto atual do perfil"
+                style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--accent-primary)',
+                  flexShrink: 0
+                }}
+              />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900 }}>
+                  Foto do perfil
+                </span>
+                <span style={{ display: 'block', fontSize: '0.70rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Use a câmera, a galeria ou escolha um avatar.
+                </span>
+              </span>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)', whiteSpace: 'nowrap' }}>
+                Alterar foto
+              </span>
+            </button>
+
             <div>
               <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px' }}>
                 Nome Completo *
@@ -1856,7 +1917,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             ======================================================== */}
         <BottomSheet 
           isOpen={showAvatarPicker} 
-          onClose={() => setShowAvatarPicker(false)}
+          onClose={closeAvatarPicker}
           maxHeight="70vh"
         >
           <h3 style={{ fontSize: '1.15rem', fontWeight: 900, textAlign: 'center', color: 'var(--text-main)', margin: '4px 0 16px 0' }}>
