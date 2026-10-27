@@ -224,7 +224,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         userSelect: 'none'
       }}
     >
-      {/* Visualização de Vídeo Inline com Autoplay */}
+      {/* Visualização do vídeo incorporado ao banner */}
       {current.type === 'video' && isPlayingVideo ? (
         <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000000' }}>
           <iframe
@@ -400,7 +400,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                   }}
                 >
                   <span>▶</span>
-                  <span>Assistir Agora (Inline)</span>
+                  <span>{activeBroadcast?.is_available ? 'Assistir ao vivo' : 'Assistir agora'}</span>
                 </button>
               )}
 

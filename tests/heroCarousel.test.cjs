@@ -20,3 +20,8 @@ test('hero carousel replaces broken remote images and preserves the gradient as 
   assert.match(source, /image\.style\.display = 'none'/);
   assert.match(source, /var\(--accent-primary-gradient\)/);
 });
+
+test('video call to action uses user-facing labels instead of technical terminology', () => {
+  assert.match(source, /activeBroadcast\?\.is_available \? 'Assistir ao vivo' : 'Assistir agora'/);
+  assert.doesNotMatch(source, /Inline/);
+});
