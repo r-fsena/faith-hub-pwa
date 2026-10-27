@@ -68,8 +68,8 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
 
   return (
     <>
-      {/* Container Principal com perspectiva 3D e flip */}
-      <div style={{ perspective: '1200px', width: '100%', maxWidth: '440px', margin: '0 auto' }}>
+      {/* Container principal da carteira */}
+      <div style={{ width: '100%', maxWidth: '440px', margin: '0 auto' }}>
 
         {/* Barra superior de identificação */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
@@ -79,7 +79,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => setIsFlipped(!isFlipped)}
+            onClick={() => setIsFlipped(current => !current)}
             style={{
               background: 'none',
               border: 'none',
@@ -98,26 +98,21 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
 
         {/* Card Interativo */}
         <div
-          onClick={() => setIsFlipped(!isFlipped)}
+          onClick={() => setIsFlipped(current => !current)}
           style={{
             position: 'relative',
             width: '100%',
             minHeight: '230px',
             borderRadius: '24px',
             cursor: 'pointer',
-            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-            transformStyle: 'preserve-3d',
-            WebkitTransformStyle: 'preserve-3d',
-            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            WebkitTransform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            willChange: 'transform',
-            isolation: 'isolate',
+            transition: 'box-shadow 0.2s ease',
             boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(0,0,0,0.06)'
           }}
         >
           {/* ========================================================
               FRENTE DA CARTEIRINHA (Estilo Jotiva / Apple Wallet)
               ======================================================== */}
+          {!isFlipped && (
           <div
             style={{
               position: 'relative',
@@ -127,12 +122,6 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f2c2b 100%)',
               padding: '20px 22px',
               color: '#ffffff',
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              transform: 'rotateY(0deg) translateZ(1px)',
-              WebkitTransform: 'rotateY(0deg) translateZ(1px)',
-              opacity: isFlipped ? 0 : 1,
-              pointerEvents: isFlipped ? 'none' : 'auto',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -271,27 +260,21 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               )}
             </div>
           </div>
+          )}
 
           {/* ========================================================
               VERSO DA CARTEIRINHA (Dados de Batismo, Versículo)
               ======================================================== */}
+          {isFlipped && (
           <div
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
+              position: 'relative',
               width: '100%',
-              height: '100%',
+              minHeight: '230px',
               borderRadius: '24px',
               background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
               padding: '22px',
               color: '#ffffff',
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg) translateZ(1px)',
-              WebkitTransform: 'rotateY(180deg) translateZ(1px)',
-              opacity: isFlipped ? 1 : 0,
-              pointerEvents: isFlipped ? 'auto' : 'none',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -336,6 +319,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               </span>
             </div>
           </div>
+          )}
         </div>
       </div>
 

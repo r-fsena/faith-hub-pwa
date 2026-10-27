@@ -8,13 +8,12 @@ const source = fs.readFileSync(
   'utf8'
 );
 
-test('digital member card keeps only the active face visible across WebKit browsers', () => {
-  assert.match(source, /WebkitTransformStyle:\s*'preserve-3d'/);
-  assert.equal((source.match(/WebkitBackfaceVisibility:\s*'hidden'/g) || []).length, 2);
-  assert.match(source, /opacity:\s*isFlipped \? 0 : 1/);
-  assert.match(source, /opacity:\s*isFlipped \? 1 : 0/);
-  assert.match(source, /pointerEvents:\s*isFlipped \? 'none' : 'auto'/);
-  assert.match(source, /pointerEvents:\s*isFlipped \? 'auto' : 'none'/);
+test('digital member card renders exactly one face instead of stacking 3D layers', () => {
+  assert.match(source, /\{!isFlipped && \(/);
+  assert.match(source, /\{isFlipped && \(/);
+  assert.doesNotMatch(source, /preserve-3d/);
+  assert.doesNotMatch(source, /translateZ\(1px\)/);
+  assert.doesNotMatch(source, /WebkitBackfaceVisibility/);
 });
 
 test('profile avoids repeating identity details below the digital member card', () => {
