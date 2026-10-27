@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getYoutubeEmbedUrl } from './LivePlayerModal';
 
+const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80';
+
+export function resolveHeroImage(...candidates: Array<string | null | undefined>): string {
+  return candidates.find(candidate => typeof candidate === 'string' && candidate.trim())?.trim() || DEFAULT_HERO_IMAGE;
+}
+
 export function getYoutubeThumbnailUrl(urlOrId?: string): string {
   if (!urlOrId) return '';
   const trimmed = urlOrId.trim();
@@ -62,6 +68,22 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   const videoEmbedUrl = rawVideoUrl ? getYoutubeEmbedUrl(rawVideoUrl) : '';
   const videoThumbUrl = rawVideoUrl ? getYoutubeThumbnailUrl(rawVideoUrl) : '';
   const videoTitle = activeBroadcast?.title || `Culto de Celebração • ${branding?.church_name || 'Faith-Hub'}`;
+  const fallbackHeroImage = resolveHeroImage(
+    branding?.welcome_screen_config?.hero_image_url,
+    DEFAULT_HERO_IMAGE
+  );
+
+  const handleHeroImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const image = event.currentTarget;
+    const fallbackUrl = new URL(fallbackHeroImage, window.location.href).href;
+
+    if (image.src !== fallbackUrl) {
+      image.src = fallbackHeroImage;
+      return;
+    }
+
+    image.style.display = 'none';
+  };
 
   // Montagem dinâmica da lista de slides disponíveis (Destaques controlados via flags no Studio)
   const slides: Array<{
@@ -84,7 +106,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       badgeBg: activeBroadcast?.is_available ? '#ef4444' : '#0284c7',
       title: videoTitle,
       subtitle: activeBroadcast?.description || 'Toque para assistir à mensagem e celebração da nossa comunidade.',
-      bgImage: videoThumbUrl || branding?.banner_url
+      bgImage: resolveHeroImage(videoThumbUrl, branding?.banner_url, fallbackHeroImage)
     });
   }
 
@@ -96,7 +118,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     badgeBg: 'rgba(255, 255, 255, 0.25)',
     title: branding?.church_name || 'Faith-Hub',
     subtitle: branding?.tagline || 'Conectando corações e transformando vidas.',
-    bgImage: branding?.banner_url
+    bgImage: resolveHeroImage(branding?.banner_url, fallbackHeroImage)
   });
 
   // 3. Slide de Evento em Destaque (Apenas se a flag is_featured estiver ativa no Studio)
@@ -113,7 +135,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       badgeBg: '#ea580c',
       title: featuredEvent.title,
       subtitle: featuredEvent.location ? `${featuredEvent.location} • Inscrições Abertas` : 'Confira os detalhes e participe conosco.',
-      bgImage: featuredEvent.cover_url || featuredEvent.image_url || branding?.banner_url
+      bgImage: resolveHeroImage(featuredEvent.cover_url, featuredEvent.image_url, branding?.banner_url, fallbackHeroImage)
     });
   }
 
@@ -127,7 +149,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       badgeBg: '#0f766e',
       title: todayDevotional.title || 'Devocional Diário',
       subtitle: todayDevotional.verse_reference || 'Edifique a sua fé com a Palavra de Deus para hoje.',
-      bgImage: todayDevotional.cover_url || branding?.banner_url
+      bgImage: resolveHeroImage(todayDevotional.cover_url, branding?.banner_url, fallbackHeroImage)
     });
   }
 
@@ -260,9 +282,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           {/* Background Image / Gradient */}
           {current.bgImage ? (
             <img
+              key={current.bgImage}
               src={current.bgImage}
               alt={current.title}
               className="pwa-hero-bg"
+              onError={handleHeroImageError}
               style={{
                 filter: current.type === 'video' ? 'brightness(0.68)' : 'brightness(0.85)'
               }}
