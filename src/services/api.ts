@@ -175,16 +175,6 @@ export async function fetchPdvProducts(organizationId?: string, campusId?: strin
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.data || []);
       
-      // Se não houver produtos específicos vinculados a este campus e o campus não for 'all',
-      // busca os produtos da organização como fallback para a loja nunca ficar vazia
-      if (list.length === 0 && campus && campus !== 'all') {
-        const fallbackRes = await fetch(`${API_BASE_URL}/pdv/products?organization_id=${org}`, { headers });
-        if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          return Array.isArray(fallbackData) ? fallbackData : (fallbackData.data || []);
-        }
-      }
-
       return list;
     }
   } catch (e) {
@@ -196,11 +186,11 @@ export async function fetchPdvProducts(organizationId?: string, campusId?: strin
 export async function createPdvOrder(payload: {
   user_name: string; customer_phone?: string; delivery_method: 'church' | 'home'; delivery_details: string;
   items_json: Array<{ id: string; name: string; qty: number; price: number; obs?: string }>;
-  total_price: number; organization_id?: string; payment_method: 'PIX' | 'CREDIT_CARD';
+  total_price: number; organization_id?: string; campus_id?: string; payment_method: 'PIX' | 'CREDIT_CARD';
 }) {
   const headers = await getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/pdv/orders`, { method: 'POST', headers,
-    body: JSON.stringify({ ...payload, organization_id: payload.organization_id || getActiveOrganizationId() }) });
+    body: JSON.stringify({ ...payload, organization_id: payload.organization_id || getActiveOrganizationId(), campus_id: payload.campus_id || getActiveCampusId() }) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.message || 'Não foi possível registrar o pedido.');
   if (!data.id || !data.payment_status) throw new Error('Resposta de pedido inválida.');

@@ -14,6 +14,9 @@ interface Product {
   description: string;
   price: number;
   image_urls: string[];
+  track_inventory: boolean;
+  available_quantity: number;
+  unit: string;
 }
 
 export const Store: React.FC = () => {
@@ -113,7 +116,10 @@ export const Store: React.FC = () => {
           category: (p.category || 'Geral').trim(),
           description: p.description || '',
           price: Number(p.price) || 0,
-          image_urls: parseProductImages(p.image_urls)
+          image_urls: parseProductImages(p.image_urls),
+          track_inventory: Boolean(p.track_inventory),
+          available_quantity: Number(p.available_quantity) || 0,
+          unit: p.unit || 'UN'
         }));
         setProducts(mapped);
         try {
@@ -215,6 +221,7 @@ export const Store: React.FC = () => {
 
   const handleConfirmAddToCart = () => {
     if (!selectedProductModal) return;
+    if (selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0) return;
     addItem({
       id: selectedProductModal.id,
       name: selectedProductModal.name,
@@ -609,6 +616,11 @@ export const Store: React.FC = () => {
                     }}>
                       {prod.name}
                     </div>
+                    {prod.track_inventory && (
+                      <div style={{ marginTop: 4, fontSize: '.66rem', fontWeight: 800, color: prod.available_quantity > 0 ? '#047857' : '#dc2626' }}>
+                        {prod.available_quantity > 0 ? `${prod.available_quantity} ${prod.unit} disponíveis` : 'ESGOTADO'}
+                      </div>
+                    )}
                   </div>
 
                   {/* Preço e Botão Rápido */}
@@ -629,6 +641,7 @@ export const Store: React.FC = () => {
 
                     <button
                       type="button"
+                      disabled={prod.track_inventory && prod.available_quantity <= 0}
                       onClick={(e) => {
                         e.stopPropagation();
                         addItem({
@@ -644,7 +657,7 @@ export const Store: React.FC = () => {
                         width: '32px',
                         height: '32px',
                         borderRadius: '10px',
-                        background: 'var(--accent-primary-light)',
+                        background: prod.track_inventory && prod.available_quantity <= 0 ? secondaryBg : 'var(--accent-primary-light)',
                         color: 'var(--accent-primary)',
                         border: 'none',
                         fontSize: '1.15rem',
@@ -652,7 +665,8 @@ export const Store: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: 'pointer'
+                        cursor: prod.track_inventory && prod.available_quantity <= 0 ? 'not-allowed' : 'pointer',
+                        opacity: prod.track_inventory && prod.available_quantity <= 0 ? .45 : 1
                       }}
                     >
                       +
@@ -739,12 +753,14 @@ export const Store: React.FC = () => {
                     }}>
                       R$ {prod.price.toFixed(2).replace('.', ',')}
                     </div>
+                    {prod.track_inventory && <div style={{ fontSize: '.64rem', fontWeight: 800, color: prod.available_quantity > 0 ? '#047857' : '#dc2626' }}>{prod.available_quantity > 0 ? `${prod.available_quantity} ${prod.unit} disponíveis` : 'ESGOTADO'}</div>}
                   </div>
 
                   {/* Ações e Seta à direita */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <button
                       type="button"
+                      disabled={prod.track_inventory && prod.available_quantity <= 0}
                       onClick={(e) => {
                         e.stopPropagation();
                         addItem({
@@ -760,7 +776,7 @@ export const Store: React.FC = () => {
                         width: '32px',
                         height: '32px',
                         borderRadius: '10px',
-                        background: 'var(--accent-primary-light)',
+                        background: prod.track_inventory && prod.available_quantity <= 0 ? secondaryBg : 'var(--accent-primary-light)',
                         color: 'var(--accent-primary)',
                         border: 'none',
                         fontSize: '1.1rem',
@@ -768,7 +784,8 @@ export const Store: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: 'pointer'
+                        cursor: prod.track_inventory && prod.available_quantity <= 0 ? 'not-allowed' : 'pointer',
+                        opacity: prod.track_inventory && prod.available_quantity <= 0 ? .45 : 1
                       }}
                     >
                       +
@@ -984,10 +1001,11 @@ export const Store: React.FC = () => {
               <button
                 type="button"
                 className="btn-pwa-primary"
-                style={{ width: 'auto', padding: '14px 22px', fontSize: '0.88rem', fontWeight: 800 }}
+                disabled={selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0}
+                style={{ width: 'auto', padding: '14px 22px', fontSize: '0.88rem', fontWeight: 800, opacity: selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0 ? .5 : 1 }}
                 onClick={handleConfirmAddToCart}
               >
-                + Adicionar ao Pedido
+                {selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0 ? 'Produto esgotado' : '+ Adicionar ao Pedido'}
               </button>
             </div>
           </div>

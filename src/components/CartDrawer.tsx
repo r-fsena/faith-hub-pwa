@@ -94,7 +94,9 @@ export const CartDrawer: React.FC = () => {
         delivery_method: deliveryMethod,
         delivery_details: `${deliveryDetailsString} [Pgto: ${paymentMethod}${extraInfo ? ` - ${extraInfo}` : ''}]`,
         items_json: itemsPayload,
-        total_price: totalPrice
+        total_price: totalPrice,
+        organization_id: branding.organization_id,
+        campus_id: localStorage.getItem('faithhub_pwa_active_campus_id') || 'campus_sede'
       });
 
       const orderId = orderRes.id;

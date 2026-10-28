@@ -9,7 +9,7 @@ function loadApi(fetch) {
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   vm.runInNewContext(js, { exports, require: () => ({ fetchAuthSession: async () => ({ tokens: {} }) }), fetch, Headers,
-    localStorage: { getItem: () => 'org-a' }, console, URLSearchParams });
+    localStorage: { getItem: key => key === 'faithhub_pwa_active_campus_id' ? 'campus-a' : 'org-a' }, console, URLSearchParams });
   return exports;
 }
 const ticket = { event_id: 'event-a', attendee_name: 'Pessoa', attendee_whatsapp: '11999999999', payment_method: 'PIX' };
@@ -28,4 +28,14 @@ test('PWA rejects incomplete responses and preserves pending status returned by 
   const api = loadApi(async (_url, options) => { sent = JSON.parse(options.body); return { ok: true, json: async () => ({ ticket_id: 'real-ticket', qrcode_token: 'real-token', status: 'PENDING' }) }; });
   assert.equal((await api.checkoutTicket(ticket)).status, 'PENDING');
   assert.equal(sent.organization_id, 'org-a');
+});
+test('PWA checkout always sends the active organization and campus for stock reservation', async () => {
+  let sent;
+  const api = loadApi(async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ id: 'order-a', payment_status: 'PENDING', total_price: 10 }) };
+  });
+  await api.createPdvOrder(order);
+  assert.equal(sent.organization_id, 'org-a');
+  assert.equal(sent.campus_id, 'campus-a');
 });
