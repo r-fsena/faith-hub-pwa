@@ -17,6 +17,7 @@ interface Product {
   track_inventory: boolean;
   is_available_for_purchase: boolean;
   purchase_available: boolean;
+  stock_data_available: boolean;
   available_quantity: number;
   minimum_stock: number;
   unit: string;
@@ -25,11 +26,12 @@ interface Product {
 const isProductUnavailable = (product: Product): boolean => (
   product.purchase_available === false
   || product.is_available_for_purchase === false
-  || (product.track_inventory && product.available_quantity <= product.minimum_stock)
+  || (product.track_inventory && product.stock_data_available && product.available_quantity <= product.minimum_stock)
 );
 
 const productAvailabilityLabel = (product: Product): string => {
   if (product.is_available_for_purchase === false) return 'INDISPONÍVEL';
+  if (product.track_inventory && !product.stock_data_available) return 'ESTOQUE EM ATUALIZAÇÃO';
   if (product.track_inventory && product.available_quantity <= 0) return 'ESGOTADO';
   if (product.track_inventory && product.minimum_stock > 0 && product.available_quantity <= product.minimum_stock) {
     return 'ESTOQUE MÍNIMO ATINGIDO';
@@ -72,7 +74,7 @@ export const Store: React.FC = () => {
   };
 
   const orgId = branding.organization_id || 'org_default';
-  const cacheKey = `faithhub_cached_pdv_products_${orgId}`;
+  const cacheKey = `faithhub_cached_pdv_products_v2_${orgId}_${getActiveCampusId() || 'all'}`;
 
   // Helper seguro para imagens que nunca quebra na deserialização
   const parseProductImages = (raw: any): string[] => {
@@ -131,6 +133,8 @@ export const Store: React.FC = () => {
         const mapped: Product[] = backendProducts.map((p: any) => {
           const trackInventory = Boolean(p.track_inventory);
           const isAvailableForPurchase = p.is_available_for_purchase !== false;
+          const stockDataAvailable = p.available_quantity !== undefined && p.available_quantity !== null
+            && p.minimum_stock !== undefined && p.minimum_stock !== null;
           const availableQuantity = Number(p.available_quantity) || 0;
           const minimumStock = Number(p.minimum_stock) || 0;
           return {
@@ -142,8 +146,9 @@ export const Store: React.FC = () => {
             image_urls: parseProductImages(p.image_urls),
             track_inventory: trackInventory,
             is_available_for_purchase: isAvailableForPurchase,
+            stock_data_available: stockDataAvailable,
             purchase_available: p.purchase_available === undefined
-              ? isAvailableForPurchase && (!trackInventory || availableQuantity > minimumStock)
+              ? isAvailableForPurchase && (!trackInventory || !stockDataAvailable || availableQuantity > minimumStock)
               : Boolean(p.purchase_available),
             available_quantity: availableQuantity,
             minimum_stock: minimumStock,
@@ -152,7 +157,7 @@ export const Store: React.FC = () => {
         });
         setProducts(mapped);
         try {
-          localStorage.setItem(`faithhub_cached_pdv_products_${effectiveOrgId}`, JSON.stringify(mapped));
+          localStorage.setItem(`faithhub_cached_pdv_products_v2_${effectiveOrgId}_${targetCampus || 'all'}`, JSON.stringify(mapped));
         } catch {}
       } else {
         if (products.length === 0) {
