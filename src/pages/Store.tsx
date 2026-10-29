@@ -15,9 +15,27 @@ interface Product {
   price: number;
   image_urls: string[];
   track_inventory: boolean;
+  is_available_for_purchase: boolean;
+  purchase_available: boolean;
   available_quantity: number;
+  minimum_stock: number;
   unit: string;
 }
+
+const isProductUnavailable = (product: Product): boolean => (
+  product.purchase_available === false
+  || product.is_available_for_purchase === false
+  || (product.track_inventory && product.available_quantity <= product.minimum_stock)
+);
+
+const productAvailabilityLabel = (product: Product): string => {
+  if (product.is_available_for_purchase === false) return 'INDISPONÍVEL';
+  if (product.track_inventory && product.available_quantity <= 0) return 'ESGOTADO';
+  if (product.track_inventory && product.minimum_stock > 0 && product.available_quantity <= product.minimum_stock) {
+    return 'ESTOQUE MÍNIMO ATINGIDO';
+  }
+  return `${product.available_quantity} ${product.unit} disponíveis`;
+};
 
 export const Store: React.FC = () => {
   const { addItem } = useCart();
@@ -110,17 +128,28 @@ export const Store: React.FC = () => {
       const backendProducts = await fetchPdvProducts(effectiveOrgId, targetCampus);
 
       if (backendProducts && Array.isArray(backendProducts)) {
-        const mapped: Product[] = backendProducts.map((p: any) => ({
-          id: p.id || String(Math.random()),
-          name: p.name || p.title || 'Produto sem nome',
-          category: (p.category || 'Geral').trim(),
-          description: p.description || '',
-          price: Number(p.price) || 0,
-          image_urls: parseProductImages(p.image_urls),
-          track_inventory: Boolean(p.track_inventory),
-          available_quantity: Number(p.available_quantity) || 0,
-          unit: p.unit || 'UN'
-        }));
+        const mapped: Product[] = backendProducts.map((p: any) => {
+          const trackInventory = Boolean(p.track_inventory);
+          const isAvailableForPurchase = p.is_available_for_purchase !== false;
+          const availableQuantity = Number(p.available_quantity) || 0;
+          const minimumStock = Number(p.minimum_stock) || 0;
+          return {
+            id: p.id || String(Math.random()),
+            name: p.name || p.title || 'Produto sem nome',
+            category: (p.category || 'Geral').trim(),
+            description: p.description || '',
+            price: Number(p.price) || 0,
+            image_urls: parseProductImages(p.image_urls),
+            track_inventory: trackInventory,
+            is_available_for_purchase: isAvailableForPurchase,
+            purchase_available: p.purchase_available === undefined
+              ? isAvailableForPurchase && (!trackInventory || availableQuantity > minimumStock)
+              : Boolean(p.purchase_available),
+            available_quantity: availableQuantity,
+            minimum_stock: minimumStock,
+            unit: p.unit || 'UN'
+          };
+        });
         setProducts(mapped);
         try {
           localStorage.setItem(`faithhub_cached_pdv_products_${effectiveOrgId}`, JSON.stringify(mapped));
@@ -221,7 +250,7 @@ export const Store: React.FC = () => {
 
   const handleConfirmAddToCart = () => {
     if (!selectedProductModal) return;
-    if (selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0) return;
+    if (isProductUnavailable(selectedProductModal)) return;
     addItem({
       id: selectedProductModal.id,
       name: selectedProductModal.name,
@@ -556,7 +585,9 @@ export const Store: React.FC = () => {
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    filter: isProductUnavailable(prod) ? 'grayscale(1)' : 'none',
+                    opacity: isProductUnavailable(prod) ? 0.58 : 1
                   }}
                 >
                   <div>
@@ -600,6 +631,11 @@ export const Store: React.FC = () => {
                       }}>
                         {prod.category}
                       </span>
+                      {isProductUnavailable(prod) && (
+                        <span style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(15,23,42,.88)', color: '#fff', padding: '3px 6px', borderRadius: '6px', fontSize: '.56rem', fontWeight: 900 }}>
+                          INDISPONÍVEL
+                        </span>
+                      )}
                     </div>
 
                     {/* Nome do Produto */}
@@ -616,9 +652,9 @@ export const Store: React.FC = () => {
                     }}>
                       {prod.name}
                     </div>
-                    {prod.track_inventory && (
-                      <div style={{ marginTop: 4, fontSize: '.66rem', fontWeight: 800, color: prod.available_quantity > 0 ? '#047857' : '#dc2626' }}>
-                        {prod.available_quantity > 0 ? `${prod.available_quantity} ${prod.unit} disponíveis` : 'ESGOTADO'}
+                    {(prod.track_inventory || isProductUnavailable(prod)) && (
+                      <div style={{ marginTop: 4, fontSize: '.66rem', fontWeight: 800, color: isProductUnavailable(prod) ? '#475569' : '#047857' }}>
+                        {isProductUnavailable(prod) ? productAvailabilityLabel(prod) : `${prod.available_quantity} ${prod.unit} disponíveis`}
                       </div>
                     )}
                   </div>
@@ -641,7 +677,7 @@ export const Store: React.FC = () => {
 
                     <button
                       type="button"
-                      disabled={prod.track_inventory && prod.available_quantity <= 0}
+                      disabled={isProductUnavailable(prod)}
                       onClick={(e) => {
                         e.stopPropagation();
                         addItem({
@@ -657,7 +693,7 @@ export const Store: React.FC = () => {
                         width: '32px',
                         height: '32px',
                         borderRadius: '10px',
-                        background: prod.track_inventory && prod.available_quantity <= 0 ? secondaryBg : 'var(--accent-primary-light)',
+                        background: isProductUnavailable(prod) ? secondaryBg : 'var(--accent-primary-light)',
                         color: 'var(--accent-primary)',
                         border: 'none',
                         fontSize: '1.15rem',
@@ -665,8 +701,8 @@ export const Store: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: prod.track_inventory && prod.available_quantity <= 0 ? 'not-allowed' : 'pointer',
-                        opacity: prod.track_inventory && prod.available_quantity <= 0 ? .45 : 1
+                        cursor: isProductUnavailable(prod) ? 'not-allowed' : 'pointer',
+                        opacity: isProductUnavailable(prod) ? .45 : 1
                       }}
                     >
                       +
@@ -695,7 +731,9 @@ export const Store: React.FC = () => {
                     justifyContent: 'space-between',
                     gap: '12px',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    filter: isProductUnavailable(prod) ? 'grayscale(1)' : 'none',
+                    opacity: isProductUnavailable(prod) ? 0.58 : 1
                   }}
                 >
                   {/* Miniatura ou Ícone à esquerda */}
@@ -753,14 +791,14 @@ export const Store: React.FC = () => {
                     }}>
                       R$ {prod.price.toFixed(2).replace('.', ',')}
                     </div>
-                    {prod.track_inventory && <div style={{ fontSize: '.64rem', fontWeight: 800, color: prod.available_quantity > 0 ? '#047857' : '#dc2626' }}>{prod.available_quantity > 0 ? `${prod.available_quantity} ${prod.unit} disponíveis` : 'ESGOTADO'}</div>}
+                    {(prod.track_inventory || isProductUnavailable(prod)) && <div style={{ fontSize: '.64rem', fontWeight: 800, color: isProductUnavailable(prod) ? '#475569' : '#047857' }}>{isProductUnavailable(prod) ? productAvailabilityLabel(prod) : `${prod.available_quantity} ${prod.unit} disponíveis`}</div>}
                   </div>
 
                   {/* Ações e Seta à direita */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <button
                       type="button"
-                      disabled={prod.track_inventory && prod.available_quantity <= 0}
+                      disabled={isProductUnavailable(prod)}
                       onClick={(e) => {
                         e.stopPropagation();
                         addItem({
@@ -776,7 +814,7 @@ export const Store: React.FC = () => {
                         width: '32px',
                         height: '32px',
                         borderRadius: '10px',
-                        background: prod.track_inventory && prod.available_quantity <= 0 ? secondaryBg : 'var(--accent-primary-light)',
+                        background: isProductUnavailable(prod) ? secondaryBg : 'var(--accent-primary-light)',
                         color: 'var(--accent-primary)',
                         border: 'none',
                         fontSize: '1.1rem',
@@ -784,8 +822,8 @@ export const Store: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: prod.track_inventory && prod.available_quantity <= 0 ? 'not-allowed' : 'pointer',
-                        opacity: prod.track_inventory && prod.available_quantity <= 0 ? .45 : 1
+                        cursor: isProductUnavailable(prod) ? 'not-allowed' : 'pointer',
+                        opacity: isProductUnavailable(prod) ? .45 : 1
                       }}
                     >
                       +
@@ -952,8 +990,14 @@ export const Store: React.FC = () => {
               <img
                 src={selectedProductModal.image_urls[0]}
                 alt={selectedProductModal.name}
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: cardBorder }}
+                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: cardBorder, filter: isProductUnavailable(selectedProductModal) ? 'grayscale(1)' : 'none', opacity: isProductUnavailable(selectedProductModal) ? .62 : 1 }}
               />
+            )}
+
+            {isProductUnavailable(selectedProductModal) && (
+              <div style={{ padding: '10px 12px', borderRadius: '12px', background: isDark ? 'rgba(148,163,184,.12)' : '#e2e8f0', color: textMutedColor, fontSize: '.78rem', fontWeight: 900, textAlign: 'center' }}>
+                {productAvailabilityLabel(selectedProductModal)} — produto temporariamente indisponível para compra
+              </div>
             )}
 
             <div style={{
@@ -1001,11 +1045,11 @@ export const Store: React.FC = () => {
               <button
                 type="button"
                 className="btn-pwa-primary"
-                disabled={selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0}
-                style={{ width: 'auto', padding: '14px 22px', fontSize: '0.88rem', fontWeight: 800, opacity: selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0 ? .5 : 1 }}
+                disabled={isProductUnavailable(selectedProductModal)}
+                style={{ width: 'auto', padding: '14px 22px', fontSize: '0.88rem', fontWeight: 800, opacity: isProductUnavailable(selectedProductModal) ? .5 : 1 }}
                 onClick={handleConfirmAddToCart}
               >
-                {selectedProductModal.track_inventory && selectedProductModal.available_quantity <= 0 ? 'Produto esgotado' : '+ Adicionar ao Pedido'}
+                {isProductUnavailable(selectedProductModal) ? 'Produto indisponível' : '+ Adicionar ao Pedido'}
               </button>
             </div>
           </div>
