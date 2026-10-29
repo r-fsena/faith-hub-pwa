@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useTheme } from '../context/ThemeContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { trackContentEngagement } from '../services/contentEngagement';
 import { getYoutubeEmbedUrl } from '../components/LivePlayerModal';
 import { 
   fetchCellGroups, 
@@ -180,8 +182,14 @@ type LeaderSubTab = 'attendance' | 'requests' | 'members' | 'lanches' | 'setting
 export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { branding } = useBranding();
+  const { isFeatureEnabled } = useFeatureFlags();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const trackStudy = (contentType: 'STUDY_BOOK' | 'STUDY_CHAPTER', contentId: string, eventType: 'OPENED' | 'COMPLETED') => {
+    if (isFeatureEnabled('content.analytics_dashboard', false)) {
+      void trackContentEngagement({ organizationId: branding.organization_id || 'org_default', contentType, contentId, eventType, source: 'PWA_STUDIES' });
+    }
+  };
   const [cells, setCells] = useState<CellGroup[]>([]);
   const [currentMember, setCurrentMember] = useState<any>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState<boolean>(true);
@@ -675,6 +683,7 @@ export const CellGroups: React.FC = () => {
       const userIdentifier = user?.email || 'guest';
       const fullBook = await fetchStudyBookDetails(bookId, userIdentifier);
       if (fullBook) {
+        trackStudy('STUDY_BOOK', fullBook.id, 'OPENED');
         setLoadedBooksMap(prev => ({ ...prev, [bookId]: fullBook }));
         setSelectedBook(fullBook);
         
@@ -796,6 +805,7 @@ export const CellGroups: React.FC = () => {
     try {
       const res = await toggleChapterCompletion(chapterId, selectedBook.id, userIdentifier);
       if (res && Array.isArray(res.completed_chapter_ids)) {
+        if (res.completed) trackStudy('STUDY_CHAPTER', chapterId, 'COMPLETED');
         setCompletedChapterIds(res.completed_chapter_ids);
         localStorage.setItem(localKey, JSON.stringify(res.completed_chapter_ids));
       }
@@ -2374,7 +2384,10 @@ export const CellGroups: React.FC = () => {
                       return (
                         <div
                           key={chapterId}
-                          onClick={() => setReadingChapter(ch)}
+                          onClick={() => {
+                            setReadingChapter(ch);
+                            trackStudy('STUDY_CHAPTER', chapterId, 'OPENED');
+                          }}
                           style={{
                             background: 'var(--bg-card, #ffffff)',
                             borderRadius: '16px',

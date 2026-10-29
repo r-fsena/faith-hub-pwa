@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { fetchActiveBroadcast } from '../services/api';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { trackContentEngagement } from '../services/contentEngagement';
 
 interface LivePlayerModalProps {
   isOpen: boolean;
@@ -50,6 +52,8 @@ export function getYoutubeEmbedUrl(urlOrId?: string): string {
 
 export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClose, broadcast: propBroadcast }) => {
   const { branding, selectedCampus } = useBranding();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const trackedOpenRef = useRef('');
   const [broadcast, setBroadcast] = useState<any>(propBroadcast || null);
   const [, setLoading] = useState<boolean>(!propBroadcast);
   const [note, setNote] = useState('');
@@ -65,6 +69,14 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
       }
     }
   }, [isOpen, propBroadcast, branding.organization_id, selectedCampus]);
+
+  useEffect(() => {
+    const broadcastId = broadcast?.id;
+    if (!isOpen || !broadcastId || trackedOpenRef.current === broadcastId || !isFeatureEnabled('content.analytics_dashboard', false)) return;
+    trackedOpenRef.current = broadcastId;
+    void trackContentEngagement({ organizationId: branding.organization_id || 'org_default', contentType: 'BROADCAST', contentId: broadcastId, eventType: 'OPENED', source: 'PWA_LIVE_PLAYER' });
+    void trackContentEngagement({ organizationId: branding.organization_id || 'org_default', contentType: 'BROADCAST', contentId: broadcastId, eventType: 'STREAM_STARTED', source: 'PWA_LIVE_PLAYER' });
+  }, [broadcast?.id, branding.organization_id, isFeatureEnabled, isOpen]);
 
   const loadBroadcast = async () => {
     setLoading(true);
@@ -93,6 +105,9 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
     e.preventDefault();
     if (!note.trim()) return;
     setNotesList([...notesList, note.trim()]);
+    if (broadcast?.id && isFeatureEnabled('content.analytics_dashboard', false)) {
+      void trackContentEngagement({ organizationId: branding.organization_id || 'org_default', contentType: 'BROADCAST', contentId: broadcast.id, eventType: 'NOTE_CREATED', source: 'PWA_LIVE_PLAYER' });
+    }
     setNote('');
   };
 

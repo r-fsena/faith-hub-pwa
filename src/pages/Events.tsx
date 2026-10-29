@@ -5,6 +5,8 @@ import { EventTicketPassModal, type EventTicketData } from '../components/EventT
 import { EventQrScannerModal } from '../components/EventQrScannerModal';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { trackContentEngagement } from '../services/contentEngagement';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.us-east-2.amazonaws.com';
 
@@ -33,6 +35,7 @@ interface ChurchEvent {
 export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user } = useAuth();
   const { branding, selectedCampus } = useBranding();
+  const { isFeatureEnabled } = useFeatureFlags();
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,6 +65,12 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const orgId = branding.organization_id || 'org_default';
   const campusId = selectedCampus?.id || selectedCampus?.id;
+
+  const trackEvent = (eventId: string, eventType: 'OPENED' | 'CTA_CLICKED') => {
+    if (isFeatureEnabled('content.analytics_dashboard', false)) {
+      void trackContentEngagement({ organizationId: orgId, contentType: 'EVENT', contentId: eventId, eventType, source: 'PWA_EVENTS' });
+    }
+  };
 
   useEffect(() => {
     loadEventsFromBackend();
@@ -192,6 +201,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleOpenSignup = (ev: ChurchEvent) => {
+    trackEvent(ev.id, 'OPENED');
+    trackEvent(ev.id, 'CTA_CLICKED');
     setSelectedEvent(ev);
     const initialBatch = ev.batches && ev.batches.length > 0 ? ev.batches[0] : { id: 'b1', name: 'Geral', price: ev.price, available: true };
     setSelectedBatch(initialBatch);

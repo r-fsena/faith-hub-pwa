@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { fetchDevotionals, fetchTodayDevotional, getActiveCampusId } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
 import { useTheme } from '../context/ThemeContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { trackContentEngagement } from '../services/contentEngagement';
 
 export interface DevotionalItem {
   id: string;
@@ -26,6 +28,7 @@ export interface DevotionalItem {
 export const Devotionals: React.FC = () => {
   const { branding } = useBranding();
   const { resolvedTheme } = useTheme();
+  const { isFeatureEnabled } = useFeatureFlags();
   const isDark = resolvedTheme === 'dark';
   const currentOrgId = branding.organization_id || 'org_default';
   const [currentCampusId, setCurrentCampusId] = useState<string>(() => getActiveCampusId());
@@ -81,6 +84,12 @@ export const Devotionals: React.FC = () => {
 
   const [shareFeedback, setShareFeedback] = useState<boolean>(false);
 
+  const trackDevotional = (id: string, eventType: 'OPENED' | 'COMPLETED' | 'CTA_CLICKED') => {
+    if (isFeatureEnabled('content.analytics_dashboard', false)) {
+      void trackContentEngagement({ organizationId: currentOrgId, contentType: 'DEVOTIONAL', contentId: id, eventType, source: 'PWA_DEVOTIONALS' });
+    }
+  };
+
   // Estado do Player de Louvor & Meditação
   const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(false);
   const [isMusicMinimized, setIsMusicMinimized] = useState<boolean>(false);
@@ -115,13 +124,14 @@ export const Devotionals: React.FC = () => {
   // Trava a rolagem do body de fundo para eliminar disputa de gestos e travamento no mobile
   useEffect(() => {
     if (readingDevotional) {
+      trackDevotional(readingDevotional.id, 'OPENED');
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [readingDevotional]);
+  }, [readingDevotional?.id]);
 
   const getTodayDateString = (): string => {
     const now = new Date();
@@ -357,6 +367,7 @@ export const Devotionals: React.FC = () => {
 
   // Toggle de Estudo Concluído Persistido
   const toggleCompleted = (id: string) => {
+    if (!completedIds.includes(id)) trackDevotional(id, 'COMPLETED');
     setCompletedIds(prev => {
       const next = prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id];
       localStorage.setItem('faithhub_completed_devotionals_v1', JSON.stringify(next));
