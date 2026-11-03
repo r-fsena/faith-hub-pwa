@@ -1,4 +1,4 @@
-const CACHE_NAME = 'faith-hub-pwa-v6.12';
+const CACHE_NAME = 'faith-hub-pwa-v6.13';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

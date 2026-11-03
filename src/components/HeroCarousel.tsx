@@ -1,3 +1,4 @@
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { getYoutubeEmbedUrl } from './LivePlayerModal';
 
@@ -57,6 +58,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   onOpenVisitorModal,
   onOpenBible
 }) => {
+  const { isFeatureEnabled } = useFeatureFlags();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -406,7 +408,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
               {current.type === 'church' && (
                 <>
-                  {!user ? (
+                  {!user && isFeatureEnabled('visitors.module_enabled') ? (
                     <button
                       type="button"
                       onClick={(e) => {

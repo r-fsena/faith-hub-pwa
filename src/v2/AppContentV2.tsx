@@ -1,3 +1,4 @@
+import { FeatureGate } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -272,7 +273,9 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <Events onBack={() => setSubView('none')} />
+                <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<Events onBack={() => setSubView('none')} />
+</FeatureGate>
               )
             )}
 
@@ -300,13 +303,16 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <VolunteerSchedules onBack={() => setSubView('none')} />
+                <FeatureGate flag="volunteers.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<VolunteerSchedules onBack={() => setSubView('none')} />
+</FeatureGate>
               )
             )}
 
             {/* Sub-tela: Recepção & Acolhimento de Visitantes (QR Code do Culto) */}
             {subView === 'welcome' && (
-              <WelcomeVisitor 
+              <FeatureGate flag="visitors.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<WelcomeVisitor
                 onBack={() => setSubView('none')}
                 onExploreApp={() => {
                   sessionStorage.setItem('faithhub_guest_explored', 'true');
@@ -314,6 +320,7 @@ export const AppContentV2: React.FC = () => {
                   setSubView('none');
                 }}
               />
+</FeatureGate>
             )}
           </div>
         ) : (
@@ -373,7 +380,9 @@ export const AppContentV2: React.FC = () => {
             {(visitedTabs.has('store') || activeTab === 'store') && (
               <div style={{ display: activeTab === 'store' ? 'block' : 'none' }}>
                 <ErrorBoundary fallbackTitle="Erro ao carregar a Loja Oficial">
-                  <Store />
+                  <FeatureGate flag="pdv.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<Store />
+</FeatureGate>
                 </ErrorBoundary>
               </div>
             )}

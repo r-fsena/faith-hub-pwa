@@ -1,3 +1,4 @@
+import { FeatureGate } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -223,7 +224,9 @@ export const AppContentV1: React.FC = () => {
               onBack={() => setSubView('none')}
             />
           ) : (
-            <Events onBack={() => setSubView('none')} />
+            <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<Events onBack={() => setSubView('none')} />
+</FeatureGate>
           )
         ) : subView === 'giving' ? (
           !isAuthenticated ? (
@@ -289,7 +292,9 @@ export const AppContentV1: React.FC = () => {
                   onBack={() => handleTabChange('home')}
                 />
               ) : (
-                <Store />
+                <FeatureGate flag="pdv.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
+<Store />
+</FeatureGate>
               )
             )}
 

@@ -839,8 +839,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     ? memberProfile.operational_permissions
                     : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []));
 
-              const hasAny = permissions.length > 0;
-              if (!hasAny && !isAdminOrMaster && !isLeader) return null;
+              const hasAny = permissions.some(permission => permission.startsWith('kids_') ? isFeatureEnabled('kids.module_enabled') : permission === 'events_checkin' && isFeatureEnabled('events.module_enabled'));
+              if (!hasAny) return null;
 
               return (
                 <div 
@@ -908,7 +908,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             })()}
 
             {/* Card Ministérios & Escalas de Serviço */}
-            {onOpenVolunteers && (
+            {onOpenVolunteers && isFeatureEnabled('volunteers.module_enabled') && (
               <div 
                 onClick={onOpenVolunteers}
                 style={{
@@ -1260,10 +1260,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   ? memberProfile.operational_permissions
                   : (isLeader ? ['kids_checkin', 'kids_checkout', 'events_checkin', 'kids_calls'] : []));
 
-            const canKidsCheckin = permissions.includes('kids_checkin');
-            const canKidsCheckout = permissions.includes('kids_checkout');
-            const canEventsCheckin = permissions.includes('events_checkin');
-            const canKidsCalls = permissions.includes('kids_calls');
+            const canKidsCheckin = isFeatureEnabled('kids.module_enabled') && permissions.includes('kids_checkin');
+            const canKidsCheckout = isFeatureEnabled('kids.module_enabled') && permissions.includes('kids_checkout');
+            const canEventsCheckin = isFeatureEnabled('events.module_enabled') && permissions.includes('events_checkin');
+            const canKidsCalls = isFeatureEnabled('kids.module_enabled') && permissions.includes('kids_calls');
 
             const hasAny = canKidsCheckin || canKidsCheckout || canEventsCheckin || canKidsCalls;
 

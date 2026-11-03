@@ -216,7 +216,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       gradient: 'linear-gradient(135deg, rgba(15, 118, 110, 0.18) 0%, rgba(13, 148, 136, 0.08) 100%)',
       border: 'rgba(15, 118, 110, 0.32)', 
       action: () => { triggerHaptic('selection'); onOpenVolunteers ? onOpenVolunteers() : onNavigate('profile'); },
-      flag: 'cell_groups.module_enabled'
+      flag: 'volunteers.module_enabled'
     },
   ];
 
