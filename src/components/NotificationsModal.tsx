@@ -137,7 +137,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   fontSize: '0.70rem',
                   fontWeight: 800,
                   padding: '2px 8px',
-                  borderRadius: '12px'
+                  borderRadius: 'var(--exp-radius, 12px)'
                 }}>
                   {unreadTotal} nova{unreadTotal > 1 ? 's' : ''}
                 </span>
@@ -196,7 +196,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             onClick={() => setActiveFilter('all')}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: activeFilter === 'all' ? 'none' : '1px solid var(--panel-border)',
               background: activeFilter === 'all' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'all' ? '#ffffff' : 'var(--text-secondary)',
@@ -213,7 +213,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             onClick={() => setActiveFilter('birthday')}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: activeFilter === 'birthday' ? 'none' : '1px solid var(--panel-border)',
               background: activeFilter === 'birthday' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'birthday' ? '#ffffff' : 'var(--text-secondary)',
@@ -233,7 +233,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             onClick={() => setActiveFilter('spiritual')}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: activeFilter === 'spiritual' ? 'none' : '1px solid var(--panel-border)',
               background: activeFilter === 'spiritual' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'spiritual' ? '#ffffff' : 'var(--text-secondary)',
@@ -253,7 +253,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             onClick={() => setActiveFilter('prayers')}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: activeFilter === 'prayers' ? 'none' : '1px solid var(--panel-border)',
               background: activeFilter === 'prayers' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'prayers' ? '#ffffff' : 'var(--text-secondary)',
@@ -273,7 +273,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             onClick={() => setActiveFilter('schedules')}
             style={{
               padding: '6px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: activeFilter === 'schedules' ? 'none' : '1px solid var(--panel-border)',
               background: activeFilter === 'schedules' ? 'var(--accent-primary)' : 'var(--bg-card-subtle, #f1f5f9)',
               color: activeFilter === 'schedules' ? '#ffffff' : 'var(--text-secondary)',
@@ -299,7 +299,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               style={{
                 background: 'var(--bg-card-subtle, #f0fdfa)',
                 border: '1.5px solid var(--accent-primary)',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '12px 14px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -336,7 +336,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               Carregando novidades da comunidade...
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '32px 16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+            <div style={{ background: 'var(--bg-card, #ffffff)', padding: '32px 16px', borderRadius: 'var(--exp-radius, 16px)', border: '1px solid var(--panel-border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
               <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>✨</div>
               Você está em dia com todos os avisos e novidades da igreja!
             </div>
@@ -350,7 +350,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   style={{
                     background: isRead ? 'var(--bg-card, #ffffff)' : 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
                     padding: '14px',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     border: isRead ? '1px solid var(--panel-border)' : '1.5px solid var(--accent-primary)',
                     boxShadow: 'var(--shadow-sm)',
                     display: 'flex',
@@ -448,7 +448,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               background: 'var(--bg-card-subtle, #f1f5f9)',
               color: 'var(--text-main)',
               border: '1px solid var(--panel-border)',
-              borderRadius: '14px'
+              borderRadius: 'var(--exp-radius, 14px)'
             }}
           >
             Fechar

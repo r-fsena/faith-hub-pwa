@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +41,8 @@ const productAvailabilityLabel = (product: Product): string => {
 };
 
 export const Store: React.FC = () => {
+ const {t,config,active}=usePwaExperience();
+
   const { addItem } = useCart();
   const { user } = useAuth();
   const { branding } = useBranding();
@@ -288,14 +291,14 @@ export const Store: React.FC = () => {
         marginBottom: '14px'
       }}>
         <div>
-          <h2 className="section-title" style={{ fontSize: '1.25rem', color: textTitleColor, margin: '0 0 2px 0' }}>
-            {viewMode === 'catalog' ? (branding.store_title || 'Loja Oficial') : 'Meus Pedidos'}
-          </h2>
-          <p style={{ fontSize: '0.74rem', color: textMutedColor, margin: 0 }}>
+          <h2 className="section-title" style={{ fontSize: '1.25rem', color: textTitleColor, margin: '0 0 2px 0' }}>{active&&config.copy['store.title']!==undefined?t('store.title',''):<>
+            {viewMode === 'catalog' ? t('store.title', branding.store_title || 'Loja Oficial') : 'Meus Pedidos'}
+          </>}</h2>
+          <p style={{ fontSize: '0.74rem', color: textMutedColor, margin: 0 }}>{active&&config.copy['store.subtitle']!==undefined?t('store.subtitle',''):<>
             {viewMode === 'catalog' 
-              ? (branding.store_subtitle || 'Livros, vestuário, devocionais e itens com retirada expressa') 
+              ? t('store.subtitle', branding.store_subtitle || 'Livros, vestuário, devocionais e itens com retirada expressa')
               : 'Acompanhe o status do preparo dos seus itens'}
-          </p>
+          </>}</p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -482,7 +485,7 @@ export const Store: React.FC = () => {
             <div style={{
               background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '18px',
+              borderRadius: 'var(--exp-radius, 18px)',
               padding: '20px',
               textAlign: 'center',
               marginBottom: '16px',
@@ -510,7 +513,7 @@ export const Store: React.FC = () => {
           {loading && products.length === 0 ? (
             <div style={{
               background: cardBg,
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '40px 20px',
               textAlign: 'center',
               border: cardBorder,
@@ -524,7 +527,7 @@ export const Store: React.FC = () => {
           ) : filteredProducts.length === 0 ? (
             <div style={{
               background: cardBg,
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '36px 20px',
               textAlign: 'center',
               border: cardBorder,
@@ -555,7 +558,7 @@ export const Store: React.FC = () => {
                   color: 'var(--accent-primary)',
                   border: 'none',
                   padding: '10px 18px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   fontWeight: 800,
                   fontSize: '0.82rem',
                   cursor: 'pointer',
@@ -582,7 +585,7 @@ export const Store: React.FC = () => {
                   onClick={() => handleOpenProductModal(prod)}
                   style={{
                     background: cardBg,
-                    borderRadius: '18px',
+                    borderRadius: 'var(--exp-radius, 18px)',
                     padding: '10px',
                     border: cardBorder,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
@@ -600,7 +603,7 @@ export const Store: React.FC = () => {
                     <div style={{
                       width: '100%',
                       aspectRatio: '1 / 1',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       overflow: 'hidden',
                       background: secondaryBg,
                       display: 'flex',
@@ -727,7 +730,7 @@ export const Store: React.FC = () => {
                   onClick={() => handleOpenProductModal(prod)}
                   style={{
                     background: cardBg,
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '10px 14px',
                     border: cardBorder,
                     boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
@@ -745,7 +748,7 @@ export const Store: React.FC = () => {
                   <div style={{
                     width: '50px',
                     height: '50px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     overflow: 'hidden',
                     background: secondaryBg,
                     display: 'flex',
@@ -878,7 +881,7 @@ export const Store: React.FC = () => {
                 key={order.id}
                 style={{
                   background: cardBg,
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   padding: '16px',
                   border: cardBorder,
                   boxShadow: 'var(--shadow-sm)',
@@ -910,7 +913,7 @@ export const Store: React.FC = () => {
                 <div style={{
                   background: secondaryBg,
                   padding: '10px 12px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px'
@@ -995,12 +998,12 @@ export const Store: React.FC = () => {
               <img
                 src={selectedProductModal.image_urls[0]}
                 alt={selectedProductModal.name}
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', border: cardBorder, filter: isProductUnavailable(selectedProductModal) ? 'grayscale(1)' : 'none', opacity: isProductUnavailable(selectedProductModal) ? .62 : 1 }}
+                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: 'var(--exp-radius, 16px)', border: cardBorder, filter: isProductUnavailable(selectedProductModal) ? 'grayscale(1)' : 'none', opacity: isProductUnavailable(selectedProductModal) ? .62 : 1 }}
               />
             )}
 
             {isProductUnavailable(selectedProductModal) && (
-              <div style={{ padding: '10px 12px', borderRadius: '12px', background: isDark ? 'rgba(148,163,184,.12)' : '#e2e8f0', color: textMutedColor, fontSize: '.78rem', fontWeight: 900, textAlign: 'center' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', background: isDark ? 'rgba(148,163,184,.12)' : '#e2e8f0', color: textMutedColor, fontSize: '.78rem', fontWeight: 900, textAlign: 'center' }}>
                 {productAvailabilityLabel(selectedProductModal)} — produto temporariamente indisponível para compra
               </div>
             )}
@@ -1008,7 +1011,7 @@ export const Store: React.FC = () => {
             <div style={{
               background: secondaryBg,
               padding: '14px',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               border: cardBorder,
               fontSize: '0.86rem',
               color: isDark ? '#cbd5e1' : 'var(--text-secondary, #475569)',

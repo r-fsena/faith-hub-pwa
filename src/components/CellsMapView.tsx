@@ -420,7 +420,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
       height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
-      background: '#090d16',
+      background: 'var(--exp-background, #090d16)',
       overflow: 'hidden'
     }}>
       <style>{`
@@ -483,7 +483,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               backdropFilter: 'blur(10px)',
               color: '#ffffff',
               border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '16px',
+              borderRadius: 'var(--exp-radius, 16px)',
               padding: '10px 16px',
               fontSize: '0.84rem',
               fontWeight: 800,
@@ -505,7 +505,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             backdropFilter: 'blur(10px)',
             color: '#ffffff',
             border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: '16px',
+            borderRadius: 'var(--exp-radius, 16px)',
             padding: '10px 14px',
             fontSize: '0.78rem',
             fontWeight: 800,
@@ -529,7 +529,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               backdropFilter: 'blur(10px)',
               color: '#ffffff',
               border: userCoords ? '1.5px solid #60a5fa' : '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '16px',
+              borderRadius: 'var(--exp-radius, 16px)',
               padding: '10px 14px',
               fontSize: '0.82rem',
               fontWeight: 800,
@@ -556,13 +556,13 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             style={{
               width: '100%',
               padding: '12px 16px',
-              borderRadius: '16px',
+              borderRadius: 'var(--exp-radius, 16px)',
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(12px)',
               border: '1px solid rgba(0,0,0,0.08)',
               fontSize: '0.86rem',
               fontWeight: 700,
-              color: '#0f172a',
+              color: 'var(--exp-text, #0f172a)',
               boxSizing: 'border-box',
               boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
               outline: 'none'
@@ -576,9 +576,9 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             pointerEvents: 'auto',
             background: 'rgba(30, 41, 59, 0.92)',
             backdropFilter: 'blur(12px)',
-            color: '#f8fafc',
+            color: 'var(--exp-background, #f8fafc)',
             border: '1px solid rgba(96, 165, 250, 0.4)',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             padding: '8px 14px',
             fontSize: '0.74rem',
             fontWeight: 800,
@@ -595,7 +595,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             <button
               type="button"
               onClick={() => setLocationInfo(null)}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: 'var(--exp-muted, #94a3b8)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
             >
               ✕
             </button>
@@ -614,7 +614,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
           right: '12px',
           zIndex: 10001,
           background: 'var(--bg-card, #ffffff)',
-          borderRadius: '24px',
+          borderRadius: 'var(--exp-radius, 24px)',
           padding: '16px 18px',
           boxShadow: '0 12px 36px rgba(0,0,0,0.28)',
           border: '1px solid var(--panel-border)',
@@ -695,7 +695,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
             background: 'var(--bg-card-subtle, #f8fafc)',
             border: '1px solid var(--panel-border)',
             padding: '10px 12px',
-            borderRadius: '12px'
+            borderRadius: 'var(--exp-radius, 12px)'
           }}>
             {selectedCell.meeting_day && selectedCell.meeting_time && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, color: 'var(--text-main)' }}>
@@ -723,7 +723,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
               style={{
                 background: 'var(--bg-card-subtle, #f1f5f9)',
                 border: '1.5px solid var(--panel-border)',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 padding: '12px',
                 fontSize: '0.82rem',
                 fontWeight: 800,
@@ -750,7 +750,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   padding: '12px',
                   fontSize: '0.82rem',
                   fontWeight: 900,
@@ -773,7 +773,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   background: '#10b981',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   padding: '12px',
                   fontSize: '0.82rem',
                   fontWeight: 900,
@@ -797,7 +797,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   background: (isPendingJoin && isPendingJoin(selectedCell.id)) ? 'var(--bg-card-subtle)' : 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
                   color: (isPendingJoin && isPendingJoin(selectedCell.id)) ? 'var(--text-muted)' : '#ffffff',
                   border: 'none',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   padding: '12px',
                   fontSize: '0.82rem',
                   fontWeight: 900,
@@ -849,7 +849,7 @@ export const CellsMapView: React.FC<CellsMapViewProps> = ({
                   background: 'var(--bg-card, rgba(255, 255, 255, 0.95))',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid var(--panel-border)',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '10px 14px',
                   boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
                   cursor: 'pointer',

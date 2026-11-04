@@ -3,6 +3,7 @@ import { BrandingProvider } from './context/BrandingContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { PwaExperienceProvider } from './context/PwaExperienceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SplashScreen } from './components/SplashScreen';
 
@@ -47,15 +48,17 @@ const AppShell: React.FC = () => {
 export function App() {
   return (
     <BrandingProvider>
-      <ThemeProvider>
-        <FeatureFlagProvider>
+      <FeatureFlagProvider>
+        <ThemeProvider>
+          <PwaExperienceProvider>
           <AuthProvider>
             <CartProvider>
               <AppShell />
             </CartProvider>
           </AuthProvider>
-        </FeatureFlagProvider>
-      </ThemeProvider>
+          </PwaExperienceProvider>
+        </ThemeProvider>
+      </FeatureFlagProvider>
     </BrandingProvider>
   );
 }

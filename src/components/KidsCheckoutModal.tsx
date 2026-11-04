@@ -297,7 +297,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
           <div style={{
             background: '#f0fdf4',
             border: '2.5px solid #22c55e',
-            borderRadius: '24px',
+            borderRadius: 'var(--exp-radius, 24px)',
             padding: '24px 18px',
             display: 'flex',
             flexDirection: 'column',
@@ -333,8 +333,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             </div>
 
             <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
+              background: 'var(--exp-surface, #ffffff)',
+              borderRadius: 'var(--exp-radius, 16px)',
               padding: '16px',
               width: '100%',
               boxSizing: 'border-box',
@@ -344,14 +344,14 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
               flexDirection: 'column',
               gap: '6px'
             }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--exp-text, #0f172a)' }}>
                 👶 {successResult.childName}
               </div>
-              <div style={{ fontSize: '0.80rem', color: '#475569' }}>
+              <div style={{ fontSize: '0.80rem', color: 'var(--exp-muted, #475569)' }}>
                 Responsável: <b>{successResult.parentName}</b>
               </div>
               {successResult.roomName && (
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                <div style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #64748b)' }}>
                   Sala: <b>{successResult.roomName}</b>
                 </div>
               )}
@@ -365,7 +365,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                 background: '#16a34a',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '16px',
                 fontWeight: 900,
                 fontSize: '0.98rem',
@@ -386,9 +386,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             {/* Seletor Ergonômico de 3 Abas (Segmented Control Amplo) */}
             <div style={{
               display: 'flex',
-              background: '#f1f5f9',
+              background: 'var(--exp-surface-muted, #f1f5f9)',
               padding: '4px',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               gap: '4px'
             }}>
               <button
@@ -473,9 +473,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                 {/* Modal / Card de Devolução quando uma criança específica da lista é selecionada */}
                 {targetChild ? (
                   <div style={{
-                    background: '#f8fafc',
+                    background: 'var(--exp-background, #f8fafc)',
                     border: '2px solid #16a34a',
-                    borderRadius: '20px',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     padding: '18px',
                     boxShadow: '0 8px 24px rgba(22, 163, 74, 0.12)',
                     display: 'flex',
@@ -499,10 +499,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                           {targetChild.child_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--exp-text, #0f172a)' }}>
                             {targetChild.child_name}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: '#475569' }}>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--exp-muted, #475569)' }}>
                             Responsável: <b>{targetChild.parent_name}</b> ({targetChild.parent_phone})
                           </div>
                         </div>
@@ -512,12 +512,12 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                         type="button"
                         onClick={() => { setTargetChild(null); setPinInput(''); setErrorMessage(''); }}
                         style={{
-                          background: '#e2e8f0',
+                          background: 'var(--exp-border, #e2e8f0)',
                           border: 'none',
                           borderRadius: '50%',
                           width: '28px',
                           height: '28px',
-                          color: '#475569',
+                          color: 'var(--exp-muted, #475569)',
                           fontWeight: 900,
                           cursor: 'pointer'
                         }}
@@ -541,8 +541,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                     )}
 
                     <div style={{
-                      background: '#ffffff',
-                      borderRadius: '14px',
+                      background: 'var(--exp-surface, #ffffff)',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       padding: '12px',
                       border: '1.5px solid #e2e8f0',
                       textAlign: 'center'
@@ -565,7 +565,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                         style={{
                           width: '100%',
                           padding: '12px',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           border: '2px solid #cbd5e1',
                           fontSize: '1.3rem',
                           fontWeight: 900,
@@ -590,10 +590,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                         style={{
                           flex: 1,
                           padding: '14px',
-                          borderRadius: '14px',
+                          borderRadius: 'var(--exp-radius, 14px)',
                           border: '1.5px solid #cbd5e1',
-                          background: '#ffffff',
-                          color: '#475569',
+                          background: 'var(--exp-surface, #ffffff)',
+                          color: 'var(--exp-muted, #475569)',
                           fontWeight: 800,
                           fontSize: '0.84rem',
                           cursor: 'pointer'
@@ -608,7 +608,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                         style={{
                           flex: 2,
                           padding: '14px',
-                          borderRadius: '14px',
+                          borderRadius: 'var(--exp-radius, 14px)',
                           border: 'none',
                           background: '#16a34a',
                           color: '#ffffff',
@@ -635,10 +635,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                         style={{
                           flex: 1,
                           padding: '12px 14px',
-                          borderRadius: '14px',
+                          borderRadius: 'var(--exp-radius, 14px)',
                           border: '1.5px solid #cbd5e1',
                           fontSize: '0.84rem',
-                          background: '#ffffff',
+                          background: 'var(--exp-surface, #ffffff)',
                           boxSizing: 'border-box'
                         }}
                       />
@@ -648,10 +648,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                           onChange={e => setSelectedRoomId(e.target.value)}
                           style={{
                             padding: '10px 12px',
-                            borderRadius: '14px',
+                            borderRadius: 'var(--exp-radius, 14px)',
                             border: '1.5px solid #cbd5e1',
                             fontSize: '0.80rem',
-                            background: '#ffffff',
+                            background: 'var(--exp-surface, #ffffff)',
                             maxWidth: '130px',
                             fontWeight: 700
                           }}
@@ -674,7 +674,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                       paddingRight: '2px'
                     }}>
                       {filteredCheckins.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b' }}>
+                        <div style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--exp-muted, #64748b)' }}>
                           <span style={{ fontSize: '2.4rem' }}>🎉</span>
                           <p style={{ fontSize: '0.90rem', margin: '8px 0 0 0', fontWeight: 700 }}>
                             {loading ? 'Carregando crianças...' : 'Nenhuma criança presente no momento.'}
@@ -685,9 +685,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                           <div
                             key={child.id}
                             style={{
-                              background: '#ffffff',
+                              background: 'var(--exp-surface, #ffffff)',
                               border: '1.5px solid #e2e8f0',
-                              borderRadius: '18px',
+                              borderRadius: 'var(--exp-radius, 18px)',
                               padding: '14px 16px',
                               display: 'flex',
                               justifyContent: 'space-between',
@@ -715,13 +715,13 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
 
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '0.96rem', fontWeight: 900, color: '#1e293b' }}>
+                                  <span style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--exp-text, #1e293b)' }}>
                                     {child.child_name}
                                   </span>
                                   {child.room_name && (
                                     <span style={{
-                                      background: '#f1f5f9',
-                                      color: '#475569',
+                                      background: 'var(--exp-surface-muted, #f1f5f9)',
+                                      color: 'var(--exp-muted, #475569)',
                                       fontSize: '0.68rem',
                                       fontWeight: 800,
                                       padding: '2px 8px',
@@ -731,8 +731,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                                     </span>
                                   )}
                                 </div>
-                                <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '3px' }}>
-                                  Pai: {child.parent_name} • PIN: <b style={{ color: '#0f172a', letterSpacing: '0.05em' }}>{child.security_code}</b>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--exp-muted, #64748b)', marginTop: '3px' }}>
+                                  Pai: {child.parent_name} • PIN: <b style={{ color: 'var(--exp-text, #0f172a)', letterSpacing: '0.05em' }}>{child.security_code}</b>
                                 </div>
                                 {child.allergies && (
                                   <div style={{ fontSize: '0.70rem', color: '#dc2626', fontWeight: 700, marginTop: '3px' }}>
@@ -753,7 +753,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                                 background: '#16a34a',
                                 color: '#ffffff',
                                 border: 'none',
-                                borderRadius: '12px',
+                                borderRadius: 'var(--exp-radius, 12px)',
                                 padding: '10px 16px',
                                 fontSize: '0.80rem',
                                 fontWeight: 900,
@@ -783,9 +783,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   width: '100%',
                   maxWidth: '380px',
                   height: '320px',
-                  borderRadius: '24px',
+                  borderRadius: 'var(--exp-radius, 24px)',
                   overflow: 'hidden',
-                  background: '#090d16',
+                  background: 'var(--exp-background, #090d16)',
                   boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
                   border: '2px solid rgba(22, 163, 74, 0.4)',
                   display: 'flex',
@@ -870,7 +870,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                           background: '#16a34a',
                           color: '#ffffff',
                           border: 'none',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           padding: '8px 16px',
                           fontSize: '0.78rem',
                           fontWeight: 800,
@@ -910,9 +910,9 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             {activeTab === 'pin' && (
               <form onSubmit={handleDirectPinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', padding: '8px 0' }}>
                 <div style={{
-                  background: '#f8fafc',
+                  background: 'var(--exp-background, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   padding: '16px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -936,8 +936,8 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                     style={{
                       width: '100%',
                       padding: '16px',
-                      borderRadius: '14px',
-                      background: '#ffffff',
+                      borderRadius: 'var(--exp-radius, 14px)',
+                      background: 'var(--exp-surface, #ffffff)',
                       border: '2px solid #cbd5e1',
                       fontSize: '1.25rem',
                       fontWeight: 900,
@@ -946,7 +946,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                       textAlign: 'center',
                       boxSizing: 'border-box',
                       outline: 'none',
-                      color: '#0f172a'
+                      color: 'var(--exp-text, #0f172a)'
                     }}
                   />
 
@@ -959,7 +959,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   <div style={{
                     background: '#fef2f2',
                     border: '1px solid #fecaca',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     padding: '10px 14px',
                     color: '#dc2626',
                     fontSize: '0.80rem',
@@ -976,7 +976,7 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
                   style={{
                     width: '100%',
                     padding: '16px',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                     color: '#ffffff',
                     border: 'none',
@@ -1002,10 +1002,10 @@ export const KidsCheckoutModal: React.FC<KidsCheckoutModalProps> = ({ isOpen, on
             marginTop: 'auto',
             width: '100%',
             padding: '12px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             border: '1px solid #e2e8f0',
-            background: '#f8fafc',
-            color: '#64748b',
+            background: 'var(--exp-background, #f8fafc)',
+            color: 'var(--exp-muted, #64748b)',
             fontWeight: 800,
             fontSize: '0.84rem',
             cursor: 'pointer'

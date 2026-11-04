@@ -55,7 +55,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({ totalAmount, onS
     if (/^5[1-5]/.test(clean)) return { name: 'Mastercard', color: '#eb001b', icon: '💳 Mastercard' };
     if (/^(4011|4389|4514|4576|5041|5066|5090|6277|6362|6363)/.test(clean)) return { name: 'Elo', color: '#00a4e8', icon: '💳 Elo' };
     if (/^3[47]/.test(clean)) return { name: 'Amex', color: '#007bc1', icon: '💳 Amex' };
-    return { name: 'Card', color: '#64748b', icon: '💳 Cartão de Crédito' };
+    return { name: 'Card', color: 'var(--exp-muted, #64748b)', icon: '💳 Cartão de Crédito' };
   };
 
   const brand = detectBrand(cardNumber);
@@ -97,7 +97,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({ totalAmount, onS
         style={{
           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
           color: '#ffffff',
-          borderRadius: '16px',
+          borderRadius: 'var(--exp-radius, 16px)',
           padding: '16px 20px',
           boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
           display: 'flex',
@@ -217,7 +217,7 @@ export const CreditCardForm: React.FC<CreditCardFormProps> = ({ totalAmount, onS
           className="input-pwa"
           value={installments}
           onChange={e => setInstallments(Number(e.target.value))}
-          style={{ background: '#ffffff', cursor: 'pointer' }}
+          style={{ background: 'var(--exp-surface, #ffffff)', cursor: 'pointer' }}
         >
           {installmentOptions.map(opt => (
             <option key={opt.count} value={opt.count}>

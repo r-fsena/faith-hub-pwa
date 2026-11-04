@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BottomSheet } from '../components/BottomSheet';
 import { useBranding } from '../context/BrandingContext';
@@ -29,6 +30,8 @@ const HIGHLIGHT_COLORS = [
 const bibleMemoryCache: Record<string, BibleBook[]> = {};
 
 export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { branding } = useBranding();
   const bibleCfg = branding.bible_config;
 
@@ -233,9 +236,9 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               ← Voltar ao Início
             </button>
           )}
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>{active&&config.copy['bible.title']!==undefined?t('bible.title',''):<>
             📖 Bíblia Sagrada
-          </h2>
+          </>}</h2>
           <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
             66 Livros • 1.189 Capítulos na Íntegra
           </span>
@@ -252,7 +255,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 padding: '6px 8px',
                 borderRadius: '10px',
                 border: '1px solid var(--panel-border)',
-                background: '#ffffff',
+                background: 'var(--exp-surface, #ffffff)',
                 fontSize: '0.74rem',
                 fontWeight: 800,
                 color: 'var(--accent-primary)',
@@ -271,7 +274,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               padding: '6px 10px',
               borderRadius: '10px',
               border: '1px solid var(--panel-border)',
-              background: '#f8fafc',
+              background: 'var(--exp-background, #f8fafc)',
               fontSize: '0.74rem',
               fontWeight: 900,
               color: 'var(--accent-primary)'
@@ -300,7 +303,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           </button>
 
           {/* Ajuste de Tamanho da Fonte */}
-          <div style={{ display: 'flex', border: '1px solid var(--panel-border)', borderRadius: '10px', overflow: 'hidden', background: '#ffffff' }}>
+          <div style={{ display: 'flex', border: '1px solid var(--panel-border)', borderRadius: '10px', overflow: 'hidden', background: 'var(--exp-surface, #ffffff)' }}>
             <button
               type="button"
               onClick={() => setFontSize(Math.max(14, fontSize - 2))}
@@ -325,7 +328,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       {bibleCfg?.pastoral_note && (
         <div style={{
           background: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
-          borderRadius: '16px',
+          borderRadius: 'var(--exp-radius, 16px)',
           padding: '12px 16px',
           border: '1px solid #99f6e4',
           display: 'flex',
@@ -337,9 +340,9 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>
               Orientação da Liderança
             </div>
-            <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#134e4a', lineHeight: 1.4 }}>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#134e4a', lineHeight: 1.4 }}>{active&&config.copy['bible.subtitle']!==undefined?t('bible.subtitle',''):<>
               {bibleCfg.pastoral_note}
-            </p>
+            </>}</p>
           </div>
         </div>
       )}
@@ -349,7 +352,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         onClick={() => { setTempBookIndex(selectedBookIndex); setIsPickerOpen(true); }}
         style={{
           background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          borderRadius: '16px',
+          borderRadius: 'var(--exp-radius, 16px)',
           padding: '12px 16px',
           border: '1.5px solid var(--accent-primary)',
           boxShadow: 'var(--shadow-sm)',
@@ -395,7 +398,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       <div style={{
         background: themeStyles.cardBg,
         color: themeStyles.text,
-        borderRadius: '24px',
+        borderRadius: 'var(--exp-radius, 24px)',
         padding: '22px 18px',
         border: `1px solid ${themeStyles.border}`,
         boxShadow: 'var(--shadow-sm)',
@@ -469,10 +472,10 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           onClick={handlePrevChapter}
           disabled={selectedBookIndex === 0 && selectedChapter === 1}
           style={{
-            background: '#ffffff',
+            background: 'var(--exp-surface, #ffffff)',
             border: '1px solid var(--panel-border)',
             padding: '12px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             fontWeight: 800,
             fontSize: '0.80rem',
             color: 'var(--text-main)',
@@ -496,7 +499,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             background: 'var(--accent-primary)',
             border: 'none',
             padding: '12px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             fontWeight: 800,
             fontSize: '0.80rem',
             color: '#ffffff',
@@ -531,7 +534,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
 
         {/* Abas Antigo / Novo Testamento */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: 'var(--exp-surface-muted, #f1f5f9)', padding: '4px', borderRadius: 'var(--exp-radius, 12px)' }}>
           <button
             type="button"
             onClick={() => setPickerTestament('ALL')}
@@ -591,8 +594,8 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           style={{
             width: '100%',
             padding: '10px 14px',
-            borderRadius: '12px',
-            background: '#f8fafc',
+            borderRadius: 'var(--exp-radius, 12px)',
+            background: 'var(--exp-background, #f8fafc)',
             border: '1.5px solid var(--panel-border)',
             fontSize: '0.84rem',
             outline: 'none'
@@ -609,7 +612,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 onClick={() => setTempBookIndex(b.originalIndex)}
                 style={{
                   padding: '12px 10px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: b.originalIndex === selectedBookIndex ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                   background: b.originalIndex === selectedBookIndex ? 'var(--accent-primary-light)' : '#ffffff',
                   color: 'var(--text-main)',
@@ -659,7 +662,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   }}
                   style={{
                     padding: '12px 6px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: (tempBookIndex === selectedBookIndex && chNum === selectedChapter) ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                     background: (tempBookIndex === selectedBookIndex && chNum === selectedChapter) ? 'var(--accent-primary)' : '#ffffff',
                     color: (tempBookIndex === selectedBookIndex && chNum === selectedChapter) ? '#ffffff' : 'var(--text-main)',
@@ -691,7 +694,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             maxWidth: '440px',
             background: 'rgba(15, 23, 42, 0.94)',
             backdropFilter: 'blur(12px)',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             padding: '12px 14px',
             boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
             zIndex: 50,
@@ -708,7 +711,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <button
               type="button"
               onClick={() => setSelectedVerseIndex(null)}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.80rem', cursor: 'pointer', fontWeight: 700 }}
+              style={{ background: 'none', border: 'none', color: 'var(--exp-muted, #94a3b8)', fontSize: '0.80rem', cursor: 'pointer', fontWeight: 700 }}
             >
               ✕ Fechar
             </button>
@@ -762,8 +765,8 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 type="button"
                 onClick={() => handleCopyVerse(currentVerses[selectedVerseIndex])}
                 style={{
-                  background: '#ffffff',
-                  color: '#0f172a',
+                  background: 'var(--exp-surface, #ffffff)',
+                  color: 'var(--exp-text, #0f172a)',
                   border: 'none',
                   borderRadius: '10px',
                   padding: '6px 10px',

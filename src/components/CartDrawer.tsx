@@ -207,8 +207,8 @@ export const CartDrawer: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '10px 12px',
-                      background: '#f8fafc',
-                      borderRadius: '14px',
+                      background: 'var(--exp-background, #f8fafc)',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       border: '1px solid var(--panel-border)'
                     }}
                   >
@@ -216,7 +216,7 @@ export const CartDrawer: React.FC = () => {
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🛍️</div>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--exp-border, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🛍️</div>
                       )}
                       <div>
                         <div style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>{item.name}</div>
@@ -235,7 +235,7 @@ export const CartDrawer: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}
-                        style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: '#ffffff', cursor: 'pointer', fontWeight: 800 }}
+                        style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: 'var(--exp-surface, #ffffff)', cursor: 'pointer', fontWeight: 800 }}
                       >
                         -
                       </button>
@@ -245,7 +245,7 @@ export const CartDrawer: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, 1)}
-                        style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: '#ffffff', cursor: 'pointer', fontWeight: 800 }}
+                        style={{ width: '26px', height: '26px', borderRadius: '8px', border: '1px solid var(--panel-border)', background: 'var(--exp-surface, #ffffff)', cursor: 'pointer', fontWeight: 800 }}
                       >
                         +
                       </button>
@@ -299,7 +299,7 @@ export const CartDrawer: React.FC = () => {
                 onClick={() => setDeliveryMethod('church')}
                 style={{
                   padding: '12px',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   border: deliveryMethod === 'church' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                   background: deliveryMethod === 'church' ? 'var(--accent-primary-light)' : '#ffffff',
                   color: deliveryMethod === 'church' ? 'var(--accent-primary)' : 'var(--text-main)',
@@ -321,7 +321,7 @@ export const CartDrawer: React.FC = () => {
                 onClick={() => setDeliveryMethod('home')}
                 style={{
                   padding: '12px',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   border: deliveryMethod === 'home' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                   background: deliveryMethod === 'home' ? 'var(--accent-primary-light)' : '#ffffff',
                   color: deliveryMethod === 'home' ? 'var(--accent-primary)' : 'var(--text-main)',
@@ -341,7 +341,7 @@ export const CartDrawer: React.FC = () => {
 
             {/* Sub-opções de Retirada na Igreja */}
             {deliveryMethod === 'church' && (
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px', borderRadius: 'var(--exp-radius, 14px)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>Ponto de Retirada</span>
                 {[
                   'Retirar no Balcão / Ponto de Coleta',
@@ -362,7 +362,7 @@ export const CartDrawer: React.FC = () => {
 
             {/* Sub-opções de Entrega em Casa */}
             {deliveryMethod === 'home' && (
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px', borderRadius: 'var(--exp-radius, 14px)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-muted)' }}>Endereço de Entrega</span>
                 <input type="text" className="input-pwa" placeholder="CEP (00000-000)" value={cep} onChange={e => setCep(e.target.value)} />
                 <input type="text" className="input-pwa" placeholder="Rua / Avenida *" value={address} onChange={e => setAddress(e.target.value)} required />
@@ -405,7 +405,7 @@ export const CartDrawer: React.FC = () => {
               </h3>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px 14px', borderRadius: 'var(--exp-radius, 14px)', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Total a Pagar:</span>
               <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#059669' }}>
                 R$ {totalPrice.toFixed(2).replace('.', ',')}
@@ -418,9 +418,9 @@ export const CartDrawer: React.FC = () => {
                 onClick={handleStartPix}
                 style={{
                   padding: '16px',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   border: '1.5px solid var(--panel-border)',
-                  background: '#ffffff',
+                  background: 'var(--exp-surface, #ffffff)',
                   boxShadow: 'var(--shadow-sm)',
                   cursor: 'pointer',
                   display: 'flex',
@@ -429,7 +429,7 @@ export const CartDrawer: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: 'var(--exp-radius, 12px)', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
                     ⚡
                   </div>
                   <div>
@@ -445,9 +445,9 @@ export const CartDrawer: React.FC = () => {
                 aria-disabled="true" title="Pagamento por cartão indisponível"
                 style={{
                   padding: '16px',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   border: '1.5px solid var(--panel-border)',
-                  background: '#ffffff',
+                  background: 'var(--exp-surface, #ffffff)',
                   boxShadow: 'var(--shadow-sm)',
                   cursor: 'pointer',
                   display: 'flex',
@@ -456,7 +456,7 @@ export const CartDrawer: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
                     💳
                   </div>
                   <div>
@@ -507,7 +507,7 @@ export const CartDrawer: React.FC = () => {
               Pague <strong>R$ {totalPrice.toFixed(2).replace('.', ',')}</strong> apontando o app do seu banco:
             </p>
 
-            <div style={{ background: '#ffffff', padding: '12px', borderRadius: '16px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ background: 'var(--exp-surface, #ffffff)', padding: '12px', borderRadius: 'var(--exp-radius, 16px)', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <img
                 src={getPixQrCodeImageUrl(getCartPixBrCode(), 200)}
                 alt="QR Code Pix"
@@ -546,7 +546,7 @@ export const CartDrawer: React.FC = () => {
             <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
               Obrigado, <strong>{customerName}</strong>! Seu pedido foi registrado. A confirmação do pagamento será feita pela igreja.
             </p>
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', width: '100%', fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px', borderRadius: 'var(--exp-radius, 12px)', width: '100%', fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
               {deliveryMethod === 'church' ? `Apresente seu nome ou código no ${branding.store_counter_label || 'balcão da loja da igreja'}.` : 'Seu pedido será entregue no endereço informado.'}
             </div>
             <button type="button" className="btn-pwa-primary" onClick={handleClose}>

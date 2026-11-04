@@ -1,3 +1,5 @@
+import {ExperienceBlock} from '../experience/ExperienceBlock';
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +47,8 @@ export const Home: React.FC<HomeProps> = ({
   onOpenBible,
   onOpenGiving
 }) => {
+ const {t}=usePwaExperience();
+
   const { branding } = useBranding();
   const { user, isAuthenticated } = useAuth();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -132,15 +136,15 @@ export const Home: React.FC<HomeProps> = ({
       bg: 'rgba(239, 68, 68, 0.12)', 
       border: 'rgba(239, 68, 68, 0.25)', 
       action: onOpenLive,
-      flag: 'broadcasts.module_enabled'
+      id:'broadcasts', flag: 'broadcasts.module_enabled'
     },
     { 
       label: 'Palavra & Ensino', 
-      icon: <BookOpenIcon size={22} color="#0284c7" />, 
+      icon: <BookOpenIcon size={22} color="var(--exp-module-accent, #0284c7)" />,
       bg: 'rgba(2, 132, 199, 0.12)', 
       border: 'rgba(2, 132, 199, 0.25)', 
       action: () => onNavigate('devotionals'),
-      flag: 'devotionals.module_enabled'
+      id:'devotionals', flag: 'devotionals.module_enabled'
     },
     { 
       label: 'Células & Redes', 
@@ -148,7 +152,7 @@ export const Home: React.FC<HomeProps> = ({
       bg: 'var(--accent-primary-light)', 
       border: 'rgba(15, 118, 110, 0.25)', 
       action: () => onNavigate('cells'),
-      flag: 'cell_groups.module_enabled'
+      id:'cells', flag: 'cell_groups.module_enabled'
     },
     { 
       label: branding.store_title || 'Loja Oficial', 
@@ -156,23 +160,23 @@ export const Home: React.FC<HomeProps> = ({
       bg: 'rgba(5, 150, 105, 0.12)', 
       border: 'rgba(5, 150, 105, 0.25)', 
       action: () => onNavigate('store'),
-      flag: 'pdv.module_enabled'
+      id:'store', flag: 'pdv.module_enabled'
     },
     { 
       label: 'Dízimos & Ofertas', 
-      icon: <GivingHeartIcon size={22} color="#9333ea" />, 
+      icon: <GivingHeartIcon size={22} color="var(--exp-module-accent, #9333ea)" />,
       bg: 'rgba(147, 51, 234, 0.12)', 
       border: 'rgba(147, 51, 234, 0.25)', 
       action: onOpenGiving,
-      flag: 'financial.online_pix_giving'
+      id:'giving', flag: 'financial.online_pix_giving'
     },
     { 
       label: 'Eventos & Cursos', 
-      icon: <CalendarEventIcon size={22} color="#ea580c" />, 
+      icon: <CalendarEventIcon size={22} color="var(--exp-module-accent, #ea580c)" />,
       bg: 'rgba(234, 88, 12, 0.12)', 
       border: 'rgba(234, 88, 12, 0.25)', 
       action: onOpenEvents,
-      flag: 'events.module_enabled'
+      id:'events', flag: 'events.module_enabled'
     },
     { 
       label: 'Bíblia Sagrada', 
@@ -181,22 +185,22 @@ export const Home: React.FC<HomeProps> = ({
       border: 'rgba(245, 158, 11, 0.30)', 
       action: onOpenBible,
       isBible: true,
-      flag: 'bible.module_enabled'
+      id:'bible', flag: 'bible.module_enabled'
     },
     { 
       label: 'Mural de Oração', 
-      icon: <PrayerChatIcon size={22} color="#4f46e5" />, 
+      icon: <PrayerChatIcon size={22} color="var(--exp-module-accent, #4f46e5)" />,
       bg: 'rgba(79, 70, 229, 0.12)', 
       border: 'rgba(79, 70, 229, 0.25)', 
       action: onOpenPrayers,
-      flag: 'prayers.module_enabled'
+      id:'prayers', flag: 'prayers.module_enabled'
     },
   ];
 
   const quickActions = allQuickActions.filter(qa => !qa.flag || isFeatureEnabled(qa.flag));
 
   return (
-    <div className="pwa-content animate-fade-in" style={{ gap: '18px' }}>
+    <div data-experience-home="true" className="pwa-content animate-fade-in" style={{ gap: '18px' }}>
       
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
@@ -229,7 +233,7 @@ export const Home: React.FC<HomeProps> = ({
       </div>
 
       {/* Carrossel Dinâmico de Destaques & Vídeo Inline */}
-      <HeroCarousel
+      <ExperienceBlock id="hero"><HeroCarousel
         branding={branding}
         activeBroadcast={activeBroadcast}
         featuredEvent={featuredEvent}
@@ -240,16 +244,16 @@ export const Home: React.FC<HomeProps> = ({
         onNavigate={onNavigate}
         onOpenVisitorModal={() => setIsVisitorModalOpen(true)}
         onOpenBible={onOpenBible}
-      />
+      /></ExperienceBlock>
 
       {/* Meus Filhos no Kids / Chamador de Pais em Tempo Real */}
-      <KidsPassCard />
+      <ExperienceBlock id="kids"><KidsPassCard /></ExperienceBlock>
 
       {/* Grid de 8 Serviços Ministeriais em 4 Colunas */}
-      <div>
+      <ExperienceBlock id="shortcuts"><div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '0 2px' }}>
           <h3 style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Serviços & Comunidade
+            {t('home.shortcuts','Serviços & Comunidade')}
           </h3>
           <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>
             {!user ? 'Acesso Comunitário' : branding.church_name}
@@ -280,24 +284,24 @@ export const Home: React.FC<HomeProps> = ({
                   {action.icon}
                 </div>
                 <span className="quick-action-label" style={{ color: 'var(--text-main)', fontWeight: 800 }}>
-                  {action.label}
+                  {t('shortcuts.'+action.id,action.label)}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
+      </div></ExperienceBlock>
 
       {/* Destaques Ministeriais / Banner de Devocional & Eventos */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '12px' }}>
+      <div className="experience-featured-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '12px' }}>
         
         {/* Card Palavra Diária */}
-        <div 
+        <ExperienceBlock id="devotional"><div
           onClick={() => onNavigate('devotionals')}
           style={{
             background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
             border: '1px solid var(--panel-border)',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             padding: '16px',
             boxShadow: 'var(--shadow-sm)',
             cursor: 'pointer',
@@ -308,8 +312,8 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <BookOpenIcon size={22} color="#0284c7" />
+            <div style={{ width: '44px', height: '44px', borderRadius: 'var(--exp-radius, 14px)', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', color: 'var(--exp-module-accent, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <BookOpenIcon size={22} color="var(--exp-module-accent, #0284c7)" />
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
@@ -325,15 +329,15 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>›</span>
-        </div>
+        </div></ExperienceBlock>
 
         {/* Card Próximo Evento / Conferência */}
-        <div 
+        <ExperienceBlock id="events"><div
           onClick={onOpenEvents}
           style={{
             background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
             border: '1px solid var(--panel-border)',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             padding: '16px',
             boxShadow: 'var(--shadow-sm)',
             cursor: 'pointer',
@@ -344,12 +348,12 @@ export const Home: React.FC<HomeProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(234, 88, 12, 0.12)', border: '1px solid rgba(234, 88, 12, 0.25)', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <CalendarEventIcon size={22} color="#ea580c" />
+            <div style={{ width: '44px', height: '44px', borderRadius: 'var(--exp-radius, 14px)', background: 'rgba(234, 88, 12, 0.12)', border: '1px solid rgba(234, 88, 12, 0.25)', color: 'var(--exp-module-accent, #ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CalendarEventIcon size={22} color="var(--exp-module-accent, #ea580c)" />
             </div>
             <div>
-              <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
-                CALENDÁRIO & EVENTOS ({currentCampus?.name || 'Local'})
+              <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--exp-module-accent, #ea580c)', textTransform: 'uppercase' }}>
+                {t('home.events','CALENDÁRIO & EVENTOS')} ({currentCampus?.name || 'Local'})
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
                 {featuredEvent?.title || 'Eventos & Cursos'}
@@ -361,7 +365,7 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>›</span>
-        </div>
+        </div></ExperienceBlock>
 
       </div>
 

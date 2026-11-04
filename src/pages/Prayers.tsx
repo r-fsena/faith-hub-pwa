@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { fetchPrayers, createPrayerRequest, prayForRequest, submitPrayerTestimony } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
@@ -28,6 +29,8 @@ interface PrayerRequest {
 }
 
 export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { branding, selectedCampus } = useBranding();
   const { user } = useAuth();
 
@@ -258,12 +261,11 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               ← Voltar ao Início
             </button>
           )}
-          <h2 className="section-title" style={{ fontSize: '1.30rem', letterSpacing: '-0.3px', margin: 0 }}>
-            Mural de Oração
-          </h2>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+          <h2 className="section-title" style={{ fontSize: '1.30rem', letterSpacing: '-0.3px', margin: 0 }}>{active&&config.copy['prayers.title']!==undefined?t('prayers.title',''):<>
+            {t('prayers.title',"Mural de Oração")}</>}</h2>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{active&&config.copy['prayers.subtitle']!==undefined?t('prayers.subtitle',''):<>
             {selectedCampus ? `Unidade ${selectedCampus.name}` : branding.church_name || 'Comunidade'} • Intercedendo em amor
-          </p>
+          </>}</p>
         </div>
 
         <button
@@ -277,7 +279,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       {/* Abas Principais de Navegação */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '14px', marginBottom: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', background: 'var(--exp-surface-muted, #f1f5f9)', padding: '4px', borderRadius: 'var(--exp-radius, 14px)', marginBottom: '14px' }}>
         <button
           type="button"
           onClick={() => setActiveTab('wall')}
@@ -373,7 +375,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           Carregando pedidos de oração...
         </div>
       ) : displayedPrayers.length === 0 ? (
-        <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>
             {activeTab === 'testimonies' ? '✨' : activeTab === 'my_prayers' ? '🙏' : '🕊️'}
           </div>
@@ -405,8 +407,8 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 key={item.id}
                 onClick={() => setSelectedPrayerModal(item)}
                 style={{
-                  background: '#ffffff',
-                  borderRadius: '16px',
+                  background: 'var(--exp-surface, #ffffff)',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '12px 14px',
                   border: item.privacy === 'CONFIDENTIAL' ? '1.5px solid #fecdd3' : '1px solid var(--panel-border)',
                   boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
@@ -422,7 +424,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
                   color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
                   display: 'flex',
@@ -516,7 +518,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     width: '28px',
                     height: '28px',
                     borderRadius: '50%',
-                    background: '#f8fafc',
+                    background: 'var(--exp-background, #f8fafc)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -561,7 +563,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     onClick={() => setPrivacy('PUBLIC')}
                     style={{
                       padding: '10px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       border: privacy === 'PUBLIC' ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                       background: privacy === 'PUBLIC' ? 'var(--accent-primary-light)' : '#ffffff',
                       color: privacy === 'PUBLIC' ? 'var(--accent-primary)' : 'var(--text-main)',
@@ -583,7 +585,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     onClick={() => setPrivacy('CONFIDENTIAL')}
                     style={{
                       padding: '10px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       border: privacy === 'CONFIDENTIAL' ? '2px solid #e11d48' : '1px solid var(--panel-border)',
                       background: privacy === 'CONFIDENTIAL' ? '#ffe4e6' : '#ffffff',
                       color: privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--text-main)',
@@ -611,7 +613,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   className="input-pwa"
                   value={category}
                   onChange={e => setCategory(e.target.value as any)}
-                  style={{ background: '#ffffff', cursor: 'pointer' }}
+                  style={{ background: 'var(--exp-surface, #ffffff)', cursor: 'pointer' }}
                 >
                   <option value="Família">👨‍👩‍👧‍👦 Família</option>
                   <option value="Saúde">🩺 Saúde e Cura</option>
@@ -762,7 +764,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <div style={{
                       width: '44px',
                       height: '44px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       background: item.privacy === 'CONFIDENTIAL' ? '#ffe4e6' : 'var(--accent-primary-light)',
                       color: item.privacy === 'CONFIDENTIAL' ? '#e11d48' : 'var(--accent-primary)',
                       display: 'flex',
@@ -805,7 +807,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     type="button"
                     onClick={() => setSelectedPrayerModal(null)}
                     style={{
-                      background: '#f1f5f9',
+                      background: 'var(--exp-surface-muted, #f1f5f9)',
                       border: 'none',
                       borderRadius: '50%',
                       width: '32px',
@@ -813,7 +815,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#64748b',
+                      color: 'var(--exp-muted, #64748b)',
                       cursor: 'pointer',
                       fontWeight: 700,
                       fontSize: '0.90rem',
@@ -826,9 +828,9 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 {/* Conteúdo Completo do Pedido */}
                 <div style={{
-                  background: '#f8fafc',
+                  background: 'var(--exp-background, #f8fafc)',
                   border: '1px solid #e2e8f0',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '16px 18px',
                   position: 'relative'
                 }}>
@@ -849,7 +851,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 {/* RESPOSTA PASTORAL (SE HOUVER) */}
                 {item.pastoral_response && (
-                  <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', borderRadius: '16px', padding: '16px', border: '1px solid #ddd6fe' }}>
+                  <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', borderRadius: 'var(--exp-radius, 16px)', padding: '16px', border: '1px solid #ddd6fe' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#6d28d9' }}>
                         💬 Resposta Pastoral ({item.pastoral_responded_by || 'Corpo Pastoral'}):
@@ -863,7 +865,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 {/* TESTEMUNHO DE VITÓRIA (SE HOUVER) */}
                 {item.testimony_text && (
-                  <div style={{ background: '#ecfdf5', borderRadius: '16px', padding: '16px', border: '1px solid #a7f3d0' }}>
+                  <div style={{ background: '#ecfdf5', borderRadius: 'var(--exp-radius, 16px)', padding: '16px', border: '1px solid #a7f3d0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#059669' }}>
                         ✨ Testemunho de Vitória / Oração Respondida:
@@ -897,7 +899,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         background: item.is_praying ? '#ecfdf5' : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
                         color: item.is_praying ? '#059669' : '#ffffff',
                         border: item.is_praying ? '1.5px solid #a7f3d0' : 'none',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         padding: '14px',
                         fontWeight: 900,
                         fontSize: '0.90rem',
@@ -927,7 +929,7 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         color: '#059669',
                         border: '1.5px solid #a7f3d0',
                         padding: '12px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         fontWeight: 800,
                         fontSize: '0.84rem',
                         cursor: 'pointer',
@@ -948,10 +950,10 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     style={{
                       width: '100%',
                       padding: '12px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       border: '1px solid #e2e8f0',
-                      background: '#ffffff',
-                      color: '#64748b',
+                      background: 'var(--exp-surface, #ffffff)',
+                      color: 'var(--exp-muted, #64748b)',
                       fontWeight: 800,
                       fontSize: '0.82rem',
                       cursor: 'pointer'

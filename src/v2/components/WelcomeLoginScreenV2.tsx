@@ -507,7 +507,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         flexDirection: 'column',
         justifyContent: 'space-between',
         overflow: 'hidden',
-        background: '#090d16',
+        background: 'var(--exp-background, #090d16)',
         zIndex: 100,
         userSelect: 'none',
         WebkitUserSelect: 'none',
@@ -635,7 +635,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             <span style={{
               fontSize: '0.62rem',
               fontWeight: 600,
-              color: '#94a3b8',
+              color: 'var(--exp-muted, #94a3b8)',
               letterSpacing: '0.02em',
               display: 'flex',
               alignItems: 'center',
@@ -758,7 +758,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                 {/* Subtítulo Minimalista */}
                 <p style={{
                   fontSize: '0.84rem',
-                  color: '#e2e8f0',
+                  color: 'var(--exp-border, #e2e8f0)',
                   lineHeight: 1.45,
                   margin: 0,
                   maxWidth: '440px',
@@ -810,8 +810,8 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             onClick={() => handleOpenAuth('login')}
             className="v2-pressable"
             style={{
-              background: '#ffffff',
-              color: '#0f172a',
+              background: 'var(--exp-surface, #ffffff)',
+              color: 'var(--exp-text, #0f172a)',
               fontWeight: 800,
               fontSize: '0.96rem',
               borderRadius: '999px',
@@ -839,7 +839,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             justifyContent: 'center',
             gap: '8px',
             fontSize: '0.78rem',
-            color: '#94a3b8'
+            color: 'var(--exp-muted, #94a3b8)'
           }}>
             <span>Ainda não tem conta?</span>
             <button
@@ -882,7 +882,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               {authMode === 'forgot' && 'Recuperar Senha'}
               {authMode === 'forgot_confirm' && 'Nova Senha'}
             </h3>
-            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--exp-muted, #64748b)', margin: 0, lineHeight: 1.4 }}>
               {authMode === 'login' && 'Digite seu e-mail e senha para continuar.'}
               {authMode === 'signup' && (signupStep === 1 ? 'Passo 1 de 2: Dados de acesso e contato.' : 'Passo 2 de 2: Endereço para comunhão e eventos.')}
               {authMode === 'confirm' && 'Insira o código de 6 dígitos que enviamos para seu e-mail.'}
@@ -1174,7 +1174,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                     cursor: 'pointer',
                     marginTop: '2px',
                     padding: '10px 12px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'rgba(15, 23, 42, 0.03)',
                     boxSizing: 'border-box',
                     width: '100%'
@@ -1185,7 +1185,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                       onChange={e => setAcceptLGPD(e.target.checked)}
                       style={{ marginTop: '3px', accentColor: 'var(--accent-primary, #0f766e)' }}
                     />
-                    <span style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.4 }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #64748b)', lineHeight: 1.4 }}>
                       Concordo com os Termos de Uso e Política de Privacidade da igreja.
                     </span>
                   </label>
@@ -1199,10 +1199,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
                       style={{
                         height: '48px',
                         padding: '0 20px',
-                        background: '#f1f5f9',
+                        background: 'var(--exp-surface-muted, #f1f5f9)',
                         border: 'none',
-                        borderRadius: '14px',
-                        color: '#475569',
+                        borderRadius: 'var(--exp-radius, 14px)',
+                        color: 'var(--exp-muted, #475569)',
                         fontSize: '0.86rem',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -1252,7 +1252,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               <button
                 type="button"
                 onClick={() => setAuthMode('login')}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--exp-muted, #64748b)', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
               >
                 Voltar para Login
               </button>
@@ -1287,7 +1287,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               <button
                 type="button"
                 onClick={() => setAuthMode('login')}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--exp-muted, #64748b)', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
               >
                 Voltar para Login
               </button>
@@ -1345,7 +1345,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               <button
                 type="button"
                 onClick={() => setAuthMode('login')}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--exp-muted, #64748b)', fontSize: '0.80rem', fontWeight: 600, cursor: 'pointer', padding: '6px' }}
               >
                 Cancelar
               </button>

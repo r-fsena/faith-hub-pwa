@@ -108,7 +108,7 @@ export const InstallPwaBanner: React.FC = () => {
               Siga os 2 passos rápidos no navegador Safari:
             </p>
 
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '18px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '16px', borderRadius: 'var(--exp-radius, 18px)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--accent-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>1</div>
                 <div style={{ fontSize: '0.84rem', color: 'var(--text-main)', lineHeight: 1.3 }}>

@@ -230,7 +230,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
             <div style={{
               width: '46px',
               height: '46px',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               background: '#eff6ff',
               color: '#2563eb',
               display: 'flex',
@@ -252,8 +252,8 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
           {/* Seletor de Modo: Membro vs Visitante */}
           <div style={{
             display: 'flex',
-            background: '#f1f5f9',
-            borderRadius: '12px',
+            background: 'var(--exp-surface-muted, #f1f5f9)',
+            borderRadius: 'var(--exp-radius, 12px)',
             padding: '4px',
             gap: '4px'
           }}>
@@ -313,7 +313,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                       style={{
                         width: '100%',
                         padding: '12px 16px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         border: '1.5px solid #cbd5e1',
                         fontSize: '0.86rem',
                         outline: 'none',
@@ -335,9 +335,9 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                             }
                           }}
                           style={{
-                            background: '#ffffff',
+                            background: 'var(--exp-surface, #ffffff)',
                             border: '1.5px solid #e2e8f0',
-                            borderRadius: '14px',
+                            borderRadius: 'var(--exp-radius, 14px)',
                             padding: '12px 14px',
                             cursor: 'pointer',
                             display: 'flex',
@@ -346,10 +346,10 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                           }}
                         >
                           <div>
-                            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1e293b' }}>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--exp-text, #1e293b)' }}>
                               👨‍👩‍👧 {fam.name}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--exp-muted, #64748b)' }}>
                               📱 {fam.phone || 'Sem telefone'} • {(fam.children || []).length} criança(s)
                             </div>
                           </div>
@@ -360,7 +360,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                       ))}
                     </div>
                   ) : searchQuery.trim().length > 1 ? (
-                    <div style={{ textAlign: 'center', padding: '24px 12px', color: '#64748b' }}>
+                    <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--exp-muted, #64748b)' }}>
                       <p style={{ fontSize: '0.82rem', margin: 0 }}>Nenhuma família encontrada com esse termo.</p>
                       <button
                         type="button"
@@ -382,9 +382,9 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                       </button>
                     </div>
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '28px 16px', background: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                    <div style={{ textAlign: 'center', padding: '28px 16px', background: 'var(--exp-background, #f8fafc)', borderRadius: 'var(--exp-radius, 16px)', border: '1px dashed #cbd5e1' }}>
                       <span style={{ fontSize: '1.6rem' }}>👨‍👩‍👧‍👦</span>
-                      <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '6px 0 0 0' }}>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--exp-muted, #64748b)', margin: '6px 0 0 0' }}>
                         Comece digitando o número de telefone ou o sobrenome para localizar as crianças cadastradas.
                       </p>
                     </div>
@@ -397,7 +397,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                   <div style={{
                     background: '#eff6ff',
                     border: '1px solid #bfdbfe',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     padding: '10px 14px',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -407,7 +407,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                       <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e40af' }}>
                         👨‍👩‍👧 Família: {selectedFamily.name}
                       </div>
-                      <div style={{ fontSize: '0.70rem', color: '#3b82f6' }}>
+                      <div style={{ fontSize: '0.70rem', color: 'var(--exp-module-accent, #3b82f6)' }}>
                         {selectedFamily.phone}
                       </div>
                     </div>
@@ -436,7 +436,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                             style={{
                               border: isSelected ? '2px solid #2563eb' : '1.5px solid #e2e8f0',
                               background: isSelected ? '#eff6ff' : '#ffffff',
-                              borderRadius: '12px',
+                              borderRadius: 'var(--exp-radius, 12px)',
                               padding: '10px 14px',
                               cursor: 'pointer',
                               display: 'flex',
@@ -445,7 +445,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                             }}
                           >
                             <div>
-                              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1e293b' }}>
+                              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--exp-text, #1e293b)' }}>
                                 {ch.name} {age !== null ? `(${age} anos)` : ''}
                               </div>
                               {ch.allergies && (
@@ -478,10 +478,10 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                         style={{
                           width: '100%',
                           padding: '10px 12px',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           border: '1.5px solid #cbd5e1',
                           fontSize: '0.84rem',
-                          background: '#ffffff'
+                          background: 'var(--exp-surface, #ffffff)'
                         }}
                       >
                         {rooms.map(r => (
@@ -501,7 +501,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                       background: '#2563eb',
                       color: '#ffffff',
                       border: 'none',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       padding: '12px',
                       fontSize: '0.88rem',
                       fontWeight: 900,
@@ -532,7 +532,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                   value={visitorForm.parent_name}
                   onChange={e => setVisitorForm({ ...visitorForm, parent_name: e.target.value })}
                   placeholder="Nome do Pai ou Mãe"
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -546,7 +546,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                   value={visitorForm.parent_phone}
                   onChange={e => setVisitorForm({ ...visitorForm, parent_phone: e.target.value })}
                   placeholder="(00) 00000-0000"
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -561,7 +561,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                     value={visitorForm.child_name}
                     onChange={e => setVisitorForm({ ...visitorForm, child_name: e.target.value })}
                     placeholder="Nome completo"
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div>
@@ -580,7 +580,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                         room_id: getSuggestedRoomForAge(age)
                       });
                     }}
-                    style={{ width: '100%', padding: '10px 8px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.80rem', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '10px 8px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.80rem', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
@@ -592,7 +592,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                 <select
                   value={visitorForm.room_id}
                   onChange={e => setVisitorForm({ ...visitorForm, room_id: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', background: '#ffffff', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', background: 'var(--exp-surface, #ffffff)', boxSizing: 'border-box' }}
                 >
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>
@@ -611,7 +611,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                   value={visitorForm.allergies}
                   onChange={e => setVisitorForm({ ...visitorForm, allergies: e.target.value })}
                   placeholder="Ex: lactose, glúten, asma..."
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '12px', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', border: '1.5px solid #cbd5e1', fontSize: '0.84rem', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -623,7 +623,7 @@ export const KidsCheckinModal: React.FC<KidsCheckinModalProps> = ({ isOpen, onCl
                   background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '14px',
+                  borderRadius: 'var(--exp-radius, 14px)',
                   padding: '12px',
                   fontSize: '0.88rem',
                   fontWeight: 900,

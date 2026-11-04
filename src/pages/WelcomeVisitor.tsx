@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState } from 'react';
 import { useBranding } from '../context/BrandingContext';
 
@@ -9,6 +10,8 @@ interface WelcomeVisitorProps {
 const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.us-east-2.amazonaws.com';
 
 export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExploreApp }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { branding } = useBranding();
 
   const [name, setName] = useState('');
@@ -77,7 +80,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
               border: 'none',
               borderRadius: '10px',
               padding: '8px 14px',
-              color: '#f8fafc',
+              color: 'var(--exp-background, #f8fafc)',
               fontSize: '0.85rem',
               fontWeight: 700,
               cursor: 'pointer'
@@ -86,7 +89,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
             ← Voltar
           </button>
         )}
-        <div style={{ fontSize: '0.80rem', color: '#94a3b8', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.80rem', color: 'var(--exp-muted, #94a3b8)', fontWeight: 600 }}>
           {branding.church_name || 'Comunidade da Fé'}
         </div>
       </div>
@@ -94,7 +97,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
       {submitted ? (
         <div style={{
           background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '24px',
+          borderRadius: 'var(--exp-radius, 24px)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           padding: '36px 24px',
           textAlign: 'center',
@@ -102,17 +105,17 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
           backdropFilter: 'blur(10px)'
         }}>
           <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>🕊️</div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 10px 0', color: '#38bdf8' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 10px 0', color: '#38bdf8' }}>{active&&config.copy['welcome.title']!==undefined?t('welcome.title',''):<>
             Que Alegria Ter Você Aqui!
-          </h2>
-          <p style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+          </>}</h2>
+          <p style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 24px 0' }}>{active&&config.copy['welcome.subtitle']!==undefined?t('welcome.subtitle',''):<>
             Olá, <strong>{name}</strong>! Recebemos seus dados com muito amor. Nossa equipe pastoral e os líderes de células estão à sua inteira disposição para orar e caminhar com você e sua família.
-          </p>
+          </>}</p>
 
           <div style={{
             background: 'rgba(56, 189, 248, 0.1)',
             border: '1px solid rgba(56, 189, 248, 0.25)',
-            borderRadius: '16px',
+            borderRadius: 'var(--exp-radius, 16px)',
             padding: '16px',
             fontSize: '0.82rem',
             color: '#7dd3fc',
@@ -127,7 +130,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
             style={{
               width: '100%',
               padding: '14px',
-              borderRadius: '12px',
+              borderRadius: 'var(--exp-radius, 12px)',
               border: 'none',
               background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
               color: '#ffffff',
@@ -143,7 +146,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
       ) : (
         <div style={{
           background: 'rgba(255, 255, 255, 0.04)',
-          borderRadius: '24px',
+          borderRadius: 'var(--exp-radius, 24px)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '24px',
           backdropFilter: 'blur(10px)'
@@ -152,12 +155,12 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
             <div style={{
               width: '56px',
               height: '56px',
-              borderRadius: '18px',
+              borderRadius: 'var(--exp-radius, 18px)',
               background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '28px',
+              fontSize: 'calc(28px * var(--exp-font-scale, 1))',
               margin: '0 auto 12px auto',
               boxShadow: '0 6px 18px rgba(59, 130, 246, 0.3)'
             }}>
@@ -166,7 +169,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
               Seja Muito Bem-Vindo(a)!
             </h1>
-            <p style={{ fontSize: '0.84rem', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.84rem', color: 'var(--exp-muted, #94a3b8)', margin: 0, lineHeight: 1.5 }}>
               É uma honra receber você no nosso culto. Deixe seu contato para que possamos orar por você e te acolher!
             </p>
           </div>
@@ -185,7 +188,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   background: 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
@@ -208,7 +211,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   background: 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
@@ -230,7 +233,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   background: 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
@@ -252,7 +255,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   background: 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
@@ -274,7 +277,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   background: 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
@@ -291,7 +294,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
               style={{
                 width: '100%',
                 padding: '14px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 border: 'none',
                 background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                 color: '#ffffff',

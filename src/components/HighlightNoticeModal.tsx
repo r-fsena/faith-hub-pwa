@@ -45,7 +45,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       setNoticeData({
         type: 'broadcast',
         badge: activeBroadcast.is_available ? '🔴 AO VIVO AGORA' : '📺 TRANSMISSÃO EM DESTAQUE',
-        badgeBg: activeBroadcast.is_available ? '#ef4444' : '#0284c7',
+        badgeBg: activeBroadcast.is_available ? '#ef4444' : 'var(--exp-module-accent, #0284c7)',
         title: activeBroadcast.title || 'Culto de Celebração Online',
         message: activeBroadcast.description || 'Estamos transmitindo ao vivo a nossa celebração. Junte-se a nós em adoração!',
         imageUrl: branding?.banner_url,
@@ -64,7 +64,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       setNoticeData({
         type: 'event',
         badge: '📅 COMUNICADO & EVENTO ESPECIAL',
-        badgeBg: '#ea580c',
+        badgeBg: 'var(--exp-module-accent, #ea580c)',
         title: featuredEvent.title,
         message: featuredEvent.description || 'As inscrições para este grande encontro estão abertas. Garanta a sua participação!',
         imageUrl: featuredEvent.cover_url || featuredEvent.image_url || branding?.banner_url,
@@ -127,7 +127,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       <div
         style={{
           background: 'var(--bg-card, #111827)',
-          borderRadius: '24px',
+          borderRadius: 'var(--exp-radius, 24px)',
           maxWidth: '400px',
           width: '100%',
           overflow: 'hidden',
@@ -140,7 +140,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
       >
         {/* Imagem de Capa do Pop-up (se houver) */}
         {noticeData.imageUrl ? (
-          <div style={{ position: 'relative', width: '100%', height: '160px', overflow: 'hidden', background: '#090d16' }}>
+          <div style={{ position: 'relative', width: '100%', height: '160px', overflow: 'hidden', background: 'var(--exp-background, #090d16)' }}>
             <img
               src={noticeData.imageUrl}
               alt={noticeData.title}
@@ -252,7 +252,7 @@ export const HighlightNoticeModal: React.FC<HighlightNoticeModalProps> = ({
                 padding: '12px',
                 fontSize: '0.88rem',
                 fontWeight: 800,
-                borderRadius: '14px'
+                borderRadius: 'var(--exp-radius, 14px)'
               }}
             >
               {noticeData.actionText}

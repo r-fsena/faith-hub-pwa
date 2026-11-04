@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import { authFetch } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
@@ -17,6 +18,8 @@ interface KidsVolunteerPanelProps {
 
 export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, onClose, initialTab }) => {
   const { branding } = useBranding();
+  const {t,screen,setScreen}=usePwaExperience();
+  useEffect(()=>{if(!isOpen)return;const previous=screen;setScreen('kids');return()=>setScreen(previous);},[isOpen,setScreen]);
   const { user } = useAuth();
   const orgId = branding.organization_id || 'org_default';
 
@@ -327,11 +330,11 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
   const callingCount = activeCheckins.filter(c => c.status === 'CALLING_PARENTS').length;
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="🚸 Painel do Educador Kids (Mobile)">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={t('kids.title','🚸 Painel do Educador Kids (Mobile)')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: '65dvh' }}>
         
         {/* Navigation Tabs Bar */}
-        <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+        <div style={{ display: 'flex', gap: 6, background: 'var(--exp-surface-muted, #f1f5f9)', padding: 4, borderRadius: 12 }}>
           <button
             type="button"
             onClick={() => setSubTab('presence')}
@@ -484,7 +487,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                 Carregando crianças presentes...
               </div>
             ) : filteredCheckins.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 30, background: '#ffffff', borderRadius: 14, border: '1px dashed var(--panel-border)' }}>
+              <div style={{ textAlign: 'center', padding: 30, background: 'var(--exp-surface, #ffffff)', borderRadius: 14, border: '1px dashed var(--panel-border)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 6 }}>👶</div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)' }}>Nenhuma criança nesta sala</div>
                 <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -530,13 +533,13 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                         </div>
 
                         <div style={{
-                          background: '#f8fafc',
+                          background: 'var(--exp-background, #f8fafc)',
                           border: '1px solid #cbd5e1',
                           padding: '3px 8px',
                           borderRadius: 8,
                           textAlign: 'right'
                         }}>
-                          <div style={{ fontSize: '0.55rem', fontWeight: 800, color: '#64748b' }}>PIN</div>
+                          <div style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--exp-muted, #64748b)' }}>PIN</div>
                           <div style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--accent-primary)' }}>{c.security_code}</div>
                         </div>
                       </div>
@@ -638,7 +641,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
         {subTab === 'checkin' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Toggle Membro vs Visitante */}
-            <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 12 }}>
+            <div style={{ display: 'flex', background: 'var(--exp-surface-muted, #f1f5f9)', padding: 4, borderRadius: 12 }}>
               <button
                 type="button"
                 onClick={() => {
@@ -719,7 +722,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                     {familySearchQuery.trim().length >= 2 && (
                       <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
                         {families.length === 0 ? (
-                          <div style={{ padding: 12, textAlign: 'center', background: '#f8fafc', borderRadius: 10, fontSize: '0.78rem', color: '#64748b' }}>
+                          <div style={{ padding: 12, textAlign: 'center', background: 'var(--exp-background, #f8fafc)', borderRadius: 10, fontSize: '0.78rem', color: 'var(--exp-muted, #64748b)' }}>
                             Nenhum membro encontrado com "{familySearchQuery}".
                           </div>
                         ) : (
@@ -758,7 +761,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                                 }
                               }}
                               style={{
-                                background: '#ffffff',
+                                background: 'var(--exp-surface, #ffffff)',
                                 border: '1.5px solid #e2e8f0',
                                 borderRadius: 12,
                                 padding: '10px 14px',
@@ -775,7 +778,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                                 </div>
                                 <div>
                                   <div style={{ fontSize: '0.86rem', fontWeight: 900, color: 'var(--text-main)' }}>{fam.name}</div>
-                                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{fam.phone || fam.email}</div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--exp-muted, #64748b)' }}>{fam.phone || fam.email}</div>
                                 </div>
                               </div>
                               <div style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 800, background: 'var(--accent-primary-light)', padding: '4px 8px', borderRadius: 6 }}>
@@ -821,7 +824,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                           });
                         }}
                         style={{
-                          background: '#ffffff',
+                          background: 'var(--exp-surface, #ffffff)',
                           color: '#e11d48',
                           border: '1px solid #fecdd3',
                           borderRadius: 8,
@@ -905,7 +908,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                             });
                           }}
                           style={{
-                            background: '#ffffff',
+                            background: 'var(--exp-surface, #ffffff)',
                             color: '#0f766e',
                             border: '1.5px dashed #0f766e',
                             borderRadius: 10,
@@ -967,7 +970,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                       minHeight: 48,
                       borderRadius: 12,
                       border: '1.5px solid #cbd5e1',
-                      background: '#ffffff'
+                      background: 'var(--exp-surface, #ffffff)'
                     }}
                   >
                     <option value="">Selecione a sala</option>
@@ -1123,11 +1126,11 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                         🚨 {c.call_reason}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--exp-muted, #64748b)' }}>
                       Sala: {c.room_name} • Pais: {c.parent_name} ({c.parent_phone})
                     </div>
                     {c.call_message && (
-                      <div style={{ fontSize: '0.72rem', fontStyle: 'italic', color: '#475569' }}>
+                      <div style={{ fontSize: '0.72rem', fontStyle: 'italic', color: 'var(--exp-muted, #475569)' }}>
                         "{c.call_message}"
                       </div>
                     )}
@@ -1200,7 +1203,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
               <button
                 type="button"
                 onClick={() => setCallingCheckin(null)}
-                style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
+                style={{ background: 'var(--exp-surface-muted, #f1f5f9)', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
               >
                 ✕
               </button>
@@ -1309,7 +1312,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
               <button
                 type="button"
                 onClick={() => setCheckoutTarget(null)}
-                style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
+                style={{ background: 'var(--exp-surface-muted, #f1f5f9)', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
               >
                 ✕
               </button>

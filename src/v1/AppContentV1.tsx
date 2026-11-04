@@ -1,3 +1,5 @@
+import {ExperienceScreen} from '../context/PwaExperienceContext';
+import { usePwaExperience } from '../context/PwaExperienceContext';
 import { FeatureGate } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
@@ -26,6 +28,7 @@ type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving';
 
 export const AppContentV1: React.FC = () => {
   const { branding } = useBranding();
+  const { setScreen,t } = usePwaExperience();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     if (typeof window !== 'undefined' && sessionStorage.getItem('faithhub_guest_explored') === 'true') {
@@ -106,13 +109,15 @@ export const AppContentV1: React.FC = () => {
 
   const getSubViewTitle = (view: SubView) => {
     switch (view) {
-      case 'prayers': return 'Mural de Oração';
-      case 'events': return 'Eventos & Cursos';
-      case 'bible': return 'Bíblia Sagrada';
-      case 'giving': return 'Contribuições & Dízimos';
+      case 'prayers': return t('prayers.title','Mural de Oração');
+      case 'events': return t('events.title','Eventos & Cursos');
+      case 'bible': return t('bible.title','Bíblia Sagrada');
+      case 'giving': return t('giving.title','Contribuições & Dízimos');
       default: return undefined;
     }
   };
+
+  useEffect(()=>{setScreen((subView !== 'none' ? subView : activeTab==='profile'&&!isAuthenticated?'welcome':activeTab) as any);},[activeTab,subView,setScreen,isAuthenticated]);
 
   // Se o ambiente da congregação foi inativado pela administração
   if ((branding.status || '').toUpperCase() === 'INACTIVE') {
@@ -201,7 +206,7 @@ export const AppContentV1: React.FC = () => {
         {/* SUBVIEWS */}
         {subView === 'bible' ? (
           /* Bíblia Sagrada: 100% Livre para qualquer visitante sem login */
-          <Bible onBack={() => setSubView('none')} />
+          <ExperienceScreen screen="bible"><Bible onBack={() => setSubView('none')} /></ExperienceScreen>
         ) : subView === 'prayers' ? (
           !isAuthenticated ? (
             <AuthGate 
@@ -212,7 +217,7 @@ export const AppContentV1: React.FC = () => {
               onBack={() => setSubView('none')}
             />
           ) : (
-            <Prayers onBack={() => setSubView('none')} />
+            <ExperienceScreen screen="prayers"><Prayers onBack={() => setSubView('none')} /></ExperienceScreen>
           )
         ) : subView === 'events' ? (
           !isAuthenticated ? (
@@ -225,7 +230,7 @@ export const AppContentV1: React.FC = () => {
             />
           ) : (
             <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<Events onBack={() => setSubView('none')} />
+<ExperienceScreen screen="events"><Events onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
           )
         ) : subView === 'giving' ? (
@@ -238,20 +243,20 @@ export const AppContentV1: React.FC = () => {
               onBack={() => setSubView('none')}
             />
           ) : (
-            <Giving />
+            <ExperienceScreen screen="giving"><Giving /></ExperienceScreen>
           )
         ) : (
           /* ABAS PRINCIPAIS DO BOTTOM NAV */
           <>
             {activeTab === 'home' && (
-              <Home 
+              <ExperienceScreen screen="home"><Home
                 onNavigate={handleTabChange}
                 onOpenLive={() => setIsLiveOpen(true)}
                 onOpenPrayers={() => setSubView('prayers')}
                 onOpenEvents={() => setSubView('events')}
                 onOpenBible={() => setSubView('bible')}
                 onOpenGiving={() => setSubView('giving')}
-              />
+              /></ExperienceScreen>
             )}
 
             {activeTab === 'devotionals' && (
@@ -264,7 +269,7 @@ export const AppContentV1: React.FC = () => {
                   onBack={() => handleTabChange('home')}
                 />
               ) : (
-                <Devotionals />
+                <ExperienceScreen screen="devotionals"><Devotionals /></ExperienceScreen>
               )
             )}
 
@@ -278,7 +283,7 @@ export const AppContentV1: React.FC = () => {
                   onBack={() => handleTabChange('home')}
                 />
               ) : (
-                <CellGroups />
+                <ExperienceScreen screen="cells"><CellGroups /></ExperienceScreen>
               )
             )}
 
@@ -293,14 +298,14 @@ export const AppContentV1: React.FC = () => {
                 />
               ) : (
                 <FeatureGate flag="pdv.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<Store />
+<ExperienceScreen screen="store"><Store /></ExperienceScreen>
 </FeatureGate>
               )
             )}
 
             {/* Perfil: sempre acessível para permitir login/cadastro/recuperação de senha */}
             {activeTab === 'profile' && (
-              <Profile
+              <ExperienceScreen screen="profile"><Profile
                 onLoginSuccess={() => {
                   sessionStorage.removeItem('faithhub_guest_explored');
                   setActiveTab('home');
@@ -319,7 +324,7 @@ export const AppContentV1: React.FC = () => {
                   setSubView('none');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-              />
+              /></ExperienceScreen>
             )}
           </>
         )}

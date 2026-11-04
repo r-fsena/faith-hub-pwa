@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useMemo } from 'react';
 import { fetchDevotionals, fetchTodayDevotional, getActiveCampusId } from '../services/api';
 import { useBranding } from '../context/BrandingContext';
@@ -26,6 +27,8 @@ export interface DevotionalItem {
 }
 
 export const Devotionals: React.FC = () => {
+ const {t,config,active}=usePwaExperience();
+
   const { branding } = useBranding();
   const { resolvedTheme } = useTheme();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -416,12 +419,12 @@ export const Devotionals: React.FC = () => {
       {/* Header Principal */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h2 className="section-title" style={{ fontSize: '1.30rem', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>
+          <h2 className="section-title" style={{ fontSize: '1.30rem', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>{active&&config.copy['devotionals.title']!==undefined?t('devotionals.title',''):<>
             Palavra & Ensino
-          </h2>
-          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '3px', margin: 0 }}>
+          </>}</h2>
+          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '3px', margin: 0 }}>{active&&config.copy['devotionals.subtitle']!==undefined?t('devotionals.subtitle',''):<>
             Estudos bíblicos e devocionais diários
-          </p>
+          </>}</p>
         </div>
 
         {/* Botão Dias Anteriores no Canto Superior Direito */}
@@ -434,7 +437,7 @@ export const Devotionals: React.FC = () => {
             gap: '6px',
             background: 'var(--bg-card, #ffffff)',
             border: '1px solid var(--panel-border)',
-            borderRadius: '24px',
+            borderRadius: 'var(--exp-radius, 24px)',
             padding: '8px 14px',
             fontSize: '0.78rem',
             fontWeight: 800,
@@ -465,11 +468,11 @@ export const Devotionals: React.FC = () => {
       {/* Loading Skeleton */}
       {loading && allDevotionals.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '24px', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: 'var(--exp-radius, 24px)', padding: '24px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ height: '16px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '6px', width: '35%', marginBottom: '14px' }} />
             <div style={{ height: '26px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '8px', width: '80%', marginBottom: '16px' }} />
-            <div style={{ height: '80px', background: 'var(--bg-card-subtle, #f8fafc)', borderRadius: '14px', marginBottom: '16px' }} />
-            <div style={{ height: '48px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: '12px', width: '100%' }} />
+            <div style={{ height: '80px', background: 'var(--bg-card-subtle, #f8fafc)', borderRadius: 'var(--exp-radius, 14px)', marginBottom: '16px' }} />
+            <div style={{ height: '48px', background: 'var(--bg-card-subtle, #f1f5f9)', borderRadius: 'var(--exp-radius, 12px)', width: '100%' }} />
           </div>
         </div>
       ) : (
@@ -479,7 +482,7 @@ export const Devotionals: React.FC = () => {
               <div 
                 style={{
                   background: 'var(--bg-card, #ffffff)',
-                  borderRadius: '24px',
+                  borderRadius: 'var(--exp-radius, 24px)',
                   padding: 'clamp(18px, 4vw, 26px)',
                   border: completedIds.includes(todayDevotional.id)
                     ? '2px solid #10b981'
@@ -498,7 +501,7 @@ export const Devotionals: React.FC = () => {
                       fontSize: '0.70rem',
                       fontWeight: 900,
                       padding: '4px 10px',
-                      borderRadius: '16px',
+                      borderRadius: 'var(--exp-radius, 16px)',
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                       display: 'flex',
@@ -517,7 +520,7 @@ export const Devotionals: React.FC = () => {
                         fontSize: '0.68rem',
                         fontWeight: 900,
                         padding: '3px 8px',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '3px'
@@ -535,7 +538,7 @@ export const Devotionals: React.FC = () => {
                       background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light, rgba(15, 118, 110, 0.08))',
                       border: isDark ? '1px solid rgba(45, 212, 191, 0.35)' : 'none',
                       padding: '4px 10px',
-                      borderRadius: '12px'
+                      borderRadius: 'var(--exp-radius, 12px)'
                     }}>
                       📖 {todayDevotional.passage}
                     </span>
@@ -559,7 +562,7 @@ export const Devotionals: React.FC = () => {
                   <div style={{
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     padding: '14px 16px',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     borderLeft: '4px solid var(--accent-primary)',
                     border: '1px solid var(--panel-border)',
                     marginBottom: '16px',
@@ -603,7 +606,7 @@ export const Devotionals: React.FC = () => {
                       background: 'var(--bg-card-subtle, rgba(255, 255, 255, 0.85))',
                       border: '1px solid var(--panel-border)',
                       padding: '6px 12px',
-                      borderRadius: '20px'
+                      borderRadius: 'var(--exp-radius, 20px)'
                     }}>
                       <span>🎵</span>
                       <span style={{ fontWeight: 600 }}>Louvor:</span>
@@ -630,7 +633,7 @@ export const Devotionals: React.FC = () => {
                       : 'var(--accent-primary-gradient)',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     fontWeight: 900,
                     fontSize: '0.90rem',
                     cursor: 'pointer',
@@ -652,7 +655,7 @@ export const Devotionals: React.FC = () => {
               <div 
                 style={{
                   background: isDark ? 'rgba(30, 41, 59, 0.60)' : 'var(--bg-card, #ffffff)',
-                  borderRadius: '24px',
+                  borderRadius: 'var(--exp-radius, 24px)',
                   padding: 'clamp(20px, 4vw, 28px)',
                   border: isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1.5px solid var(--panel-border)',
                   boxShadow: 'var(--shadow-sm)',
@@ -666,7 +669,7 @@ export const Devotionals: React.FC = () => {
                 <div style={{
                   width: '54px',
                   height: '54px',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'var(--accent-primary-light, #e0f2fe)',
                   color: isDark ? '#2dd4bf' : 'var(--accent-primary, #0284c7)',
                   display: 'flex',
@@ -691,7 +694,7 @@ export const Devotionals: React.FC = () => {
                     style={{
                       marginTop: '4px',
                       padding: '10px 18px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       border: 'none',
                       background: isDark ? '#2dd4bf' : 'var(--accent-primary)',
                       color: isDark ? '#042f2e' : '#ffffff',
@@ -727,7 +730,7 @@ export const Devotionals: React.FC = () => {
                   fontSize: '0.70rem',
                   fontWeight: 800,
                   padding: '2px 8px',
-                  borderRadius: '12px'
+                  borderRadius: 'var(--exp-radius, 12px)'
                 }}>
                   Próximos 7 dias
                 </span>
@@ -737,7 +740,7 @@ export const Devotionals: React.FC = () => {
             {upcomingDevotionals.length === 0 ? (
               <div style={{
                 background: 'var(--bg-card, #ffffff)',
-                borderRadius: '18px',
+                borderRadius: 'var(--exp-radius, 18px)',
                 padding: '24px 16px',
                 textAlign: 'center',
                 border: '1px solid var(--panel-border)'
@@ -756,7 +759,7 @@ export const Devotionals: React.FC = () => {
                       onClick={() => setReadingDevotional(dev)}
                       style={{
                         background: 'var(--bg-card, #ffffff)',
-                        borderRadius: '18px',
+                        borderRadius: 'var(--exp-radius, 18px)',
                         padding: '14px 18px',
                         border: isDone ? '1.5px solid #10b981' : '1px solid var(--panel-border)',
                         boxShadow: 'var(--shadow-sm)',
@@ -888,7 +891,7 @@ export const Devotionals: React.FC = () => {
                 gap: '8px',
                 background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f1f5f9)',
                 border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border)',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 padding: '0 16px',
                 fontSize: '0.88rem',
                 fontWeight: 800,
@@ -937,7 +940,7 @@ export const Devotionals: React.FC = () => {
                 height: '42px',
                 background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f8fafc)',
                 border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border)',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 padding: '0 14px',
                 fontSize: '0.82rem',
                 fontWeight: 800,
@@ -983,7 +986,7 @@ export const Devotionals: React.FC = () => {
                   fontWeight: 800,
                   fontSize: '0.78rem',
                   padding: '5px 14px',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   marginBottom: '12px'
                 }}>
                   <span>📖</span>
@@ -1022,7 +1025,7 @@ export const Devotionals: React.FC = () => {
                       <div style={{
                         width: '42px',
                         height: '42px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
                         color: '#ffffff',
                         display: 'flex',
@@ -1068,7 +1071,7 @@ export const Devotionals: React.FC = () => {
                         background: isDark ? 'rgba(45, 212, 191, 0.15)' : 'rgba(15, 118, 110, 0.12)',
                         border: isDark ? '1px solid rgba(45, 212, 191, 0.35)' : '1px solid rgba(15, 118, 110, 0.25)',
                         padding: '4px 10px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         flexShrink: 0
                       }}>
                         <span className="eq-bar" style={{ height: '12px', background: isDark ? '#2dd4bf' : 'var(--accent-primary)' }} />
@@ -1101,7 +1104,7 @@ export const Devotionals: React.FC = () => {
                         border: isPlayingMusic && currentSongTitle === readingDevotional.suggested_song_title
                           ? (isDark ? '1.5px solid rgba(239, 68, 68, 0.4)' : '1.5px solid #fca5a5')
                           : 'none',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         fontWeight: 900,
                         fontSize: '0.88rem',
                         cursor: 'pointer',
@@ -1136,7 +1139,7 @@ export const Devotionals: React.FC = () => {
                             : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)'),
                           color: isDark ? '#f8fafc' : 'var(--text-main)',
                           border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           fontWeight: 800,
                           fontSize: '0.78rem',
                           cursor: 'pointer',
@@ -1162,7 +1165,7 @@ export const Devotionals: React.FC = () => {
                           background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)',
                           color: isDark ? '#f8fafc' : 'var(--text-main)',
                           border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           fontWeight: 800,
                           fontSize: '0.78rem',
                           textDecoration: 'none',
@@ -1184,7 +1187,7 @@ export const Devotionals: React.FC = () => {
                   {isPlayingMusic && currentSongEmbedUrl && showVideoEmbed && (
                     <div style={{
                       marginTop: '14px',
-                      borderRadius: '16px',
+                      borderRadius: 'var(--exp-radius, 16px)',
                       overflow: 'hidden',
                       boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
                       background: '#000000',
@@ -1222,7 +1225,7 @@ export const Devotionals: React.FC = () => {
                 <div style={{
                   background: isDark ? 'rgba(30, 41, 59, 0.70)' : 'var(--bg-card-subtle, #f8fafc)',
                   padding: '20px',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
                   borderLeftWidth: '5px',
                   borderLeftStyle: 'solid',
@@ -1273,7 +1276,7 @@ export const Devotionals: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '14px 20px',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   fontWeight: 900,
                   fontSize: '0.92rem',
                   cursor: 'pointer',
@@ -1301,7 +1304,7 @@ export const Devotionals: React.FC = () => {
                     ? 'linear-gradient(135deg, rgba(45, 212, 191, 0.10) 0%, rgba(15, 23, 42, 0.85) 100%)' 
                     : 'linear-gradient(135deg, rgba(15, 118, 110, 0.06) 0%, rgba(20, 184, 166, 0.10) 100%)',
                   padding: '20px',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   border: isDark ? '1.5px solid rgba(45, 212, 191, 0.35)' : '1.5px solid rgba(15, 118, 110, 0.20)',
                   marginBottom: '24px'
                 }}>
@@ -1335,7 +1338,7 @@ export const Devotionals: React.FC = () => {
                 <div style={{
                   background: isDark ? 'rgba(30, 41, 59, 0.75)' : 'var(--bg-card-subtle, #1e293b)',
                   padding: '16px 18px',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
                   marginBottom: '28px'
                 }}>
@@ -1393,7 +1396,7 @@ export const Devotionals: React.FC = () => {
                     color: likedIds.includes(readingDevotional.id) ? '#ef4444' : (isDark ? '#cbd5e1' : 'var(--text-secondary)'),
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border)',
                     padding: '10px 16px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     fontWeight: 800,
                     fontSize: '0.82rem',
                     cursor: 'pointer',
@@ -1483,7 +1486,7 @@ export const Devotionals: React.FC = () => {
                       }}>
                         {currentSongTitle}
                       </div>
-                      <div style={{ fontSize: '0.66rem', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '0.66rem', color: 'var(--exp-muted, #94a3b8)' }}>
                         Tocando ao fundo • Meditação
                       </div>
                     </div>
@@ -1498,7 +1501,7 @@ export const Devotionals: React.FC = () => {
                         background: 'linear-gradient(135deg, #0f766e, #14b8a6)',
                         color: '#ffffff',
                         border: 'none',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         padding: '6px 12px',
                         fontSize: '0.74rem',
                         fontWeight: 800,
@@ -1517,7 +1520,7 @@ export const Devotionals: React.FC = () => {
                       onClick={() => setIsMusicMinimized(true)}
                       style={{
                         background: 'rgba(255, 255, 255, 0.12)',
-                        color: '#e2e8f0',
+                        color: 'var(--exp-border, #e2e8f0)',
                         border: 'none',
                         borderRadius: '10px',
                         padding: '6px 8px',
@@ -1544,7 +1547,7 @@ export const Devotionals: React.FC = () => {
                       }}
                       style={{
                         background: 'rgba(255, 255, 255, 0.12)',
-                        color: '#e2e8f0',
+                        color: 'var(--exp-border, #e2e8f0)',
                         border: 'none',
                         borderRadius: '50%',
                         width: '28px',
@@ -1639,7 +1642,7 @@ export const Devotionals: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   border: '1px solid var(--panel-border)',
                   background: 'var(--bg-card-subtle, #f8fafc)',
                   fontSize: '0.84rem',
@@ -1671,7 +1674,7 @@ export const Devotionals: React.FC = () => {
                       style={{
                         background: 'var(--bg-card, #ffffff)',
                         border: isDone ? '1.5px solid #10b981' : '1px solid var(--panel-border)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px 16px',
                         cursor: 'pointer',
                         display: 'flex',

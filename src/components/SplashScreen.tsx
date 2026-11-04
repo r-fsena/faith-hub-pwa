@@ -67,7 +67,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         height: '100dvh',
         minHeight: '100vh',
         zIndex: 999999,
-        backgroundColor: '#090d16',
+        backgroundColor: 'var(--exp-background, #090d16)',
         background: `radial-gradient(circle at 50% 35%, rgba(15, 23, 42, 0.85) 0%, #090d16 80%)`,
         display: 'flex',
         flexDirection: 'column',

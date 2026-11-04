@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
@@ -180,6 +181,8 @@ type PortalTab = 'dashboard' | 'mural' | 'estudos' | 'lanches' | 'lideranca';
 type LeaderSubTab = 'attendance' | 'requests' | 'members' | 'lanches' | 'settings';
 
 export const CellGroups: React.FC = () => {
+ const {t,config,active}=usePwaExperience();
+
   const { user, isAuthenticated } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -470,7 +473,7 @@ export const CellGroups: React.FC = () => {
   };
 
   const getAuthorColor = (name: string, isDarkTheme: boolean) => {
-    const colorsLight = ['#0284c7', '#7c3aed', '#059669', '#ea580c', '#db2777', '#0891b2', '#4f46e5'];
+    const colorsLight = ['var(--exp-module-accent, #0284c7)', 'var(--exp-module-accent, #7c3aed)', '#059669', 'var(--exp-module-accent, #ea580c)', '#db2777', '#0891b2', 'var(--exp-module-accent, #4f46e5)'];
     const colorsDark = ['#38bdf8', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#22d3ee', '#818cf8'];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -1447,10 +1450,10 @@ export const CellGroups: React.FC = () => {
       {viewMode === 'discover' && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <div>
-            <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>Células & Redes</h2>
-            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+            <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>{active&&config.copy['cells.title']!==undefined?t('cells.title',''):<>{t('cells.title',"Células & Redes")}</>}</h2>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{active&&config.copy['cells.subtitle']!==undefined?t('cells.subtitle',''):<>
               Encontre uma célula perto de você
-            </p>
+            </>}</p>
           </div>
 
           {cells.length > 0 && myGroupId && (
@@ -1497,7 +1500,7 @@ export const CellGroups: React.FC = () => {
                   ? `linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%), url(${myGroup.cover_url || myGroup.image_url}) center/cover no-repeat`
                   : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'),
                 color: '#ffffff',
-                borderRadius: '18px',
+                borderRadius: 'var(--exp-radius, 18px)',
                 padding: isCellHeaderExpanded ? '16px 16px 14px 16px' : '12px 16px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
                 cursor: 'pointer',
@@ -1515,7 +1518,7 @@ export const CellGroups: React.FC = () => {
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: '#94a3b8',
+                    color: 'var(--exp-muted, #94a3b8)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -1566,7 +1569,7 @@ export const CellGroups: React.FC = () => {
                       🔍 Trocar
                     </button>
                   )}
-                  <span style={{ fontSize: '0.80rem', color: '#94a3b8', transform: isCellHeaderExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                  <span style={{ fontSize: '0.80rem', color: 'var(--exp-muted, #94a3b8)', transform: isCellHeaderExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
                     ▼
                   </span>
                 </div>
@@ -1581,7 +1584,7 @@ export const CellGroups: React.FC = () => {
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',
                     padding: '12px 14px',
-                    borderRadius: '14px',
+                    borderRadius: 'var(--exp-radius, 14px)',
                     fontSize: '0.78rem',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1647,7 +1650,7 @@ export const CellGroups: React.FC = () => {
                     onClick={() => setPortalTab(tab.id as PortalTab)}
                     style={{
                       padding: '8px 14px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       border: isActive ? '1.5px solid var(--accent-primary)' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'var(--panel-border)'}`,
                       background: isActive 
                         ? 'var(--accent-primary-light)' 
@@ -1682,7 +1685,7 @@ export const CellGroups: React.FC = () => {
               {pendingUsers.length > 0 && (
                 <div 
                   onClick={() => { setPortalTab('lideranca'); setLeaderSubTab('requests'); }}
-                  style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '16px', padding: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--exp-radius, 16px)', padding: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '1.2rem' }}>🔔</span>
@@ -1706,7 +1709,7 @@ export const CellGroups: React.FC = () => {
                   style={{
                     background: 'linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%)',
                     border: '1.5px solid #99f6e4',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '14px 16px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -1719,7 +1722,7 @@ export const CellGroups: React.FC = () => {
                     <div style={{
                       width: '38px',
                       height: '38px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       background: '#ccfbf1',
                       display: 'flex',
                       alignItems: 'center',
@@ -1746,7 +1749,7 @@ export const CellGroups: React.FC = () => {
               {/* Estudo da Semana */}
               <div 
                 onClick={() => setPortalTab('estudos')}
-                style={{ background: '#ffffff', border: '1px solid var(--panel-border)', borderRadius: '18px', padding: '16px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
+                style={{ background: 'var(--exp-surface, #ffffff)', border: '1px solid var(--panel-border)', borderRadius: 'var(--exp-radius, 18px)', padding: '16px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
@@ -1806,7 +1809,7 @@ export const CellGroups: React.FC = () => {
                     ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0)' 
                     : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0)',
                   backgroundSize: '24px 24px',
-                  borderRadius: '20px',
+                  borderRadius: 'var(--exp-radius, 20px)',
                   padding: '14px 12px 10px 12px',
                   border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                   display: 'flex',
@@ -1823,7 +1826,7 @@ export const CellGroups: React.FC = () => {
                   <div style={{
                     alignSelf: 'center',
                     background: isDark ? 'rgba(32, 44, 51, 0.85)' : '#ffffff',
-                    borderRadius: '14px',
+                    borderRadius: 'var(--exp-radius, 14px)',
                     padding: '24px 18px',
                     textAlign: 'center',
                     border: isDark ? '1px dashed rgba(255, 255, 255, 0.15)' : '1px dashed #cbd5e1',
@@ -1984,7 +1987,7 @@ export const CellGroups: React.FC = () => {
                             gap: '3px',
                             background: isDark ? '#202c33' : '#ffffff',
                             border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             padding: '2px 7px',
                             fontSize: '0.70rem',
                             boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
@@ -2055,7 +2058,7 @@ export const CellGroups: React.FC = () => {
                       backdropFilter: 'blur(12px)',
                       WebkitBackdropFilter: 'blur(12px)',
                       borderLeft: '3.5px solid var(--accent-primary, #00a884)',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       padding: '6px 12px',
                       display: 'flex',
                       alignItems: 'center',
@@ -2111,7 +2114,7 @@ export const CellGroups: React.FC = () => {
                         flex: 1,
                         minHeight: '44px',
                         maxHeight: '100px',
-                        borderRadius: '24px',
+                        borderRadius: 'var(--exp-radius, 24px)',
                         background: isDark ? '#1e293b' : '#ffffff',
                         border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
                         padding: '11px 18px',
@@ -2168,9 +2171,9 @@ export const CellGroups: React.FC = () => {
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                background: '#f1f5f9',
+                background: 'var(--exp-surface-muted, #f1f5f9)',
                 padding: '4px',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 gap: '4px',
                 border: '1px solid var(--panel-border)'
               }}>
@@ -2179,7 +2182,7 @@ export const CellGroups: React.FC = () => {
                   onClick={() => handleSwitchScope('cell')}
                   style={{
                     padding: '10px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: 'none',
                     background: studyScope === 'cell' ? '#ffffff' : 'transparent',
                     color: studyScope === 'cell' ? 'var(--accent-primary)' : 'var(--text-secondary)',
@@ -2203,7 +2206,7 @@ export const CellGroups: React.FC = () => {
                   onClick={() => handleSwitchScope('church')}
                   style={{
                     padding: '10px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: 'none',
                     background: studyScope === 'church' ? '#ffffff' : 'transparent',
                     color: studyScope === 'church' ? 'var(--accent-primary)' : 'var(--text-secondary)',
@@ -2224,7 +2227,7 @@ export const CellGroups: React.FC = () => {
               </div>
 
               {loadingBookDetails && !selectedBook ? (
-                <div style={{ background: '#ffffff', borderRadius: '20px', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Carregando roteiro do estudo...
                 </div>
               ) : selectedBook ? (
@@ -2297,7 +2300,7 @@ export const CellGroups: React.FC = () => {
                       <div style={{
                         background: 'rgba(0,0,0,0.3)',
                         backdropFilter: 'blur(8px)',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         padding: '14px',
                         marginTop: '6px',
                         fontSize: '0.80rem',
@@ -2322,8 +2325,8 @@ export const CellGroups: React.FC = () => {
 
                     return (
                       <div style={{
-                        background: '#ffffff',
-                        borderRadius: '18px',
+                        background: 'var(--exp-surface, #ffffff)',
+                        borderRadius: 'var(--exp-radius, 18px)',
                         padding: '16px',
                         border: '1px solid var(--panel-border)',
                         boxShadow: 'var(--shadow-sm)',
@@ -2351,7 +2354,7 @@ export const CellGroups: React.FC = () => {
                         </div>
 
                         {/* Barra de Progresso */}
-                        <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: '100%', height: '8px', background: 'var(--exp-surface-muted, #f1f5f9)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{
                             width: `${progressPercent}%`,
                             height: '100%',
@@ -2390,7 +2393,7 @@ export const CellGroups: React.FC = () => {
                           }}
                           style={{
                             background: 'var(--bg-card, #ffffff)',
-                            borderRadius: '16px',
+                            borderRadius: 'var(--exp-radius, 16px)',
                             border: isCompleted ? '1.5px solid #a7f3d0' : '1px solid var(--panel-border)',
                             boxShadow: 'var(--shadow-sm)',
                             padding: '12px 14px',
@@ -2473,7 +2476,7 @@ export const CellGroups: React.FC = () => {
                               width: '28px',
                               height: '28px',
                               borderRadius: '50%',
-                              background: '#f8fafc',
+                              background: 'var(--exp-background, #f8fafc)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -2491,7 +2494,7 @@ export const CellGroups: React.FC = () => {
                 </>
               ) : (
                 /* Fallback se nenhum livro for encontrado para o escopo */
-                <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed #cbd5e1' }}>
+                <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed #cbd5e1' }}>
                   <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>📖</span>
                   <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)', marginBottom: '4px' }}>
                     Nenhum Estudo {studyScope === 'cell' ? 'Exclusivo da Célula' : 'Geral da Igreja'}
@@ -2561,7 +2564,7 @@ export const CellGroups: React.FC = () => {
                     background: isDark 
                       ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
                       : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                    borderRadius: '24px',
+                    borderRadius: 'var(--exp-radius, 24px)',
                     padding: '32px 20px',
                     textAlign: 'center',
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--panel-border)',
@@ -2641,7 +2644,7 @@ export const CellGroups: React.FC = () => {
                         color: '#ffffff',
                         border: 'none',
                         padding: '13px 26px',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         fontWeight: 900,
                         fontSize: '0.88rem',
                         cursor: 'pointer',
@@ -2659,7 +2662,7 @@ export const CellGroups: React.FC = () => {
                   {/* Card com Ideias de Alimentos para Inspirar */}
                   <div style={{
                     background: isDark ? 'rgba(30, 41, 59, 0.50)' : '#f8fafc',
-                    borderRadius: '20px',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     padding: '16px',
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
                     display: 'flex',
@@ -2673,7 +2676,7 @@ export const CellGroups: React.FC = () => {
                       <div style={{
                         background: isDark ? '#1e293b' : '#ffffff',
                         padding: '12px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0'
                       }}>
                         <span style={{ fontSize: '1.3rem' }}>🥟</span>
@@ -2683,7 +2686,7 @@ export const CellGroups: React.FC = () => {
                       <div style={{
                         background: isDark ? '#1e293b' : '#ffffff',
                         padding: '12px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0'
                       }}>
                         <span style={{ fontSize: '1.3rem' }}>🥤</span>
@@ -2718,7 +2721,7 @@ export const CellGroups: React.FC = () => {
                       <div style={{
                         width: '46px',
                         height: '46px',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
                         color: '#b45309',
                         display: 'flex',
@@ -2779,7 +2782,7 @@ export const CellGroups: React.FC = () => {
                         color: '#ffffff',
                         border: 'none',
                         padding: '9px 14px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         fontWeight: 800,
                         fontSize: '0.78rem',
                         cursor: 'pointer',
@@ -2799,7 +2802,7 @@ export const CellGroups: React.FC = () => {
                   {/* Painel de Cobertura e Progresso */}
                   <div style={{
                     background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#f8fafc',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '12px 14px',
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
                     display: 'flex',
@@ -2810,7 +2813,7 @@ export const CellGroups: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       <div style={{
                         background: isDark ? '#1e293b' : '#ffffff',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         padding: '8px 12px',
                         border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
                         display: 'flex',
@@ -2830,7 +2833,7 @@ export const CellGroups: React.FC = () => {
 
                       <div style={{
                         background: isDark ? '#1e293b' : '#ffffff',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         padding: '8px 12px',
                         border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #e2e8f0',
                         display: 'flex',
@@ -2919,7 +2922,7 @@ export const CellGroups: React.FC = () => {
                         className="v2-pressable"
                         style={{
                           padding: '8px 13px',
-                          borderRadius: '14px',
+                          borderRadius: 'var(--exp-radius, 14px)',
                           border: isActive 
                             ? '1.5px solid var(--accent-primary)' 
                             : (cat.isHighlight ? (isDark ? '1px solid rgba(245, 158, 11, 0.40)' : '1px solid #fde68a') : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--panel-border)'}`),
@@ -2964,7 +2967,7 @@ export const CellGroups: React.FC = () => {
                 {filteredSnacks.length === 0 ? (
                   <div style={{
                     background: isDark ? 'var(--bg-card)' : '#ffffff',
-                    borderRadius: '20px',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     padding: '36px 20px',
                     textAlign: 'center',
                     border: isDark ? '1px dashed rgba(255, 255, 255, 0.15)' : '1px dashed #cbd5e1'
@@ -2999,7 +3002,7 @@ export const CellGroups: React.FC = () => {
                         color: '#ffffff',
                         border: 'none',
                         padding: '10px 18px',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         fontSize: '0.80rem',
                         fontWeight: 800,
                         cursor: 'pointer'
@@ -3026,7 +3029,7 @@ export const CellGroups: React.FC = () => {
                           key={snack.id}
                           style={{
                             background: isDark ? 'var(--bg-card)' : '#ffffff',
-                            borderRadius: '18px',
+                            borderRadius: 'var(--exp-radius, 18px)',
                             padding: '14px 16px',
                             border: isConfirmed 
                               ? (isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0') 
@@ -3086,7 +3089,7 @@ export const CellGroups: React.FC = () => {
                                 
                                 {isConfirmed ? (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    {snack.event_date && <span style={{ fontSize: '0.70rem', color: '#94a3b8' }}>•</span>}
+                                    {snack.event_date && <span style={{ fontSize: '0.70rem', color: 'var(--exp-muted, #94a3b8)' }}>•</span>}
                                     <div style={{
                                       width: '18px',
                                       height: '18px',
@@ -3138,7 +3141,7 @@ export const CellGroups: React.FC = () => {
                                   color: '#ffffff',
                                   border: 'none',
                                   padding: '8px 14px',
-                                  borderRadius: '12px',
+                                  borderRadius: 'var(--exp-radius, 12px)',
                                   fontWeight: 900,
                                   fontSize: '0.76rem',
                                   cursor: 'pointer',
@@ -3255,7 +3258,7 @@ export const CellGroups: React.FC = () => {
                       alignItems: 'center',
                       gap: '6px',
                       padding: '6px 12px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       backdropFilter: 'blur(8px)'
                     }}
                   >
@@ -3269,7 +3272,7 @@ export const CellGroups: React.FC = () => {
                   <div style={{
                     width: '46px',
                     height: '46px',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
                     display: 'flex',
                     alignItems: 'center',
@@ -3286,7 +3289,7 @@ export const CellGroups: React.FC = () => {
                       fontWeight: 800,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      color: '#94a3b8',
+                      color: 'var(--exp-muted, #94a3b8)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
@@ -3315,7 +3318,7 @@ export const CellGroups: React.FC = () => {
                     background: 'rgba(255, 255, 255, 0.10)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.16)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '12px 14px'
                   }}>
                     <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
@@ -3330,7 +3333,7 @@ export const CellGroups: React.FC = () => {
                     background: 'rgba(255, 255, 255, 0.10)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.16)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '12px 14px'
                   }}>
                     <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
@@ -3370,7 +3373,7 @@ export const CellGroups: React.FC = () => {
                       onClick={() => setLeaderSubTab(sub.id as LeaderSubTab)}
                       style={{
                         padding: '8px 14px',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         border: isActive 
                           ? '1.5px solid var(--accent-primary, #ea580c)' 
                           : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
@@ -3378,7 +3381,7 @@ export const CellGroups: React.FC = () => {
                           ? (isDark ? '#431407' : '#ffedd5') 
                           : (isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'),
                         color: isActive 
-                          ? '#ea580c' 
+                          ? 'var(--exp-module-accent, #ea580c)'
                           : (isDark ? '#cbd5e1' : '#475569'),
                         fontWeight: isActive ? 900 : 700,
                         fontSize: '0.78rem',
@@ -3396,7 +3399,7 @@ export const CellGroups: React.FC = () => {
                       <span>{sub.label}</span>
                       {typeof sub.count === 'number' && sub.count > 0 && (
                         <span style={{
-                          background: isActive ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0'),
+                          background: isActive ? 'var(--exp-module-accent, #ea580c)' : (isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0'),
                           color: isActive ? '#ffffff' : (isDark ? '#ffffff' : '#334155'),
                           padding: '1px 6px',
                           borderRadius: '999px',
@@ -3442,7 +3445,7 @@ export const CellGroups: React.FC = () => {
                         return (
                           <div style={{
                             background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-                            borderRadius: '20px',
+                            borderRadius: 'var(--exp-radius, 20px)',
                             padding: '10px 14px',
                             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
@@ -3459,7 +3462,7 @@ export const CellGroups: React.FC = () => {
                               style={{
                                 width: '38px',
                                 height: '38px',
-                                borderRadius: '12px',
+                                borderRadius: 'var(--exp-radius, 12px)',
                                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                                 background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
                                 color: 'var(--text-main, #0f172a)',
@@ -3496,7 +3499,7 @@ export const CellGroups: React.FC = () => {
                                 <span style={{
                                   fontSize: '0.68rem',
                                   fontWeight: 900,
-                                  color: '#ea580c',
+                                  color: 'var(--exp-module-accent, #ea580c)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.04em'
                                 }}>
@@ -3527,7 +3530,7 @@ export const CellGroups: React.FC = () => {
                               style={{
                                 width: '38px',
                                 height: '38px',
-                                borderRadius: '12px',
+                                borderRadius: 'var(--exp-radius, 12px)',
                                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                                 background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
                                 color: 'var(--text-main, #0f172a)',
@@ -3550,7 +3553,7 @@ export const CellGroups: React.FC = () => {
                       {/* 2. CARD COMPACTO EXPANSÍVEL: TEMA & NOTAS DO ENCONTRO */}
                       <div style={{
                         background: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}`,
                         overflow: 'hidden',
                         transition: 'all 0.2s ease'
@@ -3607,7 +3610,7 @@ export const CellGroups: React.FC = () => {
                                     style={{
                                       background: 'none',
                                       border: 'none',
-                                      color: '#ea580c',
+                                      color: 'var(--exp-module-accent, #ea580c)',
                                       fontSize: '0.68rem',
                                       fontWeight: 800,
                                       cursor: 'pointer',
@@ -3626,7 +3629,7 @@ export const CellGroups: React.FC = () => {
                                 style={{
                                   width: '100%',
                                   padding: '9px 12px',
-                                  borderRadius: '12px',
+                                  borderRadius: 'var(--exp-radius, 12px)',
                                   border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                                   background: isDark ? '#0f172a' : '#f8fafc',
                                   color: 'var(--text-main)',
@@ -3650,7 +3653,7 @@ export const CellGroups: React.FC = () => {
                                 style={{
                                   width: '100%',
                                   padding: '8px 12px',
-                                  borderRadius: '12px',
+                                  borderRadius: 'var(--exp-radius, 12px)',
                                   border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                                   background: isDark ? '#0f172a' : '#f8fafc',
                                   color: 'var(--text-main)',
@@ -3726,7 +3729,7 @@ export const CellGroups: React.FC = () => {
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: '#ea580c',
+                              color: 'var(--exp-module-accent, #ea580c)',
                               fontWeight: 800,
                               fontSize: '0.82rem',
                               cursor: 'pointer',
@@ -3741,7 +3744,7 @@ export const CellGroups: React.FC = () => {
 
                       {/* Lista de Membros com Ergonomia Mobile */}
                       {groupMembers.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-muted, #94a3b8)', fontSize: '0.80rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', borderRadius: '16px', border: `1px dashed ${isDark ? '#334155' : '#e2e8f0'}` }}>
+                        <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-muted, #94a3b8)', fontSize: '0.80rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', borderRadius: 'var(--exp-radius, 16px)', border: `1px dashed ${isDark ? '#334155' : '#e2e8f0'}` }}>
                           Nenhum membro cadastrado nesta célula ainda.
                         </div>
                       ) : (
@@ -3754,7 +3757,7 @@ export const CellGroups: React.FC = () => {
                                 style={{
                                   background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
                                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'}`,
-                                  borderRadius: '18px',
+                                  borderRadius: 'var(--exp-radius, 18px)',
                                   padding: '12px 14px',
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                                   display: 'flex',
@@ -3808,7 +3811,7 @@ export const CellGroups: React.FC = () => {
                                     onClick={() => handleToggleAttendeeStatus(m.id, 'PRESENT')}
                                     style={{
                                       padding: '9px 0',
-                                      borderRadius: '12px',
+                                      borderRadius: 'var(--exp-radius, 12px)',
                                       border: status === 'PRESENT' ? '1.5px solid #10b981' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                                       background: status === 'PRESENT' ? (isDark ? '#064e3b' : '#ecfdf5') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
                                       color: status === 'PRESENT' ? (isDark ? '#6ee7b7' : '#065f46') : (isDark ? '#94a3b8' : '#64748b'),
@@ -3828,7 +3831,7 @@ export const CellGroups: React.FC = () => {
                                     onClick={() => handleToggleAttendeeStatus(m.id, 'ABSENT')}
                                     style={{
                                       padding: '9px 0',
-                                      borderRadius: '12px',
+                                      borderRadius: 'var(--exp-radius, 12px)',
                                       border: status === 'ABSENT' ? '1.5px solid #ef4444' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                                       background: status === 'ABSENT' ? (isDark ? '#7f1d1d' : '#fef2f2') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
                                       color: status === 'ABSENT' ? (isDark ? '#fca5a5' : '#991b1b') : (isDark ? '#94a3b8' : '#64748b'),
@@ -3848,7 +3851,7 @@ export const CellGroups: React.FC = () => {
                                     onClick={() => handleToggleAttendeeStatus(m.id, 'JUSTIFIED')}
                                     style={{
                                       padding: '9px 0',
-                                      borderRadius: '12px',
+                                      borderRadius: 'var(--exp-radius, 12px)',
                                       border: status === 'JUSTIFIED' ? '1.5px solid #a855f7' : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                                       background: status === 'JUSTIFIED' ? (isDark ? '#581c87' : '#faf5ff') : (isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc'),
                                       color: status === 'JUSTIFIED' ? (isDark ? '#d8b4fe' : '#6b21a8') : (isDark ? '#94a3b8' : '#64748b'),
@@ -3920,7 +3923,7 @@ export const CellGroups: React.FC = () => {
                           background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
                           border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                           padding: '4px 6px',
-                          borderRadius: '16px'
+                          borderRadius: 'var(--exp-radius, 16px)'
                         }}>
                           <button
                             type="button"
@@ -3931,7 +3934,7 @@ export const CellGroups: React.FC = () => {
                               borderRadius: '10px',
                               border: 'none',
                               background: isDark ? '#334155' : '#f8fafc',
-                              color: '#ea580c',
+                              color: 'var(--exp-module-accent, #ea580c)',
                               fontSize: '1.2rem',
                               fontWeight: 900,
                               cursor: 'pointer',
@@ -3954,7 +3957,7 @@ export const CellGroups: React.FC = () => {
                               borderRadius: '10px',
                               border: 'none',
                               background: isDark ? '#334155' : '#f8fafc',
-                              color: '#ea580c',
+                              color: 'var(--exp-module-accent, #ea580c)',
                               fontSize: '1.2rem',
                               fontWeight: 900,
                               cursor: 'pointer',
@@ -3989,7 +3992,7 @@ export const CellGroups: React.FC = () => {
 
                       {/* Formulário de Visitante com Nome/WhatsApp */}
                       {showAddVisitor && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: isDark ? '#0f172a' : '#ffffff', padding: '12px', borderRadius: '14px', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: isDark ? '#0f172a' : '#ffffff', padding: '12px', borderRadius: 'var(--exp-radius, 14px)', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
                           <input
                             type="text"
                             placeholder="Nome completo do visitante..."
@@ -4042,7 +4045,7 @@ export const CellGroups: React.FC = () => {
                           background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
                           border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                           padding: '6px 10px',
-                          borderRadius: '14px'
+                          borderRadius: 'var(--exp-radius, 14px)'
                         }}>
                           <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-muted, #64748b)' }}>
                             R$
@@ -4118,7 +4121,7 @@ export const CellGroups: React.FC = () => {
                             background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                             color: '#ffffff',
                             border: 'none',
-                            borderRadius: '16px',
+                            borderRadius: 'var(--exp-radius, 16px)',
                             padding: '12px 22px',
                             fontWeight: 900,
                             fontSize: '0.92rem',
@@ -4150,7 +4153,7 @@ export const CellGroups: React.FC = () => {
                           padding: '24px 16px', 
                           color: 'var(--text-muted, #94a3b8)', 
                           background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff', 
-                          borderRadius: '16px', 
+                          borderRadius: 'var(--exp-radius, 16px)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                           display: 'flex',
                           flexDirection: 'column',
@@ -4171,7 +4174,7 @@ export const CellGroups: React.FC = () => {
                             key={m.id} 
                             style={{ 
                               background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff', 
-                              borderRadius: '16px', 
+                              borderRadius: 'var(--exp-radius, 16px)',
                               padding: '14px 16px', 
                               border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`, 
                               boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))',
@@ -4216,7 +4219,7 @@ export const CellGroups: React.FC = () => {
                                 border: `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1'}`,
                                 color: 'var(--text-main, #0f172a)',
                                 padding: '6px 12px',
-                                borderRadius: '12px',
+                                borderRadius: 'var(--exp-radius, 12px)',
                                 fontSize: '0.74rem',
                                 fontWeight: 800,
                                 cursor: 'pointer',
@@ -4247,7 +4250,7 @@ export const CellGroups: React.FC = () => {
                   </div>
 
                   {pendingUsers.length === 0 ? (
-                    <div style={{ background: '#ffffff', borderRadius: '18px', padding: '30px 20px', textAlign: 'center', border: '1px solid var(--panel-border)' }}>
+                    <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 18px)', padding: '30px 20px', textAlign: 'center', border: '1px solid var(--panel-border)' }}>
                       <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
                       <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--text-main)' }}>
                         Nenhuma solicitação pendente
@@ -4258,7 +4261,7 @@ export const CellGroups: React.FC = () => {
                     </div>
                   ) : (
                     pendingUsers.map(user => (
-                      <div key={user.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #fecaca', boxShadow: 'var(--shadow-sm)' }}>
+                      <div key={user.id} style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 16px)', padding: '16px', border: '1px solid #fecaca', boxShadow: 'var(--shadow-sm)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div>
                             <div style={{ fontWeight: 900, fontSize: '0.94rem', color: 'var(--text-main)' }}>
@@ -4285,7 +4288,7 @@ export const CellGroups: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleRejectMember(user)}
-                            style={{ background: '#f1f5f9', color: '#dc2626', border: 'none', padding: '8px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer' }}
+                            style={{ background: 'var(--exp-surface-muted, #f1f5f9)', color: '#dc2626', border: 'none', padding: '8px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer' }}
                           >
                             ✕ Recusar
                           </button>
@@ -4315,12 +4318,12 @@ export const CellGroups: React.FC = () => {
                   </div>
 
                   {groupMembers.length === 0 ? (
-                    <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                    <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 16px)', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                       Nenhum membro vinculado ainda. Aprove as solicitações para montar sua equipe!
                     </div>
                   ) : (
                     groupMembers.map(member => (
-                      <div key={member.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div key={member.id} style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 16px)', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
                             {member.name}
@@ -4374,7 +4377,7 @@ export const CellGroups: React.FC = () => {
                   </div>
 
                   {snacks.length === 0 ? (
-                    <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                    <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 16px)', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                       Nenhum item de lanche cadastrado. Toque no botão acima para adicionar!
                     </div>
                   ) : (
@@ -4382,7 +4385,7 @@ export const CellGroups: React.FC = () => {
                       {snacks.map(snack => {
                         const isConfirmed = snack.confirmed || snack.is_confirmed;
                         return (
-                          <div key={snack.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div key={snack.id} style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 16px)', padding: '14px', border: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <span style={{ fontSize: '1.4rem' }}>{getSnackIcon(snack.item || snack.item_name)}</span>
                               <div>
@@ -4397,7 +4400,7 @@ export const CellGroups: React.FC = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{
                                 background: isConfirmed ? '#ecfdf5' : '#fff7ed',
-                                color: isConfirmed ? '#059669' : '#ea580c',
+                                color: isConfirmed ? '#059669' : 'var(--exp-module-accent, #ea580c)',
                                 padding: '4px 8px',
                                 borderRadius: '8px',
                                 fontSize: '0.70rem',
@@ -4424,7 +4427,7 @@ export const CellGroups: React.FC = () => {
 
               {/* SUBTAB 4: CONFIGURAÇÃO RÁPIDA DO ENCONTRO */}
               {leaderSubTab === 'settings' && (
-                <form onSubmit={handleSaveMeetingInfo} style={{ background: '#ffffff', borderRadius: '18px', padding: '16px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <form onSubmit={handleSaveMeetingInfo} style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 18px)', padding: '16px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main)' }}>
                     ⚙️ Informações do Encontro Semanal
                   </div>
@@ -4493,7 +4496,7 @@ export const CellGroups: React.FC = () => {
                       onChange={e => setEditCoverUrl(e.target.value)}
                     />
                     {editCoverUrl && (
-                      <div style={{ marginTop: '8px', position: 'relative', borderRadius: '12px', overflow: 'hidden', height: '110px', border: '1px solid #cbd5e1' }}>
+                      <div style={{ marginTop: '8px', position: 'relative', borderRadius: 'var(--exp-radius, 12px)', overflow: 'hidden', height: '110px', border: '1px solid #cbd5e1' }}>
                         <img 
                           src={editCoverUrl} 
                           alt="Prévia da Capa" 
@@ -4550,7 +4553,7 @@ export const CellGroups: React.FC = () => {
                 background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 padding: '12px 16px',
                 fontSize: '0.84rem',
                 fontWeight: 900,
@@ -4585,7 +4588,7 @@ export const CellGroups: React.FC = () => {
           />
 
           {filteredCells.length === 0 ? (
-            <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>👥</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
                 Nenhuma célula cadastrada
@@ -4611,8 +4614,8 @@ export const CellGroups: React.FC = () => {
                     key={cell.id} 
                     onClick={() => setSelectedCellDetail(cell)}
                     style={{ 
-                      background: '#ffffff', 
-                      borderRadius: '18px', 
+                      background: 'var(--exp-surface, #ffffff)',
+                      borderRadius: 'var(--exp-radius, 18px)',
                       padding: '14px 18px', 
                       border: isMemberOrLeader ? '1.5px solid var(--accent-primary)' : '1px solid var(--panel-border)', 
                       boxShadow: 'var(--shadow-sm)', 
@@ -4667,7 +4670,7 @@ export const CellGroups: React.FC = () => {
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      background: '#f8fafc',
+                      background: 'var(--exp-background, #f8fafc)',
                       border: '1px solid #e2e8f0',
                       color: 'var(--accent-primary)',
                       display: 'flex',
@@ -4724,7 +4727,7 @@ export const CellGroups: React.FC = () => {
                 {/* Bloco de Encontro */}
                 <div style={{
                   background: 'var(--bg-card-subtle, #f8fafc)',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '14px',
                   border: '1px solid var(--panel-border)',
                   display: 'flex',
@@ -4763,7 +4766,7 @@ export const CellGroups: React.FC = () => {
                     style={{
                       background: 'var(--bg-card-subtle, #f1f5f9)',
                       border: '1.5px solid var(--panel-border)',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       padding: '12px',
                       fontSize: '0.82rem',
                       fontWeight: 800,
@@ -4819,7 +4822,7 @@ export const CellGroups: React.FC = () => {
                       <button 
                         type="button" 
                         disabled
-                        style={{ padding: '14px', fontSize: '0.84rem', background: '#f1f5f9', color: 'var(--text-muted)', border: '1px solid var(--panel-border)', borderRadius: '14px', cursor: 'default', fontWeight: 800 }}
+                        style={{ padding: '14px', fontSize: '0.84rem', background: 'var(--exp-surface-muted, #f1f5f9)', color: 'var(--text-muted)', border: '1px solid var(--panel-border)', borderRadius: 'var(--exp-radius, 14px)', cursor: 'default', fontWeight: 800 }}
                       >
                         ⏳ Solicitação Enviada (Aguardando Líder)
                       </button>
@@ -4837,7 +4840,7 @@ export const CellGroups: React.FC = () => {
                             background: '#10b981',
                             color: '#ffffff',
                             border: 'none',
-                            borderRadius: '14px',
+                            borderRadius: 'var(--exp-radius, 14px)',
                             padding: '14px',
                             fontSize: '0.84rem',
                             fontWeight: 900,
@@ -4873,10 +4876,10 @@ export const CellGroups: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '11px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: '1px solid #e2e8f0',
-                    background: '#ffffff',
-                    color: '#64748b',
+                    background: 'var(--exp-surface, #ffffff)',
+                    color: 'var(--exp-muted, #64748b)',
                     fontWeight: 800,
                     fontSize: '0.80rem',
                     cursor: 'pointer'
@@ -4919,11 +4922,11 @@ export const CellGroups: React.FC = () => {
                 } else if (/^###\s+(.*)/.test(line)) {
                   line = line.replace(/^###\s+(.*)/, `<h5 style="font-size: 0.90rem; font-weight: 800; margin: 8px 0 4px 0; color: ${isDark ? '#2dd4bf' : 'var(--accent-primary, #0ea5e9)'};">$1</h5>`);
                 } else if (/^&gt;\s*(.*)/.test(line)) {
-                  line = line.replace(/^&gt;\s*(.*)/, `<blockquote style="border-left: 3px solid ${isDark ? '#2dd4bf' : '#0284c7'}; background: ${isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc'}; padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-style: italic; color: ${isDark ? '#cbd5e1' : '#475569'};">$1</blockquote>`);
+                  line = line.replace(/^&gt;\s*(.*)/, `<blockquote style="border-left: 3px solid ${isDark ? '#2dd4bf' : 'var(--exp-module-accent, #0284c7)'}; background: ${isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc'}; padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-style: italic; color: ${isDark ? '#cbd5e1' : '#475569'};">$1</blockquote>`);
                 } else if (/^[\•\-\*]\s+(.*)/.test(line)) {
-                  line = line.replace(/^[\•\-\*]\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="color: ${isDark ? '#2dd4bf' : '#0284c7'}; font-weight: 900;">•</span><span style="flex: 1;">$1</span></div>`);
+                  line = line.replace(/^[\•\-\*]\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="color: ${isDark ? '#2dd4bf' : 'var(--exp-module-accent, #0284c7)'}; font-weight: 900;">•</span><span style="flex: 1;">$1</span></div>`);
                 } else if (/^(\d+)\.\s+(.*)/.test(line)) {
-                  line = line.replace(/^(\d+)\.\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="font-weight: 800; color: ${isDark ? '#2dd4bf' : '#0284c7'}; min-width: 18px;">$1.</span><span style="flex: 1;">$2</span></div>`);
+                  line = line.replace(/^(\d+)\.\s+(.*)/, `<div style="display: flex; gap: 8px; margin: 4px 0 4px 4px; align-items: flex-start;"><span style="font-weight: 800; color: ${isDark ? '#2dd4bf' : 'var(--exp-module-accent, #0284c7)'}; min-width: 18px;">$1.</span><span style="flex: 1;">$2</span></div>`);
                 }
 
                 line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -5031,7 +5034,7 @@ export const CellGroups: React.FC = () => {
                     background: isDark ? 'rgba(30, 41, 59, 0.70)' : 'var(--bg-card-subtle, #eff6ff)',
                     borderLeft: `4px solid ${isDark ? '#2dd4bf' : 'var(--accent-primary)'}`,
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #dbeafe)',
-                    borderRadius: '14px',
+                    borderRadius: 'var(--exp-radius, 14px)',
                     padding: '12px 16px',
                     fontSize: '0.88rem',
                     color: isDark ? '#ffffff' : 'var(--text-main, #1e40af)',
@@ -5052,7 +5055,7 @@ export const CellGroups: React.FC = () => {
                 {readingChapter.icebreaker && (
                   <div style={{
                     background: isDark ? 'rgba(99, 102, 241, 0.10)' : 'var(--bg-card-subtle, #f8fafc)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '14px 16px',
                     border: isDark ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid var(--panel-border, #e2e8f0)'
                   }}>
@@ -5091,7 +5094,7 @@ export const CellGroups: React.FC = () => {
                         lineHeight: 1.7,
                         background: isDark ? '#111827' : 'var(--bg-card, #ffffff)',
                         padding: '18px',
-                        borderRadius: '18px',
+                        borderRadius: 'var(--exp-radius, 18px)',
                         border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #f1f5f9)',
                         boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : 'var(--shadow-sm)'
                       }}
@@ -5104,7 +5107,7 @@ export const CellGroups: React.FC = () => {
                 {questionsList.length > 0 && (
                   <div style={{
                     background: isDark ? 'rgba(168, 85, 247, 0.10)' : 'var(--bg-card-subtle, #fdf4ff)',
-                    borderRadius: '18px',
+                    borderRadius: 'var(--exp-radius, 18px)',
                     padding: '16px 18px',
                     border: isDark ? '1px solid rgba(168, 85, 247, 0.25)' : '1px solid var(--panel-border, #f5d0fe)'
                   }}>
@@ -5142,7 +5145,7 @@ export const CellGroups: React.FC = () => {
                 {readingChapter.practical_challenge && (
                   <div style={{
                     background: isDark ? 'rgba(217, 119, 6, 0.10)' : 'var(--bg-card-subtle, #fffbeb)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '14px 16px',
                     border: isDark ? '1px solid rgba(217, 119, 6, 0.25)' : '1px solid var(--panel-border, #fde68a)'
                   }}>
@@ -5162,7 +5165,7 @@ export const CellGroups: React.FC = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {isVideo && videoEmbedUrl && (
                       <div style={{
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         overflow: 'hidden',
                         aspectRatio: '16 / 9',
                         width: '100%',
@@ -5188,7 +5191,7 @@ export const CellGroups: React.FC = () => {
                       style={{
                         padding: '14px 18px',
                         background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card-subtle, #f8fafc)',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--panel-border, #e2e8f0)',
                         color: isDark ? '#2dd4bf' : 'var(--accent-primary)',
                         textDecoration: 'none',
@@ -5218,7 +5221,7 @@ export const CellGroups: React.FC = () => {
                         background: isDark ? 'rgba(16, 185, 129, 0.20)' : '#ecfdf5',
                         color: isDark ? '#34d399' : '#059669',
                         border: '1.5px solid #10b981',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px',
                         fontWeight: 800,
                         fontSize: '0.88rem',
@@ -5242,7 +5245,7 @@ export const CellGroups: React.FC = () => {
                         background: 'linear-gradient(135deg, #10b981, #059669)',
                         color: '#ffffff',
                         border: 'none',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px',
                         fontWeight: 900,
                         fontSize: '0.88rem',
@@ -5265,7 +5268,7 @@ export const CellGroups: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '12px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--panel-border, #e2e8f0)',
                       background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'var(--bg-card, #ffffff)',
                       color: isDark ? '#cbd5e1' : 'var(--text-secondary, #64748b)',
@@ -5303,7 +5306,7 @@ export const CellGroups: React.FC = () => {
               <div style={{
                 width: '46px',
                 height: '46px',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
                 color: '#b45309',
                 display: 'flex',
@@ -5366,7 +5369,7 @@ export const CellGroups: React.FC = () => {
                         border: isSelected 
                           ? '1.5px solid var(--accent-primary)' 
                           : (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid #e2e8f0'),
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         padding: '7px 11px',
                         fontSize: '0.75rem',
                         fontWeight: 700,
@@ -5405,7 +5408,7 @@ export const CellGroups: React.FC = () => {
                     fontSize: '0.90rem',
                     background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                    borderRadius: '14px',
+                    borderRadius: 'var(--exp-radius, 14px)',
                     padding: '12px 14px',
                     color: 'var(--text-main)',
                     boxSizing: 'border-box'
@@ -5430,7 +5433,7 @@ export const CellGroups: React.FC = () => {
                       fontSize: '0.86rem',
                       background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                       border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       padding: '12px 14px',
                       color: 'var(--text-main)',
                       boxSizing: 'border-box'
@@ -5453,7 +5456,7 @@ export const CellGroups: React.FC = () => {
                       fontSize: '0.86rem',
                       background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                       border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       padding: '11px 12px',
                       color: 'var(--text-main)',
                       boxSizing: 'border-box'
@@ -5478,7 +5481,7 @@ export const CellGroups: React.FC = () => {
                     className="v2-pressable"
                     style={{
                       padding: '12px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       cursor: 'pointer',
                       border: newSnackAssigneeMode === 'me'
                         ? '1.5px solid var(--accent-primary)'
@@ -5513,7 +5516,7 @@ export const CellGroups: React.FC = () => {
                     className="v2-pressable"
                     style={{
                       padding: '12px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       cursor: 'pointer',
                       border: newSnackAssigneeMode === 'open'
                         ? (isDark ? '1.5px solid #f59e0b' : '1.5px solid #d97706')
@@ -5574,7 +5577,7 @@ export const CellGroups: React.FC = () => {
                           fontSize: '0.86rem',
                           background: isDark ? 'rgba(15, 23, 42, 0.60)' : '#ffffff',
                           border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #cbd5e1',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           padding: '11px 12px',
                           color: 'var(--text-main)',
                           boxSizing: 'border-box'
@@ -5600,7 +5603,7 @@ export const CellGroups: React.FC = () => {
                   padding: '14px',
                   fontSize: '0.92rem',
                   fontWeight: 900,
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   boxShadow: '0 4px 16px rgba(15, 118, 110, 0.28)'
                 }}
               >
@@ -5697,7 +5700,7 @@ export const CellGroups: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px 16px',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         border: isSelected 
                           ? '1.5px solid #ea580c' 
                           : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
@@ -5711,10 +5714,10 @@ export const CellGroups: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '1.2rem' }}>🗓️</span>
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isSelected ? '#ea580c' : 'var(--text-main)' }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isSelected ? 'var(--exp-module-accent, #ea580c)' : 'var(--text-main)' }}>
                             {opt.label}
                           </div>
-                          <div style={{ fontSize: '0.70rem', color: isSelected ? '#ea580c' : 'var(--text-muted)' }}>
+                          <div style={{ fontSize: '0.70rem', color: isSelected ? 'var(--exp-module-accent, #ea580c)' : 'var(--text-muted)' }}>
                             {opt.date}
                           </div>
                         </div>
@@ -5725,7 +5728,7 @@ export const CellGroups: React.FC = () => {
                         borderRadius: '999px',
                         fontSize: '0.68rem',
                         fontWeight: 800,
-                        background: isSelected ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'),
+                        background: isSelected ? 'var(--exp-module-accent, #ea580c)' : (isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'),
                         color: isSelected ? '#ffffff' : (isDark ? '#cbd5e1' : '#475569')
                       }}>
                         {opt.badge}
@@ -5739,7 +5742,7 @@ export const CellGroups: React.FC = () => {
             {/* Seletor Customizado / Qualquer Data */}
             <div style={{
               background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-              borderRadius: '18px',
+              borderRadius: 'var(--exp-radius, 18px)',
               padding: '14px',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0'}`
             }}>
@@ -5754,7 +5757,7 @@ export const CellGroups: React.FC = () => {
                   style={{
                     flex: 1,
                     padding: '10px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                     background: isDark ? '#0f172a' : '#ffffff',
                     color: 'var(--text-main)',
@@ -5768,8 +5771,8 @@ export const CellGroups: React.FC = () => {
                   onClick={() => setShowDatePickerModal(false)}
                   style={{
                     padding: '10px 18px',
-                    borderRadius: '12px',
-                    background: '#ea580c',
+                    borderRadius: 'var(--exp-radius, 12px)',
+                    background: 'var(--exp-module-accent, #ea580c)',
                     color: '#ffffff',
                     border: 'none',
                     fontWeight: 900,
@@ -5807,7 +5810,7 @@ export const CellGroups: React.FC = () => {
             background: isDark ? 'var(--bg-card, #1e293b)' : '#ffffff',
             width: '100%',
             maxWidth: '540px',
-            borderRadius: '28px',
+            borderRadius: 'var(--exp-radius, 28px)',
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
@@ -5829,7 +5832,7 @@ export const CellGroups: React.FC = () => {
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: 'linear-gradient(135deg, #059669, #10b981)',
                   color: '#ffffff',
                   display: 'flex',
@@ -5884,7 +5887,7 @@ export const CellGroups: React.FC = () => {
                       background: isDark ? 'rgba(15, 118, 110, 0.15)' : '#f0fdfa',
                       border: `1px solid ${isDark ? 'rgba(15, 118, 110, 0.3)' : '#ccfbf1'}`,
                       padding: '12px 14px',
-                      borderRadius: '16px'
+                      borderRadius: 'var(--exp-radius, 16px)'
                     }}>
                       <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-primary, #0f766e)', letterSpacing: '0.05em' }}>
                         📖 Tema Abordado no Encontro
@@ -5897,7 +5900,7 @@ export const CellGroups: React.FC = () => {
 
                   {/* Grid de Métricas */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                    <div style={{ background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : '#bbf7d0'}` }}>
+                    <div style={{ background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', borderRadius: 'var(--exp-radius, 14px)', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : '#bbf7d0'}` }}>
                       <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#10b981' }}>
                         {viewingMeetingReport.present_count || 0}
                       </div>
@@ -5906,7 +5909,7 @@ export const CellGroups: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.2)' : '#fecaca'}` }}>
+                    <div style={{ background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2', borderRadius: 'var(--exp-radius, 14px)', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.2)' : '#fecaca'}` }}>
                       <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ef4444' }}>
                         {viewingMeetingReport.absent_count || 0}
                       </div>
@@ -5915,7 +5918,7 @@ export const CellGroups: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ background: isDark ? 'rgba(168, 85, 247, 0.12)' : '#faf5ff', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(168, 85, 247, 0.2)' : '#e9d5ff'}` }}>
+                    <div style={{ background: isDark ? 'rgba(168, 85, 247, 0.12)' : '#faf5ff', borderRadius: 'var(--exp-radius, 14px)', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(168, 85, 247, 0.2)' : '#e9d5ff'}` }}>
                       <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#a855f7' }}>
                         {viewingMeetingReport.justified_count || 0}
                       </div>
@@ -5924,7 +5927,7 @@ export const CellGroups: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ background: isDark ? 'rgba(249, 115, 22, 0.12)' : '#fff7ed', borderRadius: '14px', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(249, 115, 22, 0.2)' : '#fed7aa'}` }}>
+                    <div style={{ background: isDark ? 'rgba(249, 115, 22, 0.12)' : '#fff7ed', borderRadius: 'var(--exp-radius, 14px)', padding: '10px 8px', textAlign: 'center', border: `1px solid ${isDark ? 'rgba(249, 115, 22, 0.2)' : '#fed7aa'}` }}>
                       <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f97316' }}>
                         {viewingMeetingReport.visitor_count || 0}
                       </div>
@@ -5940,7 +5943,7 @@ export const CellGroups: React.FC = () => {
                       background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
                       border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
                       padding: '10px 14px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center'
@@ -5960,7 +5963,7 @@ export const CellGroups: React.FC = () => {
                       background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
                       border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
                       padding: '12px 14px',
-                      borderRadius: '14px'
+                      borderRadius: 'var(--exp-radius, 14px)'
                     }}>
                       <div style={{ fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
                         📝 Observações & Pedidos de Oração
@@ -5981,7 +5984,7 @@ export const CellGroups: React.FC = () => {
                     </div>
 
                     {(!viewingMeetingReport.attendees || viewingMeetingReport.attendees.length === 0) ? (
-                      <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.76rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc', borderRadius: '12px' }}>
+                      <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.76rem', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc', borderRadius: 'var(--exp-radius, 12px)' }}>
                         Nenhum detalhe nominal gravado para esta reunião.
                       </div>
                     ) : (
@@ -5998,7 +6001,7 @@ export const CellGroups: React.FC = () => {
                               style={{
                                 background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc',
                                 border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0'}`,
-                                borderRadius: '12px',
+                                borderRadius: 'var(--exp-radius, 12px)',
                                 padding: '8px 12px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -6010,7 +6013,7 @@ export const CellGroups: React.FC = () => {
                                   <span>{att.is_visitor ? '🌟' : '👤'}</span>
                                   <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
                                   {att.is_visitor && (
-                                    <span style={{ fontSize: '0.62rem', background: '#fff7ed', color: '#ea580c', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                    <span style={{ fontSize: '0.62rem', background: '#fff7ed', color: 'var(--exp-module-accent, #ea580c)', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
                                       Visitante
                                     </span>
                                   )}

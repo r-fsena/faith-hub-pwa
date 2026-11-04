@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
         }}>
           <div style={{
             background: 'var(--panel-bg, #ffffff)',
-            borderRadius: '24px',
+            borderRadius: 'var(--exp-radius, 24px)',
             padding: '32px 24px',
             border: '1px solid var(--panel-border, rgba(0,0,0,0.08))',
             boxShadow: 'var(--shadow-md, 0 4px 14px rgba(0,0,0,0.06))',
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div style={{
               width: '64px',
               height: '64px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               background: '#fee2e2',
               color: '#ef4444',
               display: 'flex',

@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
@@ -64,6 +65,8 @@ export interface ProfileProps {
 }
 
 export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGuest, onLogout, onOpenVolunteers }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { user, isAuthenticated, signOut, checkAuth } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -696,6 +699,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
           onChange={e => e.target.files?.[0] && handleProcessImage(e.target.files[0])}
         />
 
+        {active&&(config.copy['profile.title']!==undefined||config.copy['profile.subtitle']!==undefined)&&<header className="experience-screen-heading"><h1>{t('profile.title','Meu perfil')}</h1><p>{t('profile.subtitle','')}</p></header>}
         <div className="responsive-2col-layout">
           {/* Coluna 1: Carteirinha Digital, Perfil do Membro, Operações Ministeriais e Logout */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -723,7 +727,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             {!hasDigitalMemberCard && (
             <div style={{
               background: 'var(--bg-card, #ffffff)',
-              borderRadius: '18px',
+              borderRadius: 'var(--exp-radius, 18px)',
               padding: '14px',
               border: '1px solid var(--panel-border)',
               boxShadow: 'var(--shadow-sm)',
@@ -847,7 +851,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   onClick={() => setIsOperationalMenuOpen(true)}
                   style={{
                     background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #115e59 100%)',
-                    borderRadius: '20px',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     padding: '18px 20px',
                     color: '#ffffff',
                     boxShadow: '0 8px 24px rgba(15, 118, 110, 0.28)',
@@ -864,7 +868,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     ⚡
                   </div>
                   <div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '20px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#99f6e4', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: 'var(--exp-radius, 20px)' }}>
                       <span>⚡</span> Ferramentas de Campo
                     </div>
                     <div style={{ fontSize: '1.08rem', fontWeight: 900, marginTop: '6px', letterSpacing: '-0.02em' }}>
@@ -884,10 +888,10 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                       setIsOperationalMenuOpen(true);
                     }}
                     style={{
-                      background: '#ffffff',
+                      background: 'var(--exp-surface, #ffffff)',
                       color: '#0f766e',
                       border: 'none',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       padding: '10px 16px',
                       fontWeight: 900,
                       fontSize: '0.82rem',
@@ -913,7 +917,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 onClick={onOpenVolunteers}
                 style={{
                   background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                  borderRadius: '20px',
+                  borderRadius: 'var(--exp-radius, 20px)',
                   padding: '18px 20px',
                   color: '#ffffff',
                   boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
@@ -930,13 +934,13 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   🤝
                 </div>
                 <div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#38bdf8', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.12)', padding: '2px 8px', borderRadius: '20px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 900, textTransform: 'uppercase', color: '#38bdf8', letterSpacing: '0.06em', background: 'rgba(255,255,255,0.12)', padding: '2px 8px', borderRadius: 'var(--exp-radius, 20px)' }}>
                     <span>🤝</span> Voluntariado
                   </div>
                   <div style={{ fontSize: '1.08rem', fontWeight: 900, marginTop: '6px', letterSpacing: '-0.02em' }}>
                     Minhas Escalas & Servir
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #94a3b8)', marginTop: '2px' }}>
                     Veja suas convocações, confirme presença ou inscreva-se
                   </div>
                 </div>
@@ -949,9 +953,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   }}
                   style={{
                     background: '#38bdf8',
-                    color: '#0f172a',
+                    color: 'var(--exp-text, #0f172a)',
                     border: 'none',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     padding: '10px 16px',
                     fontWeight: 900,
                     fontSize: '0.82rem',
@@ -976,7 +980,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             {/* Card Informações da Igreja & Contatos */}
             <div style={{
               background: 'var(--bg-card, #ffffff)',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '18px',
               border: '1px solid var(--panel-border)',
               display: 'flex',
@@ -1015,7 +1019,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             {/* Configuração de Privacidade & LGPD */}
             <div style={{
               background: 'var(--bg-card, #ffffff)',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '16px',
               border: '1px solid var(--panel-border)',
               display: 'flex',
@@ -1044,7 +1048,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             {/* Seletor de Aparência do Aplicativo - Minimalista e Compacto */}
             <div style={{
               background: 'var(--bg-card, #ffffff)',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '12px 16px',
               border: '1px solid var(--panel-border)',
               display: 'flex',
@@ -1069,7 +1073,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 display: 'inline-flex',
                 background: 'var(--bg-card-subtle, #f1f5f9)',
                 padding: '3px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 border: '1px solid var(--panel-border)',
                 gap: '3px'
               }}>
@@ -1177,7 +1181,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               background: '#fef2f2',
               color: '#dc2626',
               border: '1.5px solid #fecaca',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               padding: '12px 24px',
               fontSize: '0.86rem',
               fontWeight: 800,
@@ -1273,7 +1277,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   <div style={{
                     width: '44px',
                     height: '44px',
-                    borderRadius: '14px',
+                    borderRadius: 'var(--exp-radius, 14px)',
                     background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
                     color: '#ffffff',
                     display: 'flex',
@@ -1298,8 +1302,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
 
                 {!hasAny ? (
                   <div style={{
-                    background: '#f8fafc',
-                    borderRadius: '16px',
+                    background: 'var(--exp-background, #f8fafc)',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '28px 20px',
                     textAlign: 'center',
                     border: '1.5px dashed #cbd5e1'
@@ -1308,7 +1312,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#334155', margin: '8px 0 4px 0' }}>
                       Nenhuma ferramenta atribuída
                     </h4>
-                    <p style={{ fontSize: '0.76rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--exp-muted, #64748b)', margin: 0, lineHeight: 1.4 }}>
                       Seu cadastro ainda não possui ferramentas operacionais liberadas. Converse com o líder do seu ministério ou com a secretaria da igreja para liberar seu acesso às escalas.
                     </p>
                   </div>
@@ -1318,7 +1322,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     {canKidsCheckin && (
                       <div style={{
                         background: 'var(--bg-card-subtle, #ffffff)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px 16px',
                         border: '1.5px solid var(--panel-border)',
                         display: 'flex',
@@ -1331,7 +1335,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                           <div style={{
                             width: '42px',
                             height: '42px',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             background: 'rgba(37, 99, 235, 0.12)',
                             color: '#2563eb',
                             display: 'flex',
@@ -1380,7 +1384,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     {canKidsCheckout && (
                       <div style={{
                         background: 'var(--bg-card-subtle, #ffffff)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px 16px',
                         border: '1.5px solid var(--panel-border)',
                         display: 'flex',
@@ -1393,7 +1397,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                           <div style={{
                             width: '42px',
                             height: '42px',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             background: 'rgba(22, 163, 74, 0.12)',
                             color: '#16a34a',
                             display: 'flex',
@@ -1442,7 +1446,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     {canEventsCheckin && (
                       <div style={{
                         background: 'var(--bg-card-subtle, #ffffff)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px 16px',
                         border: '1.5px solid var(--panel-border)',
                         display: 'flex',
@@ -1455,9 +1459,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                           <div style={{
                             width: '42px',
                             height: '42px',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             background: 'rgba(147, 51, 234, 0.12)',
-                            color: '#9333ea',
+                            color: 'var(--exp-module-accent, #9333ea)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1483,7 +1487,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                             setIsEventScannerOpen(true);
                           }}
                           style={{
-                            background: '#9333ea',
+                            background: 'var(--exp-module-accent, #9333ea)',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '10px',
@@ -1504,7 +1508,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     {canKidsCalls && (
                       <div style={{
                         background: 'var(--bg-card-subtle, #ffffff)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '14px 16px',
                         border: '1.5px solid var(--panel-border)',
                         display: 'flex',
@@ -1517,7 +1521,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                           <div style={{
                             width: '42px',
                             height: '42px',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             background: 'rgba(217, 119, 6, 0.12)',
                             color: '#d97706',
                             display: 'flex',
@@ -1597,7 +1601,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 alignItems: 'center',
                 gap: '12px',
                 padding: '12px',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 border: '1.5px solid var(--panel-border)',
                 background: 'var(--bg-card-subtle, #f8fafc)',
                 color: 'var(--text-main)',
@@ -1642,7 +1646,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
@@ -1665,7 +1669,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
@@ -1686,7 +1690,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
@@ -1720,7 +1724,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
@@ -1742,7 +1746,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: 'var(--bg-card-subtle, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
@@ -1765,7 +1769,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
@@ -1786,7 +1790,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
@@ -1810,7 +1814,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 10px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
@@ -1831,7 +1835,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 10px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
@@ -1853,7 +1857,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 8px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: 'var(--bg-card-subtle, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.85rem',
@@ -1876,7 +1880,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   background: 'var(--bg-card, #e2e8f0)',
                   border: '1px solid var(--panel-border, #cbd5e1)',
                   fontSize: '0.84rem',
@@ -1932,7 +1936,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               style={{
                 background: 'var(--bg-card-subtle, #ffffff)',
                 border: '1.5px solid var(--panel-border)',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '14px 10px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1953,7 +1957,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               style={{
                 background: 'var(--bg-card-subtle, #ffffff)',
                 border: '1.5px solid var(--panel-border)',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '14px 10px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -2016,8 +2020,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
     <div className="pwa-content animate-fade-in" style={{ justifyContent: 'center', minHeight: '80vh', alignItems: 'center' }}>
       
       <div style={{
-        background: '#ffffff',
-        borderRadius: '24px',
+        background: 'var(--exp-surface, #ffffff)',
+        borderRadius: 'var(--exp-radius, 24px)',
         padding: 'clamp(20px, 4vw, 32px)',
         border: '1px solid var(--panel-border)',
         boxShadow: 'var(--shadow-sm)',
@@ -2037,7 +2041,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               style={{
                 width: '56px',
                 height: '56px',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 objectFit: 'cover',
                 margin: '0 auto 12px',
                 display: 'block',
@@ -2051,7 +2055,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               style={{
                 width: '56px',
                 height: '56px',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 objectFit: 'contain',
                 margin: '0 auto 12px',
                 display: 'block',
@@ -2059,12 +2063,12 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               }}
             />
           )}
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0 }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.3px', margin: 0 }}>{active&&config.copy['auth.title']!==undefined?t('auth.title',''):<>
             {branding.church_name || 'Faith-Hub Community'}
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.80rem', marginTop: '4px' }}>
+          </>}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.80rem', marginTop: '4px' }}>{active&&config.copy['auth.subtitle']!==undefined?t('auth.subtitle',''):<>
             Acesse seu portal comunitário e fique conectado.
-          </p>
+          </>}</p>
         </div>
 
         {/* Mensagem de Erro */}
@@ -2073,7 +2077,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             backgroundColor: '#fef2f2',
             color: '#dc2626',
             padding: '10px 14px',
-            borderRadius: '12px',
+            borderRadius: 'var(--exp-radius, 12px)',
             fontSize: '0.78rem',
             textAlign: 'center',
             border: '1px solid #fecaca',
@@ -2089,9 +2093,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '4px',
-            background: '#f1f5f9',
+            background: 'var(--exp-surface-muted, #f1f5f9)',
             padding: '4px',
-            borderRadius: '14px'
+            borderRadius: 'var(--exp-radius, 14px)'
           }}>
             <button
               type="button"
@@ -2149,8 +2153,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  borderRadius: '12px',
-                  background: '#f8fafc',
+                  borderRadius: 'var(--exp-radius, 12px)',
+                  background: 'var(--exp-background, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
                   fontSize: '0.88rem',
                   outline: 'none'
@@ -2181,8 +2185,8 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   style={{
                     width: '100%',
                     padding: '12px 42px 12px 14px',
-                    borderRadius: '12px',
-                    background: '#f8fafc',
+                    borderRadius: 'var(--exp-radius, 12px)',
+                    background: 'var(--exp-background, #f8fafc)',
                     border: '1.5px solid var(--panel-border)',
                     fontSize: '0.88rem',
                     outline: 'none'
@@ -2216,11 +2220,11 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               disabled={loading}
               style={{ width: '100%', padding: '13px', marginTop: '4px', fontSize: '0.90rem', fontWeight: 800 }}
             >
-              {loading ? 'Validando...' : 'Entrar no Aplicativo'}
+              {loading ? 'Validando...' : t('auth.action','Entrar no Aplicativo')}
             </button>
 
             {/* Divisor ou Google */}
-            <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0', color: '#94a3b8', fontSize: '0.74rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0', color: 'var(--exp-muted, #94a3b8)', fontSize: '0.74rem' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
               <span style={{ padding: '0 10px', fontWeight: 600 }}>ou acesse com</span>
               <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
@@ -2236,9 +2240,9 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 border: '1px solid var(--panel-border)',
-                background: '#ffffff',
+                background: 'var(--exp-surface, #ffffff)',
                 color: 'var(--text-main)',
                 fontSize: '0.84rem',
                 fontWeight: 700,
@@ -2264,7 +2268,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 onChange={e => setName(e.target.value)}
                 required
                 placeholder="Ex: João da Silva"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
             </div>
 
@@ -2278,7 +2282,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 onChange={e => setEmail(e.target.value)}
                 required
                 placeholder="seu.email@exemplo.com"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
             </div>
 
@@ -2292,7 +2296,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="(11) 99999-9999"
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
               </div>
 
@@ -2304,7 +2308,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   type="date"
                   value={birthDate}
                   onChange={e => setBirthDate(e.target.value)}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
               </div>
             </div>
@@ -2329,7 +2333,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 }}
                 maxLength={9}
                 placeholder="00000-000"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
             </div>
 
@@ -2342,7 +2346,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 value={signupStreet}
                 onChange={e => setSignupStreet(e.target.value)}
                 placeholder="Ex: Av. Brasil"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
             </div>
 
@@ -2356,7 +2360,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   value={signupNumber}
                   onChange={e => setSignupNumber(e.target.value)}
                   placeholder="Ex: 500"
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
               </div>
               <div>
@@ -2368,7 +2372,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   value={signupComplement}
                   onChange={e => setSignupComplement(e.target.value)}
                   placeholder="Ex: Bloco A"
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
               </div>
             </div>
@@ -2383,7 +2387,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   value={signupNeighborhood}
                   onChange={e => setSignupNeighborhood(e.target.value)}
                   placeholder="Bairro"
-                  style={{ width: '100%', padding: '12px 10px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 10px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
                 />
               </div>
               <div>
@@ -2395,7 +2399,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   value={signupCity}
                   onChange={e => setSignupCity(e.target.value)}
                   placeholder="Cidade"
-                  style={{ width: '100%', padding: '12px 10px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 10px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', outline: 'none' }}
                 />
               </div>
               <div>
@@ -2408,7 +2412,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   onChange={e => setSignupState(e.target.value.toUpperCase())}
                   maxLength={2}
                   placeholder="UF"
-                  style={{ width: '100%', padding: '12px 8px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', textAlign: 'center', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 8px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.85rem', textAlign: 'center', outline: 'none' }}
                 />
               </div>
             </div>
@@ -2424,7 +2428,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   onChange={e => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
                 />
                 <button
                   type="button"
@@ -2481,7 +2485,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               onChange={e => setConfirmationCode(e.target.value)}
               required
               placeholder="123456"
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '4px', outline: 'none' }}
+              style={{ width: '100%', padding: '12px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '4px', outline: 'none' }}
             />
             <button type="submit" className="btn-pwa-primary" disabled={loading} style={{ width: '100%', padding: '12px' }}>
               {loading ? 'Validando...' : 'Confirmar Código'}
@@ -2504,7 +2508,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               onChange={e => setEmail(e.target.value)}
               required
               placeholder="seu.email@exemplo.com"
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
             />
             <button type="submit" className="btn-pwa-primary" disabled={loading} style={{ width: '100%', padding: '12px' }}>
               {loading ? 'Enviando...' : 'Enviar Código de Redefinição'}
@@ -2524,7 +2528,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
               onChange={e => setConfirmationCode(e.target.value)}
               required
               placeholder="Código de 6 dígitos recebido"
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
             />
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <input
@@ -2533,7 +2537,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 onChange={e => setNewPassword(e.target.value)}
                 required
                 placeholder="Nova senha (mínimo 8 caracteres)"
-                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
               <button
                 type="button"
@@ -2580,7 +2584,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                 onChange={e => setNewPassword(e.target.value)}
                 required
                 placeholder="Nova senha definitiva"
-                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
+                style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: 'var(--exp-radius, 12px)', background: 'var(--exp-background, #f8fafc)', border: '1.5px solid var(--panel-border)', fontSize: '0.88rem', outline: 'none' }}
               />
               <button
                 type="button"

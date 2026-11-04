@@ -13,7 +13,7 @@ export interface FeatureFlagContextType {
   refreshFlags: () => Promise<void>;
 }
 
-const FeatureFlagContext = createContext<FeatureFlagContextType>({
+export const FeatureFlagContext = createContext<FeatureFlagContextType>({
   flags: {},
   configs: {},
   isLoading: true,

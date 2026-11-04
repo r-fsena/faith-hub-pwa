@@ -108,7 +108,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
             position: 'relative',
             width: '100%',
             minHeight: '230px',
-            borderRadius: '24px',
+            borderRadius: 'var(--exp-radius, 24px)',
             cursor: 'pointer',
             transition: 'box-shadow 0.2s ease',
             boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(0,0,0,0.06)'
@@ -123,7 +123,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               position: 'relative',
               width: '100%',
               minHeight: '230px',
-              borderRadius: '24px',
+              borderRadius: 'var(--exp-radius, 24px)',
               background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f2c2b 100%)',
               padding: '20px 22px',
               color: '#ffffff',
@@ -202,7 +202,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc' }}>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 900, color: 'var(--exp-background, #f8fafc)' }}>
                     {member.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                   </div>
                 )}
@@ -253,7 +253,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
                   }}
                   title="Toque para ampliar o QR Code"
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--exp-surface, #ffffff)',
                     padding: '4px',
                     borderRadius: '10px',
                     display: 'flex',
@@ -279,7 +279,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               position: 'relative',
               width: '100%',
               minHeight: '230px',
-              borderRadius: '24px',
+              borderRadius: 'var(--exp-radius, 24px)',
               background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
               padding: '22px',
               color: '#ffffff',
@@ -293,14 +293,14 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 800 }}>
                 Registro Eclesiástico
               </div>
-              <div style={{ fontSize: '0.90rem', fontWeight: 800, marginTop: '4px', color: '#f8fafc' }}>
+              <div style={{ fontSize: '0.90rem', fontWeight: 800, marginTop: '4px', color: 'var(--exp-background, #f8fafc)' }}>
                 {member.name}
               </div>
 
               <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: '10px' }}>
                   <div style={{ fontSize: '0.64rem', color: 'rgba(255,255,255,0.5)' }}>Batismo nas Águas</div>
-                  <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#e2e8f0', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--exp-border, #e2e8f0)', marginTop: '2px' }}>
                     {member.baptism_date ? new Date(member.baptism_date).toLocaleDateString('pt-BR') : 'Confirmado'}
                   </div>
                 </div>
@@ -358,8 +358,8 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#ffffff',
-              borderRadius: '24px',
+              background: 'var(--exp-surface, #ffffff)',
+              borderRadius: 'var(--exp-radius, 24px)',
               padding: '24px',
               maxWidth: '320px',
               width: '100%',
@@ -367,18 +367,18 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
             }}
           >
-            <div style={{ fontSize: '0.94rem', fontWeight: 900, color: '#0f172a' }}>
+            <div style={{ fontSize: '0.94rem', fontWeight: 900, color: 'var(--exp-text, #0f172a)' }}>
               Credencial de Membro
             </div>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--exp-muted, #64748b)', marginTop: '4px' }}>
               Apresente na portaria ou recepção para credenciamento rápido
             </div>
 
-            <div style={{ margin: '18px auto', padding: '12px', background: '#f8fafc', borderRadius: '16px', display: 'inline-block', border: '1px solid #e2e8f0' }}>
+            <div style={{ margin: '18px auto', padding: '12px', background: 'var(--exp-background, #f8fafc)', borderRadius: 'var(--exp-radius, 16px)', display: 'inline-block', border: '1px solid #e2e8f0' }}>
               <img src={qrCodeDataUrl} alt="QR Code Ampliado" style={{ width: '180px', height: '180px', display: 'block' }} />
             </div>
 
-            <div style={{ fontWeight: 800, fontSize: '0.90rem', color: '#0f172a' }}>
+            <div style={{ fontWeight: 800, fontSize: '0.90rem', color: 'var(--exp-text, #0f172a)' }}>
               {member.name}
             </div>
             <div style={{ fontSize: '0.74rem', color: '#0f766e', fontWeight: 700, marginTop: '2px' }}>
@@ -392,10 +392,10 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
                 marginTop: '16px',
                 width: '100%',
                 padding: '10px',
-                background: '#0f172a',
+                background: 'var(--exp-surface, #0f172a)',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 fontWeight: 800,
                 fontSize: '0.84rem',
                 cursor: 'pointer'

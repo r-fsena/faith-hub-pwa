@@ -14,7 +14,7 @@ const CALL_REASONS = [
   { id: 'CHORO', label: 'Choro Inconsolável', icon: '😭', color: '#ef4444', bg: '#fef2f2' },
   { id: 'FRALDA', label: 'Troca de Fralda', icon: '🧷', color: '#d97706', bg: '#fffbeb' },
   { id: 'MEDICAMENTO', label: 'Medicamento', icon: '💊', color: '#2563eb', bg: '#eff6ff' },
-  { id: 'OUTRO', label: 'Necessidade / Outro', icon: '⚠️', color: '#7c3aed', bg: '#faf5ff' }
+  { id: 'OUTRO', label: 'Necessidade / Outro', icon: '⚠️', color: 'var(--exp-module-accent, #7c3aed)', bg: '#faf5ff' }
 ];
 
 export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClose }) => {
@@ -118,7 +118,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
           <div style={{
             width: '46px',
             height: '46px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             background: '#fffbeb',
             color: '#d97706',
             display: 'flex',
@@ -151,7 +151,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
               background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               padding: '12px 18px',
               display: 'flex',
               alignItems: 'center',
@@ -170,7 +170,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
           <form onSubmit={handleTriggerCall} style={{
             background: '#fffbeb',
             border: '1.5px solid #fde68a',
-            borderRadius: '16px',
+            borderRadius: 'var(--exp-radius, 16px)',
             padding: '14px',
             display: 'flex',
             flexDirection: 'column',
@@ -204,7 +204,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
                   borderRadius: '10px',
                   border: '1.5px solid #fcd34d',
                   fontSize: '0.84rem',
-                  background: '#ffffff',
+                  background: 'var(--exp-surface, #ffffff)',
                   boxSizing: 'border-box'
                 }}
               >
@@ -311,7 +311,7 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
                 fontSize: '0.64rem',
                 fontWeight: 900,
                 padding: '2px 8px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 animation: 'pulse 1.5s infinite'
               }}>
                 ● NO TELÃO AGORA
@@ -323,12 +323,12 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
             <div style={{
               textAlign: 'center',
               padding: '28px 16px',
-              background: '#f8fafc',
-              borderRadius: '14px',
+              background: 'var(--exp-background, #f8fafc)',
+              borderRadius: 'var(--exp-radius, 14px)',
               border: '1.5px dashed #cbd5e1'
             }}>
               <span style={{ fontSize: '1.8rem' }}>🕊️</span>
-              <p style={{ fontSize: '0.80rem', color: '#64748b', margin: '4px 0 0 0', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.80rem', color: 'var(--exp-muted, #64748b)', margin: '4px 0 0 0', fontWeight: 600 }}>
                 Nenhum pai sendo chamado no momento.
               </p>
             </div>
@@ -338,9 +338,9 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
                 <div
                   key={c.id}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--exp-surface, #ffffff)',
                     border: '2px solid #fecaca',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '14px',
                     boxShadow: '0 4px 12px rgba(239, 68, 68, 0.08)'
                   }}
@@ -359,10 +359,10 @@ export const KidsPagingModal: React.FC<KidsPagingModalProps> = ({ isOpen, onClos
                         {c.security_code}
                       </span>
                       <div>
-                        <div style={{ fontSize: '0.90rem', fontWeight: 900, color: '#1e293b' }}>
+                        <div style={{ fontSize: '0.90rem', fontWeight: 900, color: 'var(--exp-text, #1e293b)' }}>
                           {c.child_name}
                         </div>
-                        <div style={{ fontSize: '0.70rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.70rem', color: 'var(--exp-muted, #64748b)' }}>
                           Pai: {c.parent_name} • {c.room_name || 'Sala Kids'}
                         </div>
                       </div>

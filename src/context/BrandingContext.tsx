@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchChurchSettings, setActiveOrganizationId, fetchCampuses, getActiveCampusId } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { fetchChurchSettings, setActiveOrganizationId, fetchCampuses, getActiveCampusId, setActiveCampusId } from '../services/api';
 
 export interface ChurchBranding {
   church_name: string;
@@ -16,6 +16,7 @@ export interface ChurchBranding {
   logo_icon_url: string;
   logo_header_url: string;
   banner_url: string;
+  pwa_experience?: {enabled:boolean;customized?:boolean;config:any;revision:string};
   primary_color: string;
   secondary_color: string;
   theme_mode: 'LIGHT' | 'DARK' | 'AUTO';
@@ -136,7 +137,7 @@ interface BrandingContextType {
   updateBranding: (newBranding: Partial<ChurchBranding>) => void;
 }
 
-const BrandingContext = createContext<BrandingContextType>({
+export const BrandingContext = createContext<BrandingContextType>({
   branding: DEFAULT_BRANDING,
   selectedCampus: null,
   updateBranding: () => {}
@@ -181,6 +182,7 @@ export function getChurchSlugFromUrl(): string | null {
 
 export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
+  const brandingRequest = useRef(0);
   const [branding, setBranding] = useState<ChurchBranding>(DEFAULT_BRANDING);
 
   useEffect(() => {
@@ -201,16 +203,21 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const loadBranding = async () => {
+    const requestId=++brandingRequest.current;
     const urlSlug = getChurchSlugFromUrl();
     const previousSavedSlug = localStorage.getItem('faithhub_active_church_slug');
     const activeSlug = urlSlug || previousSavedSlug || undefined;
 
     // Se o slug mudou em relação à sessão anterior, atualiza o storage
     if (urlSlug && urlSlug !== previousSavedSlug) {
+      localStorage.removeItem('faithhub_pwa_active_org_id');
       localStorage.setItem('faithhub_active_church_slug', urlSlug);
     }
 
     const cacheKey = `faithhub_church_branding_${activeSlug || 'default'}`;
+
+    setBranding({...DEFAULT_BRANDING,organization_id:activeSlug?.startsWith('org_')?activeSlug:undefined,pwa_slug:activeSlug||''});
+    applyTheme(DEFAULT_BRANDING);
 
     // 1. Carrega do localStorage imediato correspondente a este slug específico
     const saved = localStorage.getItem(cacheKey);
@@ -234,6 +241,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 2. Busca do backend a versão mais recente em nuvem para este slug específico
     try {
       const backendSettings = await fetchChurchSettings(activeSlug);
+      if(requestId!==brandingRequest.current)return;
       if (backendSettings && backendSettings.church_name) {
         const resolvedOrgId = backendSettings.organization_id || (activeSlug?.startsWith('org_') ? activeSlug : 'org_default');
         const mapped: Partial<ChurchBranding> = {
@@ -252,6 +260,9 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           logo_icon_url: backendSettings.logo_icon_url || '',
           logo_header_url: backendSettings.logo_header_url || '',
           banner_url: backendSettings.banner_url || '',
+          pwa_experience: backendSettings.pwa_experience,
+          theme_mode: backendSettings.theme_mode || DEFAULT_BRANDING.theme_mode,
+          pwa_splash_bg: backendSettings.pwa_splash_bg || DEFAULT_BRANDING.pwa_splash_bg,
           primary_color: backendSettings.primary_color || DEFAULT_BRANDING.primary_color,
           secondary_color: backendSettings.secondary_color || DEFAULT_BRANDING.secondary_color,
           pwa_short_name: backendSettings.pwa_short_name || DEFAULT_BRANDING.pwa_short_name,
@@ -373,7 +384,11 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let active = true;
     const refreshCampus = async () => {
       const campuses: Campus[] = await fetchCampuses(branding.organization_id);
-      if (active) setSelectedCampus(campuses.find(campus => campus.id === getActiveCampusId()) || null);
+      if (active) {
+        const selected=campuses.find(campus => campus.id === getActiveCampusId());
+        if(!selected&&campuses.length&&getActiveCampusId()!=='all')setActiveCampusId(campuses[0].id);
+        setSelectedCampus(selected||campuses[0]||null);
+      }
     };
     void refreshCampus();
     window.addEventListener('pwa-campus-changed', refreshCampus);

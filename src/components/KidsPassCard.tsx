@@ -216,7 +216,7 @@ export const KidsPassCard: React.FC = () => {
                 type="button"
                 onClick={() => setSelectedQrItem(null)}
                 style={{
-                  background: '#f1f5f9',
+                  background: 'var(--exp-surface-muted, #f1f5f9)',
                   border: 'none',
                   width: 32,
                   height: 32,
@@ -271,7 +271,7 @@ export const KidsPassCard: React.FC = () => {
               </div>
 
               <div style={{
-                background: '#f8fafc',
+                background: 'var(--exp-background, #f8fafc)',
                 border: '1.5px solid var(--panel-border)',
                 borderRadius: 16,
                 padding: '10px 20px',
@@ -325,16 +325,16 @@ export const KidsPassCard: React.FC = () => {
               </div>
 
               <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', padding: '14px', borderRadius: 14, width: '100%', textAlign: 'left' }}>
-                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Sala:</div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #64748b)' }}>Sala:</div>
                 <div style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)' }}>
                   {currentCallingItem.room_icon} {currentCallingItem.room_name}
                 </div>
-                <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 8 }}>Motivo:</div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #64748b)', marginTop: 8 }}>Motivo:</div>
                 <div style={{ fontSize: '0.90rem', fontWeight: 800, color: '#b91c1c' }}>
                   {currentCallingItem.call_reason}
                 </div>
                 {currentCallingItem.call_message && (
-                  <div style={{ fontSize: '0.76rem', color: '#475569', marginTop: 6, fontStyle: 'italic' }}>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--exp-muted, #475569)', marginTop: 6, fontStyle: 'italic' }}>
                     "{currentCallingItem.call_message}"
                   </div>
                 )}

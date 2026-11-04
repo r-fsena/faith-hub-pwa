@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -22,6 +23,8 @@ interface VolunteerSchedulesProps {
 }
 
 export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'my_schedules' | 'swaps' | 'blockouts' | 'join_ministry'>('my_schedules');
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -339,7 +342,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               style={{
                 background: 'var(--bg-card, #ffffff)',
                 border: '1px solid var(--panel-border, #e2e8f0)',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 width: '38px',
                 height: '38px',
                 display: 'flex',
@@ -356,8 +359,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           )}
           <div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
-              Escalas & Voluntariado
-            </h1>
+              {t('volunteers.title',"Escalas & Voluntariado")}</h1>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               Seus cultos escalados, agenda e oportunidades de servir
             </p>
@@ -380,7 +382,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               onClick={() => setActiveTab(tab.key as any)}
               style={{
                 padding: '10px 4px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 border: isActive ? 'none' : '1px solid var(--panel-border, #e2e8f0)',
                 background: isActive ? 'var(--accent-primary, #0f766e)' : 'var(--bg-card, #ffffff)',
                 color: isActive ? '#ffffff' : 'var(--text-secondary, #64748b)',
@@ -430,7 +432,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 style={{
                   background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
                   border: '1.5px solid #3b82f6',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '14px 16px',
                   display: 'flex',
                   alignItems: 'center',
@@ -448,18 +450,18 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         ? '1 colega precisa de substituto em seu ministério' 
                         : `${pendingSwaps.incoming.length} colegas precisam de substitutos`}
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#3b82f6', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--exp-module-accent, #3b82f6)', marginTop: '2px' }}>
                       Toque para visualizar e assumir a vaga no culto
                     </div>
                   </div>
                 </div>
-                <span style={{ fontSize: '1.1rem', color: '#3b82f6', fontWeight: 900 }}>→</span>
+                <span style={{ fontSize: '1.1rem', color: 'var(--exp-module-accent, #3b82f6)', fontWeight: 900 }}>→</span>
               </div>
             )}
 
             {/* Bloco de Escalas Pessoais Atribuídas */}
             {schedules.length === 0 ? (
-              <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '18px', padding: '24px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: 'var(--exp-radius, 18px)', padding: '24px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🙌</div>
                 <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
                   Nenhuma convocação individual pendente
@@ -520,7 +522,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     display: 'inline-flex',
                     background: 'var(--bg-card-subtle, #f1f5f9)',
                     padding: '3px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     border: '1px solid var(--panel-border, #e2e8f0)'
                   }}>
                     <button
@@ -585,7 +587,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           key={item.roster_item_id}
                           style={{
                             background: 'var(--bg-card, #ffffff)',
-                            borderRadius: '18px',
+                            borderRadius: 'var(--exp-radius, 18px)',
                             padding: '18px',
                             border: isAccepted 
                               ? '1.5px solid #10b981' 
@@ -632,7 +634,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           </div>
 
                           {/* Posição Escalada */}
-                          <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '1.1rem' }}>🏷️</span>
                             <div>
                               <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -659,7 +661,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                 disabled={answeringItemId === item.roster_item_id}
                                 style={{
                                   padding: '12px',
-                                  borderRadius: '12px',
+                                  borderRadius: 'var(--exp-radius, 12px)',
                                   border: 'none',
                                   background: '#10b981',
                                   color: '#ffffff',
@@ -682,7 +684,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                 disabled={answeringItemId === item.roster_item_id}
                                 style={{
                                   padding: '12px',
-                                  borderRadius: '12px',
+                                  borderRadius: 'var(--exp-radius, 12px)',
                                   border: '1.5px solid #ef4444',
                                   background: 'var(--bg-card, #ffffff)',
                                   color: '#ef4444',
@@ -736,7 +738,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             <div style={{
                               background: 'rgba(245, 158, 11, 0.12)',
                               border: '1.5px solid rgba(245, 158, 11, 0.4)',
-                              borderRadius: '12px',
+                              borderRadius: 'var(--exp-radius, 12px)',
                               padding: '12px',
                               display: 'flex',
                               flexDirection: 'column',
@@ -763,7 +765,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                       onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
                                       disabled={cancellingSwap}
                                       style={{
-                                        background: '#ffffff',
+                                        background: 'var(--exp-surface, #ffffff)',
                                         border: '1.5px solid #f59e0b',
                                         color: '#b45309',
                                         padding: '6px 14px',
@@ -793,7 +795,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     {/* Container do Calendário */}
                     <div style={{
                       background: 'var(--bg-card, #ffffff)',
-                      borderRadius: '20px',
+                      borderRadius: 'var(--exp-radius, 20px)',
                       padding: '16px 14px',
                       border: '1px solid var(--panel-border, #e2e8f0)',
                       boxShadow: 'var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04))'
@@ -828,7 +830,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             style={{
                               background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.10) 100%)',
                               border: '1.5px solid #f59e0b',
-                              borderRadius: '14px',
+                              borderRadius: 'var(--exp-radius, 14px)',
                               padding: '12px 14px',
                               marginBottom: '14px',
                               display: 'flex',
@@ -889,7 +891,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                               style={{
                                 background: 'rgba(59, 130, 246, 0.08)',
                                 border: '1.5px dashed #3b82f6',
-                                borderRadius: '14px',
+                                borderRadius: 'var(--exp-radius, 14px)',
                                 padding: '11px 14px',
                                 marginBottom: '14px',
                                 display: 'flex',
@@ -1086,7 +1088,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                   }}
                                   style={{
                                     minHeight: '52px',
-                                    borderRadius: '12px',
+                                    borderRadius: 'var(--exp-radius, 12px)',
                                     border: isSelected
                                       ? '2.5px solid var(--accent-primary, #0f766e)'
                                       : (hasPending
@@ -1294,7 +1296,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             <div style={{
                               background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.08) 100%)',
                               border: '1.5px solid #f59e0b',
-                              borderRadius: '14px',
+                              borderRadius: 'var(--exp-radius, 14px)',
                               padding: '12px 14px',
                               display: 'flex',
                               alignItems: 'center',
@@ -1316,7 +1318,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           {displayed.length === 0 ? (
                             <div style={{
                               background: 'var(--bg-card, #ffffff)',
-                              borderRadius: '16px',
+                              borderRadius: 'var(--exp-radius, 16px)',
                               padding: '20px 16px',
                               textAlign: 'center',
                               border: '1px solid var(--panel-border, #e2e8f0)'
@@ -1343,7 +1345,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                     key={item.roster_item_id}
                                     style={{
                                       background: 'var(--bg-card, #ffffff)',
-                                      borderRadius: '18px',
+                                      borderRadius: 'var(--exp-radius, 18px)',
                                       padding: '18px',
                                       border: isAccepted 
                                         ? '1.5px solid #10b981' 
@@ -1390,7 +1392,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                     </div>
 
                                     {/* Posição Escalada */}
-                                    <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '10px 12px', borderRadius: 'var(--exp-radius, 12px)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                       <span style={{ fontSize: '1.1rem' }}>🏷️</span>
                                       <div>
                                         <div style={{ fontSize: '0.70rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -1417,7 +1419,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                           disabled={answeringItemId === item.roster_item_id}
                                           style={{
                                             padding: '12px',
-                                            borderRadius: '12px',
+                                            borderRadius: 'var(--exp-radius, 12px)',
                                             border: 'none',
                                             background: '#10b981',
                                             color: '#ffffff',
@@ -1440,7 +1442,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                           disabled={answeringItemId === item.roster_item_id}
                                           style={{
                                             padding: '12px',
-                                            borderRadius: '12px',
+                                            borderRadius: 'var(--exp-radius, 12px)',
                                             border: '1.5px solid #ef4444',
                                             background: 'var(--bg-card, #ffffff)',
                                             color: '#ef4444',
@@ -1494,7 +1496,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                       <div style={{
                                         background: 'rgba(245, 158, 11, 0.12)',
                                         border: '1.5px solid rgba(245, 158, 11, 0.4)',
-                                        borderRadius: '12px',
+                                        borderRadius: 'var(--exp-radius, 12px)',
                                         padding: '12px',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -1521,7 +1523,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                                                 onClick={() => handleCancelSwap(relatedSwap?.swap_id, item.roster_item_id)}
                                                 disabled={cancellingSwap}
                                                 style={{
-                                                  background: '#ffffff',
+                                                  background: 'var(--exp-surface, #ffffff)',
                                                   border: '1.5px solid #f59e0b',
                                                   color: '#b45309',
                                                   padding: '6px 14px',
@@ -1560,7 +1562,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   <div style={{
                     background: 'linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(13, 148, 136, 0.04) 100%)',
                     border: '1.5px dashed var(--accent-primary, #0f766e)',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     padding: '18px',
                     textAlign: 'center'
                   }}>
@@ -1609,7 +1611,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         style={{
                           background: 'var(--bg-card, #ffffff)',
                           border: isCandidate ? '1.5px solid #fde68a' : '1.5px solid var(--panel-border, #e2e8f0)',
-                          borderRadius: '16px',
+                          borderRadius: 'var(--exp-radius, 16px)',
                           padding: '14px 16px',
                           display: 'flex',
                           flexDirection: 'column',
@@ -1700,7 +1702,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               </div>
 
               {pendingSwaps.incoming.length === 0 ? (
-                <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: '14px', padding: '24px 16px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: 'var(--exp-radius, 14px)', padding: '24px 16px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🕊️</div>
                   <div style={{ fontSize: '0.80rem', color: 'var(--text-muted, #64748b)' }}>
                     Nenhum pedido de troca recebido no momento.
@@ -1713,7 +1715,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       key={sw.swap_id}
                       style={{
                         background: 'var(--bg-card, #ffffff)',
-                        borderRadius: '16px',
+                        borderRadius: 'var(--exp-radius, 16px)',
                         padding: '16px',
                         border: '1.5px solid #3b82f6',
                         boxShadow: 'var(--shadow-sm)',
@@ -1724,7 +1726,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                          <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: 'var(--exp-module-accent, #3b82f6)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
                             {sw.ministry_name}
                           </span>
                           <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main, #0f172a)', marginTop: '4px' }}>
@@ -1804,7 +1806,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       key={sw.swap_id}
                       style={{
                         background: 'var(--bg-card, #ffffff)',
-                        borderRadius: '14px',
+                        borderRadius: 'var(--exp-radius, 14px)',
                         padding: '14px',
                         border: '1px solid var(--panel-border, #e2e8f0)',
                         fontSize: '0.80rem',
@@ -1843,7 +1845,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                             onClick={() => handleCancelSwap(sw.swap_id, sw.roster_item_id)}
                             disabled={cancellingSwap}
                             style={{
-                              background: '#ffffff',
+                              background: 'var(--exp-surface, #ffffff)',
                               border: '1px solid #ef4444',
                               color: '#ef4444',
                               padding: '5px 12px',
@@ -1877,7 +1879,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 key={min.id}
                 style={{
                   background: 'var(--bg-card, #ffffff)',
-                  borderRadius: '16px',
+                  borderRadius: 'var(--exp-radius, 16px)',
                   padding: '16px',
                   border: '1px solid var(--panel-border, #e2e8f0)',
                   boxShadow: 'var(--shadow-sm)',
@@ -1891,7 +1893,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     <div style={{
                       width: '38px',
                       height: '38px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       background: `${min.color || '#0f766e'}25`,
                       color: min.color || 'var(--accent-primary, #0f766e)',
                       display: 'flex',
@@ -1923,7 +1925,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   <div style={{
                     marginTop: '6px',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: '#fffbeb',
                     border: '1px solid #fde68a',
                     display: 'flex',
@@ -1955,7 +1957,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         padding: '8px 12px',
                         borderRadius: '10px',
                         border: '1px solid #f59e0b',
-                        background: '#ffffff',
+                        background: 'var(--exp-surface, #ffffff)',
                         color: '#b45309',
                         fontSize: '0.76rem',
                         fontWeight: 800,
@@ -1973,7 +1975,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   <div style={{
                     marginTop: '6px',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: '#fffbeb',
                     border: '1px solid #fde68a',
                     display: 'flex',
@@ -2003,7 +2005,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         padding: '8px 12px',
                         borderRadius: '10px',
                         border: '1px solid #fcd34d',
-                        background: '#ffffff',
+                        background: 'var(--exp-surface, #ffffff)',
                         color: '#92400e',
                         fontSize: '0.76rem',
                         fontWeight: 700,
@@ -2021,7 +2023,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   <div style={{
                     marginTop: '6px',
                     padding: '12px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     background: '#f0fdf4',
                     border: '1px solid #bbf7d0',
                     display: 'flex',
@@ -2064,7 +2066,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     </button>
                   </div>
                 ) : joiningMinId === min.id ? (
-                  <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '12px', borderRadius: '12px' }}>
+                  <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '12px', borderRadius: 'var(--exp-radius, 12px)' }}>
                     <label style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main, #334155)' }}>
                       Quais são seus dons/funções de interesse?
                     </label>
@@ -2121,7 +2123,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     style={{
                       marginTop: '4px',
                       padding: '11px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       border: '1px solid var(--accent-primary, #0f766e)',
                       background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
                       color: 'var(--accent-contrast, var(--accent-primary, #0f766e))',
@@ -2148,7 +2150,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             <div style={{
               background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
               color: '#ffffff',
-              borderRadius: '18px',
+              borderRadius: 'var(--exp-radius, 18px)',
               padding: '18px',
               display: 'flex',
               flexDirection: 'column',
@@ -2159,7 +2161,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                 <span style={{ fontSize: '1.5rem' }}>🗓️</span>
                 <div>
                   <div style={{ fontWeight: 900, fontSize: '0.98rem' }}>Agenda de Indisponibilidade</div>
-                  <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--exp-muted, #94a3b8)' }}>
                     Avise previamente quando estará viajando ou impossibilitado de servir
                   </div>
                 </div>
@@ -2175,7 +2177,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   background: '#0ea5e9',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--exp-radius, 12px)',
                   padding: '10px 16px',
                   fontWeight: 800,
                   fontSize: '0.82rem',
@@ -2195,7 +2197,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             {blockouts.length === 0 ? (
               <div style={{
                 background: 'var(--bg-card, #ffffff)',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '30px 20px',
                 textAlign: 'center',
                 border: '1px solid var(--panel-border, #e2e8f0)',
@@ -2222,7 +2224,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     key={b.id}
                     style={{
                       background: 'var(--bg-card, #ffffff)',
-                      borderRadius: '16px',
+                      borderRadius: 'var(--exp-radius, 16px)',
                       padding: '16px',
                       border: '1px solid var(--panel-border, #e2e8f0)',
                       boxShadow: 'var(--shadow-sm)',
@@ -2240,7 +2242,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           fontSize: '0.68rem',
                           fontWeight: 800,
                           padding: '2px 8px',
-                          borderRadius: '20px'
+                          borderRadius: 'var(--exp-radius, 20px)'
                         }}>
                           🚫 Bloqueado
                         </span>
@@ -2293,7 +2295,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           <div style={{
             background: 'var(--bg-card, #ffffff)',
             border: '1px solid var(--panel-border, #e2e8f0)',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             width: '100%',
             maxWidth: '420px',
             padding: '22px',
@@ -2415,7 +2417,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
       {/* MODAL: MOTIVO DA RECUSA */}
       {declineReasonModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
-          <div style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--panel-border, #e2e8f0)', borderRadius: '20px', width: '100%', maxWidth: '400px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--panel-border, #e2e8f0)', borderRadius: 'var(--exp-radius, 20px)', width: '100%', maxWidth: '400px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: 'var(--shadow-lg)' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
               Justificar Ausência na Escala
             </h3>
@@ -2479,7 +2481,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           <div style={{
             background: 'var(--bg-card, #ffffff)',
             border: '1px solid var(--panel-border, #e2e8f0)',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             width: '100%',
             maxWidth: '440px',
             padding: '20px',
@@ -2503,7 +2505,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               </button>
             </div>
 
-            <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--panel-border, #e2e8f0)', fontSize: '0.80rem' }}>
+            <div style={{ background: 'var(--bg-card-subtle, #f8fafc)', padding: '10px 14px', borderRadius: 'var(--exp-radius, 12px)', border: '1px solid var(--panel-border, #e2e8f0)', fontSize: '0.80rem' }}>
               <div style={{ fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>{swapTargetSchedule.service_title}</div>
               <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.74rem', marginTop: '2px' }}>
                 {new Date(swapTargetSchedule.service_date).toLocaleDateString('pt-BR')} às {swapTargetSchedule.service_time} • {swapTargetSchedule.role_name}
@@ -2617,7 +2619,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               <div style={{
                 width: '42px',
                 height: '42px',
-                borderRadius: '12px',
+                borderRadius: 'var(--exp-radius, 12px)',
                 background: `${viewingMinistry.color || '#0f766e'}25`,
                 color: viewingMinistry.color || 'var(--accent-primary, #0f766e)',
                 display: 'flex',
@@ -2658,7 +2660,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             ) : ministrySchedules.length === 0 ? (
               <div style={{
                 background: 'var(--bg-card-subtle, #f8fafc)',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '30px 20px',
                 textAlign: 'center',
                 border: '1px solid var(--panel-border, #e2e8f0)'
@@ -2683,7 +2685,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                     style={{
                       background: 'var(--bg-card, #ffffff)',
                       border: '1px solid var(--panel-border, #e2e8f0)',
-                      borderRadius: '16px',
+                      borderRadius: 'var(--exp-radius, 16px)',
                       overflow: 'hidden',
                       boxShadow: 'var(--shadow-sm)'
                     }}

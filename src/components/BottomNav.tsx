@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React from 'react';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useBranding } from '../context/BrandingContext';
@@ -28,6 +29,8 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) => {
+ const {t}=usePwaExperience();
+
   const { isFeatureEnabled } = useFeatureFlags();
   const { branding } = useBranding();
   const { totalItemsCount } = useCart();
@@ -79,7 +82,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) 
                   </span>
                 )}
               </div>
-              <span className="nav-tab-label">{tab.label}</span>
+              <span className="nav-tab-label">{t('navigation.'+tab.id,tab.label)}</span>
               {isActive && <div className="nav-active-pill" />}
             </button>
           );

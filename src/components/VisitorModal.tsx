@@ -202,7 +202,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.
                     className="input-pwa"
                     value={campusId}
                     onChange={e => setCampusId(e.target.value)}
-                    style={{ background: '#ffffff', cursor: 'pointer' }}
+                    style={{ background: 'var(--exp-surface, #ffffff)', cursor: 'pointer' }}
                   >
                     {campuses.map(c => (
                       <option key={c.id} value={c.id}>
@@ -263,7 +263,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.
               Olá <strong>{name}</strong>, nossa liderança pastoral já recebeu seu contato. No final do culto, não deixe de passar no **Espaço Boas-Vindas** para tomar um café com a gente e receber um presente especial!
             </p>
 
-            <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--panel-border)', width: '100%', fontSize: '0.80rem', color: 'var(--accent-primary)', fontWeight: 700 }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px 16px', borderRadius: 'var(--exp-radius, 14px)', border: '1px solid var(--panel-border)', width: '100%', fontSize: '0.80rem', color: 'var(--accent-primary)', fontWeight: 700 }}>
               🏛️ {branding.church_name} • Casa de Oração para Todos
             </div>
 

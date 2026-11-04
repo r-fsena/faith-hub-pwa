@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../context/BrandingContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +20,8 @@ interface SpecialProject {
 }
 
 export const Giving: React.FC = () => {
+ const {t,config,active}=usePwaExperience();
+
   const { branding } = useBranding();
   const { user } = useAuth();
   const { isEnabled: isOfficialPixEnabled } = useFeatureFlag('financial.pix_static_official', true);
@@ -195,16 +198,16 @@ export const Giving: React.FC = () => {
       {/* Header com Switch entre Dízimos e Projetos */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>{active&&config.copy['giving.title']!==undefined?t('giving.title',''):<>
             Contribuições
-          </h2>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+          </>}</h2>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>{active&&config.copy['giving.subtitle']!==undefined?t('giving.subtitle',''):<>
             {branding.church_name}
-          </p>
+          </>}</p>
         </div>
 
         {/* Switch de Visualização */}
-        <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', background: 'var(--exp-surface-muted, #f1f5f9)', padding: '4px', borderRadius: 'var(--exp-radius, 12px)' }}>
           <button
             type="button"
             onClick={() => setViewTab('tithes')}
@@ -220,8 +223,7 @@ export const Giving: React.FC = () => {
               boxShadow: viewTab === 'tithes' ? 'var(--shadow-sm)' : 'none'
             }}
           >
-            Dízimos & Ofertas
-          </button>
+            {t('giving.title',"Dízimos & Ofertas")}</button>
           <button
             type="button"
             onClick={() => setViewTab('projects')}
@@ -249,7 +251,7 @@ export const Giving: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {/* Card Dízimo Institucional */}
-          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '20px', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             
             {/* Finalidade */}
             <div>
@@ -264,7 +266,7 @@ export const Giving: React.FC = () => {
                     onClick={() => setPurpose(item)}
                     style={{
                       padding: '10px 8px',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--exp-radius, 12px)',
                       border: purpose === item ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                       background: purpose === item ? 'var(--accent-primary-light)' : '#ffffff',
                       color: purpose === item ? 'var(--accent-primary)' : 'var(--text-main)',
@@ -320,13 +322,13 @@ export const Giving: React.FC = () => {
             </div>
 
             {/* Resumo e Botão Pix */}
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid var(--panel-border)', textAlign: 'center' }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '16px', borderRadius: 'var(--exp-radius, 16px)', border: '1px solid var(--panel-border)', textAlign: 'center' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Você está contribuindo com</span>
               <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#059669', margin: '4px 0 8px 0' }}>
                 R$ {currentAmount.toFixed(2).replace('.', ',')}
               </div>
 
-              <div style={{ background: '#ffffff', border: '1px solid var(--panel-border)', borderRadius: '12px', padding: '10px 14px', marginBottom: '12px', fontSize: '0.74rem', color: 'var(--text-secondary)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ background: 'var(--exp-surface, #ffffff)', border: '1px solid var(--panel-border)', borderRadius: 'var(--exp-radius, 12px)', padding: '10px 14px', marginBottom: '12px', fontSize: '0.74rem', color: 'var(--text-secondary)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <div>🏛️ <strong>Favorecido:</strong> {branding.church_name}</div>
                 {churchPixKey && <div>🔑 <strong>Chave Pix:</strong> {churchPixKey}</div>}
                 <div>📍 <strong>Localização:</strong> {branding.city || 'Brasil'} {branding.state ? `- ${branding.state}` : ''}</div>
@@ -361,7 +363,7 @@ export const Giving: React.FC = () => {
 
           </div>
 
-          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '16px', padding: '14px', textAlign: 'center' }}>
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 'var(--exp-radius, 16px)', padding: '14px', textAlign: 'center' }}>
             <p style={{ fontSize: '0.80rem', color: '#78350f', fontStyle: 'italic', margin: 0 }}>
               "Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." — 2 Coríntios 9:7
             </p>
@@ -372,7 +374,7 @@ export const Giving: React.FC = () => {
             MODO 2: PROJETOS E CAMPANHAS ESPECIAIS (COM METAS %)
             ======================================================== */
         projects.length === 0 ? (
-          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🎯</div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
               Nenhuma campanha ativa no momento
@@ -392,8 +394,8 @@ export const Giving: React.FC = () => {
                 <div 
                   key={proj.id}
                   style={{
-                    background: '#ffffff',
-                    borderRadius: '20px',
+                    background: 'var(--exp-surface, #ffffff)',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     overflow: 'hidden',
                     border: '1px solid var(--panel-border)',
                     boxShadow: 'var(--shadow-sm)'
@@ -412,13 +414,13 @@ export const Giving: React.FC = () => {
                     </p>
 
                     {/* Barra de Progresso da Meta */}
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
+                    <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px', borderRadius: 'var(--exp-radius, 12px)', border: '1px solid var(--panel-border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '6px' }}>
                         <span style={{ fontWeight: 800, color: '#059669' }}>R$ {collected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         <span style={{ color: 'var(--text-muted)' }}>Meta: R$ {target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({pct}%)</span>
                       </div>
 
-                      <div style={{ width: '100%', height: '8px', borderRadius: '999px', background: '#e2e8f0', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '8px', borderRadius: '999px', background: 'var(--exp-border, #e2e8f0)', overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', borderRadius: '999px', background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)' }} />
                       </div>
                     </div>
@@ -462,9 +464,9 @@ export const Giving: React.FC = () => {
             
             {/* QR Code Container */}
             <div style={{
-              background: '#ffffff',
+              background: 'var(--exp-surface, #ffffff)',
               padding: '16px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               border: '1px solid var(--panel-border)',
               margin: '0 auto',
               boxShadow: 'var(--shadow-sm)',
@@ -491,7 +493,7 @@ export const Giving: React.FC = () => {
             </div>
 
             {/* Informações do Recebedor */}
-            <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '10px 14px', border: '1px solid var(--panel-border)', fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div style={{ background: 'var(--exp-background, #f8fafc)', borderRadius: 'var(--exp-radius, 12px)', padding: '10px 14px', border: '1px solid var(--panel-border)', fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <div>🏛️ <strong>Favorecido:</strong> {branding.church_name}</div>
               <div>🔑 <strong>Chave:</strong> {activeModalPixKey || churchPixKey || 'Não cadastrada'}</div>
               <div>📍 <strong>Cidade:</strong> {branding.city || 'Brasil'}</div>
@@ -554,7 +556,7 @@ export const Giving: React.FC = () => {
               Envie o print ou PDF do comprovante para conciliação da Tesouraria:
             </p>
 
-            <label style={{ width: '100%', height: '100px', borderRadius: '14px', border: '2px dashed var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc' }}>
+            <label style={{ width: '100%', height: '100px', borderRadius: 'var(--exp-radius, 14px)', border: '2px dashed var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'var(--exp-background, #f8fafc)' }}>
               <span style={{ fontSize: '1.5rem' }}>📄</span>
               <span style={{ fontSize: '0.80rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
                 {uploadingReceipt ? 'Enviando...' : 'Selecionar Comprovante (Foto ou PDF)'}

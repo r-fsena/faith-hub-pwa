@@ -53,8 +53,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
       {/* Card Central da Entre-Tela de Login */}
       <div 
         style={{
-          background: '#ffffff',
-          borderRadius: '24px',
+          background: 'var(--exp-surface, #ffffff)',
+          borderRadius: 'var(--exp-radius, 24px)',
           padding: '28px 20px',
           border: '1px solid var(--panel-border)',
           boxShadow: 'var(--shadow-md)',
@@ -70,7 +70,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
           style={{
             width: '68px',
             height: '68px',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             background: 'var(--accent-primary-gradient)',
             color: '#ffffff',
             display: 'flex',
@@ -113,9 +113,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({
         <div 
           style={{
             width: '100%',
-            background: '#f8fafc',
+            background: 'var(--exp-background, #f8fafc)',
             border: '1px solid var(--panel-border)',
-            borderRadius: '16px',
+            borderRadius: 'var(--exp-radius, 16px)',
             padding: '14px',
             textAlign: 'left',
             display: 'flex',

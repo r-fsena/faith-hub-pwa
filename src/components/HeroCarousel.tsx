@@ -105,7 +105,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       id: 'slide-video',
       type: 'video',
       badge: activeBroadcast?.is_available ? '● TRANSMISSÃO AO VIVO' : '📺 CULTO EM DESTAQUE',
-      badgeBg: activeBroadcast?.is_available ? '#ef4444' : '#0284c7',
+      badgeBg: activeBroadcast?.is_available ? '#ef4444' : 'var(--exp-module-accent, #0284c7)',
       title: videoTitle,
       subtitle: activeBroadcast?.description || 'Toque para assistir à mensagem e celebração da nossa comunidade.',
       bgImage: resolveHeroImage(videoThumbUrl, branding?.banner_url, fallbackHeroImage)
@@ -134,7 +134,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       id: 'slide-event',
       type: 'event',
       badge: `📅 EVENTO EM DESTAQUE ${eventDateFormatted ? `• ${eventDateFormatted.toUpperCase()}` : ''}`,
-      badgeBg: '#ea580c',
+      badgeBg: 'var(--exp-module-accent, #ea580c)',
       title: featuredEvent.title,
       subtitle: featuredEvent.location ? `${featuredEvent.location} • Inscrições Abertas` : 'Confira os detalhes e participe conosco.',
       bgImage: resolveHeroImage(featuredEvent.cover_url, featuredEvent.image_url, branding?.banner_url, fallbackHeroImage)
@@ -219,10 +219,10 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       style={{
         position: 'relative',
         width: '100%',
-        borderRadius: '24px',
+        borderRadius: 'var(--exp-radius, 24px)',
         overflow: 'hidden',
         boxShadow: '0 16px 36px -10px rgba(0,0,0,0.22)',
-        background: '#0f172a',
+        background: 'var(--exp-surface, #0f172a)',
         userSelect: 'none'
       }}
     >
@@ -251,7 +251,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
               top: '12px',
               right: '12px',
               background: 'rgba(0,0,0,0.65)',
-              color: '#ffffff',
+              color: 'var(--exp-hero-text, #ffffff)',
               border: '1px solid rgba(255,255,255,0.25)',
               borderRadius: '999px',
               padding: '6px 12px',
@@ -336,7 +336,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   background: current.badgeBg,
-                  color: '#ffffff',
+                  color: 'var(--exp-hero-text, #ffffff)',
                   padding: '3px 9px',
                   borderRadius: '8px',
                   backdropFilter: 'blur(6px)',
@@ -386,11 +386,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                     setIsPlayingVideo(true);
                   }}
                   style={{
-                    background: '#ffffff',
-                    color: '#0f172a',
+                    background: 'var(--exp-surface, #ffffff)',
+                    color: 'var(--exp-text, #0f172a)',
                     border: 'none',
                     padding: '7px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     fontWeight: 800,
                     fontSize: '0.74rem',
                     cursor: 'pointer',
@@ -417,11 +417,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                       }}
                       style={{
                         background: 'rgba(255,255,255,0.25)',
-                        color: '#ffffff',
+                        color: 'var(--exp-hero-text, #ffffff)',
                         border: '1px solid rgba(255,255,255,0.5)',
                         backdropFilter: 'blur(8px)',
                         padding: '7px 13px',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         fontWeight: 700,
                         fontSize: '0.74rem',
                         cursor: 'pointer',
@@ -439,11 +439,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                       }}
                       style={{
                         background: 'rgba(255,255,255,0.25)',
-                        color: '#ffffff',
+                        color: 'var(--exp-hero-text, #ffffff)',
                         border: '1px solid rgba(255,255,255,0.5)',
                         backdropFilter: 'blur(8px)',
                         padding: '7px 13px',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--exp-radius, 12px)',
                         fontWeight: 700,
                         fontSize: '0.74rem',
                         cursor: 'pointer',
@@ -464,11 +464,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                     onOpenEvents();
                   }}
                   style={{
-                    background: '#ffffff',
-                    color: '#0f172a',
+                    background: 'var(--exp-surface, #ffffff)',
+                    color: 'var(--exp-text, #0f172a)',
                     border: 'none',
                     padding: '7px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     fontWeight: 800,
                     fontSize: '0.74rem',
                     cursor: 'pointer',
@@ -492,11 +492,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                     onNavigate('devotionals');
                   }}
                   style={{
-                    background: '#ffffff',
-                    color: '#0f172a',
+                    background: 'var(--exp-surface, #ffffff)',
+                    color: 'var(--exp-text, #0f172a)',
                     border: 'none',
                     padding: '7px 14px',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--exp-radius, 12px)',
                     fontWeight: 800,
                     fontSize: '0.74rem',
                     cursor: 'pointer',

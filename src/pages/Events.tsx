@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { fetchEvents, checkoutTicket, getAuthHeaders } from '../services/api';
 import { CreditCardForm } from '../components/CreditCardForm';
@@ -33,6 +34,8 @@ interface ChurchEvent {
 }
 
 export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+ const {t,config,active}=usePwaExperience();
+
   const { user } = useAuth();
   const { branding, selectedCampus } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -296,12 +299,12 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               ← Voltar ao Início
             </button>
           )}
-          <h2 className="section-title" style={{ fontSize: '1.30rem', margin: 0, letterSpacing: '-0.3px' }}>
+          <h2 className="section-title" style={{ fontSize: '1.30rem', margin: 0, letterSpacing: '-0.3px' }}>{active&&config.copy['events.title']!==undefined?t('events.title',''):<>
             {viewTab === 'events' ? 'Eventos & Cursos' : 'Meus Passaportes & Carteira'}
-          </h2>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+          </>}</h2>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{active&&config.copy['events.subtitle']!==undefined?t('events.subtitle',''):<>
             {selectedCampus ? `Unidade ${selectedCampus.name}` : branding.church_name} • {viewTab === 'events' ? 'Garanta sua vaga' : 'Apresente seu QR Code na portaria'}
-          </p>
+          </>}</p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -310,7 +313,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             type="button"
             onClick={() => setIsScannerOpen(true)}
             style={{
-              background: '#0f172a',
+              background: 'var(--exp-surface, #0f172a)',
               color: '#ffffff',
               border: 'none',
               padding: '8px 12px',
@@ -388,16 +391,16 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '16px', minHeight: '40vh' }}>
             {[1, 2, 3].map(n => (
-              <div key={n} style={{ background: '#ffffff', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--panel-border)', padding: '16px' }}>
-                <div style={{ height: '140px', background: '#f1f5f9', borderRadius: '14px', marginBottom: '12px' }} />
-                <div style={{ height: '16px', background: '#f1f5f9', borderRadius: '6px', width: '40%', marginBottom: '8px' }} />
-                <div style={{ height: '22px', background: '#f1f5f9', borderRadius: '6px', width: '80%', marginBottom: '10px' }} />
-                <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '6px', width: '60%' }} />
+              <div key={n} style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', overflow: 'hidden', border: '1px solid var(--panel-border)', padding: '16px' }}>
+                <div style={{ height: '140px', background: 'var(--exp-surface-muted, #f1f5f9)', borderRadius: 'var(--exp-radius, 14px)', marginBottom: '12px' }} />
+                <div style={{ height: '16px', background: 'var(--exp-surface-muted, #f1f5f9)', borderRadius: '6px', width: '40%', marginBottom: '8px' }} />
+                <div style={{ height: '22px', background: 'var(--exp-surface-muted, #f1f5f9)', borderRadius: '6px', width: '80%', marginBottom: '10px' }} />
+                <div style={{ height: '14px', background: 'var(--exp-surface-muted, #f1f5f9)', borderRadius: '6px', width: '60%' }} />
               </div>
             ))}
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div style={{ background: '#ffffff', borderRadius: '20px', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', padding: '36px 20px', textAlign: 'center', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '2.4rem', marginBottom: '10px' }}>🗓️</div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
               Nenhum evento ou curso encontrado nesta categoria
@@ -412,8 +415,8 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               <div 
                 key={ev.id}
                 style={{
-                  background: '#ffffff',
-                  borderRadius: '20px',
+                  background: 'var(--exp-surface, #ffffff)',
+                  borderRadius: 'var(--exp-radius, 20px)',
                   overflow: 'hidden',
                   border: '1px solid var(--panel-border)',
                   boxShadow: 'var(--shadow-sm)',
@@ -458,7 +461,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     </p>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '8px 12px', borderRadius: '10px', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span>📍</span> <span>{ev.location}</span>
                   </div>
 
@@ -490,7 +493,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             ======================================================== */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '14px' }}>
           {myTickets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '20px', border: '1px solid var(--panel-border)', width: '100%' }}>
+            <div style={{ textAlign: 'center', padding: '50px 20px', background: 'var(--exp-surface, #ffffff)', borderRadius: 'var(--exp-radius, 20px)', border: '1px solid var(--panel-border)', width: '100%' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>🎟️</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
                 Sua carteira de ingressos está vazia
@@ -526,7 +529,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   onClick={() => setSelectedTicketPass(tck)}
                   style={{
                     background: isUsed ? '#f8fafc' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                    borderRadius: '20px',
+                    borderRadius: 'var(--exp-radius, 20px)',
                     padding: '16px',
                     border: isUsed ? '1.5px solid #cbd5e1' : '1.5px solid var(--panel-border)',
                     boxShadow: isUsed ? 'none' : '0 4px 14px rgba(0,0,0,0.05)',
@@ -560,7 +563,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     <div style={{
                       width: '46px',
                       height: '46px',
-                      borderRadius: '14px',
+                      borderRadius: 'var(--exp-radius, 14px)',
                       background: isUsed ? '#e2e8f0' : 'linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%)',
                       color: isUsed ? '#64748b' : '#ffffff',
                       display: 'flex',
@@ -583,11 +586,11 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                   {isUsed && (
                     <div style={{
-                      background: '#e2e8f0',
+                      background: 'var(--exp-border, #e2e8f0)',
                       borderRadius: '10px',
                       padding: '6px 10px',
                       fontSize: '0.70rem',
-                      color: '#475569',
+                      color: 'var(--exp-muted, #475569)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
@@ -667,7 +670,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '10px 12px',
-                            borderRadius: '12px',
+                            borderRadius: 'var(--exp-radius, 12px)',
                             border: selectedBatch?.id === b.id ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
                             background: selectedBatch?.id === b.id ? 'var(--accent-primary-light)' : '#ffffff',
                             cursor: 'pointer'
@@ -715,7 +718,7 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   <input type="text" className="input-pwa" placeholder="Ex: Vegetariano, intolerância a lactose..." value={dietaryNotes} onChange={e => setDietaryNotes(e.target.value)} />
                 </div>
 
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', fontSize: '0.86rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800, border: '1px solid var(--panel-border)' }}>
+                <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '12px', borderRadius: 'var(--exp-radius, 12px)', fontSize: '0.86rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800, border: '1px solid var(--panel-border)' }}>
                   <span>Total a Pagar:</span>
                   <span style={{ color: (selectedBatch?.price || selectedEvent.price) === 0 ? '#059669' : 'var(--text-main)' }}>
                     {(selectedBatch?.price || selectedEvent.price) === 0 ? 'Gratuito' : `R$ ${(selectedBatch?.price || selectedEvent.price).toFixed(2).replace('.', ',')}`}

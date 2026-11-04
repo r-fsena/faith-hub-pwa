@@ -150,7 +150,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
             type="button"
             onClick={onClose}
             style={{
-              background: '#f1f5f9',
+              background: 'var(--exp-surface-muted, #f1f5f9)',
               border: 'none',
               width: 32,
               height: 32,
@@ -176,7 +176,7 @@ export const KidsQrScannerModal: React.FC<KidsQrScannerModalProps> = ({
             width: '100%',
             maxWidth: 360,
             height: 300,
-            background: '#090d16',
+            background: 'var(--exp-background, #090d16)',
             borderRadius: 24,
             overflow: 'hidden',
             display: 'flex',

@@ -262,7 +262,7 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
           <div style={{
             background: scanResult.status === 'SUCCESS' ? '#f0fdf4' : '#fef2f2',
             border: `2.5px solid ${scanResult.status === 'SUCCESS' ? '#22c55e' : '#ef4444'}`,
-            borderRadius: '24px',
+            borderRadius: 'var(--exp-radius, 24px)',
             padding: '24px 18px',
             display: 'flex',
             flexDirection: 'column',
@@ -312,8 +312,8 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
             {/* Crachá Detalhado do Participante */}
             {scanResult.attendee_name && (
               <div style={{
-                background: '#ffffff',
-                borderRadius: '16px',
+                background: 'var(--exp-surface, #ffffff)',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '16px',
                 width: '100%',
                 boxSizing: 'border-box',
@@ -387,7 +387,7 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
                 background: scanResult.status === 'SUCCESS' ? '#16a34a' : '#0f172a',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '16px',
+                borderRadius: 'var(--exp-radius, 16px)',
                 padding: '16px',
                 fontWeight: 900,
                 fontSize: '0.98rem',
@@ -411,9 +411,9 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
             {/* Segmented Control: Câmera vs Código Manual */}
             <div style={{
               display: 'flex',
-              background: '#f1f5f9',
+              background: 'var(--exp-surface-muted, #f1f5f9)',
               padding: '4px',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               gap: '4px'
             }}>
               <button
@@ -476,9 +476,9 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
                   width: '100%',
                   maxWidth: '380px',
                   height: '320px',
-                  borderRadius: '24px',
+                  borderRadius: 'var(--exp-radius, 24px)',
                   overflow: 'hidden',
-                  background: '#090d16',
+                  background: 'var(--exp-background, #090d16)',
                   boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
                   border: '2px solid rgba(59, 130, 246, 0.4)',
                   display: 'flex',
@@ -565,10 +565,10 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
                         type="button"
                         onClick={() => setActiveTab('manual')}
                         style={{
-                          background: '#3b82f6',
+                          background: 'var(--exp-module-accent, #3b82f6)',
                           color: '#ffffff',
                           border: 'none',
-                          borderRadius: '12px',
+                          borderRadius: 'var(--exp-radius, 12px)',
                           padding: '8px 16px',
                           fontSize: '0.78rem',
                           fontWeight: 800,
@@ -606,9 +606,9 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
             {activeTab === 'manual' && (
               <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', padding: '8px 0' }}>
                 <div style={{
-                  background: '#f8fafc',
+                  background: 'var(--exp-background, #f8fafc)',
                   border: '1.5px solid var(--panel-border)',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   padding: '16px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -626,8 +626,8 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '16px',
-                      borderRadius: '14px',
-                      background: '#ffffff',
+                      borderRadius: 'var(--exp-radius, 14px)',
+                      background: 'var(--exp-surface, #ffffff)',
                       border: '2px solid #cbd5e1',
                       fontSize: '1.25rem',
                       fontWeight: 900,
@@ -650,7 +650,7 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '16px',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--exp-radius, 16px)',
                     background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                     color: '#ffffff',
                     border: 'none',
@@ -676,10 +676,10 @@ export const EventQrScannerModal: React.FC<EventQrScannerModalProps> = ({
             marginTop: 'auto',
             width: '100%',
             padding: '12px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             border: '1px solid #e2e8f0',
-            background: '#f8fafc',
-            color: '#64748b',
+            background: 'var(--exp-background, #f8fafc)',
+            color: 'var(--exp-muted, #64748b)',
             fontWeight: 800,
             fontSize: '0.84rem',
             cursor: 'pointer'

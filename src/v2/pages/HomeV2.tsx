@@ -1,3 +1,5 @@
+import {ExperienceBlock} from '../../experience/ExperienceBlock';
+import {usePwaExperience} from '../../context/PwaExperienceContext';
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../context/BrandingContext';
 import { useAuth } from '../../context/AuthContext';
@@ -50,6 +52,8 @@ export const HomeV2: React.FC<HomeV2Props> = ({
   onOpenGiving,
   onOpenVolunteers
 }) => {
+ const {t}=usePwaExperience();
+
   const { branding } = useBranding();
   const { user, isAuthenticated } = useAuth();
   const { isFeatureEnabled } = useFeatureFlags();
@@ -150,16 +154,16 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(220, 38, 38, 0.08) 100%)',
       border: 'rgba(239, 68, 68, 0.28)', 
       action: () => { triggerHaptic('selection'); onOpenLive(); },
-      flag: 'broadcasts.module_enabled',
+      id:'broadcasts', flag: 'broadcasts.module_enabled',
       isLive: activeBroadcast?.is_available
     },
     { 
       label: 'Palavra & Estudo', 
-      icon: <BookOpenIcon size={24} color="#0284c7" />, 
+      icon: <BookOpenIcon size={24} color="var(--exp-module-accent, #0284c7)" />,
       gradient: 'linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(14, 165, 233, 0.08) 100%)',
       border: 'rgba(2, 132, 199, 0.28)', 
       action: () => { triggerHaptic('selection'); onNavigate('devotionals'); },
-      flag: 'devotionals.module_enabled'
+      id:'devotionals', flag: 'devotionals.module_enabled'
     },
     { 
       label: 'Células & Redes', 
@@ -167,7 +171,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       gradient: 'linear-gradient(135deg, var(--accent-primary-light, rgba(15, 118, 110, 0.16)) 0%, rgba(20, 184, 166, 0.08) 100%)',
       border: 'rgba(15, 118, 110, 0.28)', 
       action: () => { triggerHaptic('selection'); onNavigate('cells'); },
-      flag: 'cell_groups.module_enabled'
+      id:'cells', flag: 'cell_groups.module_enabled'
     },
     { 
       label: branding.store_title || 'Loja Oficial', 
@@ -175,23 +179,23 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       gradient: 'linear-gradient(135deg, rgba(5, 150, 105, 0.16) 0%, rgba(16, 185, 129, 0.08) 100%)',
       border: 'rgba(5, 150, 105, 0.28)', 
       action: () => { triggerHaptic('selection'); onNavigate('store'); },
-      flag: 'pdv.module_enabled'
+      id:'store', flag: 'pdv.module_enabled'
     },
     { 
       label: 'Dízimos & Ofertas', 
-      icon: <GivingHeartIcon size={24} color="#9333ea" />, 
+      icon: <GivingHeartIcon size={24} color="var(--exp-module-accent, #9333ea)" />,
       gradient: 'linear-gradient(135deg, rgba(147, 51, 234, 0.16) 0%, rgba(168, 85, 247, 0.08) 100%)',
       border: 'rgba(147, 51, 234, 0.28)', 
       action: () => { triggerHaptic('selection'); onOpenGiving(); },
-      flag: 'financial.online_pix_giving'
+      id:'giving', flag: 'financial.online_pix_giving'
     },
     { 
       label: 'Eventos & Cursos', 
-      icon: <CalendarEventIcon size={24} color="#ea580c" />, 
+      icon: <CalendarEventIcon size={24} color="var(--exp-module-accent, #ea580c)" />,
       gradient: 'linear-gradient(135deg, rgba(234, 88, 12, 0.16) 0%, rgba(249, 115, 22, 0.08) 100%)',
       border: 'rgba(234, 88, 12, 0.28)', 
       action: () => { triggerHaptic('selection'); onOpenEvents(); },
-      flag: 'events.module_enabled'
+      id:'events', flag: 'events.module_enabled'
     },
     { 
       label: 'Bíblia Sagrada', 
@@ -200,36 +204,36 @@ export const HomeV2: React.FC<HomeV2Props> = ({
       border: 'rgba(245, 158, 11, 0.32)', 
       action: () => { triggerHaptic('selection'); onOpenBible(); },
       isBible: true,
-      flag: 'bible.module_enabled'
+      id:'bible', flag: 'bible.module_enabled'
     },
     { 
       label: 'Mural de Oração', 
-      icon: <PrayerChatIcon size={24} color="#4f46e5" />, 
+      icon: <PrayerChatIcon size={24} color="var(--exp-module-accent, #4f46e5)" />,
       gradient: 'linear-gradient(135deg, rgba(79, 70, 229, 0.16) 0%, rgba(99, 102, 241, 0.08) 100%)',
       border: 'rgba(79, 70, 229, 0.28)', 
       action: () => { triggerHaptic('selection'); onOpenPrayers(); },
-      flag: 'prayers.module_enabled'
+      id:'prayers', flag: 'prayers.module_enabled'
     },
     { 
       label: 'Escalas & Servir', 
-      icon: <span style={{ fontSize: '22px' }}>🎼</span>, 
+      icon: <span style={{ fontSize: 'calc(22px * var(--exp-font-scale, 1))' }}>🎼</span>,
       gradient: 'linear-gradient(135deg, rgba(15, 118, 110, 0.18) 0%, rgba(13, 148, 136, 0.08) 100%)',
       border: 'rgba(15, 118, 110, 0.32)', 
       action: () => { triggerHaptic('selection'); onOpenVolunteers ? onOpenVolunteers() : onNavigate('profile'); },
-      flag: 'volunteers.module_enabled'
+      id:'volunteers', flag: 'volunteers.module_enabled'
     },
   ];
 
   const quickActions = allQuickActions.filter(qa => !qa.flag || isFeatureEnabled(qa.flag));
 
   return (
-    <div className="v2-animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '16px' }}>
+    <div data-experience-home="true" className="v2-animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '16px' }}>
       
       {/* Banner de Instalação do PWA */}
       <InstallPwaBanner />
 
       {/* 1. Carrossel Dinâmico de Destaques */}
-      <HeroCarousel
+      <ExperienceBlock id="hero"><HeroCarousel
         branding={branding}
         activeBroadcast={activeBroadcast}
         featuredEvent={featuredEvent}
@@ -240,13 +244,13 @@ export const HomeV2: React.FC<HomeV2Props> = ({
         onNavigate={onNavigate}
         onOpenVisitorModal={() => setIsVisitorModalOpen(true)}
         onOpenBible={onOpenBible}
-      />
+      /></ExperienceBlock>
 
       {/* 3. Meus Filhos no Kids / Chamador em Tempo Real */}
-      <KidsPassCard />
+      <ExperienceBlock id="kids"><KidsPassCard /></ExperienceBlock>
 
-      {/* 4. Grid de Serviços & Comunidade (Squircles Nativos com Spring Press) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* 4. Grid de serviços e comunidade */}
+      <ExperienceBlock id="shortcuts"><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
           <h3 style={{ 
             fontSize: '0.86rem', 
@@ -256,7 +260,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             textTransform: 'uppercase', 
             letterSpacing: '0.05em' 
           }}>
-            Serviços & Ministérios
+            {t('home.shortcuts','Serviços & Ministérios')}
           </h3>
           <span style={{ 
             fontSize: '0.68rem', 
@@ -288,7 +292,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
                   border: '1px solid var(--v2-glass-border, rgba(255, 255, 255, 0.8))',
-                  borderRadius: '20px',
+                  borderRadius: 'var(--exp-radius, 20px)',
                   padding: '12px 6px 10px 6px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -358,19 +362,19 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden'
                 }}>
-                  {action.label}
+                  {t('shortcuts.'+action.id,action.label)}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
+      </div></ExperienceBlock>
 
       {/* 5. Destaques Ministeriais / Cards Refinados com Micro-Animações */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="experience-featured-row" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         
         {/* Card Palavra Diária */}
-        <div 
+        <ExperienceBlock id="devotional"><div
           onClick={() => {
             triggerHaptic('light');
             onNavigate('devotionals');
@@ -393,22 +397,22 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             <div style={{ 
               width: '46px', 
               height: '46px', 
-              borderRadius: '16px', 
+              borderRadius: 'var(--exp-radius, 16px)',
               background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(14, 165, 233, 0.08) 100%)', 
               border: '1px solid rgba(2, 132, 199, 0.25)', 
-              color: '#0284c7', 
+              color: 'var(--exp-module-accent, #0284c7)',
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               flexShrink: 0 
             }}>
-              <BookOpenIcon size={24} color="#0284c7" />
+              <BookOpenIcon size={24} color="var(--exp-module-accent, #0284c7)" />
             </div>
             <div style={{ minWidth: 0 }}>
               <span style={{ 
                 fontSize: '0.64rem', 
                 fontWeight: 900, 
-                color: '#0284c7', 
+                color: 'var(--exp-module-accent, #0284c7)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em'
               }}>
@@ -446,15 +450,15 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#0284c7',
+            color: 'var(--exp-module-accent, #0284c7)',
             flexShrink: 0
           }}>
-            <ChevronRightIcon size={18} color="#0284c7" />
+            <ChevronRightIcon size={18} color="var(--exp-module-accent, #0284c7)" />
           </div>
-        </div>
+        </div></ExperienceBlock>
 
         {/* Card Próximo Evento / Calendário */}
-        <div 
+        <ExperienceBlock id="events"><div
           onClick={() => {
             triggerHaptic('light');
             onOpenEvents();
@@ -477,26 +481,26 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             <div style={{ 
               width: '46px', 
               height: '46px', 
-              borderRadius: '16px', 
+              borderRadius: 'var(--exp-radius, 16px)',
               background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.16) 0%, rgba(249, 115, 22, 0.08) 100%)', 
               border: '1px solid rgba(234, 88, 12, 0.25)', 
-              color: '#ea580c', 
+              color: 'var(--exp-module-accent, #ea580c)',
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               flexShrink: 0 
             }}>
-              <CalendarEventIcon size={24} color="#ea580c" />
+              <CalendarEventIcon size={24} color="var(--exp-module-accent, #ea580c)" />
             </div>
             <div style={{ minWidth: 0 }}>
               <span style={{ 
                 fontSize: '0.64rem', 
                 fontWeight: 900, 
-                color: '#ea580c', 
+                color: 'var(--exp-module-accent, #ea580c)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em'
               }}>
-                AGENDA & EVENTOS • {currentCampus?.name || 'Local'}
+                {t('home.events','AGENDA & EVENTOS')} • {currentCampus?.name || 'Local'}
               </span>
               <h4 style={{ 
                 fontSize: '0.92rem', 
@@ -530,12 +534,12 @@ export const HomeV2: React.FC<HomeV2Props> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ea580c',
+            color: 'var(--exp-module-accent, #ea580c)',
             flexShrink: 0
           }}>
-            <ChevronRightIcon size={18} color="#ea580c" />
+            <ChevronRightIcon size={18} color="var(--exp-module-accent, #ea580c)" />
           </div>
-        </div>
+        </div></ExperienceBlock>
 
       </div>
 

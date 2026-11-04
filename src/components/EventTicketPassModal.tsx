@@ -291,7 +291,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
         }
 
         // Código curto de conferência
-        ctx.fillStyle = '#4f46e5';
+        ctx.fillStyle = 'var(--exp-module-accent, #4f46e5)';
         ctx.font = '900 26px Inter, sans-serif';
         ctx.fillText(shortCode, 300, 780);
 
@@ -316,7 +316,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
         ctx.drawImage(qrCanvas, 140, 400, 320, 320);
 
         // Código de validação curto
-        ctx.fillStyle = '#4f46e5';
+        ctx.fillStyle = 'var(--exp-module-accent, #4f46e5)';
         ctx.font = '900 30px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(shortCode, 300, 765);
@@ -408,7 +408,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
         <div style={{
           width: '100%',
           background: 'linear-gradient(145deg, #1e1b4b 0%, #312e81 60%, #1e1b4b 100%)',
-          borderRadius: '24px',
+          borderRadius: 'var(--exp-radius, 24px)',
           padding: '20px 18px',
           color: '#ffffff',
           boxShadow: '0 12px 32px rgba(49, 46, 129, 0.35)',
@@ -451,7 +451,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
           </h2>
 
           {/* Grid com Titular, Lote e Data */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', textAlign: 'left', background: 'rgba(255, 255, 255, 0.08)', padding: '10px 14px', borderRadius: '14px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', textAlign: 'left', background: 'rgba(255, 255, 255, 0.08)', padding: '10px 14px', borderRadius: 'var(--exp-radius, 14px)', marginBottom: '14px' }}>
             <div>
               <div style={{ fontSize: '0.64rem', color: '#cbd5e1', fontWeight: 700, textTransform: 'uppercase' }}>Titular</div>
               <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -475,9 +475,9 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
           {/* Card Central: Se VALIDADO não mostra o QR Code, mostra a mensagem de validação */}
           {isUsed ? (
             <div style={{
-              background: '#ffffff',
+              background: 'var(--exp-surface, #ffffff)',
               padding: '24px 18px 20px 18px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
               display: 'flex',
               flexDirection: 'column',
@@ -504,7 +504,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: '0 0 2px 0', letterSpacing: '-0.01em' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--exp-text, #0f172a)', margin: '0 0 2px 0', letterSpacing: '-0.01em' }}>
                   INGRESSO VALIDADO
                 </h3>
                 <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -514,9 +514,9 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
 
               {/* Box com detalhes da validação */}
               <div style={{
-                background: '#f8fafc',
+                background: 'var(--exp-background, #f8fafc)',
                 border: '1.5px solid #e2e8f0',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 padding: '12px 14px',
                 width: '100%',
                 boxSizing: 'border-box',
@@ -526,16 +526,16 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
                 textAlign: 'left'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
-                  <span style={{ color: '#64748b', fontWeight: 600 }}>Data da Validação:</span>
-                  <strong style={{ color: '#0f172a', fontWeight: 800 }}>{validationDetails.dateStr}</strong>
+                  <span style={{ color: 'var(--exp-muted, #64748b)', fontWeight: 600 }}>Data da Validação:</span>
+                  <strong style={{ color: 'var(--exp-text, #0f172a)', fontWeight: 800 }}>{validationDetails.dateStr}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
-                  <span style={{ color: '#64748b', fontWeight: 600 }}>Horário:</span>
-                  <strong style={{ color: '#0f172a', fontWeight: 800 }}>{validationDetails.timeStr}</strong>
+                  <span style={{ color: 'var(--exp-muted, #64748b)', fontWeight: 600 }}>Horário:</span>
+                  <strong style={{ color: 'var(--exp-text, #0f172a)', fontWeight: 800 }}>{validationDetails.timeStr}</strong>
                 </div>
                 {current.scanned_by && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem' }}>
-                    <span style={{ color: '#64748b', fontWeight: 600 }}>Credenciamento:</span>
+                    <span style={{ color: 'var(--exp-muted, #64748b)', fontWeight: 600 }}>Credenciamento:</span>
                     <strong style={{ color: '#4338ca', fontWeight: 800 }}>{current.scanned_by}</strong>
                   </div>
                 )}
@@ -543,8 +543,8 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
 
               {/* Código Curto de Validação Manual */}
               <div style={{
-                background: '#f1f5f9',
-                color: '#475569',
+                background: 'var(--exp-surface-muted, #f1f5f9)',
+                color: 'var(--exp-muted, #475569)',
                 padding: '4px 14px',
                 borderRadius: '8px',
                 fontSize: '0.86rem',
@@ -570,9 +570,9 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             </div>
           ) : (
             <div style={{
-              background: '#ffffff',
+              background: 'var(--exp-surface, #ffffff)',
               padding: '16px 12px 14px 12px',
-              borderRadius: '20px',
+              borderRadius: 'var(--exp-radius, 20px)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
               display: 'flex',
               flexDirection: 'column',
@@ -587,7 +587,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
                   style={{ width: '175px', height: '175px', display: 'block' }}
                 />
               ) : (
-                <div style={{ width: 175, height: 175, display: 'grid', placeItems: 'center', color: '#64748b', fontSize: '0.75rem', textAlign: 'center' }}>
+                <div style={{ width: 175, height: 175, display: 'grid', placeItems: 'center', color: 'var(--exp-muted, #64748b)', fontSize: '0.75rem', textAlign: 'center' }}>
                   QR Code indisponível. Utilize o código manual abaixo.
                 </div>
               )}
@@ -604,7 +604,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               }}>
                 {shortCode}
               </div>
-              <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.66rem', color: 'var(--exp-muted, #64748b)', fontWeight: 600 }}>
                 Apresente este QR Code no credenciamento
               </span>
             </div>
@@ -625,7 +625,7 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             style={{
               width: '100%',
               padding: '12px',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               border: 'none',
               background: '#000000',
               color: '#ffffff',
@@ -655,9 +655,9 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               style={{
                 width: '100%',
                 padding: '11px',
-                borderRadius: '14px',
+                borderRadius: 'var(--exp-radius, 14px)',
                 border: '1.5px solid var(--panel-border)',
-                background: '#ffffff',
+                background: 'var(--exp-surface, #ffffff)',
                 color: 'var(--text-main)',
                 fontWeight: 800,
                 fontSize: '0.80rem',
@@ -679,8 +679,8 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
                 bottom: '110%',
                 left: 0,
                 right: 0,
-                background: '#ffffff',
-                borderRadius: '14px',
+                background: 'var(--exp-surface, #ffffff)',
+                borderRadius: 'var(--exp-radius, 14px)',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                 border: '1px solid var(--panel-border)',
                 padding: '6px',
@@ -773,8 +773,8 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
             padding: '20px'
           }}>
             <div style={{
-              background: '#0f172a',
-              borderRadius: '20px',
+              background: 'var(--exp-surface, #0f172a)',
+              borderRadius: 'var(--exp-radius, 20px)',
               padding: '16px',
               maxWidth: '360px',
               width: '100%',
@@ -788,15 +788,15 @@ export const EventTicketPassModal: React.FC<EventTicketPassModalProps> = ({
               <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.92rem', textAlign: 'center' }}>
                 🎉 Passaporte Gerado!
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '0.72rem', margin: 0, textAlign: 'center', lineHeight: 1.4 }}>
+              <p style={{ color: 'var(--exp-muted, #94a3b8)', fontSize: '0.72rem', margin: 0, textAlign: 'center', lineHeight: 1.4 }}>
                 No celular, você pode <strong>tocar e segurar</strong> na imagem abaixo para <strong>Salvar no Fotos / Galeria</strong>.
               </p>
               
-              <div style={{ maxHeight: '380px', overflowY: 'auto', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <div style={{ maxHeight: '380px', overflowY: 'auto', borderRadius: 'var(--exp-radius, 14px)', border: '1px solid rgba(255,255,255,0.15)' }}>
                 <img 
                   src={savedCardPreviewUrl} 
                   alt="Passaporte do Evento" 
-                  style={{ width: '100%', display: 'block', borderRadius: '14px' }} 
+                  style={{ width: '100%', display: 'block', borderRadius: 'var(--exp-radius, 14px)' }}
                 />
               </div>
 

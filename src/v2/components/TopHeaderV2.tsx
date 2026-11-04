@@ -53,7 +53,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
   // Modo Sub-tela (com botão Voltar)
   if (onBack) {
     return (
-      <header style={{
+      <header data-experience-region="header" className="experience-top-header" style={{
         position: 'sticky',
         top: 0,
         zIndex: 90,
@@ -81,7 +81,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             style={{
               background: 'var(--bg-card-subtle, rgba(241, 245, 249, 0.9))',
               border: '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
-              borderRadius: '14px',
+              borderRadius: 'var(--exp-radius, 14px)',
               color: 'var(--text-main, #0f172a)',
               fontSize: '0.84rem',
               fontWeight: 800,
@@ -119,7 +119,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
   }
 
   return (
-    <header style={{
+    <header data-experience-region="header" className="experience-top-header" style={{
       position: 'sticky',
       top: 0,
       zIndex: 90,
@@ -157,7 +157,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
           <div style={{ 
             width: '42px',
             height: '42px',
-            borderRadius: '14px',
+            borderRadius: 'var(--exp-radius, 14px)',
             background: 'var(--accent-primary-light, rgba(255, 255, 255, 0.08))',
             border: '1.5px solid var(--panel-border, rgba(255, 255, 255, 0.20))',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
@@ -260,7 +260,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             style={{
               width: '38px',
               height: '38px',
-              borderRadius: '12px',
+              borderRadius: 'var(--exp-radius, 12px)',
               background: 'var(--bg-card-subtle, rgba(255, 255, 255, 0.10))',
               border: '1px solid var(--panel-border, rgba(255, 255, 255, 0.18))',
               backdropFilter: 'blur(16px)',

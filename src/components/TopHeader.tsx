@@ -43,7 +43,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   // Se estiver em uma sub-tela (com botão Voltar)
   if (onBack) {
     return (
-      <header className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
+      <header data-experience-region="header" className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="pwa-topbar-inner" style={{ justifyContent: 'space-between' }}>
           <button 
             type="button" 
@@ -88,7 +88,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   }
 
   return (
-    <header className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
+    <header data-experience-region="header" className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
       <div className="pwa-topbar-inner">
         <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
           <div className="pwa-church-avatar" title="Ir para o Perfil">

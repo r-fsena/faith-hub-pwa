@@ -131,7 +131,7 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
         </div>
 
         {/* Video Player Embed */}
-        <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', borderRadius: '16px', overflow: 'hidden', background: '#000', marginTop: '12px' }}>
+        <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', borderRadius: 'var(--exp-radius, 16px)', overflow: 'hidden', background: '#000', marginTop: '12px' }}>
           {embedUrl ? (
             <iframe 
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
@@ -154,7 +154,7 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
         )}
 
         {/* Anotações do Sermão */}
-        <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '16px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+        <div style={{ background: 'var(--exp-background, #f8fafc)', padding: '14px', borderRadius: 'var(--exp-radius, 16px)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
           <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)' }}>
             📝 Meu Caderno de Anotações do Culto
           </span>
@@ -175,7 +175,7 @@ export const LivePlayerModal: React.FC<LivePlayerModalProps> = ({ isOpen, onClos
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
             {notesList.map((n, i) => (
-              <div key={i} style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '8px', fontSize: '0.76rem', color: 'var(--text-secondary)', border: '1px solid var(--panel-border)' }}>
+              <div key={i} style={{ background: 'var(--exp-surface, #ffffff)', padding: '8px 10px', borderRadius: '8px', fontSize: '0.76rem', color: 'var(--text-secondary)', border: '1px solid var(--panel-border)' }}>
                 {n}
               </div>
             ))}

@@ -1,3 +1,4 @@
+import {usePwaExperience} from '../../context/PwaExperienceContext';
 import React from 'react';
 import { useFeatureFlags } from '../../context/FeatureFlagContext';
 import { useBranding } from '../../context/BrandingContext';
@@ -29,6 +30,8 @@ interface BottomNavV2Props {
 }
 
 export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab }) => {
+ const {t}=usePwaExperience();
+
   const { isFeatureEnabled } = useFeatureFlags();
   const { branding } = useBranding();
   const { totalItemsCount } = useCart();
@@ -62,7 +65,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
       zIndex: 90,
       pointerEvents: 'none'
     }}>
-      <nav style={{
+      <nav data-experience-region="navigation" className="experience-bottom-nav" style={{
         pointerEvents: 'auto',
         maxWidth: '460px',
         width: '100%',
@@ -95,7 +98,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
                 justifyContent: 'center',
                 background: isActive ? 'var(--v2-nav-active-bg, var(--accent-primary-light, rgba(99, 102, 241, 0.12)))' : 'transparent',
                 border: 'none',
-                borderRadius: '24px',
+                borderRadius: 'var(--exp-radius, 24px)',
                 padding: '6px 4px',
                 cursor: 'pointer',
                 color: isActive ? 'var(--v2-nav-active-color, var(--accent-primary, #6366f1))' : 'var(--v2-nav-inactive-color, #64748b)',
@@ -141,7 +144,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
                 letterSpacing: '-0.01em',
                 transition: 'color 0.15s ease'
               }}>
-                {tab.label}
+                {t('navigation.'+tab.id,tab.label)}
               </span>
 
               {/* Indicador de Barra Ativa Luminosa */}

@@ -1,3 +1,5 @@
+import {ExperienceScreen} from '../context/PwaExperienceContext';
+import { usePwaExperience } from '../context/PwaExperienceContext';
 import { FeatureGate } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../context/BrandingContext';
@@ -38,6 +40,7 @@ type SubView = 'none' | 'prayers' | 'events' | 'bible' | 'giving' | 'volunteers'
 
 export const AppContentV2: React.FC = () => {
   const { branding } = useBranding();
+  const { setScreen,t } = usePwaExperience();
   const { isAuthenticated } = useAuth();
   const { resolvedTheme } = useTheme();
   
@@ -150,14 +153,16 @@ export const AppContentV2: React.FC = () => {
 
   const getSubViewTitle = (view: SubView) => {
     switch (view) {
-      case 'prayers': return 'Mural de Oração';
-      case 'events': return 'Eventos & Cursos';
-      case 'bible': return 'Bíblia Sagrada';
-      case 'giving': return 'Contribuições & Dízimos';
-      case 'volunteers': return 'Escalas & Voluntariado';
+      case 'prayers': return t('prayers.title','Mural de Oração');
+      case 'events': return t('events.title','Eventos & Cursos');
+      case 'bible': return t('bible.title','Bíblia Sagrada');
+      case 'giving': return t('giving.title','Contribuições & Dízimos');
+      case 'volunteers': return t('volunteers.title','Escalas & Voluntariado');
       default: return undefined;
     }
   };
+
+  useEffect(()=>{setScreen((subView !== 'none' ? (subView === 'welcome' ? 'welcome' : subView) : activeTab==='profile'&&!isAuthenticated?'welcome':activeTab) as any);},[activeTab,subView,setScreen,isAuthenticated]);
 
   // Se o ambiente da congregação foi inativado pela administração
   if ((branding.status || '').toUpperCase() === 'INACTIVE') {
@@ -167,12 +172,12 @@ export const AppContentV2: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f8fafc',
+        background: 'var(--exp-background, #f8fafc)',
         padding: '24px'
       }}>
         <div style={{
-          background: '#ffffff',
-          borderRadius: '28px',
+          background: 'var(--exp-surface, #ffffff)',
+          borderRadius: 'var(--exp-radius, 28px)',
           padding: '36px 24px',
           maxWidth: '420px',
           width: '100%',
@@ -183,7 +188,7 @@ export const AppContentV2: React.FC = () => {
           <div style={{
             width: '64px',
             height: '64px',
-            borderRadius: '20px',
+            borderRadius: 'var(--exp-radius, 20px)',
             background: '#fee2e2',
             color: '#ef4444',
             display: 'flex',
@@ -193,7 +198,7 @@ export const AppContentV2: React.FC = () => {
           }}>
             <CrossIcon size={32} color="#ef4444" />
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: '0 0 8px 0' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--exp-text, #0f172a)', margin: '0 0 8px 0' }}>
             {branding.church_name}
           </h2>
           <span style={{
@@ -208,7 +213,7 @@ export const AppContentV2: React.FC = () => {
           }}>
             Aplicativo Temporariamente Indisponível
           </span>
-          <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ color: 'var(--exp-muted, #64748b)', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
             O aplicativo da nossa comunidade está temporariamente indisponível no momento.
           </p>
         </div>
@@ -246,7 +251,7 @@ export const AppContentV2: React.FC = () => {
         {subView !== 'none' ? (
           <div className="animate-fade-in" style={{ flex: 1 }}>
             {subView === 'bible' && (
-              <Bible onBack={() => setSubView('none')} />
+              <ExperienceScreen screen="bible"><Bible onBack={() => setSubView('none')} /></ExperienceScreen>
             )}
 
             {subView === 'prayers' && (
@@ -259,7 +264,7 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <Prayers onBack={() => setSubView('none')} />
+                <ExperienceScreen screen="prayers"><Prayers onBack={() => setSubView('none')} /></ExperienceScreen>
               )
             )}
 
@@ -274,7 +279,7 @@ export const AppContentV2: React.FC = () => {
                 />
               ) : (
                 <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<Events onBack={() => setSubView('none')} />
+<ExperienceScreen screen="events"><Events onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
               )
             )}
@@ -289,7 +294,7 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <Giving />
+                <ExperienceScreen screen="giving"><Giving /></ExperienceScreen>
               )
             )}
 
@@ -304,7 +309,7 @@ export const AppContentV2: React.FC = () => {
                 />
               ) : (
                 <FeatureGate flag="volunteers.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<VolunteerSchedules onBack={() => setSubView('none')} />
+<ExperienceScreen screen="volunteers"><VolunteerSchedules onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
               )
             )}
@@ -312,14 +317,14 @@ export const AppContentV2: React.FC = () => {
             {/* Sub-tela: Recepção & Acolhimento de Visitantes (QR Code do Culto) */}
             {subView === 'welcome' && (
               <FeatureGate flag="visitors.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<WelcomeVisitor
+<ExperienceScreen screen="welcome"><WelcomeVisitor
                 onBack={() => setSubView('none')}
                 onExploreApp={() => {
                   sessionStorage.setItem('faithhub_guest_explored', 'true');
                   setActiveTab('home');
                   setSubView('none');
                 }}
-              />
+              /></ExperienceScreen>
 </FeatureGate>
             )}
           </div>
@@ -331,7 +336,7 @@ export const AppContentV2: React.FC = () => {
             
             {/* 1. HOME V2 */}
             <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
-              <HomeV2 
+              <ExperienceScreen screen="home"><HomeV2
                 onNavigate={handleTabChange}
                 onOpenLive={() => setIsLiveOpen(true)}
                 onOpenPrayers={() => setSubView('prayers')}
@@ -339,7 +344,7 @@ export const AppContentV2: React.FC = () => {
                 onOpenBible={() => setSubView('bible')}
                 onOpenGiving={() => setSubView('giving')}
                 onOpenVolunteers={() => setSubView('volunteers')}
-              />
+              /></ExperienceScreen>
             </div>
 
             {/* 2. DEVOCIONAIS (Renderizado sob demanda e preservado) */}
@@ -354,7 +359,7 @@ export const AppContentV2: React.FC = () => {
                     onBack={() => handleTabChange('home')}
                   />
                 ) : (
-                  <Devotionals />
+                  <ExperienceScreen screen="devotionals"><Devotionals /></ExperienceScreen>
                 )}
               </div>
             )}
@@ -371,7 +376,7 @@ export const AppContentV2: React.FC = () => {
                     onBack={() => handleTabChange('home')}
                   />
                 ) : (
-                  <CellGroups />
+                  <ExperienceScreen screen="cells"><CellGroups /></ExperienceScreen>
                 )}
               </div>
             )}
@@ -381,7 +386,7 @@ export const AppContentV2: React.FC = () => {
               <div style={{ display: activeTab === 'store' ? 'block' : 'none' }}>
                 <ErrorBoundary fallbackTitle="Erro ao carregar a Loja Oficial">
                   <FeatureGate flag="pdv.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<Store />
+<ExperienceScreen screen="store"><Store /></ExperienceScreen>
 </FeatureGate>
                 </ErrorBoundary>
               </div>
@@ -391,7 +396,7 @@ export const AppContentV2: React.FC = () => {
             {visitedTabs.has('profile') && (
               <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
                 {!isAuthenticated ? (
-                  <WelcomeLoginScreenV2
+                  <ExperienceScreen screen="welcome"><WelcomeLoginScreenV2
                     onLoginSuccess={() => {
                       sessionStorage.removeItem('faithhub_guest_explored');
                       setActiveTab('home');
@@ -402,9 +407,9 @@ export const AppContentV2: React.FC = () => {
                       setActiveTab('home');
                       setSubView('none');
                     }}
-                  />
+                  /></ExperienceScreen>
                 ) : (
-                  <Profile
+                  <ExperienceScreen screen="profile"><Profile
                     onLoginSuccess={() => {
                       sessionStorage.removeItem('faithhub_guest_explored');
                       setActiveTab('home');
@@ -421,7 +426,7 @@ export const AppContentV2: React.FC = () => {
                       setSubView('none');
                     }}
                     onOpenVolunteers={() => setSubView('volunteers')}
-                  />
+                  /></ExperienceScreen>
                 )}
               </div>
             )}
@@ -469,7 +474,7 @@ export const AppContentV2: React.FC = () => {
           <div style={{
             width: '48px',
             height: '48px',
-            borderRadius: '16px',
+            borderRadius: 'var(--exp-radius, 16px)',
             background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
             color: 'var(--accent-primary, #0f766e)',
             display: 'flex',
@@ -498,7 +503,7 @@ export const AppContentV2: React.FC = () => {
                 style={{
                   background: isSelected ? 'var(--v2-item-selected-bg, var(--accent-primary-light, rgba(15, 118, 110, 0.12)))' : 'var(--bg-card, #ffffff)',
                   border: isSelected ? '2px solid var(--v2-item-selected-border, var(--accent-primary, #0f766e))' : '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
-                  borderRadius: '18px',
+                  borderRadius: 'var(--exp-radius, 18px)',
                   padding: '14px',
                   display: 'flex',
                   alignItems: 'center',

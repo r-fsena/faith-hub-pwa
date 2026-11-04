@@ -85,7 +85,7 @@ export const KidsBadgeModal: React.FC<KidsBadgeModalProps> = ({ isOpen, onClose,
             type="button"
             onClick={onClose}
             style={{
-              background: '#f1f5f9',
+              background: 'var(--exp-surface-muted, #f1f5f9)',
               border: 'none',
               width: 32,
               height: 32,
@@ -176,7 +176,7 @@ export const KidsBadgeModal: React.FC<KidsBadgeModalProps> = ({ isOpen, onClose,
 
           {/* Large Security PIN Box */}
           <div style={{
-            background: '#f8fafc',
+            background: 'var(--exp-background, #f8fafc)',
             border: '1.5px solid var(--panel-border)',
             borderRadius: 16,
             padding: '10px 20px',
