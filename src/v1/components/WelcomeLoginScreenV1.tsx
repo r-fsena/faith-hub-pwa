@@ -314,7 +314,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
       flexDirection: 'column',
       justifyContent: 'space-between',
       overflow: 'hidden',
-      background: '#090d16',
+      background: 'var(--exp-background, #090d16)',
       zIndex: 100
     }}>
       {/* Camadas Dinâmicas de Fundo por Slide com Transição Cross-Fade Fluida */}
@@ -351,7 +351,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'linear-gradient(180deg, rgba(9, 13, 22, 0.75) 0%, rgba(9, 13, 22, 0.20) 28%, rgba(9, 13, 22, 0.45) 55%, rgba(9, 13, 22, 0.96) 84%, #090d16 100%)',
+        background: 'var(--exp-welcome-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.75) 0%, rgba(9, 13, 22, 0.20) 28%, rgba(9, 13, 22, 0.45) 55%, rgba(9, 13, 22, 0.96) 84%, #090d16 100%))',
         zIndex: 2,
         pointerEvents: 'none'
       }} />
@@ -410,7 +410,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
             <span style={{ 
               fontSize: isLargeChurchName ? 'clamp(0.76rem, 2.5vw, 0.88rem)' : '0.98rem', 
               fontWeight: 900, 
-              color: '#ffffff', 
+              color: 'var(--exp-hero-text, #ffffff)',
               letterSpacing: '-0.02em',
               lineHeight: 1.15,
               textShadow: '0 2px 8px rgba(0,0,0,0.6)',
@@ -454,7 +454,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
               border: '1px solid rgba(255, 255, 255, 0.20)',
               borderRadius: '999px',
               padding: '8px 15px',
-              color: '#ffffff',
+              color: 'var(--exp-hero-text, #ffffff)',
               fontSize: '0.76rem',
               fontWeight: 800,
               display: 'flex',
@@ -520,7 +520,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{
                     background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, var(--accent-secondary, #14b8a6) 100%)',
-                    color: '#ffffff',
+                    color: 'var(--exp-hero-text, #ffffff)',
                     fontSize: '0.62rem',
                     fontWeight: 900,
                     letterSpacing: '0.08em',
@@ -540,7 +540,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
                       ? 'clamp(1.28rem, 4.3vw, 1.82rem)' 
                       : 'clamp(1.48rem, 5.1vw, 2.05rem)',
                   fontWeight: 900,
-                  color: '#ffffff',
+                  color: 'var(--exp-hero-text, #ffffff)',
                   lineHeight: 1.15,
                   letterSpacing: '-0.03em',
                   margin: 0,
@@ -597,7 +597,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
                   borderRadius: '50%',
                   background: 'rgba(255, 255, 255, 0.12)',
                   border: '1px solid rgba(255, 255, 255, 0.20)',
-                  color: '#ffffff',
+                  color: 'var(--exp-hero-text, #ffffff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -648,7 +648,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
                   borderRadius: '50%',
                   background: 'rgba(255, 255, 255, 0.12)',
                   border: '1px solid rgba(255, 255, 255, 0.20)',
-                  color: '#ffffff',
+                  color: 'var(--exp-hero-text, #ffffff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

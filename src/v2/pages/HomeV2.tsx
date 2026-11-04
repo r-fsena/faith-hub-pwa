@@ -274,8 +274,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
           </span>
         </div>
 
-        <div style={{
-          display: 'grid',
+        <div className="experience-shortcuts-grid" style={{ display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '10px'
         }}>
@@ -416,7 +415,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em'
               }}>
-                {todayDevotional ? 'PALAVRA & ESTUDO DIÁRIO' : 'PALAVRA & ENSINO'}
+                {t('home.devotional',todayDevotional ? 'PALAVRA & ESTUDO DIÁRIO' : 'PALAVRA & ENSINO')}
               </span>
               <h4 style={{ 
                 fontSize: '0.92rem', 

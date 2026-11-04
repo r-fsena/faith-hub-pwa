@@ -317,7 +317,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
             <div>
               <span style={{ fontSize: '0.66rem', fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
-                PALAVRA & ENSINO
+                {t('home.devotional','PALAVRA & ENSINO')}
               </span>
               <h4 style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)', margin: '2px 0 0 0' }}>
                 {todayDevotional?.title || 'Estudos & Devocionais'}

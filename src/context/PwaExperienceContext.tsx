@@ -193,6 +193,7 @@ export function PwaExperienceProvider({
       };
       for (const [k, v] of Object.entries(aliases)) set(k, v);
       const region = config.screens[currentScreen];
+      if (region?.overlay !== undefined) set('--exp-welcome-overlay', `linear-gradient(180deg,rgba(0,0,0,${region.overlay}),rgba(0,0,0,${region.overlay}))`);
       if (region?.image_url)
         set(
           "--exp-screen-image",
@@ -244,6 +245,7 @@ export function PwaExperienceProvider({
         welcome_screen_config: {
           ...branding.welcome_screen_config,
           enabled: branding.welcome_screen_config?.enabled !== false,
+          hero_image_url: config.screens.welcome?.image_url || config.identity.banner_url || branding.welcome_screen_config?.hero_image_url,
           headline:
             config.copy["welcome.title"] ??
             branding.welcome_screen_config?.headline,

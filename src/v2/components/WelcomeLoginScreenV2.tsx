@@ -564,7 +564,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'linear-gradient(180deg, rgba(9, 13, 22, 0.82) 0%, rgba(9, 13, 22, 0.20) 25%, rgba(9, 13, 22, 0.50) 55%, rgba(9, 13, 22, 0.98) 85%, #090d16 100%)',
+        background: 'var(--exp-welcome-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.82) 0%, rgba(9, 13, 22, 0.20) 25%, rgba(9, 13, 22, 0.50) 55%, rgba(9, 13, 22, 0.98) 85%, #090d16 100%))',
         zIndex: 2,
         pointerEvents: 'none'
       }} />

@@ -32,7 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const org = branding.organization_id || branding.pwa_slug || "unresolved";
   const key = `faithhub_theme_mode:${org}`;
   const initial = branding.pwa_experience?.customized
-    ? branding.pwa_experience.config?.theme?.default_mode
+    ? (branding.pwa_experience.config?.theme?.default_mode ?? branding.theme_mode)
     : branding.theme_mode;
   const [themePreference, setPreference] = useState<ThemePreference>(
     normalize(initial),

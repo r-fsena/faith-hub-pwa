@@ -170,3 +170,10 @@ html[data-pwa-experience="custom"] .btn-pwa-secondary {
   color: var(--exp-text) !important;
   border-color: var(--exp-border) !important;
 }
+
+html[data-pwa-experience=custom] .experience-shortcuts-grid{grid-template-columns:repeat(var(--exp-home-columns,3),minmax(0,1fr))!important;}
+html[data-pwa-experience=custom] [data-experience-block=devotional]>div,html[data-pwa-experience=custom] [data-experience-block=events]>div{background:var(--exp-surface)!important;border-color:var(--exp-border)!important;box-shadow:var(--exp-shadow)!important;}
+html[data-pwa-experience=custom] body .v2-shell{--v2-bg:var(--exp-background);--v2-card-bg:var(--exp-surface);--v2-glass-surface:var(--exp-surface);--v2-glass-border:var(--exp-border);--v2-subtle-border:var(--exp-border);--v2-segment-active-bg:var(--exp-surface);--v2-segment-active-color:var(--exp-primary);--v2-nav-active-color:var(--exp-navigation-active);--v2-nav-inactive-color:var(--exp-navigation-text);}
+:is(.nav-tab-item,.v2-nav-item) span{overflow-wrap:anywhere;}
+html[data-pwa-experience=custom] :is(.nav-tab-item,.v2-nav-item)>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;}
+html[data-pwa-experience=custom] .experience-screen-heading{overflow-wrap:anywhere;}
