@@ -42,7 +42,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
   useEffect(() => {
     const url = new URLSearchParams(location.search).get("theme");
-    const saved = localStorage.getItem(key);
+    let saved = localStorage.getItem(key);
+    const legacy=localStorage.getItem('faithhub_theme_mode');
+    if(!valid(saved)&&valid(legacy)&&!localStorage.getItem('faithhub_theme_legacy_migrated')&&org!=='unresolved'&&localStorage.getItem('faithhub_pwa_active_org_id')===org){
+      localStorage.setItem(key,legacy);
+      localStorage.setItem('faithhub_theme_legacy_migrated',org);
+      saved=legacy;
+    }
     setPreference(valid(url) ? url : valid(saved) ? saved : normalize(initial));
   }, [key, initial]);
   useEffect(() => {
