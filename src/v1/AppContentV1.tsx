@@ -1,4 +1,5 @@
 import {ExperienceScreen} from '../context/PwaExperienceContext';
+import {useUsageScreen} from '../context/UsageContext';
 import { usePwaExperience } from '../context/PwaExperienceContext';
 import { FeatureGate } from '../context/FeatureFlagContext';
 import React, { useState, useEffect, useRef } from 'react';
@@ -39,6 +40,7 @@ export const AppContentV1: React.FC = () => {
   const [subView, setSubView] = useState<SubView>('none');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  useUsageScreen(isLiveOpen ? 'home' : subView !== 'none' ? subView : activeTab, 'v1');
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Gestão Unificada de Congregações / Unidades (Campuses)

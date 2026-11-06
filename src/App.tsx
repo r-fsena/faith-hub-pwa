@@ -2,6 +2,7 @@ import React, { Suspense, useMemo } from 'react';
 import { BrandingProvider } from './context/BrandingContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
 import { AuthProvider } from './context/AuthContext';
+import { UsageProvider } from './context/UsageContext';
 import { CartProvider } from './context/CartContext';
 import { PwaExperienceProvider } from './context/PwaExperienceContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -52,9 +53,11 @@ export function App() {
         <ThemeProvider>
           <PwaExperienceProvider>
           <AuthProvider>
+            <UsageProvider>
             <CartProvider>
               <AppShell />
             </CartProvider>
+            </UsageProvider>
           </AuthProvider>
           </PwaExperienceProvider>
         </ThemeProvider>

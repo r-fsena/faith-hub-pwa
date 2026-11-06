@@ -1,3 +1,4 @@
+import {useUsageScreen} from '../context/UsageContext';
 import {ExperienceScreen} from '../context/PwaExperienceContext';
 import { usePwaExperience } from '../context/PwaExperienceContext';
 import { FeatureGate } from '../context/FeatureFlagContext';
@@ -68,6 +69,7 @@ export const AppContentV2: React.FC = () => {
 
   const [isLiveOpen, setIsLiveOpen] = useState(urlLive);
   const [showNotifications, setShowNotifications] = useState(false);
+  useUsageScreen(isLiveOpen ? 'home' : subView !== 'none' ? (subView === 'welcome' ? 'welcome' : subView) : activeTab, 'v2');
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Fast-Tab State Retention: Guarda quais abas já foram visitadas para carregamento instantâneo em 0ms

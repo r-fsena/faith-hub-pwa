@@ -1,3 +1,4 @@
+import {UsagePrivacy} from '../components/UsagePrivacy';
 import {usePwaExperience} from '../context/PwaExperienceContext';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -1151,6 +1152,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         </div>
 
 
+        <UsagePrivacy />
         {/* Botão de Sair da Conta (Logout) - SEMPRE POR ÚLTIMO NA PARTE INFERIOR DA TELA */}
         <div style={{
           marginTop: '8px',
