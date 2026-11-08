@@ -9,6 +9,7 @@ export function UsagePrivacy(){
     <span className="usage-privacy-eyebrow">Sua privacidade</span>
     <h3 id="usage-privacy-title">Dados de uso do aplicativo</h3>
     <p>Você escolhe se deseja compartilhar suas telas visitadas e interações com conteúdos para ajudar sua igreja a melhorar o aplicativo. As análises são agregadas, com proteção para grupos pequenos.</p>
+    <p>Esses registros também ajudam a entender o primeiro uso medido, as interações úteis e o retorno ao aplicativo. Primeiro uso medido não significa primeiro login da conta.</p>
     <p>Não coletamos o texto das suas anotações, pedidos de oração, atendimentos ou informações de pagamento nesta medição. Você pode continuar usando o app sem autorizar.</p>
     {preference&&!preference.eligible&&<p className="usage-privacy-note">A medição opcional está disponível somente para adultos com data de nascimento informada no cadastro.</p>}
     {preference&&!preference.collection_enabled&&<p className="usage-privacy-note">A igreja pausou esta medição. Sua escolha permanece registrada e pode ser retirada a qualquer momento.</p>}
