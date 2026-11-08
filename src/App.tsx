@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { UsageProvider } from './context/UsageContext';
 import { CartProvider } from './context/CartContext';
 import { PwaExperienceProvider } from './context/PwaExperienceContext';
+import { PwaInstallationProvider } from './context/PwaInstallationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SplashScreen } from './components/SplashScreen';
 
@@ -52,6 +53,7 @@ export function App() {
       <FeatureFlagProvider>
         <ThemeProvider>
           <PwaExperienceProvider>
+          <PwaInstallationProvider>
           <AuthProvider>
             <UsageProvider>
             <CartProvider>
@@ -59,6 +61,7 @@ export function App() {
             </CartProvider>
             </UsageProvider>
           </AuthProvider>
+          </PwaInstallationProvider>
           </PwaExperienceProvider>
         </ThemeProvider>
       </FeatureFlagProvider>

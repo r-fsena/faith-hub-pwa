@@ -133,6 +133,7 @@ interface Campus { id: string; name: string; }
 
 interface BrandingContextType {
   selectedCampus: Campus | null;
+  isResolved?: boolean;
   branding: ChurchBranding;
   updateBranding: (newBranding: Partial<ChurchBranding>) => void;
 }
@@ -182,6 +183,7 @@ export function getChurchSlugFromUrl(): string | null {
 
 export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
+  const [resolvedOrganizationId, setResolvedOrganizationId] = useState<string | null>(null);
   const brandingRequest = useRef(0);
   const [branding, setBranding] = useState<ChurchBranding>(DEFAULT_BRANDING);
 
@@ -204,6 +206,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const loadBranding = async () => {
     const requestId=++brandingRequest.current;
+    setResolvedOrganizationId(null);
     const urlSlug = getChurchSlugFromUrl();
     const previousSavedSlug = localStorage.getItem('faithhub_active_church_slug');
     const activeSlug = urlSlug || previousSavedSlug || undefined;
@@ -282,6 +285,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         localStorage.setItem(cacheKey, JSON.stringify(updated));
         applyTheme(updated);
         setActiveOrganizationId(resolvedOrgId);
+        setResolvedOrganizationId(resolvedOrgId);
       }
     } catch (err) {
       console.log("Usando branding em cache local offline", err);
@@ -362,7 +366,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Atualiza o favicon se houver logo_icon_url
     if (data.logo_icon_url) {
-      const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      const link: HTMLLinkElement | null = document.querySelector("link[rel='icon']");
       if (link) {
         link.href = data.logo_icon_url;
       }
@@ -396,7 +400,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [branding.organization_id]);
 
   return (
-    <BrandingContext.Provider value={{ branding, updateBranding, selectedCampus }}>
+    <BrandingContext.Provider value={{ branding, updateBranding, selectedCampus, isResolved: resolvedOrganizationId === branding.organization_id }}>
       {children}
     </BrandingContext.Provider>
   );
