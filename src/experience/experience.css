@@ -197,10 +197,30 @@ html[data-pwa-color-mode="monochrome"] :has(> [data-brand-logo]) {
   box-shadow: none !important;
 }
 html[data-pwa-color-mode="monochrome"] .experience-welcome {
-  --exp-welcome-overlay: linear-gradient(180deg, #ffffffcc 0%, #ffffff66 35%, #fffffff2 72%, #ffffff 100%);
+  --exp-welcome-default-overlay: none;
 }
-html[data-pwa-color-mode="monochrome"][data-theme="dark"] .experience-welcome {
-  --exp-welcome-overlay: linear-gradient(180deg, #000000cc 0%, #00000066 35%, #000000f2 72%, #000000 100%);
+html[data-pwa-color-mode="monochrome"] .experience-welcome-photo {
+  filter: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome-visual {
+  display: flex !important;
+  flex: 1;
+  flex-direction: column;
+  position: relative;
+  min-height: 100px;
+  overflow: hidden;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome-content {
+  background: var(--exp-background);
+  border-top: 1px solid var(--exp-border);
+  border-radius: var(--exp-radius, 24px) var(--exp-radius, 24px) 0 0;
+  margin-top: calc(-1 * var(--exp-radius, 24px));
+  padding-top: 24px !important;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  max-height: calc(100dvh - 100px - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 html[data-pwa-color-mode="monochrome"] .experience-welcome :is(h1, p, header span, button) {
   color: var(--exp-text) !important;
@@ -210,6 +230,14 @@ html[data-pwa-color-mode="monochrome"] .experience-welcome header > div:first-ch
   background: var(--exp-surface) !important;
   border-color: var(--exp-border) !important;
   box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome header > button {
+  background: var(--exp-surface) !important;
+  border-color: var(--exp-border) !important;
+  color: var(--exp-text) !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome header > button svg {
+  stroke: currentColor;
 }
 html[data-pwa-color-mode="monochrome"] [data-welcome-badge] {
   background: var(--exp-primary) !important;

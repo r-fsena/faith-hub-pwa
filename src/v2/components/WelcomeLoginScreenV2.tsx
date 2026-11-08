@@ -488,6 +488,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         cursor: isDragging ? 'grabbing' : 'default'
       }}
     >
+      <div className="experience-welcome-visual" style={{ display: 'contents' }}>
       {/* Trilho Físico de Fotos com Resposta Visual ao Arraste */}
       <div style={{
         position: 'absolute',
@@ -514,7 +515,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           {extendedSlides.map((slide, idx) => {
             const slideImg = (slide as any).image_url || heroImage;
             return (
-              <div 
+              <div className="experience-welcome-photo"
                 key={idx}
                 style={{
                   minWidth: '100%',
@@ -538,7 +539,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'var(--exp-welcome-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.82) 0%, rgba(9, 13, 22, 0.20) 25%, rgba(9, 13, 22, 0.50) 55%, rgba(9, 13, 22, 0.98) 85%, #090d16 100%))',
+        background: 'var(--exp-welcome-overlay, var(--exp-welcome-default-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.82) 0%, rgba(9, 13, 22, 0.20) 25%, rgba(9, 13, 22, 0.50) 55%, rgba(9, 13, 22, 0.98) 85%, #090d16 100%)))',
         zIndex: 2,
         pointerEvents: 'none'
       }} />
@@ -656,8 +657,10 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
 
       <div style={{ flex: 1, minHeight: '16px', zIndex: 5 }} />
 
+      </div>
+
       {/* Carrossel de Boas-Vindas Refinado */}
-      <div 
+      <div className="experience-welcome-content"
         onTouchStart={e => handleDragStart(e.touches[0].clientX)}
         onTouchMove={e => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={handleDragEnd}

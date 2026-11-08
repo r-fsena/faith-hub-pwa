@@ -291,12 +291,13 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
       background: 'var(--exp-background, #090d16)',
       zIndex: 100
     }}>
+      <div className="experience-welcome-visual" style={{ display: 'contents' }}>
       {/* Camadas Dinâmicas de Fundo por Slide com Transição Cross-Fade Fluida */}
       {allSlides.map((slide, idx) => {
         const isCurrent = currentSlide === idx;
         const slideImg = (slide as any).image_url || heroImage;
         return (
-          <div 
+          <div className="experience-welcome-photo"
             key={idx}
             style={{
               position: 'absolute',
@@ -325,7 +326,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'var(--exp-welcome-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.75) 0%, rgba(9, 13, 22, 0.20) 28%, rgba(9, 13, 22, 0.45) 55%, rgba(9, 13, 22, 0.96) 84%, #090d16 100%))',
+        background: 'var(--exp-welcome-overlay, var(--exp-welcome-default-overlay, linear-gradient(180deg, rgba(9, 13, 22, 0.75) 0%, rgba(9, 13, 22, 0.20) 28%, rgba(9, 13, 22, 0.45) 55%, rgba(9, 13, 22, 0.96) 84%, #090d16 100%)))',
         zIndex: 2,
         pointerEvents: 'none'
       }} />
@@ -447,8 +448,10 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
 
       <div style={{ flex: 1, zIndex: 5 }} />
 
+      </div>
+
       {/* Base Imersiva */}
-      <div 
+      <div className="experience-welcome-content"
         onTouchStart={e => handleDragStart(e.touches[0].clientX)}
         onTouchMove={e => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={handleDragEnd}
