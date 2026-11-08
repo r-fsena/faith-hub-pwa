@@ -168,7 +168,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             flexShrink: 0
           }}>
             <img 
-              src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
+              data-brand-logo="true" src={branding.logo_icon_url || '/brand/logo-symbol.png'}
               alt={branding.church_name || 'Faith-Hub'} 
               onError={(e) => {
                 const target = e.target as HTMLImageElement;

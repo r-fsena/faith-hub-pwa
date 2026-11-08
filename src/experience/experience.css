@@ -177,3 +177,76 @@ html[data-pwa-experience=custom] body .v2-shell{--v2-bg:var(--exp-background);--
 :is(.nav-tab-item,.v2-nav-item) span{overflow-wrap:anywhere;}
 html[data-pwa-experience=custom] :is(.nav-tab-item,.v2-nav-item)>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;}
 html[data-pwa-experience=custom] .experience-screen-heading{overflow-wrap:anywhere;}
+
+/* Full monochrome is opt-in through achromatic published palettes, scoped per tenant.
+   Filtering the document root keeps legacy illustrations, media and status icons
+   achromatic without creating a containing block for fixed dialogs/navigation. */
+html[data-pwa-color-mode="monochrome"] { filter: grayscale(1); }
+html[data-pwa-color-mode="monochrome"] :is(.v2-auth-shell, #faithhub-splash-portal) {
+  background: var(--exp-background) !important;
+  color: var(--exp-text) !important;
+}
+html[data-pwa-color-mode="monochrome"] [data-brand-logo] {
+  background: #fff !important;
+  filter: grayscale(1) contrast(20) !important;
+}
+html[data-pwa-color-mode="monochrome"][data-theme="dark"] [data-brand-logo] {
+  filter: grayscale(1) contrast(20) invert(1) !important;
+}
+html[data-pwa-color-mode="monochrome"] :has(> [data-brand-logo]) {
+  background: var(--exp-surface) !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome {
+  --exp-welcome-overlay: linear-gradient(180deg, #ffffffcc 0%, #ffffff66 35%, #fffffff2 72%, #ffffff 100%);
+}
+html[data-pwa-color-mode="monochrome"][data-theme="dark"] .experience-welcome {
+  --exp-welcome-overlay: linear-gradient(180deg, #000000cc 0%, #00000066 35%, #000000f2 72%, #000000 100%);
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome :is(h1, p, header span, button) {
+  color: var(--exp-text) !important;
+  text-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome header > div:first-child {
+  background: var(--exp-surface) !important;
+  border-color: var(--exp-border) !important;
+  box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] [data-welcome-badge] {
+  background: var(--exp-primary) !important;
+  color: var(--exp-on-primary) !important;
+  box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome :is(.btn-pwa-primary, .v2-btn-monolith) {
+  background: var(--exp-primary) !important;
+  color: var(--exp-on-primary) !important;
+}
+html[data-pwa-color-mode="monochrome"] :is(.v2-btn-monolith, .v2-input-wrapper, .v2-segment-btn.active) {
+  border-color: var(--exp-border) !important;
+}
+html[data-pwa-color-mode="monochrome"] .v2-input-wrapper { background: var(--exp-input) !important; }
+html[data-pwa-color-mode="monochrome"] .v2-btn-monolith {
+  background: var(--exp-primary) !important;
+  color: var(--exp-on-primary) !important;
+}
+html[data-pwa-color-mode="monochrome"] .experience-welcome svg { color: inherit !important; }
+html[data-pwa-color-mode="monochrome"] .experience-welcome .experience-welcome-action {
+  background: var(--exp-primary) !important;
+  color: var(--exp-on-primary) !important;
+  box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] #faithhub-splash-portal :is(h1, p, span) {
+  color: var(--exp-text) !important;
+}
+.welcome-slide-dot { border: 0; padding: 0; flex-shrink: 0; }
+html[data-pwa-color-mode="monochrome"] .welcome-slide-dot {
+  background: var(--exp-muted) !important;
+  opacity: 0.45;
+  box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .welcome-slide-dot[aria-current="step"] {
+  background: var(--exp-text) !important;
+  opacity: 1;
+}
+html[data-pwa-color-mode="monochrome"] .welcome-swipe-hint {
+  color: var(--exp-muted) !important;
+}

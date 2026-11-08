@@ -2038,7 +2038,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
         <div style={{ textAlign: 'center' }}>
           {branding.logo_icon_url ? (
             <img
-              src={branding.logo_icon_url}
+              data-brand-logo="true" src={branding.logo_icon_url}
               alt={branding.church_name}
               style={{
                 width: '56px',

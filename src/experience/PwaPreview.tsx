@@ -30,6 +30,7 @@ import { Store } from "../pages/Store";
 import { Giving } from "../pages/Giving";
 import { VolunteerSchedules } from "../pages/VolunteerSchedules";
 import { Profile } from "../pages/Profile";
+import { WelcomeLoginScreenV1 } from "../v1/components/WelcomeLoginScreenV1";
 import { WelcomeLoginScreenV2 } from "../v2/components/WelcomeLoginScreenV2";
 import { KidsVolunteerPanel } from "../components/KidsVolunteerPanel";
 import "../v2/styles/v2-theme.css";
@@ -180,10 +181,10 @@ export default function PwaPreview() {
     welcome:
       version === "v2" ? (
         <WelcomeLoginScreenV2
-          {...({ onExplore: noop, onLogin: noop } as any)}
+          onContinueAsGuest={noop}
         />
       ) : (
-        <Profile />
+        <WelcomeLoginScreenV1 onContinueAsGuest={noop} />
       ),
     auth: <Profile />,
     profile: <Profile />,

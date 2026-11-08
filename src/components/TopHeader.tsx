@@ -93,7 +93,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
           <div className="pwa-church-avatar" title="Ir para o Perfil">
             <img 
-              src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
+              data-brand-logo="true" src={branding.logo_icon_url || '/brand/logo-symbol.png'}
               alt={branding.church_name || 'Faith-Hub'} 
               onError={(e) => {
                 const target = e.target as HTMLImageElement;

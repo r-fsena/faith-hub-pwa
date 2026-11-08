@@ -1,3 +1,4 @@
+import { resolveWelcomeSlides } from '../../config/welcomeScreen';
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../../context/BrandingContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -101,39 +102,12 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
     ? `${churchTitle} • Conectando corações, transformando vidas e vivendo o propósito do Evangelho.`
     : 'Acompanhe devocionais, conecte-se à sua célula, participe de eventos e cresça em comunidade.');
 
-  const defaultSlides = [
-    {
-      badge: isLargeChurchName ? 'BOAS-VINDAS' : churchTitle.toUpperCase(),
-      title: headline,
-      description: subtitle,
-      image_url: heroImage
-    },
-    {
-      badge: 'CÉLULAS & GRUPOS',
-      title: 'Conecte-se em um Grupo',
-      description: 'Amizades reais e comunhão nos lares da nossa congregação.',
-      image_url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80'
-    },
-    {
-      badge: 'PALAVRA DO DIA',
-      title: 'Devocionais Diários',
-      description: 'Mensagens em vídeo e estudos bíblicos preparados pelos pastores.',
-      image_url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80'
-    },
-    {
-      badge: 'EVENTOS & FAMÍLIA',
-      title: 'Eventos & Ministério Kids',
-      description: 'Inscrições com QR Code express e check-in seguro para seus filhos.',
-      image_url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80'
-    }
-  ];
-
-  const allSlides = welcomeConfig?.slides && welcomeConfig.slides.length > 0 
-    ? welcomeConfig.slides.map((s, idx) => ({
-        ...s,
-        image_url: (s as any).image_url || defaultSlides[idx % defaultSlides.length]?.image_url || heroImage
-      }))
-    : defaultSlides;
+  const allSlides = resolveWelcomeSlides({
+    badge: isLargeChurchName ? 'BOAS-VINDAS' : churchTitle.toUpperCase(),
+    title: headline,
+    description: subtitle,
+    image_url: heroImage,
+  }, welcomeConfig?.slides);
 
   // Array estendido com clones para Loop Infinito 360° fluido (sem rebobinamento ou salto brusco)
   const extendedSlides = allSlides.length > 1
@@ -484,7 +458,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
   };
 
   return (
-    <div 
+    <div className="experience-welcome"
       onTouchStart={e => handleDragStart(e.touches[0].clientX)}
       onTouchMove={e => handleDragMove(e.touches[0].clientX)}
       onTouchEnd={handleDragEnd}
@@ -607,7 +581,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
             flexShrink: 0
           }}>
             <img 
-              src={branding.logo_icon_url || '/brand/logo-symbol.png'} 
+              data-brand-logo="true" src={branding.logo_icon_url || '/brand/logo-symbol.png'}
               alt={branding.church_name}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -727,7 +701,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
               >
                 {/* Badge Discreta */}
                 <div>
-                  <span style={{
+                  <span data-welcome-badge="true" style={{
                     background: 'rgba(255, 255, 255, 0.12)',
                     color: '#ffffff',
                     fontSize: '0.64rem',
@@ -776,7 +750,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           {allSlides.map((_, idx) => {
             const isActive = activeSlideIndex === idx;
             return (
-              <div
+              <button type="button" className="welcome-slide-dot" aria-label={`Ir para tela ${idx + 1}`} aria-current={isActive ? "step" : undefined}
                 key={idx}
                 onClick={() => {
                   triggerHaptic('light');
@@ -808,7 +782,7 @@ export const WelcomeLoginScreenV2: React.FC<WelcomeLoginScreenV2Props> = ({
           <button
             type="button"
             onClick={() => handleOpenAuth('login')}
-            className="v2-pressable"
+            className="v2-pressable experience-welcome-action"
             style={{
               background: 'var(--exp-surface, #ffffff)',
               color: 'var(--exp-text, #0f172a)',

@@ -138,7 +138,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           }}
         >
           <img
-            src={logoUrl}
+            data-brand-logo="true" src={logoUrl}
             alt={churchName}
             style={{
               maxWidth: '100%',

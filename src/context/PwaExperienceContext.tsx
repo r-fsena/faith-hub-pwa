@@ -13,6 +13,7 @@ import { useTheme } from "./ThemeContext";
 import { getActiveCampusId } from "../services/api";
 import {
   EXPERIENCE_FLAG,
+  isMonochromeExperience,
   resolveExperience,
   paletteFor,
   defaultExperience,
@@ -146,6 +147,7 @@ export function PwaExperienceProvider({
     };
     if (active) {
       root.dataset.pwaExperience = "custom";
+      if (isMonochromeExperience(config)) root.dataset.pwaColorMode = "monochrome";
       const p = paletteFor(config, resolvedTheme, currentScreen);
       for (const [key, value] of Object.entries(p))
         set(
@@ -224,6 +226,7 @@ export function PwaExperienceProvider({
     }
     return () => {
       delete root.dataset.pwaExperience;
+      delete root.dataset.pwaColorMode;
       for (const name of names) root.style.removeProperty(name);
     };
   }, [config, active, currentScreen, resolvedTheme]);
@@ -238,6 +241,7 @@ export function PwaExperienceProvider({
         church_name: config.identity.name || branding.church_name,
         tagline: config.identity.tagline,
         logo_icon_url: config.identity.logo_url,
+        logo_header_url: config.identity.logo_url || branding.logo_header_url,
         banner_url: config.identity.banner_url,
         store_title: config.copy["store.title"] ?? branding.store_title,
         store_subtitle:
@@ -245,7 +249,7 @@ export function PwaExperienceProvider({
         welcome_screen_config: {
           ...branding.welcome_screen_config,
           enabled: branding.welcome_screen_config?.enabled !== false,
-          hero_image_url: config.screens.welcome?.image_url || config.identity.banner_url || branding.welcome_screen_config?.hero_image_url,
+          hero_image_url: config.screens.welcome?.image_url || branding.welcome_screen_config?.hero_image_url || config.identity.banner_url,
           headline:
             config.copy["welcome.title"] ??
             branding.welcome_screen_config?.headline,

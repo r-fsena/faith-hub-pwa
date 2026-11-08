@@ -150,7 +150,7 @@ export const DigitalMemberCard: React.FC<DigitalMemberCardProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {logoUrl ? (
-                  <img src={logoUrl} alt={churchName} style={{ width: '28px', height: '28px', borderRadius: '8px', objectFit: 'contain' }} />
+                  <img data-brand-logo="true" src={logoUrl} alt={churchName} style={{ width: '28px', height: '28px', borderRadius: '8px', objectFit: 'contain' }} />
                 ) : (
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
                     ⛪
