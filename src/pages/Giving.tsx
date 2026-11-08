@@ -268,7 +268,7 @@ export const Giving: React.FC = () => {
                       padding: '10px 8px',
                       borderRadius: 'var(--exp-radius, 12px)',
                       border: purpose === item ? '2px solid var(--accent-primary)' : '1px solid var(--panel-border)',
-                      background: purpose === item ? 'var(--accent-primary-light)' : '#ffffff',
+                      background: purpose === item ? 'var(--accent-primary-light)' : 'var(--exp-surface, #ffffff)',
                       color: purpose === item ? 'var(--accent-primary)' : 'var(--text-main)',
                       fontWeight: 800,
                       fontSize: '0.80rem',

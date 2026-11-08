@@ -119,7 +119,7 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
                     top: '-6px',
                     right: '-10px',
                     background: 'var(--accent-primary, #6366f1)',
-                    color: '#ffffff',
+                    color: 'var(--exp-on-primary, #ffffff)',
                     fontSize: '0.60rem',
                     fontWeight: 900,
                     minWidth: '17px',

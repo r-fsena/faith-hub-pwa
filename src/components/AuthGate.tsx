@@ -72,7 +72,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
             height: '68px',
             borderRadius: 'var(--exp-radius, 20px)',
             background: 'var(--accent-primary-gradient)',
-            color: '#ffffff',
+            color: 'var(--exp-on-primary, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

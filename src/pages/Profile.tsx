@@ -776,7 +776,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'var(--accent-primary)',
-                  color: '#ffffff',
+                  color: 'var(--exp-on-primary, #ffffff)',
                   border: '2px solid var(--bg-card, #ffffff)',
                   fontSize: '0.62rem'
                 }}>
@@ -820,7 +820,7 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                     padding: '8px 12px',
                     fontSize: '0.74rem',
                     fontWeight: 800,
-                    color: '#ffffff',
+                    color: 'var(--exp-on-primary, #ffffff)',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap'
                   }}

@@ -66,7 +66,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onChangeTab }) 
                     top: '-5px',
                     right: '-9px',
                     background: 'var(--accent-primary, #6366f1)',
-                    color: '#ffffff',
+                    color: 'var(--exp-on-primary, #ffffff)',
                     fontSize: '0.62rem',
                     fontWeight: 900,
                     minWidth: '16px',

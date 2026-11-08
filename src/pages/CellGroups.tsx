@@ -2641,7 +2641,7 @@ export const CellGroups: React.FC = () => {
                       className="v2-pressable"
                       style={{
                         background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, #0d9488 100%)',
-                        color: '#ffffff',
+                        color: 'var(--exp-on-primary, #ffffff)',
                         border: 'none',
                         padding: '13px 26px',
                         borderRadius: 'var(--exp-radius, 16px)',
@@ -2779,7 +2779,7 @@ export const CellGroups: React.FC = () => {
                       className="v2-pressable"
                       style={{
                         background: 'linear-gradient(135deg, var(--accent-primary, #0f766e) 0%, #0d9488 100%)',
-                        color: '#ffffff',
+                        color: 'var(--exp-on-primary, #ffffff)',
                         border: 'none',
                         padding: '9px 14px',
                         borderRadius: 'var(--exp-radius, 14px)',
@@ -2999,7 +2999,7 @@ export const CellGroups: React.FC = () => {
                       style={{
                         margin: '0 auto',
                         background: 'var(--accent-primary)',
-                        color: '#ffffff',
+                        color: 'var(--exp-on-primary, #ffffff)',
                         border: 'none',
                         padding: '10px 18px',
                         borderRadius: 'var(--exp-radius, 12px)',

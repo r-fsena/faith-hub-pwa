@@ -502,7 +502,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             borderRadius: 'var(--exp-radius, 14px)',
             fontWeight: 800,
             fontSize: '0.80rem',
-            color: '#ffffff',
+            color: 'var(--exp-on-primary, #ffffff)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',

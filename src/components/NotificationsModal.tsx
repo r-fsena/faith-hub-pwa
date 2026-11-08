@@ -133,7 +133,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               {unreadTotal > 0 && (
                 <span style={{
                   background: 'var(--accent-primary)',
-                  color: '#ffffff',
+                  color: 'var(--exp-on-primary, #ffffff)',
                   fontSize: '0.70rem',
                   fontWeight: 800,
                   padding: '2px 8px',

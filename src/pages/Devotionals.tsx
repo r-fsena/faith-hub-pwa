@@ -497,7 +497,7 @@ export const Devotionals: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     <span style={{
                       background: 'var(--accent-primary-gradient)',
-                      color: '#ffffff',
+                      color: 'var(--exp-on-primary, #ffffff)',
                       fontSize: '0.70rem',
                       fontWeight: 900,
                       padding: '4px 10px',

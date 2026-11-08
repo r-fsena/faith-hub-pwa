@@ -773,7 +773,7 @@ export const KidsVolunteerPanel: React.FC<KidsVolunteerPanelProps> = ({ isOpen, 
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-primary-gradient)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.90rem' }}>
+                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-primary-gradient)', color: 'var(--exp-on-primary, #ffffff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.90rem' }}>
                                   {fam.name.charAt(0)}
                                 </div>
                                 <div>

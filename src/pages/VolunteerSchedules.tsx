@@ -1580,7 +1580,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         borderRadius: '10px',
                         border: 'none',
                         background: 'var(--accent-primary, #0f766e)',
-                        color: '#ffffff',
+                        color: 'var(--exp-on-primary, #ffffff)',
                         fontWeight: 800,
                         fontSize: '0.76rem',
                         cursor: 'pointer'
@@ -2051,7 +2051,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         borderRadius: '10px',
                         border: 'none',
                         background: 'var(--accent-primary, #0f766e)',
-                        color: '#ffffff',
+                        color: 'var(--exp-on-primary, #ffffff)',
                         fontSize: '0.78rem',
                         fontWeight: 800,
                         cursor: 'pointer',
@@ -2107,7 +2107,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           borderRadius: '8px',
                           border: 'none',
                           background: 'var(--accent-primary, #0f766e)',
-                          color: '#ffffff',
+                          color: 'var(--exp-on-primary, #ffffff)',
                           fontWeight: 800,
                           fontSize: '0.75rem',
                           cursor: 'pointer'
@@ -2401,7 +2401,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   borderRadius: '10px',
                   border: 'none',
                   background: 'var(--accent-primary, #0f766e)',
-                  color: '#ffffff',
+                  color: 'var(--exp-on-primary, #ffffff)',
                   fontWeight: 800,
                   fontSize: '0.80rem',
                   cursor: savingBlockout ? 'not-allowed' : 'pointer'
@@ -2594,7 +2594,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                   borderRadius: '10px',
                   border: 'none',
                   background: 'var(--accent-primary, #0f766e)',
-                  color: '#fff',
+                  color: 'var(--exp-on-primary, #ffffff)',
                   fontWeight: 800,
                   fontSize: '0.80rem',
                   cursor: 'pointer'
