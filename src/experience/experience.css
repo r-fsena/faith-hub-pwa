@@ -178,10 +178,8 @@ html[data-pwa-experience=custom] body .v2-shell{--v2-bg:var(--exp-background);--
 html[data-pwa-experience=custom] :is(.nav-tab-item,.v2-nav-item)>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;}
 html[data-pwa-experience=custom] .experience-screen-heading{overflow-wrap:anywhere;}
 
-/* Full monochrome is opt-in through achromatic published palettes, scoped per tenant.
-   Filtering the document root keeps legacy illustrations, media and status icons
-   achromatic without creating a containing block for fixed dialogs/navigation. */
-html[data-pwa-color-mode="monochrome"] { filter: grayscale(1); }
+/* Monochrome describes the interface palette, never a filter on content.
+   Photos, videos, embeds and canvases retain their original colors. */
 html[data-pwa-color-mode="monochrome"] :is(.v2-auth-shell, #faithhub-splash-portal) {
   background: var(--exp-background) !important;
   color: var(--exp-text) !important;
@@ -249,4 +247,38 @@ html[data-pwa-color-mode="monochrome"] .welcome-slide-dot[aria-current="step"] {
 }
 html[data-pwa-color-mode="monochrome"] .welcome-swipe-hint {
   color: var(--exp-muted) !important;
+}
+html[data-pwa-color-mode="monochrome"] :is(.quick-action-icon, .experience-service-icon) {
+  background: var(--exp-surface-muted) !important;
+  border-color: var(--exp-border) !important;
+  color: var(--exp-primary) !important;
+}
+html[data-pwa-color-mode="monochrome"] :is(.quick-action-icon, .experience-service-icon) svg {
+  stroke: var(--exp-primary);
+}
+html[data-pwa-color-mode="monochrome"] :is(.free-access-badge, .experience-service-badge) {
+  background: var(--exp-primary) !important;
+  color: var(--exp-on-primary) !important;
+  box-shadow: none !important;
+}
+html[data-pwa-color-mode="monochrome"] .install-banner-pulsing {
+  background: var(--exp-surface-muted);
+  border-color: var(--exp-border);
+  color: var(--exp-text);
+  box-shadow: var(--exp-shadow);
+  animation: none;
+}
+html[data-pwa-color-mode="monochrome"] .install-banner-pulsing :is(div, span, button) {
+  color: var(--exp-text) !important;
+}
+html[data-pwa-color-mode="monochrome"] .install-banner-pulsing .install-cta-btn {
+  background: var(--exp-primary);
+  color: var(--exp-on-primary) !important;
+}
+html[data-pwa-color-mode="monochrome"] .v2-live-pulse {
+  animation-name: experienceLivePulse;
+}
+@keyframes experienceLivePulse {
+  0% { box-shadow: 0 0 0 0 var(--accent-primary-light); }
+  70%, 100% { box-shadow: 0 0 0 10px transparent; }
 }

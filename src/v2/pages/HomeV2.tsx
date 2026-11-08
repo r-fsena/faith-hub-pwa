@@ -303,7 +303,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 }}
               >
                 {isBiblePulse && (
-                  <span style={{
+                  <span className="experience-service-badge" style={{
                     position: 'absolute',
                     top: '-4px',
                     right: '-4px',
@@ -320,7 +320,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                 )}
 
                 {action.isLive && (
-                  <span style={{
+                  <span className="experience-service-badge" style={{
                     position: 'absolute',
                     top: '-4px',
                     right: '-4px',
@@ -336,7 +336,7 @@ export const HomeV2: React.FC<HomeV2Props> = ({
                   </span>
                 )}
 
-                <div style={{
+                <div className="experience-service-icon" style={{
                   width: '46px',
                   height: '46px',
                   borderRadius: '15px',
