@@ -193,6 +193,8 @@ html[data-pwa-color-mode="monochrome"][data-theme="dark"] [data-brand-logo] {
 }
 html[data-pwa-color-mode="monochrome"] :has(> [data-brand-logo]) {
   background: var(--exp-surface) !important;
+  border-color: var(--exp-border) !important;
+  box-shadow: none !important;
 }
 html[data-pwa-color-mode="monochrome"] .experience-welcome {
   --exp-welcome-overlay: linear-gradient(180deg, #ffffffcc 0%, #ffffff66 35%, #fffffff2 72%, #ffffff 100%);
