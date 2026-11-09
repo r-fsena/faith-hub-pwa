@@ -22,7 +22,7 @@ function CampusPickerSession({ campuses, organizationId, selectedId, isOpen, onS
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ready' | 'denied' | 'error' | 'unsupported'>('idle');
   const alive = useRef(true);
   const request = useRef(0);
-  const autoRequested = useRef(false);
+  const lastLocationRequest = useRef<number | null>(null);
   useEffect(() => { alive.current = true; return () => { alive.current = false; request.current++; }; }, []);
 
   useEffect(() => {
@@ -38,6 +38,7 @@ function CampusPickerSession({ campuses, organizationId, selectedId, isOpen, onS
   }, [organizationId, authenticated, isOpen, profileAttempt]);
 
   function locate() {
+    lastLocationRequest.current = Date.now();
     if (!navigator.geolocation) { setLocationStatus('unsupported'); return; }
     const id = ++request.current;
     setLocationStatus('loading');
@@ -52,7 +53,7 @@ function CampusPickerSession({ campuses, organizationId, selectedId, isOpen, onS
   }
 
   useEffect(() => {
-    if (isOpen && proximityEnabled && !autoRequested.current) { autoRequested.current = true; locate(); }
+    if (isOpen && proximityEnabled && (lastLocationRequest.current === null || Date.now() - lastLocationRequest.current > 120000)) locate();
   }, [isOpen, proximityEnabled]);
 
   const ordered = orderCampuses(campuses, organizationId, member, proximityEnabled ? position : null);
