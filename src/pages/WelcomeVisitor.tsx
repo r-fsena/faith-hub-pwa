@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { useBranding } from '../context/BrandingContext';
 
 interface WelcomeVisitorProps {
+  embedded?: boolean;
   onBack?: () => void;
   onExploreApp?: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.us-east-2.amazonaws.com';
 
-export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExploreApp }) => {
+export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExploreApp, embedded = false }) => {
  const {t,config,active}=usePwaExperience();
 
   const { branding } = useBranding();
@@ -72,7 +73,7 @@ export const WelcomeVisitor: React.FC<WelcomeVisitorProps> = ({ onBack, onExplor
     }}>
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        {onBack && (
+        {onBack && !embedded && (
           <button
             onClick={onBack}
             style={{

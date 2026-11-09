@@ -33,7 +33,7 @@ interface ChurchEvent {
   campus_id?: string;
 }
 
-export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+export const Events: React.FC<{ onBack?: () => void; embedded?: boolean }> = ({ onBack, embedded = false }) => {
  const {t,config,active}=usePwaExperience();
 
   const { user } = useAuth();
@@ -294,14 +294,14 @@ export const Events: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       {/* Header com Switch entre Eventos, Meus Passaportes e Scanner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          {onBack && (
+          {onBack && !embedded && (
             <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer', marginBottom: '4px' }}>
               ← Voltar ao Início
             </button>
           )}
-          <h2 className="section-title" style={{ fontSize: '1.30rem', margin: 0, letterSpacing: '-0.3px' }}>{active&&config.copy['events.title']!==undefined?t('events.title',''):<>
+          {(!embedded || viewTab !== 'events') && (<h2 className="section-title" style={{ fontSize: '1.30rem', margin: 0, letterSpacing: '-0.3px' }}>{viewTab === 'my_tickets' ? 'Meus Passaportes & Carteira' : active&&config.copy['events.title']!==undefined?t('events.title',''):<>
             {viewTab === 'events' ? 'Eventos & Cursos' : 'Meus Passaportes & Carteira'}
-          </>}</h2>
+          </>}</h2>)}
           <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{active&&config.copy['events.subtitle']!==undefined?t('events.subtitle',''):<>
             {selectedCampus ? `Unidade ${selectedCampus.name}` : branding.church_name} • {viewTab === 'events' ? 'Garanta sua vaga' : 'Apresente seu QR Code na portaria'}
           </>}</p>

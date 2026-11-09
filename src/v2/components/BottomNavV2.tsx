@@ -47,10 +47,8 @@ export const BottomNavV2: React.FC<BottomNavV2Props> = ({ activeTab, onChangeTab
   const visibleTabs = allTabs.filter(tab => !tab.flag || isFeatureEnabled(tab.flag));
 
   const handleTabClick = (tabId: ActiveTab) => {
-    if (activeTab !== tabId) {
-      triggerHaptic('selection');
-      onChangeTab(tabId);
-    }
+    triggerHaptic('selection');
+    onChangeTab(tabId);
   };
 
   return (

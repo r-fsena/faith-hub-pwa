@@ -28,7 +28,7 @@ interface PrayerRequest {
   created_at?: string;
 }
 
-export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+export const Prayers: React.FC<{ onBack?: () => void; embedded?: boolean }> = ({ onBack, embedded = false }) => {
  const {t,config,active}=usePwaExperience();
 
   const { branding, selectedCampus } = useBranding();
@@ -256,13 +256,13 @@ export const Prayers: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       {/* Header com Unidade */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
         <div>
-          {onBack && (
+          {onBack && !embedded && (
             <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.80rem', fontWeight: 800, cursor: 'pointer', marginBottom: '4px' }}>
               ← Voltar ao Início
             </button>
           )}
-          <h2 className="section-title" style={{ fontSize: '1.30rem', letterSpacing: '-0.3px', margin: 0 }}>{active&&config.copy['prayers.title']!==undefined?t('prayers.title',''):<>
-            {t('prayers.title',"Mural de Oração")}</>}</h2>
+          {!embedded && (<h2 className="section-title" style={{ fontSize: '1.30rem', letterSpacing: '-0.3px', margin: 0 }}>{active&&config.copy['prayers.title']!==undefined?t('prayers.title',''):<>
+            {t('prayers.title',"Mural de Oração")}</>}</h2>)}
           <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{active&&config.copy['prayers.subtitle']!==undefined?t('prayers.subtitle',''):<>
             {selectedCampus ? `Unidade ${selectedCampus.name}` : branding.church_name || 'Comunidade'} • Intercedendo em amor
           </>}</p>

@@ -57,10 +57,10 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
         position: 'sticky',
         top: 0,
         zIndex: 90,
-        background: isScrolled ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.82)',
+        background: 'var(--v2-glass-surface, var(--bg-card, #ffffff))',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        borderBottom: isScrolled ? '1px solid rgba(226, 232, 240, 0.9)' : '1px solid transparent',
+        borderBottom: isScrolled ? '1px solid var(--panel-border)' : '1px solid transparent',
         boxShadow: isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.04)' : 'none',
         transition: 'all 0.25s ease',
         padding: 'env(safe-area-inset-top, 0px) 14px 0 14px'

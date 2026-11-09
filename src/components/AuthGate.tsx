@@ -2,6 +2,7 @@ import React from 'react';
 import { useBranding } from '../context/BrandingContext';
 
 interface AuthGateProps {
+  embedded?: boolean;
   featureName: string;
   featureDescription?: string;
   onGoToLogin: () => void;
@@ -14,7 +15,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   featureDescription,
   onGoToLogin,
   onGoToBible,
-  onBack
+  onBack,
+  embedded = false
 }) => {
   const { branding } = useBranding();
 
@@ -102,7 +104,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Título & Descrição */}
         <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, lineHeight: 1.25 }}>
-          Acesse {featureName} com sua conta
+          {embedded ? 'Acesse sua conta' : `Acesse ${featureName} com sua conta`}
         </h2>
 
         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
@@ -162,7 +164,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
         )}
 
         {/* Botão Voltar */}
-        {onBack && (
+        {onBack && !embedded && (
           <button
             type="button"
             onClick={onBack}

@@ -7,10 +7,11 @@ import { useBranding } from '../context/BrandingContext';
 import { BottomSheet } from '../components/BottomSheet';
 
 interface VolunteerSchedulesProps {
+  embedded?: boolean;
   onBack?: () => void;
 }
 
-export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }) => {
+export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack, embedded = false }) => {
   const { branding, selectedCampus, isResolved } = useBranding();
   const { user } = useAuth();
   const [campus, setCampus] = useState(getActiveCampusId);
@@ -22,9 +23,9 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const scope = useMemo(() => ({ organizationId: branding.organization_id || '', campusId: campus }), [branding.organization_id, campus]);
   if (isResolved === false || !scope.organizationId || !user) return <p role="status">Carregando o voluntariado desta igreja…</p>;
   const label = `${branding.church_name} · ${campus === 'all' ? 'Todas as unidades' : (selectedCampus?.id === campus ? selectedCampus.name : 'Unidade selecionada')}`;
-  return <VolunteerSchedulesContent key={`${scope.organizationId}:${campus}:${user.userId}`} onBack={onBack} scope={scope} scopeLabel={label} />;
+  return <VolunteerSchedulesContent key={`${scope.organizationId}:${campus}:${user.userId}`} onBack={onBack} embedded={embedded} scope={scope} scopeLabel={label} />;
 };
-const VolunteerSchedulesContent: React.FC<VolunteerSchedulesProps & { scope: VolunteerScope; scopeLabel: string }> = ({ onBack, scope, scopeLabel }) => {
+const VolunteerSchedulesContent: React.FC<VolunteerSchedulesProps & { scope: VolunteerScope; scopeLabel: string }> = ({ onBack, embedded = false, scope, scopeLabel }) => {
   const { fetchMySchedules, respondToSchedule, fetchMinistries, fetchMinistrySchedules, joinMinistry, fetchMyBlockouts, createBlockout, deleteBlockout, fetchEligiblePeersForSwap, requestRosterSwap, fetchMyPendingSwaps, respondToSwap, cancelRosterSwap } = useMemo(() => createVolunteerClient(scope), [scope]);
   const requestId = useRef(0), alive = useRef(true), ministryRequest = useRef(0);
   const alert = (message?: string) => { if (alive.current) window.alert(message); };
@@ -348,7 +349,7 @@ const VolunteerSchedulesContent: React.FC<VolunteerSchedulesProps & { scope: Vol
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {onBack && (
+          {onBack && !embedded && (
             <button
               onClick={onBack}
               style={{
@@ -370,8 +371,8 @@ const VolunteerSchedulesContent: React.FC<VolunteerSchedulesProps & { scope: Vol
             </button>
           )}
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
-              {t('volunteers.title',"Escalas & Voluntariado")}</h1><p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>{scopeLabel}</p>
+            {!embedded && (<h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
+              {t('volunteers.title',"Escalas & Voluntariado")}</h1>)}<p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>{scopeLabel}</p>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               Seus cultos escalados, agenda e oportunidades de servir
             </p>

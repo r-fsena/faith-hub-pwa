@@ -1,3 +1,4 @@
+import { useNavigationScroll } from '../hooks/useNavigationScroll';
 import { CampusPicker } from '../components/CampusPicker';
 import {useUsageScreen} from '../context/UsageContext';
 import {ExperienceScreen} from '../context/PwaExperienceContext';
@@ -143,7 +144,17 @@ export const AppContentV2: React.FC = () => {
 
   const currentCampus = campuses.find(c => c.id === activeCampusId) || campuses[0];
 
+  const scrollAfterNavigation = useNavigationScroll();
   const handleTabChange = (tab: ActiveTab) => {
+    setIsLiveOpen(false);
+    setShowNotifications(false);
+    setIsCampusDrawerOpen(false);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    url.searchParams.delete('view');
+    url.searchParams.delete('live');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    scrollAfterNavigation();
     setActiveTab(tab);
     setVisitedTabs(prev => {
       if (!prev.has(tab)) {
@@ -163,6 +174,7 @@ export const AppContentV2: React.FC = () => {
       case 'bible': return t('bible.title','Bíblia Sagrada');
       case 'giving': return t('giving.title','Contribuições & Dízimos');
       case 'volunteers': return t('volunteers.title','Escalas & Voluntariado');
+      case 'welcome': return 'Boas-vindas';
       default: return undefined;
     }
   };
@@ -256,12 +268,12 @@ export const AppContentV2: React.FC = () => {
         {subView !== 'none' ? (
           <div className="animate-fade-in" style={{ flex: 1 }}>
             {subView === 'bible' && (
-              <ExperienceScreen screen="bible"><Bible onBack={() => setSubView('none')} /></ExperienceScreen>
+              <ExperienceScreen screen="bible"><Bible embedded onBack={() => setSubView('none')} /></ExperienceScreen>
             )}
 
             {subView === 'prayers' && (
               !isAuthenticated ? (
-                <AuthGate 
+                <AuthGate embedded
                   featureName="Mural de Oração"
                   featureDescription="Para publicar pedidos de oração e interceder pela comunidade, acesse sua conta."
                   onGoToLogin={() => handleTabChange('profile')}
@@ -269,13 +281,13 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <ExperienceScreen screen="prayers"><Prayers onBack={() => setSubView('none')} /></ExperienceScreen>
+                <ExperienceScreen screen="prayers"><Prayers embedded onBack={() => setSubView('none')} /></ExperienceScreen>
               )
             )}
 
             {subView === 'events' && (
               !isAuthenticated ? (
-                <AuthGate 
+                <AuthGate embedded
                   featureName="Eventos & Cursos"
                   featureDescription="Para se inscrever em eventos e emitir ingressos com QR Code, acesse sua conta."
                   onGoToLogin={() => handleTabChange('profile')}
@@ -284,14 +296,14 @@ export const AppContentV2: React.FC = () => {
                 />
               ) : (
                 <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<ExperienceScreen screen="events"><Events onBack={() => setSubView('none')} /></ExperienceScreen>
+<ExperienceScreen screen="events"><Events embedded onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
               )
             )}
 
             {subView === 'giving' && (
               !isAuthenticated ? (
-                <AuthGate 
+                <AuthGate embedded
                   featureName="Contribuições & Dízimos"
                   featureDescription="Para semear na obra com segurança e anexar comprovantes, acesse sua conta."
                   onGoToLogin={() => handleTabChange('profile')}
@@ -299,13 +311,13 @@ export const AppContentV2: React.FC = () => {
                   onBack={() => setSubView('none')}
                 />
               ) : (
-                <ExperienceScreen screen="giving"><Giving /></ExperienceScreen>
+                <ExperienceScreen screen="giving"><Giving embedded /></ExperienceScreen>
               )
             )}
 
             {subView === 'volunteers' && (
               !isAuthenticated ? (
-                <AuthGate 
+                <AuthGate embedded
                   featureName="Escalas & Voluntariado"
                   featureDescription="Para consultar suas escalas de serviço, confirmar presença ou ingressar em um ministério, acesse sua conta."
                   onGoToLogin={() => handleTabChange('profile')}
@@ -314,7 +326,7 @@ export const AppContentV2: React.FC = () => {
                 />
               ) : (
                 <FeatureGate flag="volunteers.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<ExperienceScreen screen="volunteers"><VolunteerSchedules onBack={() => setSubView('none')} /></ExperienceScreen>
+<ExperienceScreen screen="volunteers"><VolunteerSchedules embedded onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
               )
             )}

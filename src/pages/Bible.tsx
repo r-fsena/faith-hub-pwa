@@ -29,7 +29,7 @@ const HIGHLIGHT_COLORS = [
 
 const bibleMemoryCache: Record<string, BibleBook[]> = {};
 
-export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+export const Bible: React.FC<{ onBack?: () => void; embedded?: boolean }> = ({ onBack, embedded = false }) => {
  const {t,config,active}=usePwaExperience();
 
   const { branding } = useBranding();
@@ -227,7 +227,7 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       {/* Topo / Header com Acessibilidade e Voltar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          {onBack && (
+          {onBack && !embedded && (
             <button 
               type="button" 
               onClick={onBack} 
@@ -236,9 +236,9 @@ export const Bible: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               ← Voltar ao Início
             </button>
           )}
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>{active&&config.copy['bible.title']!==undefined?t('bible.title',''):<>
+          {!embedded && (<h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>{active&&config.copy['bible.title']!==undefined?t('bible.title',''):<>
             📖 Bíblia Sagrada
-          </>}</h2>
+          </>}</h2>)}
           <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>
             66 Livros • 1.189 Capítulos na Íntegra
           </span>

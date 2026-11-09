@@ -1,3 +1,4 @@
+import { useNavigationScroll } from '../hooks/useNavigationScroll';
 import { CampusPicker } from '../components/CampusPicker';
 import {ExperienceScreen} from '../context/PwaExperienceContext';
 import {useUsageScreen} from '../context/UsageContext';
@@ -107,10 +108,19 @@ export const AppContentV1: React.FC = () => {
     }
   }, []);
 
+  const scrollAfterNavigation = useNavigationScroll();
   const handleTabChange = (tab: ActiveTab) => {
+    setIsLiveOpen(false);
+    setShowNotifications(false);
+    setIsCampusDrawerOpen(false);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    url.searchParams.delete('view');
+    url.searchParams.delete('live');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    scrollAfterNavigation();
     setActiveTab(tab);
     setSubView('none');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getSubViewTitle = (view: SubView) => {
@@ -212,10 +222,10 @@ export const AppContentV1: React.FC = () => {
         {/* SUBVIEWS */}
         {subView === 'bible' ? (
           /* Bíblia Sagrada: 100% Livre para qualquer visitante sem login */
-          <ExperienceScreen screen="bible"><Bible onBack={() => setSubView('none')} /></ExperienceScreen>
+          <ExperienceScreen screen="bible"><Bible embedded onBack={() => setSubView('none')} /></ExperienceScreen>
         ) : subView === 'prayers' ? (
           !isAuthenticated ? (
-            <AuthGate 
+            <AuthGate embedded
               featureName="Mural de Oração"
               featureDescription="Para publicar pedidos de oração, interceder pela comunidade e receber apoio pastoral, entre com sua conta."
               onGoToLogin={() => handleTabChange('profile')}
@@ -223,11 +233,11 @@ export const AppContentV1: React.FC = () => {
               onBack={() => setSubView('none')}
             />
           ) : (
-            <ExperienceScreen screen="prayers"><Prayers onBack={() => setSubView('none')} /></ExperienceScreen>
+            <ExperienceScreen screen="prayers"><Prayers embedded onBack={() => setSubView('none')} /></ExperienceScreen>
           )
         ) : subView === 'events' ? (
           !isAuthenticated ? (
-            <AuthGate 
+            <AuthGate embedded
               featureName="Eventos & Cursos"
               featureDescription="Para se inscrever em conferências, cursos e emitir seu passaporte com QR Code, entre ou crie seu cadastro grátis."
               onGoToLogin={() => handleTabChange('profile')}
@@ -236,12 +246,12 @@ export const AppContentV1: React.FC = () => {
             />
           ) : (
             <FeatureGate flag="events.module_enabled" fallback={<p>Este módulo não está disponível para esta igreja.</p>}>
-<ExperienceScreen screen="events"><Events onBack={() => setSubView('none')} /></ExperienceScreen>
+<ExperienceScreen screen="events"><Events embedded onBack={() => setSubView('none')} /></ExperienceScreen>
 </FeatureGate>
           )
         ) : subView === 'giving' ? (
           !isAuthenticated ? (
-            <AuthGate 
+            <AuthGate embedded
               featureName="Contribuições & Dízimos"
               featureDescription="Para semear na obra com segurança e anexar seus comprovantes à tesouraria, faça login na sua conta."
               onGoToLogin={() => handleTabChange('profile')}
@@ -249,7 +259,7 @@ export const AppContentV1: React.FC = () => {
               onBack={() => setSubView('none')}
             />
           ) : (
-            <ExperienceScreen screen="giving"><Giving /></ExperienceScreen>
+            <ExperienceScreen screen="giving"><Giving embedded /></ExperienceScreen>
           )
         ) : (
           /* ABAS PRINCIPAIS DO BOTTOM NAV */

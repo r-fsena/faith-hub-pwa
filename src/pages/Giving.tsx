@@ -19,7 +19,7 @@ interface SpecialProject {
   status: string;
 }
 
-export const Giving: React.FC = () => {
+export const Giving: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
  const {t,config,active}=usePwaExperience();
 
   const { branding } = useBranding();
@@ -198,9 +198,9 @@ export const Giving: React.FC = () => {
       {/* Header com Switch entre Dízimos e Projetos */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>{active&&config.copy['giving.title']!==undefined?t('giving.title',''):<>
+          {!embedded && (<h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>{active&&config.copy['giving.title']!==undefined?t('giving.title',''):<>
             Contribuições
-          </>}</h2>
+          </>}</h2>)}
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>{active&&config.copy['giving.subtitle']!==undefined?t('giving.subtitle',''):<>
             {branding.church_name}
           </>}</p>
