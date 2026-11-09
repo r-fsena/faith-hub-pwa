@@ -26,6 +26,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { branding } = useBranding();
   const org = branding.organization_id || branding.pwa_slug || "unresolved";
   const key = `faithhub_theme_mode:${org}`;
+  // Capture the legacy owner before BrandingProvider updates the active organization.
+  const [legacyOrganization] = useState(() => {
+    try { return localStorage.getItem('faithhub_pwa_active_org_id'); } catch { return null; }
+  });
   // Church palettes still define both themes; the visitor's initial preference is always dark.
   const [themePreference, setPreference] = useState<ThemePreference>('dark');
   const readinessKey = key;
@@ -39,7 +43,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       saved = localStorage.getItem(key);
       const legacy = localStorage.getItem('faithhub_theme_mode');
-      if (!valid(saved) && valid(legacy) && !localStorage.getItem('faithhub_theme_legacy_migrated') && org !== 'unresolved' && localStorage.getItem('faithhub_pwa_active_org_id') === org) {
+      if (!valid(saved) && valid(legacy) && !localStorage.getItem('faithhub_theme_legacy_migrated') && org !== 'unresolved' && legacyOrganization === org) {
         localStorage.setItem(key, legacy);
         localStorage.setItem('faithhub_theme_legacy_migrated', org);
         saved = legacy;
@@ -47,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch { /* The default remains usable when browser storage is unavailable. */ }
     setPreference(valid(url) ? url : valid(saved) ? saved : 'dark');
     setResolvedPreferenceKey(readinessKey);
-  }, [key, org, readinessKey]);
+  }, [key, org, readinessKey, legacyOrganization]);
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const change = () => setSystemDark(media.matches);
