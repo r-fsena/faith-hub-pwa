@@ -1,5 +1,5 @@
 #initial-splash { --boot-background:#090d16; --boot-text:#f8fafc; --boot-muted:#cbd5e1; position:fixed; inset:0; z-index:2147483646; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:32px; box-sizing:border-box; background:var(--boot-background); color:var(--boot-text); font-family:system-ui,sans-serif; text-align:center; }
-#initial-splash img { width:80px; height:80px; object-fit:contain; }
+#initial-splash img { width:80px; height:80px; object-fit:contain; border-radius:20px; overflow:hidden; }
 #initial-splash img[hidden],#initial-splash button[hidden],#initial-splash[hidden] { display:none; }
 #initial-splash[data-monochrome="light"] img { filter:grayscale(1) contrast(20); mix-blend-mode:multiply; }
 #initial-splash[data-monochrome="dark"] img { filter:grayscale(1) contrast(20) invert(1); mix-blend-mode:screen; }
