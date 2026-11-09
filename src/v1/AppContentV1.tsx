@@ -1,3 +1,4 @@
+import { CampusPicker } from '../components/CampusPicker';
 import {ExperienceScreen} from '../context/PwaExperienceContext';
 import {useUsageScreen} from '../context/UsageContext';
 import { usePwaExperience } from '../context/PwaExperienceContext';
@@ -49,7 +50,10 @@ export const AppContentV1: React.FC = () => {
   const [isCampusDrawerOpen, setIsCampusDrawerOpen] = useState(false);
 
   useEffect(() => {
-    fetchCampuses(branding.organization_id).then(list => setCampuses(list || []));
+    let current = true;
+    setCampuses([]);
+    fetchCampuses(branding.organization_id).then(list => { if (current) setCampuses(list || []); });
+    return () => { current = false; };
   }, [branding.organization_id]);
 
   useEffect(() => {
@@ -362,52 +366,7 @@ export const AppContentV1: React.FC = () => {
         onClose={() => setIsCampusDrawerOpen(false)}
         title="Selecione a Unidade"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '16px' }}>
-          {campuses.map(c => {
-            const isSelected = c.id === activeCampusId;
-            return (
-              <div
-                key={c.id}
-                onClick={() => handleSelectCampus(c.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 16px',
-                  borderRadius: '16px',
-                  background: isSelected ? 'var(--accent-primary-light)' : '#f8fafc',
-                  border: isSelected ? '1.5px solid var(--accent-primary)' : '1px solid #e2e8f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.90rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-main)' }}>
-                    {c.name}
-                  </div>
-                  {c.address && (
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      {c.address}
-                    </div>
-                  )}
-                  {c.pastor_name && (
-                    <div style={{ fontSize: '0.70rem', color: 'var(--accent-primary)', fontWeight: 700, marginTop: '2px' }}>
-                      Pastor Local: {c.pastor_name}
-                    </div>
-                  )}
-                </div>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  border: isSelected ? '5px solid var(--accent-primary)' : '2px solid #cbd5e1',
-                  background: '#ffffff',
-                  flexShrink: 0
-                }} />
-              </div>
-            );
-          })}
-        </div>
+        <CampusPicker campuses={campuses} organizationId={branding.organization_id || ''} selectedId={activeCampusId} isOpen={isCampusDrawerOpen} onSelect={handleSelectCampus} />
       </BottomSheet>
 
       {/* Bottom Navigation */}

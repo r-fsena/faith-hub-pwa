@@ -674,18 +674,22 @@ export async function fetchCampuses(organizationId?: string) {
 // ----------------------------------------------------
 // 10. PERFIL DO MEMBRO & VÍNCULO DE CÉLULA
 // ----------------------------------------------------
-export async function fetchCurrentMember(): Promise<any> {
+export async function fetchCurrentMember(organizationId?: string): Promise<any> {
+  // Capture the organization before asynchronous token restoration.
+  const org = organizationId || getActiveOrganizationId();
+  if (!org) return null;
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/members/me`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      return data.data || data;
-    }
+    const headers = { ...await getAuthHeaders(), 'x-organization-id': org };
+    const res = await fetch(`${API_BASE_URL}/members/me?organization_id=${encodeURIComponent(org)}`, { headers, cache: 'no-store' });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Não foi possível consultar seu cadastro nesta igreja.');
+    const data = await res.json();
+    const member = data.data || data;
+    return member.organization_id === org ? member : null;
   } catch (e) {
-    console.log("Fetch current member fallback", e);
+    if (organizationId) throw e;
+    return null;
   }
-  return null;
 }
 
 // ----------------------------------------------------

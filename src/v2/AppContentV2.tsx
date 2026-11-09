@@ -1,3 +1,4 @@
+import { CampusPicker } from '../components/CampusPicker';
 import {useUsageScreen} from '../context/UsageContext';
 import {ExperienceScreen} from '../context/PwaExperienceContext';
 import { usePwaExperience } from '../context/PwaExperienceContext';
@@ -16,11 +17,11 @@ import { AuthGate } from '../components/AuthGate';
 
 // Estilos e Tokens Nativos da V2
 import './styles/v2-theme.css';
-import { prefetchV2Data, swrFetch } from './services/swrCache';
+import { prefetchV2Data } from './services/swrCache';
 import { getActiveCampusId, fetchCampuses, setActiveCampusId } from '../services/api';
 import { BottomSheet } from '../components/BottomSheet';
 import { triggerHaptic } from './utils/haptics';
-import { ChurchIcon, CrossIcon } from './components/Icons';
+import { CrossIcon } from './components/Icons';
 
 // Telas do App
 import { HomeV2 } from './pages/HomeV2';
@@ -113,13 +114,15 @@ export const AppContentV2: React.FC = () => {
 
   // Prefetch de dados da V2 e carregamento de filiais/campuses
   useEffect(() => {
+    let current = true;
+    setCampuses([]);
     if (branding.organization_id) {
       prefetchV2Data(branding.organization_id, getActiveCampusId());
-      swrFetch(`campuses_${branding.organization_id}`, () => fetchCampuses(branding.organization_id), { persistLocal: true })
-        .then(({ data }) => {
-          if (data && Array.isArray(data)) setCampuses(data);
-        });
+      fetchCampuses(branding.organization_id).then(data => {
+        if (current) setCampuses(data);
+      });
     }
+    return () => { current = false; };
   }, [branding.organization_id]);
 
   useEffect(() => {
@@ -470,88 +473,10 @@ export const AppContentV2: React.FC = () => {
       <BottomSheet 
         isOpen={isCampusDrawerOpen} 
         onClose={() => setIsCampusDrawerOpen(false)}
-        maxHeight="65vh"
+        maxHeight="75vh"
+        title="Escolha sua unidade"
       >
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: 'var(--exp-radius, 16px)',
-            background: 'var(--accent-primary-light, rgba(15, 118, 110, 0.12))',
-            color: 'var(--accent-primary, #0f766e)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 8px auto'
-          }}>
-            <ChurchIcon size={26} color="var(--accent-primary, #0f766e)" />
-          </div>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: '4px 0 0 0' }}>
-            Escolha sua Congregação
-          </h3>
-          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
-            Selecione o campus onde você congrega ou está visitando hoje.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '48vh', overflowY: 'auto' }}>
-          {campuses.map(c => {
-            const isSelected = c.id === activeCampusId;
-            return (
-              <div
-                key={c.id}
-                onClick={() => handleSelectCampus(c.id)}
-                className={`v2-pressable v2-campus-option ${isSelected ? 'active' : ''}`}
-                style={{
-                  background: isSelected ? 'var(--v2-item-selected-bg, var(--accent-primary-light, rgba(15, 118, 110, 0.12)))' : 'var(--bg-card, #ffffff)',
-                  border: isSelected ? '2px solid var(--v2-item-selected-border, var(--accent-primary, #0f766e))' : '1px solid var(--panel-border, rgba(226, 232, 240, 0.8))',
-                  borderRadius: 'var(--exp-radius, 18px)',
-                  padding: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  boxShadow: isSelected ? '0 4px 16px rgba(0,0,0,0.12)' : 'var(--v2-shadow-ambient)'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                      {c.name}
-                    </span>
-                    {Boolean(c.is_headquarters) && (
-                      <span style={{ 
-                        fontSize: '0.62rem', 
-                        background: '#fef3c7', 
-                        color: '#92400e', 
-                        padding: '2px 6px', 
-                        borderRadius: '6px', 
-                        fontWeight: 900 
-                      }}>
-                        SEDE
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', margin: '4px 0 0 0' }}>
-                    {c.address ? `${c.address}, ` : ''}{c.city ? `${c.city} - ${c.state}` : 'Endereço no App'}
-                  </p>
-                  {c.pastor_name && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--accent-bright, var(--accent-primary, #0f766e))', fontWeight: 700, margin: '2px 0 0 0' }}>
-                      Pastor Local: {c.pastor_name}
-                    </p>
-                  )}
-                </div>
-
-                <div style={{
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  border: isSelected ? '6px solid var(--v2-item-selected-border, var(--accent-primary, #0f766e))' : '2px solid var(--panel-border, #cbd5e1)',
-                  background: 'var(--bg-card, #ffffff)'
-                }} />
-              </div>
-            );
-          })}
-        </div>
+        <CampusPicker campuses={campuses} organizationId={branding.organization_id || ''} selectedId={activeCampusId} isOpen={isCampusDrawerOpen} onSelect={handleSelectCampus} />
       </BottomSheet>
     </div>
   );
