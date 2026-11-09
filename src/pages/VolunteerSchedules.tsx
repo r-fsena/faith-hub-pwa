@@ -1,21 +1,9 @@
 import {usePwaExperience} from '../context/PwaExperienceContext';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  fetchMySchedules, 
-  respondToSchedule, 
-  fetchMinistries, 
-  fetchMinistrySchedules,
-  joinMinistry, 
-  fetchMyBlockouts, 
-  createBlockout, 
-  deleteBlockout,
-  fetchEligiblePeersForSwap,
-  requestRosterSwap,
-  fetchMyPendingSwaps,
-  respondToSwap,
-  cancelRosterSwap
-} from '../services/api';
+import { createVolunteerClient, getActiveCampusId } from '../services/api';
+import type { VolunteerScope } from '../services/api';
+import { useBranding } from '../context/BrandingContext';
 import { BottomSheet } from '../components/BottomSheet';
 
 interface VolunteerSchedulesProps {
@@ -23,6 +11,24 @@ interface VolunteerSchedulesProps {
 }
 
 export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }) => {
+  const { branding, selectedCampus, isResolved } = useBranding();
+  const { user } = useAuth();
+  const [campus, setCampus] = useState(getActiveCampusId);
+  useEffect(() => {
+    const change = () => setCampus(getActiveCampusId());
+    change(); window.addEventListener('pwa-campus-changed', change);
+    return () => window.removeEventListener('pwa-campus-changed', change);
+  }, [branding.organization_id]);
+  const scope = useMemo(() => ({ organizationId: branding.organization_id || '', campusId: campus }), [branding.organization_id, campus]);
+  if (isResolved === false || !scope.organizationId || !user) return <p role="status">Carregando o voluntariado desta igreja…</p>;
+  const label = `${branding.church_name} · ${campus === 'all' ? 'Todas as unidades' : (selectedCampus?.id === campus ? selectedCampus.name : 'Unidade selecionada')}`;
+  return <VolunteerSchedulesContent key={`${scope.organizationId}:${campus}:${user.userId}`} onBack={onBack} scope={scope} scopeLabel={label} />;
+};
+const VolunteerSchedulesContent: React.FC<VolunteerSchedulesProps & { scope: VolunteerScope; scopeLabel: string }> = ({ onBack, scope, scopeLabel }) => {
+  const { fetchMySchedules, respondToSchedule, fetchMinistries, fetchMinistrySchedules, joinMinistry, fetchMyBlockouts, createBlockout, deleteBlockout, fetchEligiblePeersForSwap, requestRosterSwap, fetchMyPendingSwaps, respondToSwap, cancelRosterSwap } = useMemo(() => createVolunteerClient(scope), [scope]);
+  const requestId = useRef(0), alive = useRef(true), ministryRequest = useRef(0);
+  const alert = (message?: string) => { if (alive.current) window.alert(message); };
+  const canViewMinistry = (min: any) => min.my_is_leader === true || min.my_is_leader === 1 || ['ACTIVE', 'TRAINING'].includes(min.my_volunteer_status);
  const {t,config,active}=usePwaExperience();
 
   const { user } = useAuth();
@@ -32,6 +38,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   const [blockouts, setBlockouts] = useState<any[]>([]);
   const [pendingSwaps, setPendingSwaps] = useState<{ incoming: any[]; outgoing: any[] }>({ incoming: [], outgoing: [] });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [answeringItemId, setAnsweringItemId] = useState<string | null>(null);
   const [declineReasonModal, setDeclineReasonModal] = useState<string | null>(null);
   const [declineText, setDeclineText] = useState('');
@@ -93,21 +100,24 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
   };
 
   const handleOpenMinistrySchedules = async (min: any) => {
+    if (!canViewMinistry(min)) return alert('As escalas ficam disponíveis após sua aprovação neste ministério.');
+    const current = ++ministryRequest.current;
     setViewingMinistry(min);
     setLoadingMinistrySchedules(true);
     setMinistrySchedules([]);
     try {
       const list = await fetchMinistrySchedules(min.id);
-      setMinistrySchedules(list || []);
+      if (alive.current && current === ministryRequest.current) setMinistrySchedules(list || []);
     } catch (e) {
       console.error('Erro ao carregar escalas do ministério:', e);
     } finally {
-      setLoadingMinistrySchedules(false);
+      if (alive.current && current === ministryRequest.current) setLoadingMinistrySchedules(false);
     }
   };
 
   const loadData = async () => {
-    setLoading(true);
+    const current = ++requestId.current;
+    setLoading(true); setLoadError('');
     try {
       const [sch, mins, blk, swp] = await Promise.all([
         fetchMySchedules(),
@@ -115,19 +125,21 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         fetchMyBlockouts(),
         fetchMyPendingSwaps()
       ]);
+      if (!alive.current || current !== requestId.current) return;
       setSchedules(sch || []);
       setMinistries(mins || []);
       setBlockouts(blk || []);
       setPendingSwaps(swp || { incoming: [], outgoing: [] });
     } catch (e) {
-      console.error(e);
+      if (alive.current && current === requestId.current) setLoadError(e instanceof Error ? e.message : 'Não foi possível carregar o voluntariado desta igreja.');
     } finally {
-      setLoading(false);
+      if (alive.current && current === requestId.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    alive.current = true; void loadData();
+    return () => { alive.current = false; requestId.current++; ministryRequest.current++; };
   }, []);
 
   // Auto-posiciona o calendário no mês da próxima escala do usuário (caso o mês atual não tenha escalas)
@@ -202,7 +214,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
         alert('Erro ao enviar inscrição.');
       }
     } catch (e) {
-      alert('Erro ao se inscrever.');
+      alert(e instanceof Error ? e.message : 'Erro ao se inscrever.');
     }
   };
 
@@ -359,7 +371,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
           )}
           <div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main, #0f172a)' }}>
-              {t('volunteers.title',"Escalas & Voluntariado")}</h1>
+              {t('volunteers.title',"Escalas & Voluntariado")}</h1><p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>{scopeLabel}</p>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
               Seus cultos escalados, agenda e oportunidades de servir
             </p>
@@ -420,7 +432,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
             <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>🔄</div>
             <div>Carregando suas escalas...</div>
           </div>
-        ) : activeTab === 'my_schedules' ? (
+        ) : loadError ? (<div role="alert" style={{ padding: 20, background: 'var(--bg-card)', border: '1px solid var(--panel-border)', borderRadius: 16 }}><p>{loadError}</p><button type="button" onClick={() => loadData()} style={{ marginTop: 12, padding: 10, color: 'var(--text-main)', background: 'var(--bg-card)', border: '1px solid var(--panel-border)', borderRadius: 10 }}>Tentar novamente</button></div>) : activeTab === 'my_schedules' ? (
           
           /* ABA: MINHAS ESCALAS & MEUS MINISTÉRIOS */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -464,10 +476,10 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
               <div style={{ background: 'var(--bg-card, #ffffff)', borderRadius: 'var(--exp-radius, 18px)', padding: '24px 20px', textAlign: 'center', border: '1px solid var(--panel-border, #e2e8f0)', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🙌</div>
                 <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--text-main, #0f172a)' }}>
-                  Nenhuma convocação individual pendente
+                  Nenhuma escala nesta igreja e unidade
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', marginTop: '4px' }}>
-                  Quando a liderança escalar você para o próximo culto, seu posto aparecerá aqui para confirmação.
+                  As convocações aparecerão quando você estiver vinculado a um ministério desta igreja e for escalado para esta unidade.
                 </div>
               </div>
             ) : (
@@ -1662,7 +1674,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           </div>
                         )}
 
-                        <button
+                        {canViewMinistry(min) && (<button
                           onClick={() => handleOpenMinistrySchedules(min)}
                           style={{
                             padding: '9px 14px',
@@ -1680,7 +1692,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                           }}
                         >
                           📅 Visualizar Escalas deste Grupo
-                        </button>
+                        </button>)}
                       </div>
                     );
                   })}
@@ -1950,7 +1962,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         <strong>Dons informados:</strong> {min.my_volunteer_roles}
                       </div>
                     )}
-                    <button
+                    {canViewMinistry(min) && (<button
                       onClick={() => handleOpenMinistrySchedules(min)}
                       style={{
                         marginTop: '2px',
@@ -1969,7 +1981,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       }}
                     >
                       📅 Ver Escalas deste Ministério
-                    </button>
+                    </button>)}
                   </div>
                 ) : min.my_volunteer_status === 'CANDIDATE' ? (
                   <div style={{
@@ -1998,7 +2010,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         <strong>Dons informados:</strong> {min.my_volunteer_roles}
                       </div>
                     )}
-                    <button
+                    {canViewMinistry(min) && (<button
                       onClick={() => handleOpenMinistrySchedules(min)}
                       style={{
                         marginTop: '2px',
@@ -2017,7 +2029,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       }}
                     >
                       📅 Visualizar Escalas deste Ministério
-                    </button>
+                    </button>)}
                   </div>
                 ) : (min.my_volunteer_status === 'ACTIVE' || min.my_volunteer_status === 'TRAINING') ? (
                   <div style={{
@@ -2043,7 +2055,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                         <strong>Suas funções:</strong> {min.my_volunteer_roles}
                       </div>
                     )}
-                    <button
+                    {canViewMinistry(min) && (<button
                       onClick={() => handleOpenMinistrySchedules(min)}
                       style={{
                         marginTop: '2px',
@@ -2063,7 +2075,7 @@ export const VolunteerSchedules: React.FC<VolunteerSchedulesProps> = ({ onBack }
                       }}
                     >
                       📅 Ver Escalas deste Ministério
-                    </button>
+                    </button>)}
                   </div>
                 ) : joiningMinId === min.id ? (
                   <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card-subtle, #f8fafc)', border: '1px solid var(--panel-border, #e2e8f0)', padding: '12px', borderRadius: 'var(--exp-radius, 12px)' }}>

@@ -691,212 +691,73 @@ export async function fetchCurrentMember(): Promise<any> {
 // ----------------------------------------------------
 // 11. MINISTÉRIOS & ESCALAS DE VOLUNTÁRIOS
 // ----------------------------------------------------
-export async function fetchMySchedules(): Promise<any[]> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/my-schedules`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch my schedules fallback", e);
-  }
-  return [];
+export interface VolunteerScope { organizationId: string; campusId: string; signal?: AbortSignal }
+function volunteerScope(scope?: VolunteerScope): VolunteerScope {
+  return scope || { organizationId: getActiveOrganizationId(), campusId: getActiveCampusId() };
 }
-
-export async function respondToSchedule(rosterItemId: string, status: 'ACCEPTED' | 'DECLINED', decline_reason?: string): Promise<boolean> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/${rosterItemId}/respond`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ status, decline_reason })
-    });
-    return res.ok;
-  } catch (e) {
-    console.log("Respond schedule error", e);
-    return false;
-  }
+async function volunteerRequest(path: string, options: RequestInit = {}, scope?: VolunteerScope) {
+  const selected = volunteerScope(scope);
+  if (!selected.organizationId) throw Error('Selecione uma igreja para acessar o voluntariado.');
+  const url = new URL(API_BASE_URL + path);
+  url.searchParams.set('organization_id', selected.organizationId);
+  url.searchParams.set('campus_id', selected.campusId || 'all');
+  const headers = new Headers(await getAuthHeaders());
+  // Token restoration is asynchronous; pin the context captured before it started.
+  headers.set('x-organization-id', selected.organizationId);
+  headers.set('x-campus-id', selected.campusId || 'all');
+  return fetch(url.href, { ...options, headers, signal: selected.signal, cache: 'no-store' });
 }
-
-export async function fetchMinistries(organizationId?: string, campusId?: string): Promise<any[]> {
-  try {
-    const headers = await getAuthHeaders();
-    const org = organizationId || getActiveOrganizationId();
-    if (!org) return [];
-    const params = new URLSearchParams({ organization_id: org });
-    if (campusId && campusId !== 'all') params.set('campus_id', campusId);
-
-    const res = await fetch(`${API_BASE_URL}/ministries?${params.toString()}`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch ministries fallback", e);
+async function volunteerList(path: string, scope?: VolunteerScope): Promise<any[]> {
+  const response = await volunteerRequest(path, {}, scope);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw Error(data.message || 'Não foi possível carregar o voluntariado desta igreja e unidade.');
   }
-  return [];
+  return response.json();
 }
-
-export async function fetchMinistrySchedules(ministryId: string): Promise<any[]> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/ministries/${ministryId}/schedules?timeframe=upcoming&status=PUBLISHED`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch ministry schedules fallback", e);
-  }
-  return [];
+async function volunteerAction(path: string, body: any, scope?: VolunteerScope, method = 'POST'): Promise<{ success: boolean; message?: string }> {
+  try { const res = await volunteerRequest(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, scope);
+    const data = await res.json(); return { success: res.ok, message: data.message || 'Não foi possível concluir esta ação nesta igreja e unidade.' };
+  } catch { return { success: false, message: 'Não foi possível concluir esta ação. Tente novamente.' }; }
 }
-
-export async function joinMinistry(ministryId: string, memberId: string, rolesCsv?: string, notes?: string): Promise<boolean> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/ministries/${ministryId}/volunteers`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        member_id: memberId,
-        status: 'CANDIDATE',
-        roles_csv: rolesCsv,
-        notes
-      })
-    });
-    return res.ok;
-  } catch (e) {
-    console.log("Join ministry error", e);
-    return false;
-  }
+export const fetchMySchedules = (scope?: VolunteerScope) => volunteerList('/volunteers/my-schedules', scope);
+export async function respondToSchedule(id: string, status: 'ACCEPTED' | 'DECLINED', decline_reason?: string, scope?: VolunteerScope) {
+  return (await volunteerAction(`/volunteers/schedules/${encodeURIComponent(id)}/respond`, { status, decline_reason }, scope)).success;
 }
-
-export async function fetchMyBlockouts(): Promise<any[]> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch blockouts error", e);
-  }
-  return [];
+export function fetchMinistries(organizationId?: string, campusId?: string, scope?: VolunteerScope) {
+  const selected = scope || { organizationId: organizationId || getActiveOrganizationId(), campusId: campusId || getActiveCampusId() };
+  return volunteerList('/ministries?scope=member&status=ACTIVE', selected);
 }
-
-export async function createBlockout(startDate: string, endDate: string, reason?: string): Promise<boolean> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        start_date: startDate,
-        end_date: endDate,
-        reason
-      })
-    });
-    return res.ok;
-  } catch (e) {
-    console.log("Create blockout error", e);
-    return false;
-  }
+export const fetchMinistrySchedules = (id: string, scope?: VolunteerScope) => volunteerList(`/ministries/${encodeURIComponent(id)}/schedules?timeframe=upcoming&status=PUBLISHED&scope=member`, scope);
+export async function joinMinistry(id: string, _memberId: string, roles_csv?: string, notes?: string, scope?: VolunteerScope) {
+  const result = await volunteerAction('/volunteers/applications', { ministry_id: id, roles_csv, notes }, scope);
+  if (!result.success) throw Error(result.message); return true;
 }
-
-export async function deleteBlockout(id: string): Promise<boolean> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/blockouts/${id}`, {
-      method: 'DELETE',
-      headers
-    });
-    return res.ok;
-  } catch (e) {
-    console.log("Delete blockout error", e);
-    return false;
-  }
+export const fetchMyBlockouts = (scope?: VolunteerScope) => volunteerList('/volunteers/blockouts', scope);
+export async function createBlockout(start_date: string, end_date: string, reason?: string, scope?: VolunteerScope) { return (await volunteerAction('/volunteers/blockouts', { start_date, end_date, reason }, scope)).success; }
+export async function deleteBlockout(id: string, scope?: VolunteerScope) { return (await volunteerAction(`/volunteers/blockouts/${encodeURIComponent(id)}`, undefined, scope, 'DELETE')).success; }
+export const fetchEligiblePeersForSwap = (id: string, role: string, scope?: VolunteerScope) => volunteerList(`/volunteers/schedules/eligible-peers?${new URLSearchParams({ schedule_id: id, role_id: role })}`, scope);
+export const requestRosterSwap = (id: string, target_member_id?: string, reason?: string, scope?: VolunteerScope) => volunteerAction(`/volunteers/schedules/roster/${encodeURIComponent(id)}/swap`, { target_member_id, reason }, scope);
+export async function fetchMyPendingSwaps(scope?: VolunteerScope): Promise<{ incoming: any[]; outgoing: any[] }> {
+  const response = await volunteerRequest('/volunteers/swaps/pending', {}, scope);
+  if (!response.ok) throw Error('Não foi possível carregar as trocas desta igreja e unidade.');
+  return response.json();
 }
-
-// ----------------------------------------------------
-// 9. SHIFT SWAP (TROCA DE ESCALAS ENTRE MEMBROS)
-// ----------------------------------------------------
-export async function fetchEligiblePeersForSwap(scheduleId: string, roleId: string): Promise<any[]> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/eligible-peers?schedule_id=${scheduleId}&role_id=${roleId}`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch eligible peers error", e);
-  }
-  return [];
-}
-
-export async function requestRosterSwap(rosterItemId: string, targetMemberId?: string, reason?: string): Promise<{ success: boolean; message?: string }> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/schedules/roster/${rosterItemId}/swap`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        target_member_id: targetMemberId || undefined,
-        reason
-      })
-    });
-    const data = await res.json();
-    return { success: res.ok, message: data.message || data.error };
-  } catch (e) {
-    console.log("Request roster swap error", e);
-    return { success: false, message: 'Erro ao enviar pedido de troca' };
-  }
-}
-
-export async function fetchMyPendingSwaps(): Promise<{ incoming: any[]; outgoing: any[] }> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/swaps/pending`, { headers });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.log("Fetch pending swaps error", e);
-  }
-  return { incoming: [], outgoing: [] };
-}
-
-export async function respondToSwap(swapId: string, action: 'ACCEPT' | 'REJECT'): Promise<{ success: boolean; message?: string }> {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/volunteers/swaps/${swapId}/respond`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action })
-    });
-    const data = await res.json();
-    return { success: res.ok, message: data.message || data.error };
-  } catch (e) {
-    console.log("Respond to swap error", e);
-    return { success: false, message: 'Erro ao responder à troca' };
-  }
-}
-
-export async function cancelRosterSwap(swapId?: string, rosterItemId?: string): Promise<{ success: boolean; message?: string }> {
-  try {
-    const headers = await getAuthHeaders();
-    const url = swapId 
-      ? `${API_BASE_URL}/volunteers/swaps/${swapId}/cancel`
-      : `${API_BASE_URL}/volunteers/swaps/cancel`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ rosterItemId })
-    });
-    const data = await res.json();
-    return { success: res.ok, message: data.message || data.error };
-  } catch (e) {
-    console.log("Cancel swap error", e);
-    return { success: false, message: 'Erro ao cancelar pedido de troca' };
-  }
+export const respondToSwap = (id: string, action: 'ACCEPT' | 'REJECT', scope?: VolunteerScope) => volunteerAction(`/volunteers/swaps/${encodeURIComponent(id)}/respond`, { action }, scope);
+export const cancelRosterSwap = (id?: string, rosterItemId?: string, scope?: VolunteerScope) => volunteerAction(id ? `/volunteers/swaps/${encodeURIComponent(id)}/cancel` : '/volunteers/swaps/cancel', { rosterItemId }, scope);
+export function createVolunteerClient(scope: VolunteerScope) {
+  return {
+    fetchMySchedules: () => fetchMySchedules(scope), fetchMinistries: () => fetchMinistries(undefined, undefined, scope),
+    fetchMyBlockouts: () => fetchMyBlockouts(scope), fetchMyPendingSwaps: () => fetchMyPendingSwaps(scope),
+    fetchMinistrySchedules: (id: string) => fetchMinistrySchedules(id, scope),
+    respondToSchedule: (id: string, status: 'ACCEPTED' | 'DECLINED', reason?: string) => respondToSchedule(id, status, reason, scope),
+    joinMinistry: (id: string, member: string, roles?: string) => joinMinistry(id, member, roles, undefined, scope),
+    createBlockout: (start: string, end: string, reason?: string) => createBlockout(start, end, reason, scope),
+    deleteBlockout: (id: string) => deleteBlockout(id, scope), fetchEligiblePeersForSwap: (id: string, role: string) => fetchEligiblePeersForSwap(id, role, scope),
+    requestRosterSwap: (id: string, target?: string, reason?: string) => requestRosterSwap(id, target, reason, scope),
+    respondToSwap: (id: string, action: 'ACCEPT' | 'REJECT') => respondToSwap(id, action, scope),
+    cancelRosterSwap: (id?: string, roster?: string) => cancelRosterSwap(id, roster, scope)
+  };
 }
 
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
