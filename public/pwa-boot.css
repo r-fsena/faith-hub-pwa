@@ -1,5 +1,4 @@
-#initial-splash { --boot-background:#fff; --boot-text:#0f172a; --boot-muted:#475569; position:fixed; inset:0; z-index:2147483646; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:32px; box-sizing:border-box; background:var(--boot-background); color:var(--boot-text); font-family:system-ui,sans-serif; text-align:center; }
-@media(prefers-color-scheme:dark) { #initial-splash { --boot-background:#090d16; --boot-text:#f8fafc; --boot-muted:#cbd5e1; } }
+#initial-splash { --boot-background:#090d16; --boot-text:#f8fafc; --boot-muted:#cbd5e1; position:fixed; inset:0; z-index:2147483646; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:32px; box-sizing:border-box; background:var(--boot-background); color:var(--boot-text); font-family:system-ui,sans-serif; text-align:center; }
 #initial-splash img { width:80px; height:80px; object-fit:contain; }
 #initial-splash img[hidden],#initial-splash button[hidden],#initial-splash[hidden] { display:none; }
 #initial-splash[data-monochrome="light"] img { filter:grayscale(1) contrast(20); mix-blend-mode:multiply; }

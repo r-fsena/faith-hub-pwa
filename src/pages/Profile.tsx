@@ -1114,16 +1114,17 @@ export const Profile: React.FC<ProfileProps> = ({ onLoginSuccess, onContinueAsGu
                   }
                 ].map(opt => {
                   const isSelected = themePreference === opt.id;
-                  const itemColor = isSelected ? '#ffffff' : 'var(--text-muted, #94a3b8)';
+                  const itemColor = isSelected ? 'var(--exp-on-primary, #ffffff)' : 'var(--exp-text, var(--text-main, #0f172a))';
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setThemePreference(opt.id as any)}
-                      className={`v2-pressable v2-segment-btn ${isSelected ? 'active' : ''}`}
+                      className={`v2-pressable theme-preference-option ${isSelected ? 'active' : ''}`}
+                      aria-pressed={isSelected}
                       style={{
                         background: isSelected 
-                          ? 'var(--accent-primary-gradient, linear-gradient(135deg, #0f766e 0%, #14b8a6 100%))' 
+                          ? 'var(--exp-primary, var(--accent-primary, #0f766e))'
                           : 'transparent',
                         color: itemColor,
                         border: isSelected ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent',

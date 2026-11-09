@@ -5,11 +5,10 @@
     <link rel="icon" type="image/png" href="/brand/logo-symbol.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     
-    <link rel="stylesheet" href="/pwa-boot.css" />
+    <link rel="stylesheet" href="/pwa-boot.css?v=20261108-dark-default" />
 
     <!-- PWA Settings -->
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#090d16" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#090d16" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
@@ -20,7 +19,7 @@
 
     <title>Faith-Hub • Aplicativo Oficial</title>
   </head>
-  <body style="margin: 0; background: #f8fafc; overflow-x: hidden;">
+  <body style="margin: 0; background: #090d16; overflow-x: hidden;">
     <div id="initial-splash" role="status" aria-live="polite" aria-label="Carregamento do aplicativo">
       <img hidden alt="" />
       <h1>Carregando sua igreja…</h1>
@@ -29,7 +28,7 @@
       <button type="button" hidden>Tentar novamente</button>
     </div>
     <div id="root" inert aria-hidden="true"></div>
-    <script src="/pwa-boot.js"></script>
+    <script src="/pwa-boot.js?v=20261108-dark-default"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {

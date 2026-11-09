@@ -10,6 +10,7 @@
     if (finished || finishing || !identity) return;
     if (identity.name) title.textContent = identity.name;
     if (identity.mode === 'light' || identity.mode === 'dark') panel.dataset.monochrome = identity.monochrome ? identity.mode : '';
+    if (safeColor(identity.background)) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', identity.background);
     ['background', 'text', 'muted'].forEach(function (key) { if (safeColor(identity[key])) panel.style.setProperty('--boot-' + key, identity[key]); });
     if (identity.logoUrl && logo.getAttribute('src') !== identity.logoUrl) {
       try {
@@ -54,13 +55,19 @@
     }
     if (!slug) slug = localStorage.getItem('faithhub_active_church_slug') || '';
     slug = slug.trim().toLowerCase();
+    var validPreference = function (value) { return ['light', 'dark', 'system'].indexOf(value) !== -1; };
     var requestedTheme = query.get('theme');
-    if (requestedTheme === 'light' || requestedTheme === 'dark') update({ background:requestedTheme==='dark'?'#090d16':'#ffffff', text:requestedTheme==='dark'?'#f8fafc':'#0f172a', muted:requestedTheme==='dark'?'#cbd5e1':'#475569' });
+    var initialPreference = validPreference(requestedTheme) ? requestedTheme : 'dark';
+    var initialDark = initialPreference === 'dark' || (initialPreference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    update({ background:initialDark?'#090d16':'#ffffff', text:initialDark?'#f8fafc':'#0f172a', muted:initialDark?'#cbd5e1':'#475569' });
     var cached = JSON.parse(localStorage.getItem('faithhub_church_branding_' + (slug || 'default')) || 'null');
     if (cached && (!slug || cached.pwa_slug === slug || cached.organization_id === slug)) {
       var config = cached.pwa_experience && cached.pwa_experience.enabled && cached.pwa_experience.customized && cached.pwa_experience.config;
       var identity = config && config.identity || {}, theme = config && config.theme || {};
-      var pref = query.get('theme') || localStorage.getItem('faithhub_theme_mode:' + (cached.organization_id || slug)) || theme.default_mode || cached.theme_mode || 'system';
+      var saved = localStorage.getItem('faithhub_theme_mode:' + (cached.organization_id || slug));
+      var legacy = localStorage.getItem('faithhub_theme_mode');
+      if (!validPreference(saved) && validPreference(legacy) && !localStorage.getItem('faithhub_theme_legacy_migrated') && cached.organization_id && localStorage.getItem('faithhub_pwa_active_org_id') === cached.organization_id) saved = legacy;
+      var pref = validPreference(requestedTheme) ? requestedTheme : validPreference(saved) ? saved : 'dark';
       var dark = String(pref).toLowerCase() === 'dark' || (String(pref).toLowerCase() === 'system' && matchMedia('(prefers-color-scheme: dark)').matches), palette = theme[dark ? 'dark' : 'light'] || {};
       update({ name:identity.name || cached.church_name, logoUrl:identity.logo_url || cached.logo_icon_url || cached.logo_header_url, mode:dark?'dark':'light',
         monochrome: config && [theme.light,theme.dark].every(function (p) { return p && Object.values(p).every(function (v) { return /^#([0-9a-f]{2})\1\1$/i.test(v); }) && p.background.toLowerCase() !== p.text.toLowerCase(); }), background:palette.background || (dark?'#090d16':'#ffffff'), text:palette.text || (dark?'#f8fafc':'#0f172a'), muted:palette.muted || (dark?'#cbd5e1':'#475569') });
