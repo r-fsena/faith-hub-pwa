@@ -20,6 +20,7 @@ const valid = (v: string | null): v is ThemePreference =>
 interface ThemeContextType {
   themePreference: ThemePreference;
   resolvedTheme: ResolvedTheme;
+  isReady?: boolean;
   setThemePreference: (pref: ThemePreference) => void;
 }
 export const ThemeContext = createContext<ThemeContextType>({
@@ -37,10 +38,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themePreference, setPreference] = useState<ThemePreference>(
     normalize(initial),
   );
+  const readinessKey = `${key}:${initial || 'system'}`;
+  const [resolvedPreferenceKey, setResolvedPreferenceKey] = useState('');
   const [systemDark, setSystemDark] = useState(
     () => window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     const url = new URLSearchParams(location.search).get("theme");
     let saved = localStorage.getItem(key);
     const legacy=localStorage.getItem('faithhub_theme_mode');
@@ -50,7 +53,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       saved=legacy;
     }
     setPreference(valid(url) ? url : valid(saved) ? saved : normalize(initial));
-  }, [key, initial]);
+    setResolvedPreferenceKey(readinessKey);
+  }, [key, initial, readinessKey]);
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const change = () => setSystemDark(media.matches);
@@ -99,7 +103,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
   return (
     <ThemeContext.Provider
-      value={{ themePreference, resolvedTheme, setThemePreference }}
+      value={{ themePreference, resolvedTheme, isReady: resolvedPreferenceKey === readinessKey, setThemePreference }}
     >
       {children}
     </ThemeContext.Provider>

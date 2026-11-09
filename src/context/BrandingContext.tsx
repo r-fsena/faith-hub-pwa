@@ -134,6 +134,8 @@ interface Campus { id: string; name: string; }
 interface BrandingContextType {
   selectedCampus: Campus | null;
   isResolved?: boolean;
+  isLoading?: boolean;
+  error?: string;
   branding: ChurchBranding;
   updateBranding: (newBranding: Partial<ChurchBranding>) => void;
 }
@@ -185,6 +187,8 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
   const [resolvedOrganizationId, setResolvedOrganizationId] = useState<string | null>(null);
   const brandingRequest = useRef(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [branding, setBranding] = useState<ChurchBranding>(DEFAULT_BRANDING);
 
   useEffect(() => {
@@ -207,6 +211,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const loadBranding = async () => {
     const requestId=++brandingRequest.current;
     setResolvedOrganizationId(null);
+    setIsLoading(true); setError('');
     const urlSlug = getChurchSlugFromUrl();
     const previousSavedSlug = localStorage.getItem('faithhub_active_church_slug');
     const activeSlug = urlSlug || previousSavedSlug || undefined;
@@ -286,9 +291,12 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         applyTheme(updated);
         setActiveOrganizationId(resolvedOrgId);
         setResolvedOrganizationId(resolvedOrgId);
-      }
+      } else { throw Error('CHURCH_UNAVAILABLE'); }
     } catch (err) {
+      if (requestId === brandingRequest.current) setError('Não foi possível carregar a igreja. Verifique a conexão e tente novamente.');
       console.log("Usando branding em cache local offline", err);
+    } finally {
+      if (requestId === brandingRequest.current) setIsLoading(false);
     }
   };
 
@@ -400,7 +408,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [branding.organization_id]);
 
   return (
-    <BrandingContext.Provider value={{ branding, updateBranding, selectedCampus, isResolved: resolvedOrganizationId === branding.organization_id }}>
+    <BrandingContext.Provider value={{ branding, updateBranding, selectedCampus, isLoading, error, isResolved: resolvedOrganizationId === branding.organization_id }}>
       {children}
     </BrandingContext.Provider>
   );

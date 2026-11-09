@@ -1,24 +1,34 @@
-import React, { Suspense, useMemo } from 'react';
-import { BrandingProvider } from './context/BrandingContext';
+import React, { Suspense, useMemo, useState, useEffect } from 'react';
+import { BrandingProvider, useBranding } from './context/BrandingContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { UsageProvider } from './context/UsageContext';
 import { CartProvider } from './context/CartContext';
-import { PwaExperienceProvider } from './context/PwaExperienceContext';
+import { PwaExperienceProvider, usePwaExperience } from './context/PwaExperienceContext';
 import { PwaInstallationProvider } from './context/PwaInstallationContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { SplashScreen } from './components/SplashScreen';
 
 // Code-splitting: Carrega V1 ou V2 dinamicamente sob demanda
 const AppContentV1 = React.lazy(() => import('./v1/AppContentV1'));
 const AppContentV2 = React.lazy(() => import('./v2/AppContentV2'));
 
-const FastBootFallback = () => (
-  <div style={{ position: 'fixed', inset: 0, background: '#090d16', zIndex: 999999 }} />
-);
-
+function ShellReady({ onReady }: { onReady: () => void }) {
+  useEffect(onReady, [onReady]);
+  return null;
+}
 const AppShell: React.FC = () => {
-  const { isFeatureEnabled, isLoading } = useFeatureFlags();
+  const { isFeatureEnabled, isLoading, error: flagsError } = useFeatureFlags();
+  const { isResolved, error: brandingError } = useBranding();
+  const { isLoading: authLoading } = useAuth();
+  const { isReady: themeReady } = useTheme();
+  const { isLoading: experienceLoading } = usePwaExperience();
+  const [started, setStarted] = useState(false);
+  const [shellReady, setShellReady] = useState(false);
+  const error = brandingError || flagsError;
+  const prepared = !!isResolved && !isLoading && !authLoading && !experienceLoading && themeReady !== false && !error;
+  useEffect(() => { if (prepared) setStarted(true); }, [prepared]);
+  const markReady = React.useCallback(() => setShellReady(true), []);
 
   // V2 é a versão padrão ativa para todos os tenants e usuários
   const isV2 = useMemo(() => {
@@ -36,15 +46,13 @@ const AppShell: React.FC = () => {
     return isFeatureEnabled('pwa.v2_experience', true);
   }, [isFeatureEnabled]);
 
-  if (isLoading) {
-    return <FastBootFallback />;
-  }
-
-  return (
-    <Suspense fallback={<FastBootFallback />}>
+  return <>
+    <SplashScreen ready={prepared && shellReady} error={started ? undefined : error} />
+    {(prepared || started) && <Suspense fallback={null}>
       {isV2 ? <AppContentV2 /> : <AppContentV1 />}
-    </Suspense>
-  );
+      <ShellReady onReady={markReady} />
+    </Suspense>}
+  </>;
 };
 
 export function App() {
@@ -53,15 +61,15 @@ export function App() {
       <FeatureFlagProvider>
         <ThemeProvider>
           <PwaExperienceProvider>
-          <PwaInstallationProvider>
-          <AuthProvider>
-            <UsageProvider>
-            <CartProvider>
-              <AppShell />
-            </CartProvider>
-            </UsageProvider>
-          </AuthProvider>
-          </PwaInstallationProvider>
+            <PwaInstallationProvider>
+              <AuthProvider>
+                <UsageProvider>
+                  <CartProvider>
+                    <AppShell />
+                  </CartProvider>
+                </UsageProvider>
+              </AuthProvider>
+            </PwaInstallationProvider>
           </PwaExperienceProvider>
         </ThemeProvider>
       </FeatureFlagProvider>

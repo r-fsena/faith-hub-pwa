@@ -154,7 +154,7 @@ export const TopHeaderV2: React.FC<TopHeaderV2Props> = ({
             cursor: 'pointer' 
           }}
         >
-          <div style={{ 
+          <div data-brand-logo-frame="true" style={{
             width: '42px',
             height: '42px',
             borderRadius: 'var(--exp-radius, 14px)',

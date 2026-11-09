@@ -27,6 +27,7 @@ import "../experience/experience.css";
 interface ExperienceContextValue {
   config: ExperienceConfig;
   active: boolean;
+  isLoading?: boolean;
   screen: ScreenId;
   setScreen: (screen: ScreenId) => void;
   t: (key: string, fallback: string) => string;
@@ -57,6 +58,7 @@ export function PwaExperienceProvider({
   const { resolvedTheme } = useTheme();
   const [screen, setScreen] = useState<ScreenId>("home");
   const [published, setPublished] = useState<any>(null);
+  const [settledScope, setSettledScope] = useState('');
   const [campus, setCampus] = useState(getActiveCampusId());
   const org = branding.organization_id || "org_default";
   const enabled = !!preview || isFeatureEnabled(EXPERIENCE_FLAG, false);
@@ -105,6 +107,7 @@ export function PwaExperienceProvider({
       } catch {
       } finally {
         refreshing = false;
+        if (live) setSettledScope(scope);
       }
     }
     void refresh();
@@ -261,7 +264,7 @@ export function PwaExperienceProvider({
     : branding;
   return (
     <ExperienceContext.Provider
-      value={{ config, active, screen: currentScreen, setScreen, t }}
+      value={{ config, active, isLoading: enabled && !preview && settledScope !== scope && !scoped && !((!campus || campus === "all") && bootstrap?.customized), screen: currentScreen, setScreen, t }}
     >
       <BrandingContext.Provider
         value={{ ...brandingState, branding: presentedBranding }}

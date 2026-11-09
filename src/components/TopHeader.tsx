@@ -91,7 +91,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     <header data-experience-region="header" className={`pwa-topbar ${isScrolled ? 'is-scrolled' : ''}`}>
       <div className="pwa-topbar-inner">
         <div className="pwa-topbar-left" onClick={onOpenProfile} style={{ cursor: 'pointer' }}>
-          <div className="pwa-church-avatar" title="Ir para o Perfil">
+          <div data-brand-logo-frame="true" className="pwa-church-avatar" title="Ir para o Perfil">
             <img 
               data-brand-logo="true" src={branding.logo_icon_url || '/brand/logo-symbol.png'}
               alt={branding.church_name || 'Faith-Hub'} 

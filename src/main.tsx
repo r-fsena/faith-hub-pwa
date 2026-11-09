@@ -10,6 +10,6 @@ import React from 'react'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {isPreview?<React.Suspense fallback={<div>Preparando prévia…</div>}><PwaPreview/></React.Suspense>:<React.Suspense fallback={<div>Carregando aplicativo…</div>}><App/></React.Suspense>}
+    {isPreview?<React.Suspense fallback={<div>Preparando prévia…</div>}><PwaPreview/></React.Suspense>:<React.Suspense fallback={null}><App/></React.Suspense>}
   </StrictMode>,
 )

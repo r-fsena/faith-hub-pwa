@@ -4,6 +4,7 @@ import { getCurrentUser, signOut as amplifySignOut, fetchUserAttributes } from '
 import { getAuthHeaders, getActiveOrganizationId } from '../services/api';
 import { Hub } from 'aws-amplify/utils';
 import awsmobile from '../aws-exports';
+import { useBranding } from './BrandingContext';
 
 // Configura o Amplify uma única vez
 Amplify.configure(awsmobile);
@@ -36,11 +37,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://566n5qz7te.execute-api.
 const DEMO_AUTH_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { branding, isResolved } = useBranding();
   const [user, setUser] = useState<MemberUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isResolved) return;
     checkAuth();
 
     const unsubscribe = Hub.listen('auth', ({ payload }: { payload: any }) => {
@@ -56,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isResolved, branding.organization_id]);
 
   const checkAuth = async () => {
     setIsLoading(true);

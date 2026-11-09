@@ -356,7 +356,7 @@ export const WelcomeLoginScreenV1: React.FC<WelcomeLoginScreenProps> = ({
           flex: 1,
           minWidth: 0
         }}>
-          <div style={{
+          <div data-brand-logo-frame="true" style={{
             width: isLargeChurchName ? '38px' : '40px',
             height: isLargeChurchName ? '38px' : '40px',
             borderRadius: '50%',

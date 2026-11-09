@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useBranding } from './BrandingContext';
 import { getActiveCampusId } from '../services/api';
 
@@ -8,6 +8,7 @@ export interface FeatureFlagContextType {
   flags: Record<string, boolean>;
   configs: Record<string, any>;
   isLoading: boolean;
+  error?: string;
   isFeatureEnabled: (featureKey: string, defaultValue?: boolean) => boolean;
   getFeatureConfig: <T = any>(featureKey: string, defaultValue?: T) => T;
   refreshFlags: () => Promise<void>;
@@ -23,18 +24,26 @@ export const FeatureFlagContext = createContext<FeatureFlagContextType>({
 });
 
 export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { branding } = useBranding();
+  const { branding, isResolved } = useBranding();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [hasLoadedFlags, setHasLoadedFlags] = useState(false);
+  const [loadedOrganization, setLoadedOrganization] = useState('');
+  const [error, setError] = useState('');
+  const requestId = useRef(0);
+  const organization = branding.organization_id || '';
+
 
   const fetchFlags = useCallback(async (campusOverride?: string) => {
+    const currentRequest = ++requestId.current;
+    if (!isResolved || !organization) { setIsLoading(true); return; }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      setIsLoading(true);
+      setIsLoading(true); setError('');
       const params = new URLSearchParams();
       // Resolve org identifier
-      const orgParam = branding.organization_id || branding.pwa_slug || 'org_default';
+      const orgParam = organization;
       params.append('organization_id', orgParam);
       params.append('environment', 'production');
 
@@ -43,22 +52,25 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
         params.append('campus_id', activeCampus);
       }
 
-      const res = await fetch(`${API_URL}/feature-flags?${params.toString()}`);
+      const res = await fetch(`${API_URL}/feature-flags?${params.toString()}`, { signal: controller.signal });
       if (!res.ok) throw new Error(`FEATURE_FLAGS_HTTP_${res.status}`);
       const data = await res.json();
+      if (currentRequest !== requestId.current) return;
       setFlags(data.flags || {});
       setConfigs(data.configs || {});
-      setHasLoadedFlags(true);
+      setLoadedOrganization(organization);
     } catch (err) {
-      setHasLoadedFlags(false);
+      if (currentRequest === requestId.current) setError('Não foi possível preparar os recursos da igreja. Tente novamente.');
       console.warn('Erro ao carregar feature flags no PWA:', err);
     } finally {
-      setIsLoading(false);
+      clearTimeout(timeout);
+      if (currentRequest === requestId.current) setIsLoading(false);
     }
-  }, [branding.organization_id, branding.pwa_slug]);
+  }, [organization, isResolved]);
 
   useEffect(() => {
-    fetchFlags();
+    void fetchFlags();
+    return () => { requestId.current++; };
   }, [fetchFlags]);
 
   useEffect(() => {
@@ -75,23 +87,24 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const isFeatureEnabled = useCallback(
     (featureKey: string, defaultValue: boolean = true): boolean => {
-      if (!hasLoadedFlags) return false;
+      if (!isResolved || loadedOrganization !== organization) return false;
       if (flags[featureKey] !== undefined) {
         return Boolean(flags[featureKey]);
       }
       return defaultValue;
     },
-    [flags, hasLoadedFlags]
+    [flags, loadedOrganization, organization, isResolved]
   );
 
   const getFeatureConfig = useCallback(
     <T = any>(featureKey: string, defaultValue?: T): T => {
+      if (!isResolved || loadedOrganization !== organization) return defaultValue as T;
       if (configs[featureKey] !== undefined) {
         return configs[featureKey] as T;
       }
       return defaultValue as T;
     },
-    [configs]
+    [configs, isResolved, loadedOrganization, organization]
   );
 
   return (
@@ -99,7 +112,8 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
       value={{
         flags,
         configs,
-        isLoading,
+        isLoading: !isResolved || isLoading,
+        error: loadedOrganization === organization ? '' : error,
         isFeatureEnabled,
         getFeatureConfig,
         refreshFlags: fetchFlags

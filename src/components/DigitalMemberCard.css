@@ -1,0 +1,44 @@
+.member-card {
+  --member-background: var(--exp-surface, var(--bg-card, #fff));
+  --member-text: var(--exp-text, var(--text-main, #0f172a));
+  --member-muted: var(--exp-muted, var(--text-secondary, #475569));
+  --member-border: var(--exp-border, var(--panel-border, #e2e8f0));
+  width: 100%; max-width: 440px; margin: 0 auto; color: var(--member-text);
+}
+.member-card-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; padding:0 4px; font-size:.8rem; }
+.member-card-toolbar button { background:none; border:0; padding:6px 0; color:var(--member-text); font:inherit; font-size:.74rem; font-weight:700; cursor:pointer; }
+.member-card-face { background:var(--member-background); color:var(--member-text); border:1px solid var(--member-border); border-radius:var(--exp-radius,24px); box-shadow:var(--exp-shadow,var(--shadow-sm)); cursor:pointer; overflow:hidden; }
+.member-card-front,.member-card-back { min-height:250px; padding:20px; display:flex; flex-direction:column; gap:18px; }
+.member-card-header,.member-card-identity,.member-card-person,.member-card-footer { display:flex; align-items:center; gap:12px; }
+.member-card-header { justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; }
+.member-card-identity { flex:1; min-width:0; }
+.member-card-logo { width:36px; height:36px; object-fit:contain; flex-shrink:0; border-radius:0; }
+.member-card-church { min-width:0; overflow-wrap:anywhere; }
+.member-card-church strong { color:var(--member-text); font-size:.86rem; font-weight:900; }
+.member-card p,.member-card dt { color:var(--member-muted); font-size:.74rem; line-height:1.5; margin:0; }
+.member-card-church p { margin-top:3px; font-size:.68rem; }
+.member-card-role { font-size:.64rem; font-weight:800; padding:4px 8px; border:1px solid var(--member-border); border-radius:8px; color:var(--member-text); max-width:100%; overflow-wrap:anywhere; }
+.member-card-avatar { width:56px; height:56px; border-radius:50%; flex-shrink:0; overflow:hidden; border:1px solid var(--member-border); background:var(--exp-surface-muted,var(--bg-card-subtle)); display:grid; place-items:center; color:var(--member-text); font-weight:900; }
+.member-card-avatar img { width:100%; height:100%; object-fit:cover; }
+.member-card-person-details { flex:1; min-width:0; }
+.member-card h2 { font-size:1.05rem; font-weight:900; color:var(--member-text); margin:0 0 3px; overflow-wrap:anywhere; }
+.member-card-code { font-size:.68rem !important; margin-top:4px !important; }
+.member-card-footer { justify-content:space-between; align-items:flex-end; border-top:1px solid var(--member-border); padding-top:12px; margin-top:auto; }
+.member-card-label { font-size:.64rem !important; letter-spacing:.04em; text-transform:uppercase; }
+.member-card-status { color:var(--member-text); font-size:.75rem; display:block; margin-top:3px; }
+.member-card-hint { font-size:.62rem !important; margin-top:6px !important; }
+/* A QR code always needs its own white quiet zone, independent of the UI theme. */
+.member-card-qr { display:inline-flex; flex-shrink:0; padding:5px; background:#fff; border:0; border-radius:8px; cursor:pointer; }
+.member-card-qr img { display:block; filter:none; }
+.member-card-records { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:0; }
+.member-card-records>div { border:1px solid var(--member-border); padding:10px; border-radius:10px; }
+.member-card dd { margin:4px 0 0; font-weight:800; font-size:.78rem; overflow-wrap:anywhere; }
+.member-card-verse { text-align:center; font-style:italic; }
+.member-card-modal-overlay { position:fixed; inset:0; z-index:9999; background:#0009; display:grid; place-items:center; padding:20px; }
+.member-card-modal { background:var(--member-background); border:1px solid var(--member-border); border-radius:var(--exp-radius,24px); padding:24px; max-width:340px; text-align:center; display:flex; flex-direction:column; gap:10px; }
+.member-card-qr-large { align-self:center; padding:12px; margin:8px 0; }
+.member-card-close { padding:12px; border:1px solid var(--member-border); border-radius:12px; background:var(--member-background); color:var(--member-text); font-weight:800; cursor:pointer; }
+.member-card :is(button,[role=button]):focus-visible { outline:2px solid var(--member-text); outline-offset:3px; }
+/* Remove the rectangular backing of monochrome logos without filtering photos. */
+html[data-pwa-color-mode="monochrome"] .member-card-logo { background:transparent !important; mix-blend-mode:multiply; }
+html[data-pwa-color-mode="monochrome"][data-theme="dark"] .member-card-logo { mix-blend-mode:screen; }

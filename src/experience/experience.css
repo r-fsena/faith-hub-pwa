@@ -191,7 +191,7 @@ html[data-pwa-color-mode="monochrome"] [data-brand-logo] {
 html[data-pwa-color-mode="monochrome"][data-theme="dark"] [data-brand-logo] {
   filter: grayscale(1) contrast(20) invert(1) !important;
 }
-html[data-pwa-color-mode="monochrome"] :has(> [data-brand-logo]) {
+html[data-pwa-color-mode="monochrome"] [data-brand-logo-frame] {
   background: var(--exp-surface) !important;
   border-color: var(--exp-border) !important;
   box-shadow: none !important;
