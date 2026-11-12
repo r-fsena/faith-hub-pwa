@@ -19,6 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: node --test scripts/verify-production-release.test.cjs
+      - run: node scripts/check-dependency-policy.cjs
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint

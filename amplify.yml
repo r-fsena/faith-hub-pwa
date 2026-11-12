@@ -4,6 +4,7 @@ frontend:
     preBuild:
       commands:
         - node scripts/verify-production-release.cjs
+        - node scripts/check-dependency-policy.cjs
         - npm ci
     build:
       commands:
