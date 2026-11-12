@@ -3,6 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
+        - node scripts/verify-production-release.cjs
         - npm ci
     build:
       commands:
