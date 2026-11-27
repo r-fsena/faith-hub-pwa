@@ -186,6 +186,7 @@ export const CellGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { branding } = useBranding();
   const { isFeatureEnabled } = useFeatureFlags();
+  const canRecordOfferings = isFeatureEnabled('cell_groups.offerings', false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const trackStudy = (contentType: 'STUDY_BOOK' | 'STUDY_CHAPTER', contentId: string, eventType: 'OPENED' | 'COMPLETED') => {
@@ -1268,7 +1269,7 @@ export const CellGroups: React.FC = () => {
       const res = await recordCellMeeting(myGroupId, {
         meeting_date: meetingDate,
         study_topic: studyTopic || undefined,
-        offerings_amount: !isNaN(parsedOfferings) ? parsedOfferings : 0,
+        ...(canRecordOfferings ? { offerings_amount: !isNaN(parsedOfferings) ? parsedOfferings : 0 } : {}),
         notes: meetingNotes || undefined,
         attendees: attendeesPayload
       });
@@ -4027,48 +4028,50 @@ export const CellGroups: React.FC = () => {
                       <div style={{ height: '1px', background: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', margin: '2px 0' }} />
 
                       {/* Linha de Oferta (Opcional) */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)' }}>
-                            Oferta <span style={{ fontWeight: 600, fontSize: '0.76rem', color: 'var(--text-muted, #94a3b8)' }}>(opcional)</span>
+                      {canRecordOfferings && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 900, fontSize: '0.96rem', color: 'var(--text-main, #0f172a)' }}>
+                              Oferta <span style={{ fontWeight: 600, fontSize: '0.76rem', color: 'var(--text-muted, #94a3b8)' }}>(opcional)</span>
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>
+                              Visível à liderança e à tesouraria
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>
-                            Visível à liderança e à tesouraria
-                          </div>
-                        </div>
 
-                        {/* Input de Oferta Formatado */}
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
-                          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
-                          padding: '6px 10px',
-                          borderRadius: 'var(--exp-radius, 14px)'
-                        }}>
-                          <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-muted, #64748b)' }}>
-                            R$
-                          </span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder="0,00"
-                            value={offeringsAmount}
-                            onChange={e => setOfferingsAmount(e.target.value)}
-                            style={{
-                              width: '74px',
-                              border: 'none',
-                              outline: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-main, #0f172a)',
-                              fontWeight: 900,
-                              fontSize: '0.96rem',
-                              textAlign: 'right'
-                            }}
-                          />
+                          {/* Input de Oferta Formatado */}
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
+                            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                            padding: '6px 10px',
+                            borderRadius: 'var(--exp-radius, 14px)'
+                          }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-muted, #64748b)' }}>
+                              R$
+                            </span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="0,00"
+                              value={offeringsAmount}
+                              onChange={e => setOfferingsAmount(e.target.value)}
+                              style={{
+                                width: '74px',
+                                border: 'none',
+                                outline: 'none',
+                                background: 'transparent',
+                                color: 'var(--text-main, #0f172a)',
+                                fontWeight: 900,
+                                fontSize: '0.96rem',
+                                textAlign: 'right'
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* BARRA FIXA INFERIOR (STICKY ACTION BAR): Conforme Mockup */}
@@ -4205,7 +4208,7 @@ export const CellGroups: React.FC = () => {
                                 <span>🟢 {m.present_count || 0} presentes</span>
                                 <span>🔴 {m.absent_count || 0} faltas</span>
                                 {m.visitor_count > 0 && <span>🌟 {m.visitor_count} visitantes</span>}
-                                {m.offerings_amount && Number(m.offerings_amount) > 0 && (
+                                {canRecordOfferings && Number(m.offerings_amount) > 0 && (
                                   <span>💰 R$ {Number(m.offerings_amount).toFixed(2).replace('.', ',')}</span>
                                 )}
                               </div>
@@ -5938,7 +5941,7 @@ export const CellGroups: React.FC = () => {
                   </div>
 
                   {/* Oferta Arrecadada (se houver) */}
-                  {viewingMeetingReport.offerings_amount && Number(viewingMeetingReport.offerings_amount) > 0 && (
+                  {canRecordOfferings && Number(viewingMeetingReport.offerings_amount) > 0 && (
                     <div style={{
                       background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
                       border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0'}`,
